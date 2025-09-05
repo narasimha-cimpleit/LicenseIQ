@@ -301,6 +301,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete user endpoint (admin only)
+  app.delete('/api/users/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user || (user.role !== 'admin' && user.role !== 'owner')) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const targetUserId = req.params.id;
+      const targetUser = await storage.getUser(targetUserId);
+      
+      if (!targetUser) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Prevent deleting the last admin/owner
+      if (targetUser.role === 'owner' || targetUser.role === 'admin') {
+        const adminCount = await storage.getAdminCount();
+        if (adminCount <= 1) {
+          return res.status(400).json({ message: 'Cannot delete the last admin user' });
+        }
+      }
+
+      await storage.deleteUser(targetUserId);
+      
+      await createAuditLog(req, 'user_deleted', 'user', targetUserId, {
+        email: targetUser.email,
+        role: targetUser.role,
+      });
+
+      res.json({ message: 'User deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      res.status(500).json({ message: 'Failed to delete user' });
+    }
+  });
+
+  // Update user endpoint (admin only)
+  app.patch('/api/users/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user || (user.role !== 'admin' && user.role !== 'owner')) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const targetUserId = req.params.id;
+      const { firstName, lastName, email } = req.body;
+      
+      const updatedUser = await storage.updateUser(targetUserId, {
+        firstName,
+        lastName,
+        email,
+      });
+      
+      await createAuditLog(req, 'user_updated', 'user', targetUserId, {
+        firstName,
+        lastName,
+        email,
+      });
+
+      res.json(updatedUser);
+    } catch (error) {
+      console.error('Error updating user:', error);
+      res.status(500).json({ message: 'Failed to update user' });
+    }
+  });
+
   // Audit trail routes
   app.get('/api/audit', isAuthenticated, async (req: any, res) => {
     try {

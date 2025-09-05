@@ -14,7 +14,7 @@ import {
   type ContractWithAnalysis,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, ilike, count } from "drizzle-orm";
+import { eq, desc, and, or, ilike, count } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -24,6 +24,9 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   updateUserRole(id: string, role: string): Promise<User>;
   getAllUsers(search?: string, role?: string): Promise<User[]>;
+  deleteUser(id: string): Promise<void>;
+  updateUser(id: string, updates: Partial<InsertUser>): Promise<User>;
+  getAdminCount(): Promise<number>;
   
   // Contract operations
   createContract(contract: InsertContract): Promise<Contract>;
@@ -291,6 +294,27 @@ export class DatabaseStorage implements IStorage {
       logs,
       total: totalResult[0].count,
     };
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    await db.delete(users).where(eq(users.id, id));
+  }
+
+  async updateUser(id: string, updates: Partial<InsertUser>): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async getAdminCount(): Promise<number> {
+    const result = await db
+      .select({ count: count() })
+      .from(users)
+      .where(or(eq(users.role, 'admin'), eq(users.role, 'owner')));
+    return result[0].count;
   }
 
   // Analytics operations

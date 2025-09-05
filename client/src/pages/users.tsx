@@ -33,14 +33,26 @@ function EditUserDialog({ user, onUpdate }: { user: any; onUpdate: () => void })
   const [email, setEmail] = useState(user.email || "");
   const { toast } = useToast();
 
-  const handleSave = () => {
-    // In a real app, this would call an update API
-    toast({
-      title: "User Updated",
-      description: `${email} has been updated successfully`,
-    });
-    setOpen(false);
-    onUpdate();
+  const handleSave = async () => {
+    try {
+      await apiRequest("PATCH", `/api/users/${user.id}`, {
+        firstName,
+        lastName,
+        email,
+      });
+      toast({
+        title: "User Updated",
+        description: `${email} has been updated successfully`,
+      });
+      setOpen(false);
+      onUpdate();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update user",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -480,18 +492,23 @@ export default function Users() {
                                 variant="ghost" 
                                 size="sm" 
                                 className="text-destructive hover:text-destructive/80"
-                                onClick={() => {
+                                onClick={async () => {
                                   if (confirm(`Are you sure you want to delete ${user.email}? This action cannot be undone.`)) {
-                                    // In a real app, this would call a delete API
-                                    toast({
-                                      title: "User Deleted",
-                                      description: `${user.email} has been removed from the system`,
-                                      variant: "destructive",
-                                    });
-                                    // Remove from local state for immediate feedback
-                                    queryClient.setQueryData(["/api/users"], (oldData: any) => 
-                                      oldData?.filter((u: any) => u.id !== user.id)
-                                    );
+                                    try {
+                                      await apiRequest("DELETE", `/api/users/${user.id}`);
+                                      toast({
+                                        title: "User Deleted",
+                                        description: `${user.email} has been removed from the system`,
+                                        variant: "destructive",
+                                      });
+                                      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+                                    } catch (error) {
+                                      toast({
+                                        title: "Error",
+                                        description: "Failed to delete user",
+                                        variant: "destructive",
+                                      });
+                                    }
                                   }
                                 }}
                                 data-testid={`button-delete-user-${user.id}`}
