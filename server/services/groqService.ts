@@ -46,7 +46,7 @@ export class GroqService {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.1-70b-versatile',
+        model: 'llama-3.1-8b-instant',
         messages,
         temperature,
         max_tokens: 4000,

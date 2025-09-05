@@ -29,7 +29,7 @@ export default function Reports() {
     from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
     to: new Date(),
   });
-  const [format as exportFormat, setExportFormat] = useState("pdf");
+  const [exportFormat, setExportFormat] = useState("pdf");
 
   const { data: contractsData } = useQuery({
     queryKey: ["/api/contracts"],
