@@ -32,6 +32,29 @@ export default function ContractAnalysis() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Move mutation hook to top level to avoid conditional hook calls
+  const reprocessMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", `/api/contracts/${id}/reprocess`);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Reprocessing Started",
+        description: "The document is being reanalyzed with improved AI detection.",
+      });
+      // Invalidate and refetch contract data
+      queryClient.invalidateQueries({ queryKey: ["/api/contracts", id] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Reprocessing Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const { data: contract, isLoading, error } = useQuery({
     queryKey: ["/api/contracts", id],
     enabled: !!id,
@@ -104,28 +127,6 @@ export default function ContractAnalysis() {
 
   const analysis = contract.analysis;
   const hasAnalysis = analysis && contract.status === 'analyzed';
-
-  const reprocessMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest("POST", `/api/contracts/${id}/reprocess`);
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Reprocessing Started",
-        description: "The document is being reanalyzed with improved AI detection.",
-      });
-      // Invalidate and refetch contract data
-      queryClient.invalidateQueries({ queryKey: ["/api/contracts", id] });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Reprocessing Failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
 
   const handleExport = () => {
     toast({
