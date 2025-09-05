@@ -48,6 +48,7 @@ export interface IStorage {
     processing: number;
     analyzed: number;
     recentUploads: number;
+    activeUsers: number;
   }>;
 }
 
@@ -298,6 +299,7 @@ export class DatabaseStorage implements IStorage {
     processing: number;
     analyzed: number;
     recentUploads: number;
+    activeUsers: number;
   }> {
     let baseQuery = db.select({ count: count() }).from(contracts);
     
@@ -309,7 +311,8 @@ export class DatabaseStorage implements IStorage {
       totalResult,
       processingResult,
       analyzedResult,
-      recentResult
+      recentResult,
+      activeUsersResult
     ] = await Promise.all([
       baseQuery,
       userId 
@@ -320,7 +323,8 @@ export class DatabaseStorage implements IStorage {
         : db.select({ count: count() }).from(contracts).where(eq(contracts.status, 'analyzed')),
       userId
         ? db.select({ count: count() }).from(contracts).where(and(eq(contracts.uploadedBy, userId), eq(contracts.createdAt, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000))))
-        : db.select({ count: count() }).from(contracts).where(eq(contracts.createdAt, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)))
+        : db.select({ count: count() }).from(contracts).where(eq(contracts.createdAt, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000))),
+      db.select({ count: count() }).from(users).where(eq(users.isActive, true))
     ]);
 
     return {
@@ -328,6 +332,7 @@ export class DatabaseStorage implements IStorage {
       processing: processingResult[0].count,
       analyzed: analyzedResult[0].count,
       recentUploads: recentResult[0].count,
+      activeUsers: activeUsersResult[0].count,
     };
   }
 }

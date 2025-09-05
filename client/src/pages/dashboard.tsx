@@ -54,16 +54,16 @@ export default function Dashboard() {
             title="Total Contracts"
             value={metrics?.totalContracts || 0}
             icon={File}
-            trend="+12%"
-            trendLabel="from last month"
+            trend={metrics?.recentUploads ? `+${metrics.recentUploads}` : "+0"}
+            trendLabel="recent uploads"
             data-testid="metric-total-contracts"
           />
           <MetricsCard
             title="Processing"
             value={metrics?.processing || 0}
             icon={Settings}
-            trend="Real-time"
-            trendLabel="updates"
+            trend={metrics?.processing > 0 ? "Active" : "Idle"}
+            trendLabel="status"
             variant="processing"
             data-testid="metric-processing"
           />
@@ -71,19 +71,19 @@ export default function Dashboard() {
             title="Analyzed"
             value={metrics?.analyzed || 0}
             icon={CheckCircle}
-            trend="98.2%"
-            trendLabel="success rate"
+            trend={metrics?.totalContracts > 0 ? `${Math.round((metrics.analyzed / metrics.totalContracts) * 100)}%` : "0%"}
+            trendLabel="completion rate"
             variant="success"
             data-testid="metric-analyzed"
           />
           <MetricsCard
-            title="Revenue Impact"
-            value="$2.4M"
+            title="Active Users"
+            value={metrics?.activeUsers || 0}
             icon={DollarSign}
-            trend="+18%"
-            trendLabel="this quarter"
+            trend={metrics?.activeUsers > 1 ? "Multi-user" : "Single-user"}
+            trendLabel="activity"
             variant="revenue"
-            data-testid="metric-revenue"
+            data-testid="metric-active-users"
           />
         </div>
 
@@ -154,54 +154,71 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* AI Insights */}
+          {/* Contract Statistics */}
           <Card>
             <CardHeader>
-              <CardTitle>Contract Analysis Insights</CardTitle>
+              <CardTitle>System Overview</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <div className="flex items-start space-x-3">
-                    <div className="h-8 w-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Lightbulb className="h-4 w-4 text-white" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-blue-900 dark:text-blue-100">AI Insight</h4>
-                      <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                        15 contracts contain renewal clauses that expire within 60 days. Consider proactive renewal discussions.
-                      </p>
-                    </div>
+                {metrics?.totalContracts === 0 ? (
+                  <div className="text-center py-8">
+                    <Lightbulb className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">No contracts uploaded yet</p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Upload your first contract to see AI-powered insights and analysis.
+                    </p>
+                    <Button variant="outline" className="mt-4" onClick={handleUpload}>
+                      Upload Contract
+                    </Button>
                   </div>
-                </div>
-                
-                <div className="p-4 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
-                  <div className="flex items-start space-x-3">
-                    <div className="h-8 w-8 bg-amber-500 rounded-full flex items-center justify-center flex-shrink-0">
-                      <AlertTriangle className="h-4 w-4 text-white" />
+                ) : (
+                  <>
+                    <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <div className="flex items-start space-x-3">
+                        <div className="h-8 w-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                          <Lightbulb className="h-4 w-4 text-white" />
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-blue-900 dark:text-blue-100">Contract Analytics</h4>
+                          <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                            {metrics.analyzed} of {metrics.totalContracts} contracts have been analyzed using AI.
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-medium text-amber-900 dark:text-amber-100">Risk Alert</h4>
-                      <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-                        3 contracts have conflicting termination clauses that may require legal review.
-                      </p>
+                    
+                    {metrics?.processing > 0 && (
+                      <div className="p-4 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                        <div className="flex items-start space-x-3">
+                          <div className="h-8 w-8 bg-amber-500 rounded-full flex items-center justify-center flex-shrink-0">
+                            <AlertTriangle className="h-4 w-4 text-white" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-amber-900 dark:text-amber-100">Processing Status</h4>
+                            <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                              {metrics.processing} contracts are currently being processed by AI analysis.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
+                      <div className="flex items-start space-x-3">
+                        <div className="h-8 w-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                          <TrendingUp className="h-4 w-4 text-white" />
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-green-900 dark:text-green-100">System Status</h4>
+                          <p className="text-sm text-green-700 dark:text-green-300 mt-1">
+                            Platform is operational with {metrics?.recentUploads || 0} recent uploads.
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-                
-                <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
-                  <div className="flex items-start space-x-3">
-                    <div className="h-8 w-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-                      <TrendingUp className="h-4 w-4 text-white" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-green-900 dark:text-green-100">Opportunity</h4>
-                      <p className="text-sm text-green-700 dark:text-green-300 mt-1">
-                        Revenue optimization potential of $340K identified across 8 licensing agreements.
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>
