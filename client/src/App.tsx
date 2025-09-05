@@ -22,13 +22,15 @@ function Router() {
 
   return (
     <Switch>
+      {/* Public routes */}
+      <Route path="/auth" component={AuthPage} />
+      
+      {/* Loading or unauthenticated users see landing page */}
       {isLoading || !isAuthenticated ? (
-        <>
-          <Route path="/" component={Landing} />
-          <Route path="/auth" component={AuthPage} />
-        </>
+        <Route path="/" component={Landing} />
       ) : (
         <>
+          {/* Protected routes for authenticated users */}
           <ProtectedRoute path="/" component={Dashboard} />
           <ProtectedRoute path="/contracts" component={Contracts} />
           <ProtectedRoute path="/upload" component={Upload} />
@@ -39,6 +41,7 @@ function Router() {
           <ProtectedRoute path="/contracts/:id" component={ContractAnalysis} />
         </>
       )}
+      
       <Route component={NotFound} />
     </Switch>
   );
