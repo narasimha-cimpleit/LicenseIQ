@@ -438,25 +438,37 @@ export default function Users() {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <Select
-                              value={user.role}
-                              onValueChange={(newRole) => 
-                                updateUserRoleMutation.mutate({ userId: user.id, newRole })
-                              }
-                              disabled={updateUserRoleMutation.isPending}
-                            >
-                              <SelectTrigger className="w-32">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent className="bg-background border shadow-lg">
-                                <SelectItem value="viewer">Viewer</SelectItem>
-                                <SelectItem value="editor">Editor</SelectItem>
-                                <SelectItem value="admin">Admin</SelectItem>
-                                {user?.role === 'owner' && (
-                                  <SelectItem value="owner">Owner</SelectItem>
-                                )}
-                              </SelectContent>
-                            </Select>
+                            <div style={{ position: 'relative', zIndex: 9999 }}>
+                              <Select
+                                value={user.role}
+                                onValueChange={(newRole) => 
+                                  updateUserRoleMutation.mutate({ userId: user.id, newRole })
+                                }
+                                disabled={updateUserRoleMutation.isPending}
+                              >
+                                <SelectTrigger className="w-32">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent 
+                                  className="bg-background border shadow-lg"
+                                  style={{ 
+                                    position: 'fixed',
+                                    zIndex: 2147483647,
+                                    backgroundColor: 'white',
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '6px',
+                                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+                                  }}
+                                >
+                                  <SelectItem value="viewer">Viewer</SelectItem>
+                                  <SelectItem value="editor">Editor</SelectItem>
+                                  <SelectItem value="admin">Admin</SelectItem>
+                                  {user?.role === 'owner' && (
+                                    <SelectItem value="owner">Owner</SelectItem>
+                                  )}
+                                </SelectContent>
+                              </Select>
+                            </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <Badge variant={user.isActive ? "default" : "secondary"}>
