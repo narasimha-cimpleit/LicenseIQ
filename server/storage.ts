@@ -248,6 +248,10 @@ export class DatabaseStorage implements IStorage {
     return newAnalysis;
   }
 
+  async deleteContractAnalysis(contractId: string): Promise<void> {
+    await db.delete(contractAnalysis).where(eq(contractAnalysis.contractId, contractId));
+  }
+
   async getContractAnalysis(contractId: string): Promise<ContractAnalysis | undefined> {
     const [analysis] = await db
       .select()

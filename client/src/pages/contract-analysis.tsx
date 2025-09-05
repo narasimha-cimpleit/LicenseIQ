@@ -1,5 +1,5 @@
 import { useParams, useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import MainLayout from "@/components/layout/main-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { apiRequest } from "@/lib/queryClient";
 import { 
   FileText, 
   Download, 
@@ -29,6 +30,7 @@ export default function ContractAnalysis() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: contract, isLoading, error } = useQuery({
     queryKey: ["/api/contracts", id],
@@ -103,11 +105,37 @@ export default function ContractAnalysis() {
   const analysis = contract.analysis;
   const hasAnalysis = analysis && contract.status === 'analyzed';
 
+  const reprocessMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", `/api/contracts/${id}/reprocess`);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Reprocessing Started",
+        description: "The document is being reanalyzed with improved AI detection.",
+      });
+      // Invalidate and refetch contract data
+      queryClient.invalidateQueries({ queryKey: ["/api/contracts", id] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Reprocessing Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleExport = () => {
     toast({
       title: "Export Started",
       description: "Your analysis report is being prepared for download.",
     });
+  };
+
+  const handleReprocess = () => {
+    reprocessMutation.mutate();
   };
 
   const getConfidenceColor = (confidence: number) => {
@@ -151,12 +179,21 @@ export default function ContractAnalysis() {
             )}
           </div>
           <div className="flex space-x-3">
+            <Button 
+              variant="outline" 
+              onClick={handleReprocess} 
+              disabled={reprocessMutation.isPending}
+              data-testid="button-reprocess"
+            >
+              <AlertTriangle className="h-4 w-4 mr-2 text-amber-400" />
+              {reprocessMutation.isPending ? "Reprocessing..." : "Reprocess"}
+            </Button>
             <Button variant="outline" onClick={handleExport} data-testid="button-export">
-              <Download className="h-4 w-4 mr-2" />
+              <Download className="h-4 w-4 mr-2 text-blue-400" />
               Export
             </Button>
             <Button data-testid="button-edit-analysis">
-              <Edit className="h-4 w-4 mr-2" />
+              <Edit className="h-4 w-4 mr-2 text-green-400" />
               Edit Analysis
             </Button>
           </div>

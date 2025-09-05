@@ -63,18 +63,20 @@ export class GroqService {
 
   async analyzeContract(contractText: string): Promise<ContractAnalysisResult> {
     const prompt = `
-    You are a professional contract analyst. Analyze the following contract and provide a comprehensive analysis in valid JSON format.
+    You are a professional document analyst. Analyze the following document and provide a comprehensive analysis in valid JSON format.
 
-    Contract Text:
+    Document Text:
     ${contractText}
+
+    First, determine what type of document this is (contract, resume, report, agreement, etc.) and analyze it accordingly.
 
     Please provide your analysis in the following JSON structure:
     {
-      "summary": "A comprehensive summary of the contract (2-3 paragraphs)",
+      "summary": "A comprehensive summary of the document (2-3 paragraphs)",
       "keyTerms": [
         {
-          "type": "Term category (e.g., Financial Terms, Termination Clause, etc.)",
-          "description": "Clear description of the term",
+          "type": "Key element category (adapt based on document type)",
+          "description": "Clear description of the key element",
           "confidence": 0.95,
           "location": "Section reference where found"
         }
@@ -82,8 +84,8 @@ export class GroqService {
       "riskAnalysis": [
         {
           "level": "high|medium|low",
-          "title": "Risk title",
-          "description": "Detailed risk description"
+          "title": "Analysis point title",
+          "description": "Detailed analysis description"
         }
       ],
       "insights": [
@@ -96,13 +98,11 @@ export class GroqService {
       "confidence": 0.92
     }
 
-    Focus on:
-    - Financial terms and obligations
-    - Termination and renewal clauses
-    - Intellectual property rights
-    - Liability and indemnification
-    - Compliance requirements
-    - Risk factors and opportunities
+    Analyze based on the document type:
+    - If CONTRACT: Focus on financial terms, clauses, obligations, risks
+    - If RESUME: Focus on skills, experience, qualifications, career progression
+    - If REPORT: Focus on findings, recommendations, data analysis
+    - If OTHER: Focus on main content, key points, structure, purpose
 
     Return only valid JSON, no additional text.
     `;
@@ -110,7 +110,7 @@ export class GroqService {
     const messages = [
       {
         role: 'system',
-        content: 'You are a professional legal contract analyst. Always respond with valid JSON only.'
+        content: 'You are a professional document analyst. Always respond with valid JSON only. Analyze documents based on their actual content and type, not assumptions.'
       },
       {
         role: 'user',
