@@ -324,7 +324,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Hash the new password
-      const { hashPassword } = require('./auth');
       const hashedPassword = await hashPassword(newPassword);
       
       const updatedUser = await storage.resetUserPassword(targetUserId, hashedPassword);
