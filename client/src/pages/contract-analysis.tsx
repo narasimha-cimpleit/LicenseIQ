@@ -34,7 +34,8 @@ export default function ContractAnalysis() {
     queryKey: ["/api/contracts", id],
     enabled: !!id,
     retry: false,
-    refetchInterval: contract?.status === 'processing' ? 2000 : false, // Refresh every 2s if processing
+    refetchInterval: 2000, // Refresh every 2s
+    refetchIntervalInBackground: false,
   });
 
   // Handle unauthorized errors
