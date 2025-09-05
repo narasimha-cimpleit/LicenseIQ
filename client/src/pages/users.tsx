@@ -168,7 +168,7 @@ export default function Users() {
                 Invite User
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="bg-background border border-border">
               <DialogHeader>
                 <DialogTitle>Invite New User</DialogTitle>
               </DialogHeader>
@@ -347,7 +347,7 @@ export default function Users() {
                               <SelectTrigger className="w-32">
                                 <SelectValue />
                               </SelectTrigger>
-                              <SelectContent>
+                              <SelectContent className="z-50">
                                 <SelectItem value="viewer">Viewer</SelectItem>
                                 <SelectItem value="editor">Editor</SelectItem>
                                 <SelectItem value="admin">Admin</SelectItem>
@@ -373,6 +373,12 @@ export default function Users() {
                               <Button 
                                 variant="ghost" 
                                 size="sm"
+                                onClick={() => {
+                                  toast({
+                                    title: "Edit User",
+                                    description: "Edit user functionality will be implemented soon",
+                                  });
+                                }}
                                 data-testid={`button-edit-user-${user.id}`}
                               >
                                 <Edit className="h-4 w-4" />
@@ -380,6 +386,12 @@ export default function Users() {
                               <Button 
                                 variant="ghost" 
                                 size="sm"
+                                onClick={() => {
+                                  toast({
+                                    title: "Reset Password",
+                                    description: "Password reset functionality will be implemented soon",
+                                  });
+                                }}
                                 data-testid={`button-reset-password-${user.id}`}
                               >
                                 <Key className="h-4 w-4" />
@@ -388,6 +400,13 @@ export default function Users() {
                                 variant="ghost" 
                                 size="sm" 
                                 className="text-destructive hover:text-destructive/80"
+                                onClick={() => {
+                                  toast({
+                                    title: "Delete User",
+                                    description: "Delete user functionality will be implemented soon",
+                                    variant: "destructive",
+                                  });
+                                }}
                                 data-testid={`button-delete-user-${user.id}`}
                               >
                                 <Trash2 className="h-4 w-4" />
