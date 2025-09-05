@@ -54,7 +54,7 @@ function EditUserDialog({ user, onUpdate }: { user: any; onUpdate: () => void })
           <Edit className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="bg-background border border-border">
+      <DialogContent className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-black dark:text-white">
         <DialogHeader>
           <DialogTitle>Edit User</DialogTitle>
         </DialogHeader>
@@ -247,7 +247,7 @@ export default function Users() {
                 Invite User
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-background border border-border">
+            <DialogContent className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-black dark:text-white">
               <DialogHeader>
                 <DialogTitle>Invite New User</DialogTitle>
               </DialogHeader>
