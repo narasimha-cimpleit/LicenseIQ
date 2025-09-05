@@ -145,7 +145,8 @@ export default function Users() {
         role: inviteRole,
       };
       
-      const response = await apiRequest("POST", "/api/register", newUser);
+      // Create user but don't log in as them (admin stays logged in)
+      const response = await apiRequest("POST", "/api/users/create", newUser);
       return response.json();
     },
     onSuccess: () => {
