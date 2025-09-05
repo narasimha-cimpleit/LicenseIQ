@@ -456,6 +456,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Sample contract download route
+  app.get('/api/download/sample-contract', (req, res) => {
+    const filePath = 'sample_contract.html';
+    res.download(filePath, 'sample_contract.html', (err) => {
+      if (err) {
+        console.error('Error downloading file:', err);
+        res.status(404).json({ message: 'File not found' });
+      }
+    });
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
