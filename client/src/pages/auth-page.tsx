@@ -265,6 +265,13 @@ export default function AuthPage() {
               </Card>
             </TabsContent>
           </Tabs>
+
+          {/* Footer */}
+          <div className="text-center text-xs text-muted-foreground mt-8 pt-4 border-t">
+            <p>Powered by <a href="https://cimpleit.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Cimpleit</a></p>
+            <p>&copy; 2024 Cimpleit. All rights reserved.</p>
+            <p className="mt-1">Innovative AI and Data Analytics Solutions</p>
+          </div>
         </div>
       </div>
 

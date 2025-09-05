@@ -42,13 +42,25 @@ export default function MainLayout({ children, title, description }: MainLayoutP
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Sidebar />
-      <main className="ml-64 min-h-screen">
+      <main className="ml-64 flex-1 flex flex-col">
         <Header title={title} description={description} />
-        <div className="p-6" data-testid="main-content">
+        <div className="p-6 flex-1" data-testid="main-content">
           {children}
         </div>
+        
+        {/* Footer */}
+        <footer className="border-t bg-background/50 px-6 py-4">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <div className="flex items-center space-x-4">
+              <p>Powered by <a href="https://cimpleit.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Cimpleit</a></p>
+              <span>•</span>
+              <p>&copy; 2024 Cimpleit. All rights reserved.</p>
+            </div>
+            <p>Innovative AI and Data Analytics Solutions</p>
+          </div>
+        </footer>
       </main>
     </div>
   );
