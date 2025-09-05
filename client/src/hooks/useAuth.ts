@@ -64,6 +64,10 @@ export function useAuth() {
         title: "Logged out",
         description: "You have been successfully logged out",
       });
+      // Redirect to auth page after logout
+      setTimeout(() => {
+        window.location.href = "/auth";
+      }, 1000);
     },
     onError: (error: Error) => {
       toast({
