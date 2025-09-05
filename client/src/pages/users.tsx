@@ -448,7 +448,7 @@ export default function Users() {
                               <SelectTrigger className="w-32">
                                 <SelectValue />
                               </SelectTrigger>
-                              <SelectContent className="z-[100] bg-background border shadow-lg">
+                              <SelectContent className="z-[9999] bg-background border shadow-lg">
                                 <SelectItem value="viewer">Viewer</SelectItem>
                                 <SelectItem value="editor">Editor</SelectItem>
                                 <SelectItem value="admin">Admin</SelectItem>
