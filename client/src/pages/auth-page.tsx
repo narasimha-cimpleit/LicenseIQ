@@ -18,6 +18,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { FileText, Shield, Brain, Users, BarChart3, Loader2 } from "lucide-react";
+import cimpleitLogo from "@assets/image_1757086402738.png";
 
 export default function AuthPage() {
   const [, setLocation] = useLocation();
@@ -269,9 +270,7 @@ export default function AuthPage() {
           {/* Footer */}
           <div className="text-center text-xs text-muted-foreground mt-8 pt-4 border-t">
             <div className="flex items-center justify-center space-x-2 mb-2">
-              <div className="flex items-center justify-center w-6 h-6 bg-primary rounded text-white font-bold text-xs">
-                C
-              </div>
+              <img src={cimpleitLogo} alt="Cimpleit Logo" className="w-8 h-8" />
               <span className="font-semibold text-primary text-sm">CIMPLEIT</span>
             </div>
             <p>Powered by <a href="https://cimpleit.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Cimpleit</a></p>

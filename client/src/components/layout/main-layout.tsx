@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import Sidebar from "./sidebar";
 import Header from "./header";
+import cimpleitLogo from "@assets/image_1757086402738.png";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -55,9 +56,7 @@ export default function MainLayout({ children, title, description }: MainLayoutP
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <div className="flex items-center justify-center w-5 h-5 bg-primary rounded text-white font-bold text-xs">
-                  C
-                </div>
+                <img src={cimpleitLogo} alt="Cimpleit Logo" className="w-5 h-5" />
                 <span className="font-semibold text-primary">CIMPLEIT</span>
               </div>
               <span>•</span>
