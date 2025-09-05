@@ -43,6 +43,14 @@ export default function Users() {
 
   const { data: users, isLoading } = useQuery({
     queryKey: ["/api/users", searchQuery, roleFilter],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (searchQuery) params.append('search', searchQuery);
+      if (roleFilter !== 'all') params.append('role', roleFilter);
+      
+      const response = await apiRequest("GET", `/api/users?${params.toString()}`);
+      return response.json();
+    },
     enabled: canManageUsers,
   });
 

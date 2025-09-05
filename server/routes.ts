@@ -198,6 +198,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Alternative endpoint for users (for compatibility)
+  app.get('/api/users/all', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user || (user.role !== 'admin' && user.role !== 'owner')) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const search = req.query.search as string;
+      const role = req.query.role as string;
+      
+      const users = await storage.getAllUsers(search, role);
+      res.json(users);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      res.status(500).json({ message: 'Failed to fetch users' });
+    }
+  });
+
   app.patch('/api/users/:id/role', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
