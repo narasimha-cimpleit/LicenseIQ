@@ -133,16 +133,25 @@ export default function Users() {
     enabled: canManageUsers,
   });
 
-  const inviteUserMutation = useMutation({
+  const createUserMutation = useMutation({
     mutationFn: async () => {
-      // In a real app, this would send an invitation
-      console.log("Inviting user:", { inviteEmail, inviteRole, inviteMessage });
-      return { success: true };
+      // Create user with default password
+      const newUser = {
+        username: inviteEmail.split('@')[0], // Use email prefix as username
+        email: inviteEmail,
+        password: "TempPass123!", // Default password
+        firstName: "",
+        lastName: "",
+        role: inviteRole,
+      };
+      
+      const response = await apiRequest("POST", "/api/register", newUser);
+      return response.json();
     },
     onSuccess: () => {
       toast({
-        title: "Invitation Sent",
-        description: `Invitation sent to ${inviteEmail}`,
+        title: "User Created",
+        description: `User ${inviteEmail} created successfully with default password: TempPass123!`,
       });
       setInviteModalOpen(false);
       setInviteEmail("");
@@ -244,12 +253,12 @@ export default function Users() {
             <DialogTrigger asChild>
               <Button data-testid="button-invite-user">
                 <Plus className="h-4 w-4 mr-2" />
-                Invite User
+                Create User
               </Button>
             </DialogTrigger>
             <DialogContent className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-black dark:text-white">
               <DialogHeader>
-                <DialogTitle>Invite New User</DialogTitle>
+                <DialogTitle>Create New User</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
@@ -297,11 +306,11 @@ export default function Users() {
                     Cancel
                   </Button>
                   <Button 
-                    onClick={() => inviteUserMutation.mutate()}
-                    disabled={!inviteEmail || inviteUserMutation.isPending}
-                    data-testid="button-send-invitation"
+                    onClick={() => createUserMutation.mutate()}
+                    disabled={!inviteEmail || createUserMutation.isPending}
+                    data-testid="button-create-user"
                   >
-                    {inviteUserMutation.isPending ? "Sending..." : "Send Invitation"}
+                    {createUserMutation.isPending ? "Creating..." : "Create User"}
                   </Button>
                 </div>
               </div>
