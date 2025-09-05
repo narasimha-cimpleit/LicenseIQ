@@ -159,6 +159,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete('/api/contracts/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const contractId = req.params.id;
+      const userId = req.user.id;
+      
+      // Get the contract first
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ message: 'Contract not found' });
+      }
+
+      // Check permissions - user can delete their own contract or admin/owner can delete any
+      const userRole = (await storage.getUser(userId))?.role;
+      const canDeleteAny = userRole === 'admin' || userRole === 'owner';
+      
+      if (!canDeleteAny && contract.uploadedBy !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      // Delete the contract and its analysis
+      await storage.deleteContract(contractId);
+
+      // Log the deletion
+      await createAuditLog(req, 'contract_deleted', 'contract', contractId, {
+        fileName: contract.originalName,
+        deletedBy: userId,
+      });
+
+      res.json({ message: 'Contract deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting contract:', error);
+      res.status(500).json({ message: 'Failed to delete contract' });
+    }
+  });
+
   // Analytics routes
   app.get('/api/analytics/metrics', isAuthenticated, async (req: any, res) => {
     try {

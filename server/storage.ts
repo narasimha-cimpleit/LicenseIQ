@@ -36,6 +36,7 @@ export interface IStorage {
   updateContractStatus(id: string, status: string, processingTime?: number): Promise<Contract>;
   searchContracts(query: string, userId?: string): Promise<ContractWithAnalysis[]>;
   getContractsByUser(userId: string): Promise<Contract[]>;
+  deleteContract(id: string): Promise<void>;
   
   // Contract analysis operations
   createContractAnalysis(analysis: InsertContractAnalysis): Promise<ContractAnalysis>;
@@ -237,6 +238,14 @@ export class DatabaseStorage implements IStorage {
       .from(contracts)
       .where(eq(contracts.uploadedBy, userId))
       .orderBy(desc(contracts.createdAt));
+  }
+
+  async deleteContract(id: string): Promise<void> {
+    // First delete the associated analysis if it exists
+    await db.delete(contractAnalysis).where(eq(contractAnalysis.contractId, id));
+    
+    // Then delete the contract itself
+    await db.delete(contracts).where(eq(contracts.id, id));
   }
 
   // Contract analysis operations

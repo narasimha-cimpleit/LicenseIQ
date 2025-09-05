@@ -3,6 +3,20 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { 
   FileText, 
   Eye, 
@@ -11,7 +25,8 @@ import {
   Calendar,
   User,
   Zap,
-  AlertTriangle
+  AlertTriangle,
+  Trash2
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -22,9 +37,38 @@ interface ContractCardProps {
 
 export default function ContractCard({ contract, className }: ContractCardProps) {
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("DELETE", `/api/contracts/${contract.id}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Contract Deleted",
+        description: "The contract has been permanently deleted.",
+      });
+      // Invalidate and refetch contracts list
+      queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Delete Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleView = () => {
     setLocation(`/contracts/${contract.id}`);
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    deleteMutation.mutate();
   };
 
   const getStatusColor = (status: string) => {
@@ -168,14 +212,38 @@ export default function ContractCard({ contract, className }: ContractCardProps)
               >
                 <Download className="h-4 w-4" />
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => e.stopPropagation()}
-                data-testid={`button-menu-${contract.id}`}
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    data-testid={`button-delete-${contract.id}`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Contract</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete "{contract.originalName}"? This action cannot be undone. 
+                      The contract file and all analysis data will be permanently removed.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-red-600 hover:bg-red-700"
+                      onClick={handleDelete}
+                      disabled={deleteMutation.isPending}
+                    >
+                      {deleteMutation.isPending ? "Deleting..." : "Delete Contract"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
         </div>

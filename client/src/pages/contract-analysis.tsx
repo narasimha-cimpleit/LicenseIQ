@@ -6,6 +6,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
@@ -21,7 +32,8 @@ import {
   Lightbulb,
   Clock,
   User,
-  Calendar
+  Calendar,
+  Trash2
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -32,7 +44,7 @@ export default function ContractAnalysis() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Move mutation hook to top level to avoid conditional hook calls
+  // Move mutation hooks to top level to avoid conditional hook calls
   const reprocessMutation = useMutation({
     mutationFn: async () => {
       const response = await apiRequest("POST", `/api/contracts/${id}/reprocess`);
@@ -49,6 +61,28 @@ export default function ContractAnalysis() {
     onError: (error: Error) => {
       toast({
         title: "Reprocessing Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("DELETE", `/api/contracts/${id}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Contract Deleted",
+        description: "The contract has been permanently deleted.",
+      });
+      // Redirect to contracts list
+      setLocation("/contracts");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Delete Failed",
         description: error.message,
         variant: "destructive",
       });
@@ -139,6 +173,10 @@ export default function ContractAnalysis() {
     reprocessMutation.mutate();
   };
 
+  const handleDelete = () => {
+    deleteMutation.mutate();
+  };
+
   const getConfidenceColor = (confidence: number) => {
     if (confidence >= 0.9) return "text-green-600";
     if (confidence >= 0.7) return "text-yellow-600";
@@ -197,6 +235,37 @@ export default function ContractAnalysis() {
               <Edit className="h-4 w-4 mr-2 text-green-400" />
               Edit Analysis
             </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className="border-red-200 text-red-600 hover:bg-red-50"
+                  data-testid="button-delete-contract"
+                >
+                  <Trash2 className="h-4 w-4 mr-2 text-red-500" />
+                  Delete
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Contract</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete "{contract?.originalName}"? This action cannot be undone. 
+                    The contract file and all analysis data will be permanently removed.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-red-600 hover:bg-red-700"
+                    onClick={handleDelete}
+                    disabled={deleteMutation.isPending}
+                  >
+                    {deleteMutation.isPending ? "Deleting..." : "Delete Contract"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
 
