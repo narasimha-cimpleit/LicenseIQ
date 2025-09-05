@@ -268,6 +268,12 @@ export default function AuthPage() {
 
           {/* Footer */}
           <div className="text-center text-xs text-muted-foreground mt-8 pt-4 border-t">
+            <div className="flex items-center justify-center space-x-2 mb-2">
+              <div className="flex items-center justify-center w-6 h-6 bg-primary rounded text-white font-bold text-xs">
+                C
+              </div>
+              <span className="font-semibold text-primary text-sm">CIMPLEIT</span>
+            </div>
             <p>Powered by <a href="https://cimpleit.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Cimpleit</a></p>
             <p>&copy; 2024 Cimpleit. All rights reserved.</p>
             <p className="mt-1">Innovative AI and Data Analytics Solutions</p>

@@ -54,6 +54,13 @@ export default function MainLayout({ children, title, description }: MainLayoutP
         <footer className="border-t bg-background/50 px-6 py-4">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <div className="flex items-center justify-center w-5 h-5 bg-primary rounded text-white font-bold text-xs">
+                  C
+                </div>
+                <span className="font-semibold text-primary">CIMPLEIT</span>
+              </div>
+              <span>•</span>
               <p>Powered by <a href="https://cimpleit.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Cimpleit</a></p>
               <span>•</span>
               <p>&copy; 2024 Cimpleit. All rights reserved.</p>
