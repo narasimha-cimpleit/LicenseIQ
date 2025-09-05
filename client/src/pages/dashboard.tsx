@@ -182,7 +182,7 @@ export default function Dashboard() {
                         <div>
                           <h4 className="font-medium text-blue-900 dark:text-blue-100">Contract Analytics</h4>
                           <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                            {metrics.analyzed} of {metrics.totalContracts} contracts have been analyzed using AI.
+                            {metrics?.analyzed || 0} of {metrics?.totalContracts || 0} contracts have been analyzed using AI.
                           </p>
                         </div>
                       </div>
@@ -197,7 +197,7 @@ export default function Dashboard() {
                           <div>
                             <h4 className="font-medium text-amber-900 dark:text-amber-100">Processing Status</h4>
                             <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-                              {metrics.processing} contracts are currently being processed by AI analysis.
+                              {metrics?.processing || 0} contracts are currently being processed by AI analysis.
                             </p>
                           </div>
                         </div>
