@@ -43,7 +43,7 @@ export default function Dashboard() {
         {/* Header Actions */}
         <div className="flex justify-end">
           <Button onClick={handleUpload} data-testid="button-new-contract">
-            <FileText className="h-4 w-4 mr-2" />
+            <FileText className="h-4 w-4 mr-2 text-emerald-400" />
             New Contract
           </Button>
         </div>
@@ -97,7 +97,7 @@ export default function Dashboard() {
             <CardContent>
               {recentContracts.length === 0 ? (
                 <div className="text-center py-8">
-                  <File className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <File className="h-12 w-12 text-blue-400 mx-auto mb-4" />
                   <p className="text-muted-foreground">No contracts uploaded yet</p>
                   <Button variant="outline" className="mt-4" onClick={handleUpload}>
                     Upload your first contract
@@ -113,7 +113,7 @@ export default function Dashboard() {
                     >
                       <div className="flex items-center space-x-3">
                         <div className="h-8 w-8 bg-primary/10 rounded-full flex items-center justify-center">
-                          <FileText className="h-4 w-4 text-primary" />
+                          <FileText className="h-4 w-4 text-blue-400" />
                         </div>
                         <div>
                           <p className="font-medium text-foreground">{contract.originalName}</p>
@@ -135,7 +135,7 @@ export default function Dashboard() {
                           onClick={() => setLocation(`/contracts/${contract.id}`)}
                           data-testid={`button-view-contract-${contract.id}`}
                         >
-                          <Eye className="h-4 w-4" />
+                          <Eye className="h-4 w-4 text-green-400" />
                         </Button>
                       </div>
                     </div>
@@ -163,7 +163,7 @@ export default function Dashboard() {
               <div className="space-y-4">
                 {metrics?.totalContracts === 0 ? (
                   <div className="text-center py-8">
-                    <Lightbulb className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <Lightbulb className="h-12 w-12 text-yellow-400 mx-auto mb-4" />
                     <p className="text-muted-foreground">No contracts uploaded yet</p>
                     <p className="text-sm text-muted-foreground mt-2">
                       Upload your first contract to see AI-powered insights and analysis.
@@ -176,8 +176,8 @@ export default function Dashboard() {
                   <>
                     <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
                       <div className="flex items-start space-x-3">
-                        <div className="h-8 w-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                          <Lightbulb className="h-4 w-4 text-white" />
+                        <div className="h-8 w-8 bg-blue-400/20 rounded-full flex items-center justify-center flex-shrink-0">
+                          <Lightbulb className="h-4 w-4 text-blue-400" />
                         </div>
                         <div>
                           <h4 className="font-medium text-blue-900 dark:text-blue-100">Contract Analytics</h4>
@@ -191,8 +191,8 @@ export default function Dashboard() {
                     {metrics?.processing > 0 && (
                       <div className="p-4 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
                         <div className="flex items-start space-x-3">
-                          <div className="h-8 w-8 bg-amber-500 rounded-full flex items-center justify-center flex-shrink-0">
-                            <AlertTriangle className="h-4 w-4 text-white" />
+                          <div className="h-8 w-8 bg-amber-400/20 rounded-full flex items-center justify-center flex-shrink-0">
+                            <AlertTriangle className="h-4 w-4 text-amber-400" />
                           </div>
                           <div>
                             <h4 className="font-medium text-amber-900 dark:text-amber-100">Processing Status</h4>
@@ -206,8 +206,8 @@ export default function Dashboard() {
                     
                     <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
                       <div className="flex items-start space-x-3">
-                        <div className="h-8 w-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-                          <TrendingUp className="h-4 w-4 text-white" />
+                        <div className="h-8 w-8 bg-emerald-400/20 rounded-full flex items-center justify-center flex-shrink-0">
+                          <TrendingUp className="h-4 w-4 text-emerald-400" />
                         </div>
                         <div>
                           <h4 className="font-medium text-green-900 dark:text-green-100">System Status</h4>

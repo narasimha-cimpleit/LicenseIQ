@@ -26,23 +26,23 @@ export default function MetricsCard({
     switch (variant) {
       case 'success':
         return {
-          iconBg: 'bg-green-500/10',
-          iconColor: 'text-green-500',
+          iconBg: 'bg-emerald-400/10',
+          iconColor: 'text-emerald-400',
         };
       case 'processing':
         return {
-          iconBg: 'bg-chart-2/10',
-          iconColor: 'text-chart-2',
+          iconBg: 'bg-amber-400/10',
+          iconColor: 'text-amber-400',
         };
       case 'revenue':
         return {
-          iconBg: 'bg-chart-4/10',
-          iconColor: 'text-chart-4',
+          iconBg: 'bg-purple-400/10',
+          iconColor: 'text-purple-400',
         };
       default:
         return {
-          iconBg: 'bg-primary/10',
-          iconColor: 'text-primary',
+          iconBg: 'bg-blue-400/10',
+          iconColor: 'text-blue-400',
         };
     }
   };

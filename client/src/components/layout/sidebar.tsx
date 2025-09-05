@@ -107,7 +107,7 @@ export default function Sidebar({ className }: SidebarProps) {
                 onClick={() => setLocation(item.href)}
                 data-testid={`nav-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
               >
-                <Icon className="mr-3 h-4 w-4" />
+                <Icon className="mr-3 h-4 w-4 text-blue-400" />
                 {item.name}
               </Button>
             );
@@ -140,7 +140,7 @@ export default function Sidebar({ className }: SidebarProps) {
               className="text-sidebar-foreground hover:text-sidebar-foreground"
               data-testid="button-logout"
             >
-              <LogOut className="h-4 w-4" />
+              <LogOut className="h-4 w-4 text-red-400" />
             </Button>
           </div>
         </div>

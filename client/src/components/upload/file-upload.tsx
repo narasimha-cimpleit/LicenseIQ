@@ -64,11 +64,11 @@ export default function FileUpload({
 
   const getFileIcon = (file: File) => {
     if (file.type === 'application/pdf') {
-      return <FileText className="h-6 w-6 text-red-500" />;
+      return <FileText className="h-6 w-6 text-red-400" />;
     } else if (file.type.includes('word') || file.type.includes('document')) {
-      return <FileSpreadsheet className="h-6 w-6 text-blue-500" />;
+      return <FileSpreadsheet className="h-6 w-6 text-blue-400" />;
     }
-    return <File className="h-6 w-6 text-muted-foreground" />;
+    return <File className="h-6 w-6 text-slate-400" />;
   };
 
   const formatFileSize = (bytes: number) => {
@@ -101,7 +101,7 @@ export default function FileUpload({
         >
           <input {...getInputProps()} />
           <div className="text-center">
-            <Upload className="h-12 w-12 text-muted-foreground mb-4 mx-auto" />
+            <Upload className="h-12 w-12 text-violet-400 mb-4 mx-auto" />
             <h3 className="text-lg font-medium text-foreground mb-2">
               {isDragActive ? "Drop files here" : "Choose files or drag here"}
             </h3>
