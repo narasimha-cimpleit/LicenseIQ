@@ -301,6 +301,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reset user password endpoint (admin only)
+  app.post('/api/users/:id/reset-password', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user || (user.role !== 'admin' && user.role !== 'owner')) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const targetUserId = req.params.id;
+      const { newPassword } = req.body;
+      
+      if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+      }
+
+      const targetUser = await storage.getUser(targetUserId);
+      if (!targetUser) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Hash the new password
+      const { hashPassword } = require('./auth');
+      const hashedPassword = await hashPassword(newPassword);
+      
+      const updatedUser = await storage.resetUserPassword(targetUserId, hashedPassword);
+      
+      await createAuditLog(req, 'user_password_reset', 'user', targetUserId, {
+        email: targetUser.email,
+      });
+
+      res.json({ 
+        message: 'Password reset successfully',
+        user: {
+          id: updatedUser.id,
+          email: updatedUser.email,
+          firstName: updatedUser.firstName,
+          lastName: updatedUser.lastName
+        }
+      });
+    } catch (error) {
+      console.error('Error resetting user password:', error);
+      res.status(500).json({ message: 'Failed to reset password' });
+    }
+  });
+
   // Delete user endpoint (admin only)
   app.delete('/api/users/:id', isAuthenticated, async (req: any, res) => {
     try {

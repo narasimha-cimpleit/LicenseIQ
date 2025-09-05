@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -125,6 +125,10 @@ export default function Users() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [resetPasswordModalOpen, setResetPasswordModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("viewer");
   const [inviteMessage, setInviteMessage] = useState("");
@@ -219,6 +223,41 @@ export default function Users() {
       toast({
         title: "Error",
         description: "Failed to update user role",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: async ({ userId, newPassword }: { userId: string; newPassword: string }) => {
+      const response = await apiRequest("POST", `/api/users/${userId}/reset-password`, { newPassword });
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Password Reset",
+        description: "Password has been reset successfully",
+      });
+      setResetPasswordModalOpen(false);
+      setNewPassword("");
+      setConfirmPassword("");
+      setSelectedUser(null);
+    },
+    onError: (error: Error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/auth";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to reset password",
         variant: "destructive",
       });
     },
@@ -488,13 +527,8 @@ export default function Users() {
                                 variant="ghost" 
                                 size="sm"
                                 onClick={() => {
-                                  if (confirm(`Reset password for ${user.email}?`)) {
-                                    // In a real app, this would generate a new password or send reset email
-                                    toast({
-                                      title: "Password Reset",
-                                      description: `Password reset link sent to ${user.email}`,
-                                    });
-                                  }
+                                  setSelectedUser(user);
+                                  setResetPasswordModalOpen(true);
                                 }}
                                 data-testid={`button-reset-password-${user.id}`}
                               >
@@ -538,6 +572,82 @@ export default function Users() {
             )}
           </CardContent>
         </Card>
+
+        {/* Reset Password Dialog */}
+        <Dialog open={resetPasswordModalOpen} onOpenChange={setResetPasswordModalOpen}>
+          <DialogContent className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-black dark:text-white">
+            <DialogHeader>
+              <DialogTitle>Reset Password</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>User</Label>
+                <div className="text-sm text-muted-foreground">
+                  {selectedUser?.email}
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="new-password">New Password</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Enter new password (min 6 characters)"
+                  data-testid="input-new-password"
+                />
+              </div>
+              <div>
+                <Label htmlFor="confirm-password">Confirm Password</Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm new password"
+                  data-testid="input-confirm-password"
+                />
+              </div>
+              {newPassword && confirmPassword && newPassword !== confirmPassword && (
+                <p className="text-sm text-red-500">Passwords do not match</p>
+              )}
+              {newPassword && newPassword.length < 6 && (
+                <p className="text-sm text-red-500">Password must be at least 6 characters long</p>
+              )}
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setResetPasswordModalOpen(false);
+                  setNewPassword("");
+                  setConfirmPassword("");
+                  setSelectedUser(null);
+                }}
+                data-testid="button-cancel-reset"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  if (newPassword === confirmPassword && newPassword.length >= 6 && selectedUser) {
+                    resetPasswordMutation.mutate({ userId: selectedUser.id, newPassword });
+                  }
+                }}
+                disabled={
+                  !newPassword || 
+                  !confirmPassword || 
+                  newPassword !== confirmPassword || 
+                  newPassword.length < 6 || 
+                  resetPasswordMutation.isPending
+                }
+                data-testid="button-confirm-reset"
+              >
+                {resetPasswordMutation.isPending ? "Resetting..." : "Reset Password"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </MainLayout>
   );

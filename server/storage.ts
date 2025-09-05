@@ -26,6 +26,7 @@ export interface IStorage {
   getAllUsers(search?: string, role?: string): Promise<User[]>;
   deleteUser(id: string): Promise<void>;
   updateUser(id: string, updates: Partial<InsertUser>): Promise<User>;
+  resetUserPassword(id: string, newPassword: string): Promise<User>;
   getAdminCount(): Promise<number>;
   
   // Contract operations
@@ -304,6 +305,15 @@ export class DatabaseStorage implements IStorage {
     const [user] = await db
       .update(users)
       .set({ ...updates, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async resetUserPassword(id: string, newPassword: string): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ password: newPassword, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();
     return user;
