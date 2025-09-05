@@ -112,61 +112,80 @@
 }
 
 @layer utilities {
-  /* Force all portal content to appear above everything */
-  [data-radix-portal] {
-    z-index: 10000 !important;
+  /* Nuclear option: Force ALL potential overlay elements to highest z-index */
+  [data-radix-portal],
+  [data-radix-popper-content-wrapper],
+  [data-radix-select-content],
+  [data-radix-dropdown-menu-content],
+  [data-radix-context-menu-content],
+  [data-radix-popover-content],
+  [data-radix-hover-card-content],
+  [data-radix-tooltip-content],
+  [data-radix-menubar-content],
+  [role="listbox"],
+  [role="menu"],
+  [role="dialog"],
+  [data-state="open"][data-side],
+  .relative.z-\[8000\],
+  .z-\[8000\],
+  .z-\[9000\],
+  .z-\[9999\],
+  .z-\[10000\] {
+    z-index: 2147483647 !important;
+    position: fixed !important;
   }
   
-  /* Ensure all overlay content is properly positioned */
-  [data-radix-popper-content-wrapper] {
-    z-index: 10000 !important;
-  }
-  
-  /* Override any table stacking context issues */
+  /* Completely remove any stacking context from table elements */
   table, 
   tbody, 
   thead, 
   tr, 
   td, 
-  th {
+  th,
+  .table-auto,
+  .table-fixed {
     position: static !important;
     z-index: auto !important;
-  }
-  
-  /* Prevent any transform-based stacking contexts */
-  .table-container,
-  table,
-  tbody,
-  tr,
-  td {
     transform: none !important;
     will-change: auto !important;
     isolation: auto !important;
+    contain: none !important;
+    perspective: none !important;
+    filter: none !important;
+    backdrop-filter: none !important;
+    mask: none !important;
+    clip-path: none !important;
+    opacity: 1 !important;
   }
   
-  /* Ensure select content is always on top */
-  [data-radix-select-content] {
-    z-index: 10000 !important;
+  /* Force portal elements to use maximum z-index */
+  body > div[data-radix-portal],
+  body > div > div[data-radix-select-content],
+  body > div > div[role="listbox"] {
+    z-index: 2147483647 !important;
     position: fixed !important;
   }
   
-  /* Fix dropdown menu positioning */
-  [data-radix-dropdown-menu-content] {
-    z-index: 10000 !important;
-    position: fixed !important;
+  /* Override Tailwind z-index classes */
+  .z-50,
+  .z-40,
+  .z-30,
+  .z-20,
+  .z-10 {
+    z-index: 2147483647 !important;
   }
   
   /* Fix dialog positioning */
   [data-radix-dialog-overlay] {
-    z-index: 9998 !important;
+    z-index: 2147483646 !important;
   }
   
   [data-radix-dialog-content] {
-    z-index: 9999 !important;
+    z-index: 2147483647 !important;
   }
   
-  /* Fix toast positioning */
+  /* Fix toast positioning to be even higher */
   [data-radix-toast-viewport] {
-    z-index: 10001 !important;
+    z-index: 2147483647 !important;
   }
 }
