@@ -70,7 +70,7 @@ export default function AuthPage() {
         <div className="w-full max-w-md space-y-6">
           <div className="text-center space-y-2">
             <div className="flex items-center justify-center space-x-2 mb-4">
-              <FileText className="h-8 w-8 text-primary" />
+              <img src={cimpleitLogo} alt="Cimpleit Logo" className="w-8 h-8" />
               <h1 className="text-2xl font-bold">Licence IQ</h1>
             </div>
             <p className="text-muted-foreground">
@@ -270,7 +270,6 @@ export default function AuthPage() {
           {/* Footer */}
           <div className="text-center text-xs text-muted-foreground mt-8 pt-4 border-t">
             <div className="flex items-center justify-center space-x-2 mb-2">
-              <img src={cimpleitLogo} alt="Cimpleit Logo" className="w-8 h-8" />
               <span className="font-semibold text-primary text-sm">CIMPLEIT</span>
             </div>
             <p>Powered by <a href="https://cimpleit.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Cimpleit</a></p>

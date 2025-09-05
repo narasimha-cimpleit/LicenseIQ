@@ -12,6 +12,7 @@ import {
   History,
   LogOut
 } from "lucide-react";
+import cimpleitLogo from "@assets/image_1757086402738.png";
 
 interface SidebarProps {
   className?: string;
@@ -87,9 +88,7 @@ export default function Sidebar({ className }: SidebarProps) {
       <div className="flex flex-col h-full">
         {/* Logo */}
         <div className="flex items-center px-6 py-4 border-b border-sidebar-border">
-          <div className="h-8 w-8 bg-sidebar-primary rounded-lg flex items-center justify-center mr-3">
-            <File className="h-5 w-5 text-sidebar-primary-foreground" />
-          </div>
+          <img src={cimpleitLogo} alt="Cimpleit Logo" className="w-8 h-8 mr-3" />
           <h1 className="text-xl font-semibold text-sidebar-foreground">Licence IQ</h1>
         </div>
         
