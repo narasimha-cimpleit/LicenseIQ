@@ -1,0 +1,332 @@
+import type { Express, Request, Response } from "express";
+import { createServer, type Server } from "http";
+import multer from "multer";
+import { storage } from "./storage";
+import { setupAuth, isAuthenticated } from "./replitAuth";
+import { fileService } from "./services/fileService";
+import { groqService } from "./services/groqService";
+import { insertContractSchema, insertContractAnalysisSchema, insertAuditTrailSchema } from "@shared/schema";
+
+// Configure multer for file uploads
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 1024 * 1024 * 1024, // 1GB
+  },
+});
+
+// Audit logging middleware
+async function createAuditLog(req: any, action: string, resourceType?: string, resourceId?: string, details?: any) {
+  if (req.user?.claims?.sub) {
+    try {
+      await storage.createAuditLog({
+        userId: req.user.claims.sub,
+        action,
+        resourceType,
+        resourceId,
+        details,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent') || '',
+      });
+    } catch (error) {
+      console.error('Failed to create audit log:', error);
+    }
+  }
+}
+
+export async function registerRoutes(app: Express): Promise<Server> {
+  // Auth middleware
+  await setupAuth(app);
+
+  // Auth routes
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      await createAuditLog(req, 'user_profile_viewed');
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Contract routes
+  app.post('/api/contracts/upload', isAuthenticated, upload.single('file'), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded' });
+      }
+
+      // Validate file
+      const validation = fileService.validateFile(req.file);
+      if (!validation.isValid) {
+        return res.status(400).json({ message: validation.error });
+      }
+
+      // Save file
+      const fileResult = await fileService.saveFile(
+        req.file.buffer,
+        req.file.originalname,
+        req.file.mimetype
+      );
+
+      // Create contract record
+      const contractData = {
+        fileName: fileResult.fileName,
+        originalName: fileResult.originalName,
+        fileSize: fileResult.fileSize,
+        fileType: fileResult.fileType,
+        filePath: fileResult.filePath,
+        contractType: req.body.contractType || 'other',
+        priority: req.body.priority || 'normal',
+        uploadedBy: req.user.claims.sub,
+        notes: req.body.notes || null,
+      };
+
+      const validatedData = insertContractSchema.parse(contractData);
+      const contract = await storage.createContract(validatedData);
+
+      await createAuditLog(req, 'contract_uploaded', 'contract', contract.id, {
+        fileName: fileResult.originalName,
+        fileSize: fileResult.fileSize,
+      });
+
+      // Start processing asynchronously
+      processContractAsync(contract.id);
+
+      res.status(201).json(contract);
+    } catch (error) {
+      console.error('Error uploading contract:', error);
+      res.status(500).json({ message: 'Failed to upload contract' });
+    }
+  });
+
+  app.get('/api/contracts', isAuthenticated, async (req: any, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 20;
+      const offset = parseInt(req.query.offset as string) || 0;
+      const userId = req.user.claims.sub;
+      
+      // Check if user can view all contracts (admin/owner) or only their own
+      const userRole = (await storage.getUser(userId))?.role;
+      const canViewAll = userRole === 'admin' || userRole === 'owner';
+      
+      const result = await storage.getContracts(
+        canViewAll ? undefined : userId,
+        limit,
+        offset
+      );
+
+      res.json(result);
+    } catch (error) {
+      console.error('Error fetching contracts:', error);
+      res.status(500).json({ message: 'Failed to fetch contracts' });
+    }
+  });
+
+  app.get('/api/contracts/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const contract = await storage.getContract(req.params.id);
+      
+      if (!contract) {
+        return res.status(404).json({ message: 'Contract not found' });
+      }
+
+      // Check permissions
+      const userId = req.user.claims.sub;
+      const userRole = (await storage.getUser(userId))?.role;
+      const canViewAll = userRole === 'admin' || userRole === 'owner';
+      
+      if (!canViewAll && contract.uploadedBy !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      await createAuditLog(req, 'contract_viewed', 'contract', contract.id);
+      res.json(contract);
+    } catch (error) {
+      console.error('Error fetching contract:', error);
+      res.status(500).json({ message: 'Failed to fetch contract' });
+    }
+  });
+
+  app.get('/api/contracts/search/:query', isAuthenticated, async (req: any, res) => {
+    try {
+      const query = req.params.query;
+      const userId = req.user.claims.sub;
+      const userRole = (await storage.getUser(userId))?.role;
+      const canViewAll = userRole === 'admin' || userRole === 'owner';
+      
+      const contracts = await storage.searchContracts(
+        query,
+        canViewAll ? undefined : userId
+      );
+
+      await createAuditLog(req, 'contracts_searched', undefined, undefined, { query });
+      res.json(contracts);
+    } catch (error) {
+      console.error('Error searching contracts:', error);
+      res.status(500).json({ message: 'Failed to search contracts' });
+    }
+  });
+
+  // Analytics routes
+  app.get('/api/analytics/metrics', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const userRole = (await storage.getUser(userId))?.role;
+      const canViewAll = userRole === 'admin' || userRole === 'owner';
+      
+      const metrics = await storage.getContractMetrics(
+        canViewAll ? undefined : userId
+      );
+
+      res.json(metrics);
+    } catch (error) {
+      console.error('Error fetching metrics:', error);
+      res.status(500).json({ message: 'Failed to fetch metrics' });
+    }
+  });
+
+  // User management routes (admin only)
+  app.get('/api/users', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || (user.role !== 'admin' && user.role !== 'owner')) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const search = req.query.search as string;
+      const role = req.query.role as string;
+      
+      const users = await storage.getAllUsers(search, role);
+      res.json(users);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      res.status(500).json({ message: 'Failed to fetch users' });
+    }
+  });
+
+  app.patch('/api/users/:id/role', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || (user.role !== 'admin' && user.role !== 'owner')) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const { role } = req.body;
+      const targetUserId = req.params.id;
+      
+      const updatedUser = await storage.updateUserRole(targetUserId, role);
+      
+      await createAuditLog(req, 'user_role_updated', 'user', targetUserId, {
+        newRole: role,
+      });
+
+      res.json(updatedUser);
+    } catch (error) {
+      console.error('Error updating user role:', error);
+      res.status(500).json({ message: 'Failed to update user role' });
+    }
+  });
+
+  // Audit trail routes
+  app.get('/api/audit', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || (user.role !== 'admin' && user.role !== 'owner' && user.role !== 'auditor')) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = parseInt(req.query.offset as string) || 0;
+      
+      const result = await storage.getAuditLogs(undefined, limit, offset);
+      res.json(result);
+    } catch (error) {
+      console.error('Error fetching audit logs:', error);
+      res.status(500).json({ message: 'Failed to fetch audit logs' });
+    }
+  });
+
+  // File serving route
+  app.get('/api/files/:fileName', isAuthenticated, async (req: any, res) => {
+    try {
+      const fileName = req.params.fileName;
+      const filePath = `uploads/${fileName}`;
+      
+      // Check if user has access to this file
+      // This would require implementing file ownership checking
+      
+      const fileBuffer = await fileService.readFile(filePath);
+      res.send(fileBuffer);
+    } catch (error) {
+      console.error('Error serving file:', error);
+      res.status(404).json({ message: 'File not found' });
+    }
+  });
+
+  const httpServer = createServer(app);
+  return httpServer;
+}
+
+// Async contract processing function
+async function processContractAsync(contractId: string): Promise<void> {
+  try {
+    const startTime = Date.now();
+    
+    // Update status to processing
+    await storage.updateContractStatus(contractId, 'processing');
+    
+    // Get contract details
+    const contract = await storage.getContract(contractId);
+    if (!contract) {
+      throw new Error('Contract not found');
+    }
+
+    // Extract text from file
+    const text = await fileService.extractTextFromFile(contract.filePath, contract.fileType);
+    
+    // Analyze with Groq
+    const analysis = await groqService.analyzeContract(text);
+    
+    // Save analysis
+    const analysisData = {
+      contractId,
+      summary: analysis.summary,
+      keyTerms: analysis.keyTerms,
+      riskAnalysis: analysis.riskAnalysis,
+      insights: analysis.insights,
+      confidence: analysis.confidence.toString(),
+      processingTime: Math.round((Date.now() - startTime) / 1000),
+    };
+
+    const validatedAnalysis = insertContractAnalysisSchema.parse(analysisData);
+    await storage.createContractAnalysis(validatedAnalysis);
+    
+    // Update contract status to analyzed
+    await storage.updateContractStatus(contractId, 'analyzed', analysisData.processingTime);
+    
+    console.log(`Contract ${contractId} processed successfully`);
+  } catch (error) {
+    console.error(`Error processing contract ${contractId}:`, error);
+    
+    // Update status to failed
+    try {
+      await storage.updateContractStatus(contractId, 'failed');
+    } catch (updateError) {
+      console.error('Error updating contract status to failed:', updateError);
+    }
+  }
+}
