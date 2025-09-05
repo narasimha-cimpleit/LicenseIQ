@@ -2,7 +2,7 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import multer from "multer";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, isAuthenticated } from "./auth";
 import { fileService } from "./services/fileService";
 import { groqService } from "./services/groqService";
 import { insertContractSchema, insertContractAnalysisSchema, insertAuditTrailSchema } from "@shared/schema";
@@ -17,10 +17,10 @@ const upload = multer({
 
 // Audit logging middleware
 async function createAuditLog(req: any, action: string, resourceType?: string, resourceId?: string, details?: any) {
-  if (req.user?.claims?.sub) {
+  if (req.user?.id) {
     try {
       await storage.createAuditLog({
-        userId: req.user.claims.sub,
+        userId: req.user.id,
         action,
         resourceType,
         resourceId,
@@ -36,25 +36,9 @@ async function createAuditLog(req: any, action: string, resourceType?: string, r
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
-  await setupAuth(app);
+  setupAuth(app);
 
-  // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      await createAuditLog(req, 'user_profile_viewed');
-      res.json(user);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
-    }
-  });
+  // The auth routes are now handled in setupAuth function
 
   // Contract routes
   app.post('/api/contracts/upload', isAuthenticated, upload.single('file'), async (req: any, res) => {
@@ -85,7 +69,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         filePath: fileResult.filePath,
         contractType: req.body.contractType || 'other',
         priority: req.body.priority || 'normal',
-        uploadedBy: req.user.claims.sub,
+        uploadedBy: req.user.id,
         notes: req.body.notes || null,
       };
 
@@ -111,7 +95,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const limit = parseInt(req.query.limit as string) || 20;
       const offset = parseInt(req.query.offset as string) || 0;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       // Check if user can view all contracts (admin/owner) or only their own
       const userRole = (await storage.getUser(userId))?.role;
@@ -139,7 +123,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check permissions
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const userRole = (await storage.getUser(userId))?.role;
       const canViewAll = userRole === 'admin' || userRole === 'owner';
       
@@ -158,7 +142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/contracts/search/:query', isAuthenticated, async (req: any, res) => {
     try {
       const query = req.params.query;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const userRole = (await storage.getUser(userId))?.role;
       const canViewAll = userRole === 'admin' || userRole === 'owner';
       
@@ -178,7 +162,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Analytics routes
   app.get('/api/analytics/metrics', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const userRole = (await storage.getUser(userId))?.role;
       const canViewAll = userRole === 'admin' || userRole === 'owner';
       
@@ -196,7 +180,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User management routes (admin only)
   app.get('/api/users', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!user || (user.role !== 'admin' && user.role !== 'owner')) {
@@ -216,7 +200,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch('/api/users/:id/role', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!user || (user.role !== 'admin' && user.role !== 'owner')) {
@@ -242,7 +226,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Audit trail routes
   app.get('/api/audit', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!user || (user.role !== 'admin' && user.role !== 'owner' && user.role !== 'auditor')) {

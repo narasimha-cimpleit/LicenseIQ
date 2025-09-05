@@ -19,10 +19,10 @@ interface SidebarProps {
 
 export default function Sidebar({ className }: SidebarProps) {
   const [location, setLocation] = useLocation();
-  const { user } = useAuth();
+  const { user, logoutMutation } = useAuth();
 
   const handleLogout = () => {
-    window.location.href = "/api/logout";
+    logoutMutation.mutate();
   };
 
   const navigation = [

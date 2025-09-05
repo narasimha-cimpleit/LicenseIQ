@@ -4,7 +4,9 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
+import { ProtectedRoute } from "@/lib/protected-route";
 import Landing from "@/pages/landing";
+import AuthPage from "@/pages/auth-page";
 import Dashboard from "@/pages/dashboard";
 import Contracts from "@/pages/contracts";
 import Upload from "@/pages/upload";
@@ -21,17 +23,20 @@ function Router() {
   return (
     <Switch>
       {isLoading || !isAuthenticated ? (
-        <Route path="/" component={Landing} />
+        <>
+          <Route path="/" component={Landing} />
+          <Route path="/auth" component={AuthPage} />
+        </>
       ) : (
         <>
-          <Route path="/" component={Dashboard} />
-          <Route path="/contracts" component={Contracts} />
-          <Route path="/upload" component={Upload} />
-          <Route path="/analytics" component={Analytics} />
-          <Route path="/reports" component={Reports} />
-          <Route path="/users" component={Users} />
-          <Route path="/audit" component={Audit} />
-          <Route path="/contracts/:id" component={ContractAnalysis} />
+          <ProtectedRoute path="/" component={Dashboard} />
+          <ProtectedRoute path="/contracts" component={Contracts} />
+          <ProtectedRoute path="/upload" component={Upload} />
+          <ProtectedRoute path="/analytics" component={Analytics} />
+          <ProtectedRoute path="/reports" component={Reports} />
+          <ProtectedRoute path="/users" component={Users} />
+          <ProtectedRoute path="/audit" component={Audit} />
+          <ProtectedRoute path="/contracts/:id" component={ContractAnalysis} />
         </>
       )}
       <Route component={NotFound} />
