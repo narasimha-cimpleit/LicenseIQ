@@ -110,3 +110,63 @@
     transition: width 0.3s ease;
   }
 }
+
+@layer utilities {
+  /* Force all portal content to appear above everything */
+  [data-radix-portal] {
+    z-index: 10000 !important;
+  }
+  
+  /* Ensure all overlay content is properly positioned */
+  [data-radix-popper-content-wrapper] {
+    z-index: 10000 !important;
+  }
+  
+  /* Override any table stacking context issues */
+  table, 
+  tbody, 
+  thead, 
+  tr, 
+  td, 
+  th {
+    position: static !important;
+    z-index: auto !important;
+  }
+  
+  /* Prevent any transform-based stacking contexts */
+  .table-container,
+  table,
+  tbody,
+  tr,
+  td {
+    transform: none !important;
+    will-change: auto !important;
+    isolation: auto !important;
+  }
+  
+  /* Ensure select content is always on top */
+  [data-radix-select-content] {
+    z-index: 10000 !important;
+    position: fixed !important;
+  }
+  
+  /* Fix dropdown menu positioning */
+  [data-radix-dropdown-menu-content] {
+    z-index: 10000 !important;
+    position: fixed !important;
+  }
+  
+  /* Fix dialog positioning */
+  [data-radix-dialog-overlay] {
+    z-index: 9998 !important;
+  }
+  
+  [data-radix-dialog-content] {
+    z-index: 9999 !important;
+  }
+  
+  /* Fix toast positioning */
+  [data-radix-toast-viewport] {
+    z-index: 10001 !important;
+  }
+}
