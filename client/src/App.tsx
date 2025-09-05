@@ -38,7 +38,7 @@ function Router() {
           <ProtectedRoute path="/reports" component={Reports} />
           <ProtectedRoute path="/users" component={Users} />
           <ProtectedRoute path="/audit" component={Audit} />
-          <ProtectedRoute path="/contracts/:id" component={ContractAnalysis} />
+          <ProtectedRoute path="/contracts/:id" component={() => <ContractAnalysis />} />
         </>
       )}
       
