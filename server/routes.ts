@@ -502,6 +502,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Documentation archive download route
+  app.get('/api/download/documentation', (req, res) => {
+    const filePath = 'licence-iq-documentation.tar.gz';
+    res.download(filePath, 'licence-iq-documentation.tar.gz', (err) => {
+      if (err) {
+        console.error('Error downloading documentation:', err);
+        res.status(404).json({ message: 'Documentation file not found' });
+      }
+    });
+  });
+
   // Reprocess contract route
   app.post('/api/contracts/:id/reprocess', isAuthenticated, async (req: any, res) => {
     try {
