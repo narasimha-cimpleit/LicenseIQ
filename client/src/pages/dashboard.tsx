@@ -41,7 +41,14 @@ export default function Dashboard() {
     <MainLayout title="Dashboard" description="Welcome back, manage your contracts and insights">
       <div className="space-y-6">
         {/* Header Actions */}
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => window.open('/api/download/documentation', '_blank')}
+            data-testid="button-download-docs"
+          >
+            📥 Download POC Documentation
+          </Button>
           <Button onClick={handleUpload} data-testid="button-new-contract">
             <FileText className="h-4 w-4 mr-2 text-emerald-400" />
             New Contract

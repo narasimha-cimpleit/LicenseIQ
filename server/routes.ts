@@ -513,6 +513,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Individual documentation file downloads
+  app.get('/api/download/poc-plan', (req, res) => {
+    res.download('POC_PLAN.md', 'POC_PLAN.md');
+  });
+
+  app.get('/api/download/tech-specs', (req, res) => {
+    res.download('TECHNICAL_SPECIFICATIONS.md', 'TECHNICAL_SPECIFICATIONS.md');
+  });
+
+  app.get('/api/download/architecture', (req, res) => {
+    res.download('SYSTEM_ARCHITECTURE.md', 'SYSTEM_ARCHITECTURE.md');
+  });
+
+  app.get('/api/download/api-docs', (req, res) => {
+    res.download('API_DOCUMENTATION.md', 'API_DOCUMENTATION.md');
+  });
+
+  app.get('/api/download/deployment', (req, res) => {
+    res.download('DEPLOYMENT_GUIDE.md', 'DEPLOYMENT_GUIDE.md');
+  });
+
+  app.get('/api/download/summary', (req, res) => {
+    res.download('PROJECT_SUMMARY.md', 'PROJECT_SUMMARY.md');
+  });
+
   // Reprocess contract route
   app.post('/api/contracts/:id/reprocess', isAuthenticated, async (req: any, res) => {
     try {
