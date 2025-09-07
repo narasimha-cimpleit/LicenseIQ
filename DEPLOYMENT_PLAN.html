@@ -1,0 +1,188 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEPLOYMENT PLAN</title>
+    <style>
+        @media print {
+            body { margin: 0; }
+            .no-print { display: none; }
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background-color: #ffffff;
+        }
+        
+        h1 { 
+            color: #2c3e50; 
+            border-bottom: 3px solid #3498db; 
+            padding-bottom: 15px; 
+            margin-top: 0;
+            font-size: 2.5em;
+        }
+        
+        h2 { 
+            color: #34495e; 
+            border-bottom: 2px solid #ecf0f1; 
+            padding-bottom: 10px; 
+            margin-top: 40px;
+            font-size: 1.8em;
+        }
+        
+        h3 { 
+            color: #7f8c8d; 
+            margin-top: 30px;
+            font-size: 1.4em;
+        }
+        
+        h4 { 
+            color: #95a5a6; 
+            margin-top: 25px;
+            font-size: 1.2em;
+        }
+        
+        code { 
+            background-color: #f8f9fa; 
+            padding: 3px 6px; 
+            border-radius: 4px; 
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.9em;
+            border: 1px solid #e9ecef;
+        }
+        
+        pre { 
+            background-color: #f8f9fa; 
+            padding: 20px; 
+            border-radius: 8px; 
+            overflow-x: auto;
+            border: 1px solid #e9ecef;
+            margin: 20px 0;
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+        }
+        
+        blockquote { 
+            border-left: 4px solid #3498db; 
+            margin: 20px 0; 
+            padding-left: 25px; 
+            color: #7f8c8d;
+            font-style: italic;
+            background-color: #f8f9fa;
+            padding: 15px 25px;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        table { 
+            border-collapse: collapse; 
+            width: 100%; 
+            margin: 25px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        th, td { 
+            border: 1px solid #ddd; 
+            padding: 12px 16px; 
+            text-align: left; 
+        }
+        
+        th { 
+            background-color: #3498db; 
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        ul { 
+            margin: 15px 0; 
+            padding-left: 25px;
+        }
+        
+        li { 
+            margin: 8px 0; 
+        }
+        
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        p {
+            margin: 15px 0;
+            text-align: justify;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        .footer {
+            margin-top: 60px;
+            padding-top: 20px;
+            border-top: 1px solid #ecf0f1;
+            text-align: center;
+            color: #95a5a6;
+            font-size: 0.9em;
+        }
+        
+        .print-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            z-index: 1000;
+        }
+        
+        .print-btn:hover {
+            background: #2980b9;
+        }
+        
+        @media print {
+            .print-btn { display: none; }
+            body { max-width: none; margin: 0; padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <button class="print-btn no-print" onclick="window.print()">📄 Print to PDF</button>
+    <div class="header">
+        <h1>DEPLOYMENT PLAN</h1>
+        <p><em>Generated on 9/7/2025</em></p>
+    </div>
+    
+    <div class="content">
+        <h1>🚀 Licence IQ Research Platform - Deployment Plan</h1><p><strong>Project Name:</strong> Licence IQ Research Platform - Production Deployment  <br><strong>Duration:</strong> 1 Week (October 30 - November 7, 2025)  <br><strong>Methodology:</strong> Agile DevOps with daily deployments  <br><strong>Project Type:</strong> POC to Production Deployment  <br><strong>Target:</strong> Live production deployment with monitoring and CI/CD</p><p>---</p><h2>🎯 Deployment Goals & Objectives</h2><h3>Primary Goals</h3><br><ul><li>Deploy completed POC to production cloud infrastructure</li></ul><br><ul><li>Establish comprehensive CI/CD pipeline for ongoing operations</li></ul><br><ul><li>Implement production monitoring and alerting systems</li></ul><br><ul><li>Configure backup and disaster recovery procedures</li></ul></p><h3>Success Criteria</h3><br><ul><li>Production system accessible with 99.9% uptime</li></ul><br><ul><li>Automated deployment pipeline operational</li></ul><br><ul><li>Comprehensive monitoring dashboards active</li></ul><br><ul><li>Security audit completed with no critical issues</li></ul></p><p>---</p><h2>📊 Epic Breakdown Structure</h2><h3><strong>Epic 1: Cloud Infrastructure Setup</strong></h3><br><strong>Priority:</strong> Critical <table><tr><td><strong>Story Points:</strong> 21</td></tr></table> <strong>Duration:</strong> Day 1-3</p><h3><strong>Epic 2: CI/CD Pipeline & Automation</strong></h3><br><strong>Priority:</strong> Critical <table><tr><td><strong>Story Points:</strong> 18</td></tr></table> <strong>Duration:</strong> Day 3-5</p><h3><strong>Epic 3: Production Monitoring & Operations</strong></h3><br><strong>Priority:</strong> High <table><tr><td><strong>Story Points:</strong> 15</td></tr></table> <strong>Duration:</strong> Day 5-7</p><p>---</p><h2>🚀 Daily Deployment Schedule</h2><h2><strong>DAY 1</strong> | October 30, 2025</h2><br><strong>Theme:</strong> Cloud Infrastructure Foundation  <br><strong>Goal:</strong> Establish core AWS infrastructure and database setup  <br><strong>Story Points:</strong> 8</p><h3><strong>Epic 1: Cloud Infrastructure Setup</strong></h3><p>#### <strong>User Story 1.1: AWS Account & Base Infrastructure</strong><br><strong>Story Points:</strong> 8 | <strong>Priority:</strong> Critical  <br><strong>Acceptance Criteria:</strong> Complete AWS infrastructure provisioned and secured</p><p><strong>Tasks:</strong><br><ul><li><strong>DEPLOY-101</strong> Setup AWS account and IAM roles <table><tr><td><strong>Estimate:</strong> 2h</td><td><strong>Assignee:</strong> DevOps</td></tr></table> <strong>Due:</strong> Oct 30 10:00 AM</li></ul><br><ul><li><strong>DEPLOY-102</strong> Create Terraform infrastructure code <table><tr><td><strong>Estimate:</strong> 4h</td><td><strong>Assignee:</strong> DevOps</td></tr></table> <strong>Due:</strong> Oct 30 2:00 PM</li></ul><br><ul><li><strong>DEPLOY-103</strong> Configure VPC, subnets, and security groups <table><tr><td><strong>Estimate:</strong> 2h</td><td><strong>Assignee:</strong> DevOps</td></tr></table> <strong>Due:</strong> Oct 30 4:00 PM</li></ul></p><p>---</p><h2><strong>DAY 2</strong> | October 31, 2025</h2><br><strong>Theme:</strong> Database & Storage Setup  <br><strong>Goal:</strong> Configure production database and file storage systems  <br><strong>Story Points:</strong> 6</p><p>#### <strong>User Story 1.2: Database & Storage Configuration</strong><br><strong>Story Points:</strong> 6 | <strong>Priority:</strong> Critical  <br><strong>Acceptance Criteria:</strong> Production database and storage ready for application</p><p><strong>Tasks:</strong><br><ul><li><strong>DEPLOY-201</strong> Setup RDS PostgreSQL instance with backups <table><tr><td><strong>Estimate:</strong> 3h</td><td><strong>Assignee:</strong> DevOps</td></tr></table> <strong>Due:</strong> Oct 31 11:00 AM</li></ul><br><ul><li><strong>DEPLOY-202</strong> Configure S3 bucket for file storage <table><tr><td><strong>Estimate:</strong> 2h</td><td><strong>Assignee:</strong> DevOps</td></tr></table> <strong>Due:</strong> Oct 31 1:00 PM</li></ul><br><ul><li><strong>DEPLOY-203</strong> Setup database migration and seeding <table><tr><td><strong>Estimate:</strong> 1h</td><td><strong>Assignee:</strong> Backend Dev</td></tr></table> <strong>Due:</strong> Oct 31 2:00 PM</li></ul></p><p>---</p><h2><strong>DAY 3</strong> | November 1, 2025</h2><br><strong>Theme:</strong> Application Containerization  <br><strong>Goal:</strong> Prepare application for cloud deployment  <br><strong>Story Points:</strong> 7</p><p>#### <strong>User Story 1.3: Container & Registry Setup</strong><br><strong>Story Points:</strong> 7 | <strong>Priority:</strong> Critical  <br><strong>Acceptance Criteria:</strong> Application containerized and images in registry</p><p><strong>Tasks:</strong><br><ul><li><strong>DEPLOY-301</strong> Create production Dockerfile and optimize build <table><tr><td><strong>Estimate:</strong> 3h</td><td><strong>Assignee:</strong> DevOps</td></tr></table> <strong>Due:</strong> Nov 1 11:00 AM</li></ul><br><ul><li><strong>DEPLOY-302</strong> Setup AWS ECR repository and security <table><tr><td><strong>Estimate:</strong> 2h</td><td><strong>Assignee:</strong> DevOps</td></tr></table> <strong>Due:</strong> Nov 1 1:00 PM</li></ul><br><ul><li><strong>DEPLOY-303</strong> Build and push production images <table><tr><td><strong>Estimate:</strong> 2h</td><td><strong>Assignee:</strong> DevOps</td></tr></table> <strong>Due:</strong> Nov 1 3:00 PM</li></ul></p><p>---</p><h2><strong>DAY 4</strong> | November 2, 2025</h2><br><strong>Theme:</strong> CI/CD Pipeline Implementation  <br><strong>Goal:</strong> Establish automated deployment pipeline  <br><strong>Story Points:</strong> 9</p><h3><strong>Epic 2: CI/CD Pipeline & Automation</strong></h3><p>#### <strong>User Story 2.1: Automated Deployment Pipeline</strong><br><strong>Story Points:</strong> 9 | <strong>Priority:</strong> Critical  <br><strong>Acceptance Criteria:</strong> End-to-end automated deployment working</p><p><strong>Tasks:</strong><br><ul><li><strong>DEPLOY-401</strong> Setup GitHub Actions workflows <table><tr><td><strong>Estimate:</strong> 3h</td><td><strong>Assignee:</strong> DevOps</td></tr></table> <strong>Due:</strong> Nov 2 10:00 AM</li></ul><br><ul><li><strong>DEPLOY-402</strong> Configure automated testing in pipeline <table><tr><td><strong>Estimate:</strong> 2h</td><td><strong>Assignee:</strong> DevOps</td></tr></table> <strong>Due:</strong> Nov 2 12:00 PM</li></ul><br><ul><li><strong>DEPLOY-403</strong> Setup automated deployment to staging <table><tr><td><strong>Estimate:</strong> 2h</td><td><strong>Assignee:</strong> DevOps</td></tr></table> <strong>Due:</strong> Nov 2 2:00 PM</li></ul><br><ul><li><strong>DEPLOY-404</strong> Configure production deployment triggers <table><tr><td><strong>Estimate:</strong> 2h</td><td><strong>Assignee:</strong> DevOps</td></tr></table> <strong>Due:</strong> Nov 2 4:00 PM</li></ul></p><p>---</p><h2><strong>DAY 5</strong> | November 3, 2025</h2><br><strong>Theme:</strong> Production Environment Configuration  <br><strong>Goal:</strong> Complete production environment setup with SSL and domain  <br><strong>Story Points:</strong> 9</p><p>#### <strong>User Story 2.2: Production Environment & Load Balancing</strong><br><strong>Story Points:</strong> 9 | <strong>Priority:</strong> Critical  <br><strong>Acceptance Criteria:</strong> Production environment accessible with SSL and custom domain</p><p><strong>Tasks:</strong><br><ul><li><strong>DEPLOY-501</strong> Setup ECS service for application <table><tr><td><strong>Estimate:</strong> 3h</td><td><strong>Assignee:</strong> DevOps</td></tr></table> <strong>Due:</strong> Nov 3 10:00 AM</li></ul><br><ul><li><strong>DEPLOY-502</strong> Configure Application Load Balancer <table><tr><td><strong>Estimate:</strong> 2h</td><td><strong>Assignee:</strong> DevOps</td></tr></table> <strong>Due:</strong> Nov 3 12:00 PM</li></ul><br><ul><li><strong>DEPLOY-503</strong> Setup SSL certificate and custom domain <table><tr><td><strong>Estimate:</strong> 2h</td><td><strong>Assignee:</strong> DevOps</td></tr></table> <strong>Due:</strong> Nov 3 2:00 PM</li></ul><br><ul><li><strong>DEPLOY-504</strong> Configure environment variables and secrets <table><tr><td><strong>Estimate:</strong> 2h</td><td><strong>Assignee:</strong> DevOps</td></tr></table> <strong>Due:</strong> Nov 3 4:00 PM</li></ul></p><p>---</p><h2><strong>DAY 6</strong> | November 4, 2025</h2><br><strong>Theme:</strong> Monitoring & Alerting Setup  <br><strong>Goal:</strong> Implement comprehensive monitoring and alerting  <br><strong>Story Points:</strong> 8</p><h3><strong>Epic 3: Production Monitoring & Operations</strong></h3><p>#### <strong>User Story 3.1: Monitoring & Alerting Implementation</strong><br><strong>Story Points:</strong> 8 | <strong>Priority:</strong> Critical  <br><strong>Acceptance Criteria:</strong> Complete monitoring with alerts and dashboards</p><p><strong>Tasks:</strong><br><ul><li><strong>DEPLOY-601</strong> Setup CloudWatch dashboards and metrics <table><tr><td><strong>Estimate:</strong> 3h</td><td><strong>Assignee:</strong> DevOps</td></tr></table> <strong>Due:</strong> Nov 4 10:00 AM</li></ul><br><ul><li><strong>DEPLOY-602</strong> Configure application performance monitoring <table><tr><td><strong>Estimate:</strong> 2h</td><td><strong>Assignee:</strong> Backend Dev</td></tr></table> <strong>Due:</strong> Nov 4 12:00 PM</li></ul><br><ul><li><strong>DEPLOY-603</strong> Setup alert notifications and escalation <table><tr><td><strong>Estimate:</strong> 2h</td><td><strong>Assignee:</strong> DevOps</td></tr></table> <strong>Due:</strong> Nov 4 2:00 PM</li></ul><br><ul><li><strong>DEPLOY-604</strong> Configure log aggregation and analysis <table><tr><td><strong>Estimate:</strong> 1h</td><td><strong>Assignee:</strong> DevOps</td></tr></table> <strong>Due:</strong> Nov 4 3:00 PM</li></ul></p><p>---</p><h2><strong>DAY 7</strong> | November 5, 2025</h2><br><strong>Theme:</strong> Backup, Security & Launch  <br><strong>Goal:</strong> Complete security audit, backup setup, and production launch  <br><strong>Story Points:</strong> 7</p><p>#### <strong>User Story 3.2: Backup & Disaster Recovery</strong><br><strong>Story Points:</strong> 4 | <strong>Priority:</strong> High  <br><strong>Acceptance Criteria:</strong> Automated backup system with tested recovery procedures</p><p><strong>Tasks:</strong><br><ul><li><strong>DEPLOY-701</strong> Setup automated database backups <table><tr><td><strong>Estimate:</strong> 2h</td><td><strong>Assignee:</strong> DevOps</td></tr></table> <strong>Due:</strong> Nov 5 9:00 AM</li></ul><br><ul><li><strong>DEPLOY-702</strong> Configure file storage backups <table><tr><td><strong>Estimate:</strong> 1h</td><td><strong>Assignee:</strong> DevOps</td></tr></table> <strong>Due:</strong> Nov 5 10:00 AM</li></ul><br><ul><li><strong>DEPLOY-703</strong> Test backup restoration procedures <table><tr><td><strong>Estimate:</strong> 1h</td><td><strong>Assignee:</strong> DevOps</td></tr></table> <strong>Due:</strong> Nov 5 11:00 AM</li></ul></p><p>#### <strong>User Story 3.3: Security Audit & Production Launch</strong><br><strong>Story Points:</strong> 3 | <strong>Priority:</strong> Critical  <br><strong>Acceptance Criteria:</strong> Security audit completed and production system launched</p><p><strong>Tasks:</strong><br><ul><li><strong>DEPLOY-704</strong> Execute comprehensive security audit <table><tr><td><strong>Estimate:</strong> 2h</td><td><strong>Assignee:</strong> Security Lead</td></tr></table> <strong>Due:</strong> Nov 5 1:00 PM</li></ul><br><ul><li><strong>DEPLOY-705</strong> Execute final production smoke tests <table><tr><td><strong>Estimate:</strong> 1h</td><td><strong>Assignee:</strong> QA Engineer</td></tr></table> <strong>Due:</strong> Nov 5 3:00 PM</li></ul><br><ul><li><strong>DEPLOY-706</strong> Complete production launch checklist <table><tr><td><strong>Estimate:</strong> 30min</td><td><strong>Assignee:</strong> Project Manager</td></tr></table> <strong>Due:</strong> Nov 5 4:00 PM</li></ul></p><p>---</p><h2>🏗️ Resource Allocation</h2><h3><strong>Deployment Team Structure</strong></h3><br><ul><li><strong>DevOps Engineer</strong> (1.0 FTE) - Infrastructure, deployment automation, monitoring</li></ul><br><ul><li><strong>Backend Developer</strong> (0.5 FTE) - Application configuration, database optimization</li></ul><br><ul><li><strong>Project Manager</strong> (0.5 FTE) - Coordination, stakeholder communication</li></ul><br><ul><li><strong>Security Lead</strong> (0.25 FTE) - Security audit, compliance validation</li></ul><br><ul><li><strong>QA Engineer</strong> (0.25 FTE) - Production testing, validation</li></ul></p><h3><strong>Key Stakeholders</strong></h3><br><ul><li><strong>Technical Lead</strong> - Architecture approval, code review</li></ul><br><ul><li><strong>Business Sponsor</strong> - Go-live approval, launch authorization</li></ul><br><ul><li><strong>Infrastructure Team</strong> - Cloud resource provisioning support</li></ul><br><ul><li><strong>Security Team</strong> - Security audit, penetration testing</li></ul></p><p>---</p><h2>📊 Risk Management Matrix</h2><p><table><tr><td>Risk</td><td>Probability</td><td>Impact</td><td>Mitigation Strategy</td><td>Owner</td></tr></table><br><table><tr><td>------</td><td>-------------</td><td>---------</td><td>-------------------</td><td>--------</td></tr></table><br><table><tr><td><strong>Cloud Service Outage</strong></td><td>Low</td><td>High</td><td>Multi-AZ deployment, backup region ready</td><td>DevOps</td></tr></table><br><table><tr><td><strong>Database Migration Issues</strong></td><td>Medium</td><td>High</td><td>Test migration in staging, rollback plan</td><td>Backend Dev</td></tr></table><br><table><tr><td><strong>SSL Certificate Issues</strong></td><td>Low</td><td>Medium</td><td>Backup certificate provider, automation</td><td>DevOps</td></tr></table><br><table><tr><td><strong>Performance Degradation</strong></td><td>Medium</td><td>Medium</td><td>Load testing, auto-scaling configuration</td><td>DevOps</td></tr></table><br><table><tr><td><strong>Security Vulnerabilities</strong></td><td>Low</td><td>High</td><td>Comprehensive audit, penetration testing</td><td>Security Lead</td></tr></table></p><p>---</p><h2>📈 Daily Metrics & KPIs</h2><h3><strong>Infrastructure KPIs</strong></h3><br><ul><li><strong>Uptime Target:</strong> 99.9% availability</li></ul><br><ul><li><strong>Response Time:</strong> <2s page load, <30s AI processing</li></ul><br><ul><li><strong>Scalability:</strong> Support 100+ concurrent users</li></ul><br><ul><li><strong>Security:</strong> Zero critical vulnerabilities</li></ul></p><h3><strong>Deployment KPIs</strong></h3><br><ul><li><strong>Automation:</strong> 100% automated deployment</li></ul><br><ul><li><strong>Recovery Time:</strong> <15min for critical issues</li></ul><br><ul><li><strong>Monitoring Coverage:</strong> 100% service monitoring</li></ul><br><ul><li><strong>Backup Success:</strong> Daily automated backups</li></ul></p><p>---</p><h2>🎯 Definition of Done</h2><h3><strong>Infrastructure DoD</strong></h3><br><ul><li>⬜ All cloud resources provisioned and configured<br><li>⬜ Database setup with automatic backups<br><li>⬜ Load balancer and SSL certificate active<br><li>⬜ Monitoring and alerting operational<br><li>⬜ Security audit passed with no critical issues</p><h3><strong>Deployment DoD</strong></h3><br><li>⬜ CI/CD pipeline functional end-to-end<br><li>⬜ Automated testing in deployment pipeline<br><li>⬜ Rollback procedures tested and documented<br><li>⬜ Production environment accessible<br><li>⬜ All stakeholder approvals obtained</p><h3><strong>Operations DoD</strong></h3><br><li>⬜ Monitoring dashboards active<br><li>⬜ Alert notifications configured<br><li>⬜ Backup and recovery tested<br><li>⬜ Documentation complete<br><li>⬜ Team trained on production procedures</p><p>---</p><h2>📅 Daily Standup Schedule</h2><h3><strong>Daily Standups</strong></h3><br><li><strong>Time:</strong> 9:00 AM EST</li></ul><br><ul><li><strong>Duration:</strong> 15 minutes</li></ul><br><ul><li><strong>Format:</strong> Progress, blockers, next steps</li></ul><br><ul><li><strong>Focus:</strong> Deployment milestones and dependencies</li></ul></p><h3><strong>Daily Review</strong></h3><br><ul><li><strong>Time:</strong> 4:30 PM EST</li></ul><br><ul><li><strong>Duration:</strong> 30 minutes</li></ul><br><ul><li><strong>Format:</strong> Day accomplishments, next day planning</li></ul><br><ul><li><strong>Attendees:</strong> Deployment team + stakeholders</li></ul></p><p>---</p><h2>🚀 Production Launch Checklist</h2><h3><strong>Technical Readiness</strong></h3><br><ul><li>⬜ All infrastructure components operational<br><li>⬜ Database migrated and validated<br><li>⬜ Application deployed and accessible<br><li>⬜ SSL certificate active and valid<br><li>⬜ Monitoring and alerting functional</p><h3><strong>Operational Readiness</strong></h3><br><li>⬜ CI/CD pipeline tested and operational<br><li>⬜ Backup and recovery procedures validated<br><li>⬜ Security audit completed and passed<br><li>⬜ Performance testing completed<br><li>⬜ Documentation updated and accessible</p><h3><strong>Business Readiness</strong></h3><br><li>⬜ Stakeholder approval for go-live<br><li>⬜ Support team trained and ready<br><li>⬜ Launch communication plan executed<br><li>⬜ Success metrics baseline established</p><p>---</p><h2>📊 Success Metrics</h2><h3><strong>Technical Metrics</strong></h3><br><li><strong>Availability:</strong> >99.9% uptime in first month</li></ul><br><ul><li><strong>Performance:</strong> Meet all response time targets</li></ul><br><ul><li><strong>Security:</strong> Zero security incidents</li></ul><br><ul><li><strong>Reliability:</strong> <2 hours total downtime per month</li></ul></p><h3><strong>Operational Metrics</strong></h3><br><ul><li><strong>Deployment Success:</strong> 100% automated deployments</li></ul><br><ul><li><strong>Recovery Time:</strong> Meet RTO/RPO targets</li></ul><br><ul><li><strong>Monitoring Coverage:</strong> 100% critical path coverage</li></ul><br><ul><li><strong>Team Readiness:</strong> All procedures documented and tested</li></ul></p><p>---</p><p><strong>Deployment Plan Version:</strong> 1.0  <br><strong>Created:</strong> September 6, 2025  <br><strong>Deployment Window:</strong> October 30 - November 7, 2025  <br><strong>Next Review:</strong> October 29, 2025 (Pre-deployment Readiness)</p>
+    </div>
+    
+    <div class="footer no-print">
+        <p>Document generated from Markdown • <strong>Licence IQ Research Platform</strong></p>
+    </div>
+</body>
+</html>

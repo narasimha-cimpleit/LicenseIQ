@@ -1,0 +1,188 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API DOCUMENTATION</title>
+    <style>
+        @media print {
+            body { margin: 0; }
+            .no-print { display: none; }
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background-color: #ffffff;
+        }
+        
+        h1 { 
+            color: #2c3e50; 
+            border-bottom: 3px solid #3498db; 
+            padding-bottom: 15px; 
+            margin-top: 0;
+            font-size: 2.5em;
+        }
+        
+        h2 { 
+            color: #34495e; 
+            border-bottom: 2px solid #ecf0f1; 
+            padding-bottom: 10px; 
+            margin-top: 40px;
+            font-size: 1.8em;
+        }
+        
+        h3 { 
+            color: #7f8c8d; 
+            margin-top: 30px;
+            font-size: 1.4em;
+        }
+        
+        h4 { 
+            color: #95a5a6; 
+            margin-top: 25px;
+            font-size: 1.2em;
+        }
+        
+        code { 
+            background-color: #f8f9fa; 
+            padding: 3px 6px; 
+            border-radius: 4px; 
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.9em;
+            border: 1px solid #e9ecef;
+        }
+        
+        pre { 
+            background-color: #f8f9fa; 
+            padding: 20px; 
+            border-radius: 8px; 
+            overflow-x: auto;
+            border: 1px solid #e9ecef;
+            margin: 20px 0;
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+        }
+        
+        blockquote { 
+            border-left: 4px solid #3498db; 
+            margin: 20px 0; 
+            padding-left: 25px; 
+            color: #7f8c8d;
+            font-style: italic;
+            background-color: #f8f9fa;
+            padding: 15px 25px;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        table { 
+            border-collapse: collapse; 
+            width: 100%; 
+            margin: 25px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        th, td { 
+            border: 1px solid #ddd; 
+            padding: 12px 16px; 
+            text-align: left; 
+        }
+        
+        th { 
+            background-color: #3498db; 
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        ul { 
+            margin: 15px 0; 
+            padding-left: 25px;
+        }
+        
+        li { 
+            margin: 8px 0; 
+        }
+        
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        p {
+            margin: 15px 0;
+            text-align: justify;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        .footer {
+            margin-top: 60px;
+            padding-top: 20px;
+            border-top: 1px solid #ecf0f1;
+            text-align: center;
+            color: #95a5a6;
+            font-size: 0.9em;
+        }
+        
+        .print-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            z-index: 1000;
+        }
+        
+        .print-btn:hover {
+            background: #2980b9;
+        }
+        
+        @media print {
+            .print-btn { display: none; }
+            body { max-width: none; margin: 0; padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <button class="print-btn no-print" onclick="window.print()">📄 Print to PDF</button>
+    <div class="header">
+        <h1>API DOCUMENTATION</h1>
+        <p><em>Generated on 9/7/2025</em></p>
+    </div>
+    
+    <div class="content">
+        <h1>Licence IQ Research Platform - API Documentation</h1><h2>API Overview</h2><br>The Licence IQ Research Platform provides a comprehensive REST API for contract management, AI-powered document analysis, user management, and analytics.</p><p><strong>Base URL:</strong> <code>/api</code>  <br><strong>Authentication:</strong> Session-based with cookies  <br><strong>Content-Type:</strong> <code>application/json</code></p><h2>Authentication Endpoints</h2><h3>POST /api/register</h3><br>Register a new user account.</p><p><strong>Request Body:</strong><br><pre><code>json<br>{<br>  "username": "string (required)",<br>  "password": "string (required, min 6 chars)",<br>  "email": "string (required, valid email)",<br>  "firstName": "string (optional)",<br>  "lastName": "string (optional)",<br>  "role": "enum: owner<table><tr><td>admin</td><td>editor</td><td>viewer</td></tr></table>auditor (optional, default: viewer)"<br>}<br></code></pre></p><p><strong>Response:</strong> <code>201 Created</code><br><pre><code>json<br>{<br>  "id": "uuid",<br>  "username": "string",<br>  "email": "string",<br>  "firstName": "string",<br>  "lastName": "string",<br>  "role": "string",<br>  "isActive": true,<br>  "createdAt": "timestamp",<br>  "updatedAt": "timestamp"<br>}<br></code></pre></p><p><strong>Error Responses:</strong><br><ul><li><code>400 Bad Request</code> - Validation errors or username already exists</li></ul><br><ul><li><code>500 Internal Server Error</code> - Server error</li></ul></p><h3>POST /api/login</h3><br>Authenticate user and create session.</p><p><strong>Request Body:</strong><br><pre><code>json<br>{<br>  "username": "string (required)",<br>  "password": "string (required)"<br>}<br></code></pre></p><p><strong>Response:</strong> <code>200 OK</code><br><pre><code>json<br>{<br>  "id": "uuid",<br>  "username": "string",<br>  "email": "string",<br>  "role": "string",<br>  "isActive": true<br>}<br></code></pre></p><p><strong>Error Responses:</strong><br><ul><li><code>401 Unauthorized</code> - Invalid credentials</li></ul><br><ul><li><code>400 Bad Request</code> - Missing required fields</li></ul></p><h3>POST /api/logout</h3><br>End user session.</p><p><strong>Response:</strong> <code>200 OK</code><br><pre><code>json<br>{<br>  "message": "Logged out successfully"<br>}<br></code></pre></p><h3>GET /api/user</h3><br>Get current authenticated user information.</p><p><strong>Response:</strong> <code>200 OK</code><br><pre><code>json<br>{<br>  "id": "uuid",<br>  "username": "string",<br>  "email": "string",<br>  "firstName": "string",<br>  "lastName": "string",<br>  "role": "string",<br>  "isActive": true,<br>  "createdAt": "timestamp",<br>  "updatedAt": "timestamp"<br>}<br></code></pre></p><p><strong>Error Responses:</strong><br><ul><li><code>401 Unauthorized</code> - Not authenticated</li></ul></p><h2>Contract Management Endpoints</h2><h3>GET /api/contracts</h3><br>List all contracts with pagination and filtering.</p><p><strong>Query Parameters:</strong><br><ul><li><code>page</code>: number (default: 1)</li></ul><br><ul><li><code>limit</code>: number (default: 10, max: 100)</li></ul><br><ul><li><code>status</code>: enum (pending<table><tr><td>processing</td><td>analyzed</td></tr></table>failed)</li></ul><br><ul><li><code>contractType</code>: string</li></ul><br><ul><li><code>search</code>: string (search in filename and type)</li></ul></p><p><strong>Response:</strong> <code>200 OK</code><br><pre><code>json<br>{<br>  "contracts": [<br>    {<br>      "id": "uuid",<br>      "originalName": "string",<br>      "fileSize": "number",<br>      "fileType": "string",<br>      "contractType": "string",<br>      "status": "enum",<br>      "priority": "enum",<br>      "uploadedBy": "uuid",<br>      "processingTime": "number",<br>      "createdAt": "timestamp",<br>      "updatedAt": "timestamp",<br>      "analysis": {<br>        "confidence": "string",<br>        "summary": "string"<br>      }<br>    }<br>  ],<br>  "total": "number",<br>  "page": "number",<br>  "limit": "number",<br>  "totalPages": "number"<br>}<br></code></pre></p><h3>GET /api/contracts/:id</h3><br>Get specific contract with full analysis details.</p><p><strong>Path Parameters:</strong><br><ul><li><code>id</code>: uuid (required)</li></ul></p><p><strong>Response:</strong> <code>200 OK</code><br><pre><code>json<br>{<br>  "id": "uuid",<br>  "originalName": "string",<br>  "filePath": "string",<br>  "fileSize": "number",<br>  "fileType": "string",<br>  "contractType": "string",<br>  "status": "enum",<br>  "priority": "enum",<br>  "uploadedBy": "uuid",<br>  "processingTime": "number",<br>  "createdAt": "timestamp",<br>  "updatedAt": "timestamp",<br>  "analysis": {<br>    "id": "uuid",<br>    "summary": "string",<br>    "keyTerms": [<br>      {<br>        "type": "string",<br>        "description": "string",<br>        "confidence": "number",<br>        "location": "string"<br>      }<br>    ],<br>    "riskAnalysis": [<br>      {<br>        "level": "enum: high<table><tr><td>medium</td></tr></table>low",<br>        "title": "string",<br>        "description": "string"<br>      }<br>    ],<br>    "insights": [<br>      {<br>        "type": "string",<br>        "title": "string",<br>        "description": "string"<br>      }<br>    ],<br>    "confidence": "string",<br>    "processingTime": "number",<br>    "createdAt": "timestamp"<br>  }<br>}<br></code></pre></p><p><strong>Error Responses:</strong><br><ul><li><code>404 Not Found</code> - Contract not found</li></ul><br><ul><li><code>403 Forbidden</code> - No permission to view contract</li></ul></p><h3>POST /api/contracts/upload</h3><br>Upload a new contract file for processing.</p><p><strong>Request:</strong> <code>multipart/form-data</code><br><ul><li><code>file</code>: File (required) - PDF or DOCX file, max 10MB</li></ul><br><ul><li><code>contractType</code>: string (optional)</li></ul><br><ul><li><code>priority</code>: enum (optional) - low<table><tr><td>normal</td><td>high</td></tr></table>urgent</li></ul></p><p><strong>Response:</strong> <code>201 Created</code><br><pre><code>json<br>{<br>  "id": "uuid",<br>  "originalName": "string",<br>  "fileSize": "number",<br>  "fileType": "string",<br>  "contractType": "string",<br>  "status": "pending",<br>  "priority": "string",<br>  "uploadedBy": "uuid",<br>  "createdAt": "timestamp"<br>}<br></code></pre></p><p><strong>Error Responses:</strong><br><ul><li><code>400 Bad Request</code> - Invalid file type or size</li></ul><br><ul><li><code>413 Payload Too Large</code> - File exceeds size limit</li></ul><br><ul><li><code>401 Unauthorized</code> - Not authenticated</li></ul></p><h3>PUT /api/contracts/:id/reprocess</h3><br>Reprocess contract with AI analysis.</p><p><strong>Path Parameters:</strong><br><ul><li><code>id</code>: uuid (required)</li></ul></p><p><strong>Response:</strong> <code>200 OK</code><br><pre><code>json<br>{<br>  "message": "Contract queued for reprocessing",<br>  "contractId": "uuid",<br>  "status": "processing"<br>}<br></code></pre></p><p><strong>Error Responses:</strong><br><ul><li><code>404 Not Found</code> - Contract not found</li></ul><br><ul><li><code>403 Forbidden</code> - No permission to reprocess</li></ul><br><ul><li><code>409 Conflict</code> - Contract already processing</li></ul></p><h3>DELETE /api/contracts/:id</h3><br>Delete a contract and all associated data.</p><p><strong>Path Parameters:</strong><br><ul><li><code>id</code>: uuid (required)</li></ul></p><p><strong>Response:</strong> <code>200 OK</code><br><pre><code>json<br>{<br>  "message": "Contract deleted successfully",<br>  "contractId": "uuid"<br>}<br></code></pre></p><p><strong>Error Responses:</strong><br><ul><li><code>404 Not Found</code> - Contract not found</li></ul><br><ul><li><code>403 Forbidden</code> - No permission to delete</li></ul><br><ul><li><code>409 Conflict</code> - Contract currently processing</li></ul></p><h3>GET /api/contracts/:id/export</h3><br>Export contract analysis as PDF report.</p><p><strong>Path Parameters:</strong><br><ul><li><code>id</code>: uuid (required)</li></ul></p><p><strong>Query Parameters:</strong><br><ul><li><code>format</code>: enum (pdf|json) - default: pdf</li></ul></p><p><strong>Response:</strong> <code>200 OK</code><br><ul><li>Content-Type: <code>application/pdf</code> or <code>application/json</code></li></ul><br><ul><li>File download or JSON data</li></ul></p><h2>Analytics Endpoints</h2><h3>GET /api/analytics/metrics</h3><br>Get dashboard metrics and statistics.</p><p><strong>Response:</strong> <code>200 OK</code><br><pre><code>json<br>{<br>  "totalContracts": "number",<br>  "processing": "number",<br>  "analyzed": "number",<br>  "failed": "number",<br>  "averageProcessingTime": "number",<br>  "averageConfidence": "number",<br>  "contractsByType": {<br>    "employment": "number",<br>    "service": "number",<br>    "nda": "number",<br>    "other": "number"<br>  },<br>  "contractsByStatus": {<br>    "pending": "number",<br>    "processing": "number",<br>    "analyzed": "number",<br>    "failed": "number"<br>  },<br>  "riskDistribution": {<br>    "high": "number",<br>    "medium": "number",<br>    "low": "number"<br>  },<br>  "recentActivity": [<br>    {<br>      "contractId": "uuid",<br>      "originalName": "string",<br>      "status": "string",<br>      "createdAt": "timestamp"<br>    }<br>  ]<br>}<br></code></pre></p><h3>GET /api/analytics/reports</h3><br>Generate detailed analytics reports.</p><p><strong>Query Parameters:</strong><br><ul><li><code>dateFrom</code>: date (ISO 8601)</li></ul><br><ul><li><code>dateTo</code>: date (ISO 8601)</li></ul><br><ul><li><code>groupBy</code>: enum (day<table><tr><td>week</td></tr></table>month)</li></ul><br><ul><li><code>contractType</code>: string (optional filter)</li></ul></p><p><strong>Response:</strong> <code>200 OK</code><br><pre><code>json<br>{<br>  "period": {<br>    "from": "date",<br>    "to": "date"<br>  },<br>  "summary": {<br>    "totalContracts": "number",<br>    "totalProcessingTime": "number",<br>    "averageConfidence": "number",<br>    "successRate": "number"<br>  },<br>  "trends": [<br>    {<br>      "date": "date",<br>      "contracts": "number",<br>      "averageProcessingTime": "number",<br>      "averageConfidence": "number"<br>    }<br>  ],<br>  "typeBreakdown": {<br>    "employment": "number",<br>    "service": "number",<br>    "nda": "number"<br>  }<br>}<br></code></pre></p><h2>User Management Endpoints</h2><h3>GET /api/users</h3><br>List all users (Admin+ only).</p><p><strong>Query Parameters:</strong><br><ul><li><code>page</code>: number (default: 1)</li></ul><br><ul><li><code>limit</code>: number (default: 10)</li></ul><br><ul><li><code>role</code>: enum filter</li></ul><br><ul><li><code>search</code>: string (search username/email)</li></ul></p><p><strong>Response:</strong> <code>200 OK</code><br><pre><code>json<br>{<br>  "users": [<br>    {<br>      "id": "uuid",<br>      "username": "string",<br>      "email": "string",<br>      "firstName": "string",<br>      "lastName": "string",<br>      "role": "string",<br>      "isActive": "boolean",<br>      "createdAt": "timestamp",<br>      "lastLogin": "timestamp"<br>    }<br>  ],<br>  "total": "number",<br>  "page": "number",<br>  "totalPages": "number"<br>}<br></code></pre></p><h3>PUT /api/users/:id</h3><br>Update user information (Admin+ only).</p><p><strong>Path Parameters:</strong><br><ul><li><code>id</code>: uuid (required)</li></ul></p><p><strong>Request Body:</strong><br><pre><code>json<br>{<br>  "email": "string (optional)",<br>  "firstName": "string (optional)",<br>  "lastName": "string (optional)",<br>  "role": "enum (optional)",<br>  "isActive": "boolean (optional)"<br>}<br></code></pre></p><p><strong>Response:</strong> <code>200 OK</code><br><pre><code>json<br>{<br>  "id": "uuid",<br>  "username": "string",<br>  "email": "string",<br>  "firstName": "string",<br>  "lastName": "string",<br>  "role": "string",<br>  "isActive": "boolean",<br>  "updatedAt": "timestamp"<br>}<br></code></pre></p><h3>DELETE /api/users/:id</h3><br>Delete user account (Owner only).</p><p><strong>Path Parameters:</strong><br><ul><li><code>id</code>: uuid (required)</li></ul></p><p><strong>Response:</strong> <code>200 OK</code><br><pre><code>json<br>{<br>  "message": "User deleted successfully",<br>  "userId": "uuid"<br>}<br></code></pre></p><h2>Error Response Format</h2><p>All API endpoints return errors in a consistent format:</p><p><pre><code>json<br>{<br>  "error": {<br>    "code": "string",<br>    "message": "string",<br>    "details": "object (optional)"<br>  }<br>}<br></code></pre></p><h3>Common Error Codes</h3><br><ul><li><code>VALIDATION_ERROR</code> - Request validation failed</li></ul><br><ul><li><code>AUTHENTICATION_REQUIRED</code> - User not authenticated</li></ul><br><ul><li><code>INSUFFICIENT_PERMISSIONS</code> - User lacks required permissions</li></ul><br><ul><li><code>RESOURCE_NOT_FOUND</code> - Requested resource not found</li></ul><br><ul><li><code>DUPLICATE_RESOURCE</code> - Resource already exists</li></ul><br><ul><li><code>PROCESSING_ERROR</code> - File or AI processing error</li></ul><br><ul><li><code>RATE_LIMIT_EXCEEDED</code> - Too many requests</li></ul><br><ul><li><code>SERVER_ERROR</code> - Internal server error</li></ul></p><h2>Rate Limiting</h2><p>API endpoints are rate-limited to prevent abuse:<br><ul><li><strong>General API</strong>: 100 requests per 15 minutes per IP</li></ul><br><ul><li><strong>File Upload</strong>: 10 uploads per hour per user</li></ul><br><ul><li><strong>AI Processing</strong>: 5 concurrent processing jobs per user</li></ul></p><p>Rate limit headers:<br><ul><li><code>X-RateLimit-Limit</code>: Request limit</li></ul><br><ul><li><code>X-RateLimit-Remaining</code>: Remaining requests</li></ul><br><ul><li><code>X-RateLimit-Reset</code>: Reset time (Unix timestamp)</li></ul></p><h2>Webhooks (Future Enhancement)</h2><p>Webhook endpoints for real-time notifications:</p><h3>POST /api/webhooks/register</h3><br>Register webhook endpoint for contract processing events.</p><p><strong>Request Body:</strong><br><pre><code>json<br>{<br>  "url": "string (required)",<br>  "events": ["array of event types"],<br>  "secret": "string (optional)"<br>}<br></code></pre></p><h3>Webhook Events</h3><br><ul><li><code>contract.uploaded</code> - New contract uploaded</li></ul><br><ul><li><code>contract.processing</code> - Processing started</li></ul><br><ul><li><code>contract.analyzed</code> - Analysis completed</li></ul><br><ul><li><code>contract.failed</code> - Processing failed</li></ul><br><ul><li><code>contract.deleted</code> - Contract deleted</li></ul></p><h2>SDK Examples</h2><h3>JavaScript/Node.js</h3><br><pre><code>javascript<br>// Contract upload example<br>const formData = new FormData();<br>formData.append('file', fileBlob);<br>formData.append('contractType', 'employment');</p><p>const response = await fetch('/api/contracts/upload', {<br>  method: 'POST',<br>  credentials: 'include',<br>  body: formData<br>});</p><p>const result = await response.json();<br>console.log('Contract uploaded:', result);<br></code></pre></p><h3>Python</h3><br><pre><code>python<br>import requests</p><h1>Login example</h1><br>login_data = {<br>    'username': 'admin',<br>    'password': 'admin123'<br>}</p><p>session = requests.Session()<br>response = session.post('/api/login', json=login_data)<br>user = response.json()</p><h1>Get contracts</h1><br>contracts_response = session.get('/api/contracts')<br>contracts = contracts_response.json()<br></code></pre></p><h3>cURL</h3><br><pre><code>bash<br><h1>Login</h1><br>curl -X POST /api/login \<br>  -H "Content-Type: application/json" \<br>  -d '{"username":"admin","password":"admin123"}' \<br>  -c cookies.txt</p><h1>Upload contract</h1><br>curl -X POST /api/contracts/upload \<br>  -b cookies.txt \<br>  -F "file=@contract.pdf" \<br>  -F "contractType=service"</p><h1>Get contract analysis</h1><br>curl -X GET /api/contracts/{id} \<br>  -b cookies.txt \<br>  -H "Accept: application/json"<br></code></pre></p><h2>Testing the API</h2><h3>Postman Collection</h3><br>Import the provided Postman collection for easy API testing with pre-configured requests and environment variables.</p><h3>Test Data</h3><br>Use the following test accounts for API testing:<br><ul><li><strong>Owner</strong>: admin/admin123</li></ul><br><ul><li><strong>Admin</strong>: owner/owner123  </li></ul><br><ul><li><strong>Editor</strong>: editor/editor123</li></ul><br><ul><li><strong>Viewer</strong>: viewer/viewer123</li></ul><br><ul><li><strong>Auditor</strong>: auditor/auditor123</li></ul></p>
+    </div>
+    
+    <div class="footer no-print">
+        <p>Document generated from Markdown • <strong>Licence IQ Research Platform</strong></p>
+    </div>
+</body>
+</html>
