@@ -213,23 +213,28 @@
     z-index: 1100 !important;
   }
   
-  /* Fix toast positioning - should be visible but not cover everything */
+  /* NUCLEAR FIX: Force toast positioning away from content */
   [data-radix-toast-viewport] {
-    z-index: 50 !important;
+    z-index: 9999 !important;
     position: fixed !important;
-    top: 1rem !important;
-    right: 1rem !important;
-    max-width: 420px !important;
+    top: 20px !important;
+    right: 20px !important;
+    max-width: 350px !important;
+    width: 350px !important;
     pointer-events: none !important;
-    width: auto !important;
+    transform: translateX(0) !important;
   }
   
-  /* Toast items should allow pointer events and have proper sizing */
+  /* Toast items styling */
   [data-radix-toast-root] {
     pointer-events: auto !important;
+    width: 100% !important;
+    max-width: 350px !important;
     min-width: 300px !important;
-    max-width: 420px !important;
-    width: auto !important;
+    background: white !important;
+    border: 1px solid #e5e7eb !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+    border-radius: 8px !important;
   }
 }
 

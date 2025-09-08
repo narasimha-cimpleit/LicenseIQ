@@ -19,16 +19,14 @@ export function useAuth() {
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
-      // Auto-dismiss login toast quickly to avoid UI overlap
-      const loginToast = toast({
-        title: "Welcome back!",
-        description: `Logged in as ${user.username}`,
-      });
+      // Temporarily disable login toast to prevent overlap issues
+      // TODO: Re-enable once positioning is completely fixed
+      // const loginToast = toast({
+      //   title: "Welcome back!",
+      //   description: `Logged in as ${user.username}`,
+      // });
       
-      // Auto-dismiss after 2 seconds
-      setTimeout(() => {
-        loginToast.dismiss();
-      }, 2000);
+      console.log(`User ${user.username} logged in successfully`);
     },
     onError: (error: Error) => {
       toast({
