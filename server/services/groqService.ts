@@ -63,12 +63,35 @@ export class GroqService {
 
   async analyzeContract(contractText: string): Promise<ContractAnalysisResult> {
     const prompt = `
-    You are a professional contract analyst specializing in extracting key business terms from legal agreements. Analyze the following contract document and focus specifically on the most important sections that business users need to understand.
+    You are a professional contract analyst specializing in extracting key business terms from legal agreements. 
 
     Document Text:
     ${contractText}
 
-    Your primary objective is to identify and clearly explain these CRITICAL CONTRACT SECTIONS:
+    FIRST, determine if this document is actually a CONTRACT, AGREEMENT, or LEGAL DOCUMENT that contains business terms. 
+
+    If this document is NOT a contract/agreement (e.g., it's a resume, report, manual, random text, etc.), respond with:
+    {
+      "summary": "This document does not appear to be a contract or legal agreement. It appears to be a [document type]. This system is designed specifically for contract analysis and cannot provide meaningful business insights for this type of document.",
+      "keyTerms": [],
+      "riskAnalysis": [
+        {
+          "level": "low",
+          "title": "Document Type Mismatch",
+          "description": "This document is not a contract or agreement and should not be analyzed using contract analysis tools."
+        }
+      ],
+      "insights": [
+        {
+          "type": "alert",
+          "title": "Wrong Document Type",
+          "description": "Please upload a contract, agreement, or legal document for proper analysis."
+        }
+      ],
+      "confidence": 0.95
+    }
+
+    If this IS a contract/agreement, then proceed with your primary objective to identify and clearly explain these CRITICAL CONTRACT SECTIONS:
 
     🔍 PRIORITY SECTIONS TO EXTRACT:
     1. **Royalty Structure & Payment Terms** (Section 3 or similar) - Payment rates, schedules, calculation methods
