@@ -107,9 +107,13 @@ export class FileService {
       if (mimeType === 'application/pdf') {
         try {
           const buffer = await fs.readFile(filePath);
+          // Use createRequire for ES modules
+          const { createRequire } = await import('module');
+          const require = createRequire(import.meta.url);
           const pdfParse = require('pdf-parse');
           const pdfData = await pdfParse(buffer);
-          console.log('PDF text extracted successfully:', pdfData.text.substring(0, 200) + '...');
+          console.log('PDF text extracted successfully, length:', pdfData.text.length);
+          console.log('First 200 chars:', pdfData.text.substring(0, 200) + '...');
           return pdfData.text;
         } catch (pdfError) {
           console.error('PDF parsing error:', pdfError);
