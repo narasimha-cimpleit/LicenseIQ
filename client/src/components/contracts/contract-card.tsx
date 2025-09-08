@@ -67,8 +67,9 @@ export default function ContractCard({ contract, className }: ContractCardProps)
         title: "Contract Deleted",
         description: "The contract has been permanently deleted.",
       });
-      // Invalidate and refetch contracts list
+      // Force immediate refetch of contracts list
       queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
+      queryClient.refetchQueries({ queryKey: ["/api/contracts"] });
     },
     onError: (error: Error) => {
       console.error("Delete mutation onError:", error);
@@ -254,7 +255,7 @@ export default function ContractCard({ contract, className }: ContractCardProps)
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
-                      className="bg-red-600 hover:bg-red-700"
+                      className="bg-red-600 hover:bg-red-700 text-white"
                       onClick={handleDelete}
                       disabled={deleteMutation.isPending}
                     >

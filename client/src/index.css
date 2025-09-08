@@ -238,14 +238,18 @@
   }
 }
 
-/* NUCLEAR FIX: Enhanced dialog and modal visibility fixes */
-[data-radix-dialog-overlay] {
-  background: rgba(0, 0, 0, 0.15) !important;
+/* ULTIMATE FIX: Complete dialog overlay override */
+[data-radix-dialog-overlay],
+[data-radix-alert-dialog-overlay] {
+  background: rgba(255, 255, 255, 0.1) !important;
   backdrop-filter: none !important;
+  opacity: 0.3 !important;
 }
 
-.dark [data-radix-dialog-overlay] {
-  background: rgba(0, 0, 0, 0.25) !important;
+.dark [data-radix-dialog-overlay],
+.dark [data-radix-alert-dialog-overlay] {
+  background: rgba(0, 0, 0, 0.1) !important;
+  opacity: 0.4 !important;
 }
 
 [data-radix-dialog-content] {
