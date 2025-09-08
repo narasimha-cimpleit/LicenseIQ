@@ -107,10 +107,22 @@ export class GroqService {
       "summary": "Brief 2-paragraph executive summary focusing on the business deal and key commercial terms",
       "keyTerms": [
         {
-          "type": "Royalty Structure|Payment Terms|Manufacturing Requirements|Technology License|Termination Terms|Financial Obligations|Performance Requirements|Territory & Scope",
+          "type": "Royalty Structure",
           "description": "Plain English explanation of what this means for the business - avoid legal jargon",
           "confidence": 0.95,
           "location": "Specific section reference (e.g., Section 3.1, Article 5, etc.)"
+        },
+        {
+          "type": "Payment Terms",
+          "description": "Plain English explanation of payment schedules and methods",
+          "confidence": 0.90,
+          "location": "Section reference"
+        },
+        {
+          "type": "Manufacturing Requirements",
+          "description": "Production standards and quality requirements",
+          "confidence": 0.88,
+          "location": "Section reference"
         }
       ],
       "riskAnalysis": [
@@ -131,6 +143,8 @@ export class GroqService {
     }
 
     🎯 FOCUS REQUIREMENTS:
+    - Create a SEPARATE keyTerm object for EACH contract section you find
+    - Each keyTerm should have ONE specific type (e.g., "Royalty Structure", "Payment Terms", "Manufacturing Requirements", etc.)
     - Extract SPECIFIC numbers, percentages, dates, and dollar amounts
     - Explain complex legal terms in simple business language
     - Highlight what the user needs to DO or PAY based on this contract
