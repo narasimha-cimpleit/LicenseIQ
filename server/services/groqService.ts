@@ -63,46 +63,58 @@ export class GroqService {
 
   async analyzeContract(contractText: string): Promise<ContractAnalysisResult> {
     const prompt = `
-    You are a professional document analyst. Analyze the following document and provide a comprehensive analysis in valid JSON format.
+    You are a professional contract analyst specializing in extracting key business terms from legal agreements. Analyze the following contract document and focus specifically on the most important sections that business users need to understand.
 
     Document Text:
     ${contractText}
 
-    First, determine what type of document this is (contract, resume, report, agreement, etc.) and analyze it accordingly.
+    Your primary objective is to identify and clearly explain these CRITICAL CONTRACT SECTIONS:
 
-    Please provide your analysis in the following JSON structure:
+    🔍 PRIORITY SECTIONS TO EXTRACT:
+    1. **Royalty Structure & Payment Terms** (Section 3 or similar) - Payment rates, schedules, calculation methods
+    2. **Manufacturing & Quality Requirements** (Section 5 or similar) - Production standards, quality controls
+    3. **Licensed Technology & Patents** (Section 1 or similar) - What technology/IP is being licensed
+    4. **Termination & Post-Termination** (Section 9 or similar) - How/when contract ends, what happens after
+    5. **Financial Obligations** - Any fees, minimum payments, guarantees
+    6. **Performance Requirements** - Delivery timelines, milestones, KPIs
+    7. **Territory & Scope** - Geographic limitations, usage restrictions
+
+    Provide your analysis in this JSON structure:
     {
-      "summary": "A comprehensive summary of the document (2-3 paragraphs)",
+      "summary": "Brief 2-paragraph executive summary focusing on the business deal and key commercial terms",
       "keyTerms": [
         {
-          "type": "Key element category (adapt based on document type)",
-          "description": "Clear description of the key element",
+          "type": "Royalty Structure|Payment Terms|Manufacturing Requirements|Technology License|Termination Terms|Financial Obligations|Performance Requirements|Territory & Scope",
+          "description": "Plain English explanation of what this means for the business - avoid legal jargon",
           "confidence": 0.95,
-          "location": "Section reference where found"
+          "location": "Specific section reference (e.g., Section 3.1, Article 5, etc.)"
         }
       ],
       "riskAnalysis": [
         {
           "level": "high|medium|low",
-          "title": "Analysis point title",
-          "description": "Detailed analysis description"
+          "title": "Business Risk Title",
+          "description": "Clear explanation of potential business impact and what could go wrong"
         }
       ],
       "insights": [
         {
-          "type": "insight|opportunity|alert",
-          "title": "Insight title",
-          "description": "Detailed insight description"
+          "type": "opportunity|alert|requirement",
+          "title": "Key Business Insight",
+          "description": "Actionable business insight or recommendation"
         }
       ],
       "confidence": 0.92
     }
 
-    Analyze based on the document type:
-    - If CONTRACT: Focus on financial terms, clauses, obligations, risks
-    - If RESUME: Focus on skills, experience, qualifications, career progression
-    - If REPORT: Focus on findings, recommendations, data analysis
-    - If OTHER: Focus on main content, key points, structure, purpose
+    🎯 FOCUS REQUIREMENTS:
+    - Extract SPECIFIC numbers, percentages, dates, and dollar amounts
+    - Explain complex legal terms in simple business language
+    - Highlight what the user needs to DO or PAY based on this contract
+    - Identify potential business risks and opportunities
+    - If sections are missing, note "Not specified in this document"
+
+    Make this analysis actionable for business decision-makers who need to understand the deal quickly without reading legal text.
 
     Return only valid JSON, no additional text.
     `;
