@@ -42,10 +42,27 @@ export default function ContractCard({ contract, className }: ContractCardProps)
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("DELETE", `/api/contracts/${contract.id}`);
-      return response.json();
+      console.log("Attempting to delete contract:", contract.id);
+      try {
+        const response = await apiRequest("DELETE", `/api/contracts/${contract.id}`);
+        console.log("Delete response status:", response.status);
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Delete failed with error:", errorData);
+          throw new Error(errorData.message || "Failed to delete contract");
+        }
+        
+        const result = await response.json();
+        console.log("Delete successful:", result);
+        return result;
+      } catch (error) {
+        console.error("Delete mutation error:", error);
+        throw error;
+      }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Delete mutation success:", data);
       toast({
         title: "Contract Deleted",
         description: "The contract has been permanently deleted.",
@@ -54,9 +71,10 @@ export default function ContractCard({ contract, className }: ContractCardProps)
       queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
     },
     onError: (error: Error) => {
+      console.error("Delete mutation onError:", error);
       toast({
-        title: "Delete Failed",
-        description: error.message,
+        title: "Delete Failed", 
+        description: error.message || "An unknown error occurred",
         variant: "destructive",
       });
     },
@@ -68,6 +86,7 @@ export default function ContractCard({ contract, className }: ContractCardProps)
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
+    console.log("Delete button clicked for contract:", contract.id);
     deleteMutation.mutate();
   };
 

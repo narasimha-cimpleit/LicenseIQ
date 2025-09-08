@@ -238,14 +238,14 @@
   }
 }
 
-/* Enhanced dialog and modal visibility fixes */
+/* NUCLEAR FIX: Enhanced dialog and modal visibility fixes */
 [data-radix-dialog-overlay] {
-  background: rgba(0, 0, 0, 0.3) !important;
-  backdrop-filter: blur(1px) !important;
+  background: rgba(0, 0, 0, 0.15) !important;
+  backdrop-filter: none !important;
 }
 
 .dark [data-radix-dialog-overlay] {
-  background: rgba(0, 0, 0, 0.4) !important;
+  background: rgba(0, 0, 0, 0.25) !important;
 }
 
 [data-radix-dialog-content] {
