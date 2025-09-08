@@ -105,10 +105,16 @@ export class FileService {
       }
       
       if (mimeType === 'application/pdf') {
-        const pdfParse = (await import('pdf-parse')).default;
-        const buffer = await fs.readFile(filePath);
-        const pdfData = await pdfParse(buffer);
-        return pdfData.text;
+        try {
+          const buffer = await fs.readFile(filePath);
+          const pdfParse = require('pdf-parse');
+          const pdfData = await pdfParse(buffer);
+          console.log('PDF text extracted successfully:', pdfData.text.substring(0, 200) + '...');
+          return pdfData.text;
+        } catch (pdfError) {
+          console.error('PDF parsing error:', pdfError);
+          throw new Error('Failed to extract text from PDF');
+        }
       }
       
       if (mimeType.includes('word')) {
