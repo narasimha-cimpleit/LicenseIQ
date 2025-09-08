@@ -114,16 +114,16 @@ export default function ContractCard({ contract, className }: ContractCardProps)
   };
 
   return (
-    <Card className={cn("card-hover cursor-pointer", className)} onClick={handleView}>
+    <Card className={cn("card-hover cursor-pointer relative", className)} onClick={handleView}>
       <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start space-x-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start space-x-3 flex-1 min-w-0 overflow-hidden">
             {getFileIcon()}
-            <div className="flex-1 min-w-0">
-              <h3 className="font-medium text-foreground truncate" title={contract.originalName}>
+            <div className="flex-1 min-w-0 overflow-hidden">
+              <h3 className="font-medium text-foreground text-sm leading-tight mb-1 break-words" title={contract.originalName}>
                 {contract.originalName}
               </h3>
-              <p className="text-sm text-muted-foreground capitalize">
+              <p className="text-xs text-muted-foreground capitalize">
                 {contract.contractType || 'Unknown type'}
               </p>
             </div>
