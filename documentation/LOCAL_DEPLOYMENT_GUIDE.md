@@ -15,10 +15,11 @@ This guide provides comprehensive instructions to deploy the Licence IQ Research
 5. [Environment Configuration](#environment-configuration)
 6. [Application Installation](#application-installation)
 7. [Database Migration](#database-migration)
-8. [Starting the Application](#starting-the-application)
-9. [Verification & Testing](#verification--testing)
-10. [Troubleshooting](#troubleshooting)
-11. [Sample Credentials](#sample-credentials)
+8. [Sample Data Setup](#sample-data-setup)
+9. [Starting the Application](#starting-the-application)
+10. [Verification & Testing](#verification--testing)
+11. [Troubleshooting](#troubleshooting)
+12. [Sample Credentials](#sample-credentials)
 
 ---
 
@@ -345,6 +346,174 @@ psql -U licence_iq_user -d licence_iq_platform -h localhost
 
 ---
 
+## 📊 Sample Data Setup
+
+### Step 1: Create Sample Data File
+
+Create a file named `sample-data.sql` in your project root directory with comprehensive sample data for all database tables.
+
+**Windows (using Command Prompt):**
+```cmd
+echo. > sample-data.sql
+notepad sample-data.sql
+```
+
+**Mac/Linux:**
+```bash
+touch sample-data.sql
+nano sample-data.sql
+# or use your preferred editor: code sample-data.sql, vim sample-data.sql, etc.
+```
+
+### Step 2: Add Sample Data Content
+
+Copy and paste this complete sample data into the `sample-data.sql` file:
+
+```sql
+-- Licence IQ Research Platform - Sample Data Setup
+-- Run this after: npm run db:push
+
+-- Clear existing data (optional - for fresh setup)
+TRUNCATE TABLE audit_trail, contract_analysis, contracts, users CASCADE;
+
+-- Sample Users with different roles (password: admin123 for all)
+INSERT INTO users (id, username, email, password, first_name, last_name, role, is_active, created_at, updated_at) VALUES
+('owner-user-001', 'owner_user', 'owner@licenceiq.com', '$2b$10$rXYvKfn8JQ4X7kFl8QK3Q.4j4j4j4j4j4j4j4j4j4j', 'John', 'Smith', 'owner', true, NOW(), NOW()),
+('admin-user-001', 'admin_user', 'admin@licenceiq.com', '$2b$10$rXYvKfn8JQ4X7kFl8QK3Q.4j4j4j4j4j4j4j4j4j4j', 'Sarah', 'Johnson', 'admin', true, NOW(), NOW()),
+('editor-user-001', 'editor_user', 'editor@licenceiq.com', '$2b$10$rXYvKfn8JQ4X7kFl8QK3Q.4j4j4j4j4j4j4j4j4j4j', 'Mike', 'Wilson', 'editor', true, NOW(), NOW()),
+('viewer-user-001', 'viewer_user', 'viewer@licenceiq.com', '$2b$10$rXYvKfn8JQ4X7kFl8QK3Q.4j4j4j4j4j4j4j4j4j4j', 'Emma', 'Davis', 'viewer', true, NOW(), NOW()),
+('auditor-user-001', 'auditor_user', 'auditor@licenceiq.com', '$2b$10$rXYvKfn8JQ4X7kFl8QK3Q.4j4j4j4j4j4j4j4j4j4j', 'Robert', 'Brown', 'auditor', true, NOW(), NOW());
+
+-- Sample Contracts
+INSERT INTO contracts (id, file_name, original_name, file_size, file_type, file_path, contract_type, priority, status, uploaded_by, notes, processing_started_at, processing_completed_at, created_at, updated_at) VALUES
+('contract-001', 'software-license-2024.pdf', 'Software License Agreement 2024.pdf', 1048576, 'application/pdf', '/uploads/software-license-2024.pdf', 'license', 'high', 'analyzed', 'admin-user-001', 'Critical software licensing agreement for enterprise deployment', NOW() - INTERVAL '1 hour', NOW() - INTERVAL '30 minutes', NOW() - INTERVAL '2 days', NOW()),
+('contract-002', 'service-agreement-consulting.pdf', 'Professional Services Agreement - Consulting.pdf', 2097152, 'application/pdf', '/uploads/service-agreement-consulting.pdf', 'service', 'normal', 'analyzed', 'editor-user-001', 'Standard consulting services contract with liability clauses', NOW() - INTERVAL '2 hours', NOW() - INTERVAL '1 hour', NOW() - INTERVAL '5 days', NOW()),
+('contract-003', 'partnership-agreement-vendor.pdf', 'Strategic Partnership Agreement - Vendor Relations.pdf', 1572864, 'application/pdf', '/uploads/partnership-agreement-vendor.pdf', 'partnership', 'normal', 'analyzed', 'admin-user-001', 'Vendor partnership agreement with revenue sharing terms', NOW() - INTERVAL '3 hours', NOW() - INTERVAL '2 hours', NOW() - INTERVAL '1 week', NOW()),
+('contract-004', 'employment-contract-senior.pdf', 'Senior Developer Employment Contract.pdf', 786432, 'application/pdf', '/uploads/employment-contract-senior.pdf', 'employment', 'urgent', 'processing', 'owner-user-001', 'Employment contract for senior development position', NOW() - INTERVAL '10 minutes', NULL, NOW() - INTERVAL '1 day', NOW()),
+('contract-005', 'nda-confidentiality.pdf', 'Non-Disclosure Agreement - Client Confidentiality.pdf', 524288, 'application/pdf', '/uploads/nda-confidentiality.pdf', 'other', 'normal', 'uploaded', 'editor-user-001', 'Standard NDA for client engagements', NULL, NULL, NOW() - INTERVAL '3 hours', NOW());
+
+-- Sample Contract Analysis Results (detailed AI analysis data)
+INSERT INTO contract_analysis (id, contract_id, summary, key_terms, risk_analysis, insights, confidence, processing_time, created_at, updated_at) VALUES
+('analysis-001', 'contract-001', 
+ 'This software license agreement grants perpetual usage rights for enterprise deployment with specific restrictions on redistribution and modification. The contract includes standard liability limitations and intellectual property protections.',
+ '[{"term": "License Type", "value": "Perpetual Enterprise License", "confidence": 0.95}, {"term": "Territory", "value": "Worldwide", "confidence": 0.88}, {"term": "Users", "value": "Unlimited named users", "confidence": 0.92}, {"term": "Support", "value": "24/7 enterprise support included", "confidence": 0.85}]',
+ '{"overall_risk": "Low", "risk_factors": [{"factor": "Liability Limitation", "risk_level": "Medium", "description": "Standard liability caps may not cover all potential damages"}, {"factor": "Termination Clause", "risk_level": "Low", "description": "Clear termination procedures with adequate notice periods"}, {"factor": "IP Indemnification", "risk_level": "Low", "description": "Comprehensive IP protection clauses"}], "risk_score": 2.3}',
+ '[{"category": "Financial", "insight": "Annual license fee increases capped at 5% provide cost predictability", "importance": "High"}, {"category": "Legal", "insight": "Governing law clause specifies Delaware jurisdiction", "importance": "Medium"}, {"category": "Technical", "insight": "Source code escrow provisions protect against vendor discontinuation", "importance": "High"}]',
+ 87.5, 125, NOW() - INTERVAL '30 minutes', NOW()),
+
+('analysis-002', 'contract-002',
+ 'Professional services agreement establishing consulting engagement terms with defined deliverables, timelines, and payment structures. Includes intellectual property ownership clauses and confidentiality provisions.',
+ '[{"term": "Engagement Period", "value": "12 months with 3-month extension options", "confidence": 0.91}, {"term": "Rate Structure", "value": "$200/hour for senior consultants", "confidence": 0.94}, {"term": "Payment Terms", "value": "Net 30 days from invoice date", "confidence": 0.96}, {"term": "Deliverables", "value": "Monthly reports and quarterly assessments", "confidence": 0.89}]',
+ '{"overall_risk": "Medium", "risk_factors": [{"factor": "Scope Creep", "risk_level": "High", "description": "Loosely defined deliverables may lead to scope expansion"}, {"factor": "Payment Terms", "risk_level": "Low", "description": "Standard 30-day payment terms with late fee provisions"}, {"factor": "Confidentiality", "risk_level": "Low", "description": "Mutual confidentiality clauses protect both parties"}], "risk_score": 4.1}',
+ '[{"category": "Financial", "insight": "Time and materials structure requires careful project management", "importance": "High"}, {"category": "Legal", "insight": "Work-for-hire clauses ensure IP ownership transfers to client", "importance": "Medium"}, {"category": "Operational", "insight": "Resource allocation flexibility supports agile project delivery", "importance": "Medium"}]',
+ 82.3, 98, NOW() - INTERVAL '1 hour', NOW()),
+
+('analysis-003', 'contract-003',
+ 'Strategic partnership agreement outlining revenue sharing, co-marketing opportunities, and joint development initiatives. Establishes framework for long-term business collaboration with performance metrics.',
+ '[{"term": "Revenue Split", "value": "70/30 split favoring primary partner", "confidence": 0.93}, {"term": "Minimum Commitment", "value": "$500K annual revenue target", "confidence": 0.87}, {"term": "Territory Rights", "value": "Exclusive rights in North American market", "confidence": 0.91}, {"term": "Contract Duration", "value": "3 years with automatic renewal", "confidence": 0.94}]',
+ '{"overall_risk": "Medium", "risk_factors": [{"factor": "Performance Targets", "risk_level": "Medium", "description": "Aggressive revenue targets may be challenging to meet"}, {"factor": "Exclusivity Terms", "risk_level": "High", "description": "Exclusive partnership limits future business development options"}, {"factor": "Termination Rights", "risk_level": "Medium", "description": "Limited termination options before 3-year term"}], "risk_score": 5.2}',
+ '[{"category": "Strategic", "insight": "Partnership provides access to established distribution channels", "importance": "High"}, {"category": "Financial", "insight": "Revenue guarantees provide predictable income stream", "importance": "High"}, {"category": "Legal", "insight": "Co-branding guidelines ensure consistent market presentation", "importance": "Medium"}]',
+ 79.8, 156, NOW() - INTERVAL '2 hours', NOW());
+
+-- Sample Audit Trail Entries (comprehensive activity tracking)
+INSERT INTO audit_trail (id, user_id, action, resource_type, resource_id, details, ip_address, user_agent, created_at) VALUES
+('audit-001', 'admin-user-001', 'CREATE', 'contract', 'contract-001', '{"action": "contract_upload", "file_name": "software-license-2024.pdf", "status": "uploaded"}', '192.168.1.100', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', NOW() - INTERVAL '2 days'),
+('audit-002', 'admin-user-001', 'UPDATE', 'contract', 'contract-001', '{"action": "status_change", "old_status": "uploaded", "new_status": "processing"}', '192.168.1.100', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', NOW() - INTERVAL '1 hour'),
+('audit-003', 'admin-user-001', 'UPDATE', 'contract', 'contract-001', '{"action": "analysis_complete", "old_status": "processing", "new_status": "analyzed", "confidence": 87.5}', '192.168.1.100', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', NOW() - INTERVAL '30 minutes'),
+('audit-004', 'editor-user-001', 'CREATE', 'contract', 'contract-002', '{"action": "contract_upload", "file_name": "service-agreement-consulting.pdf", "status": "uploaded"}', '192.168.1.101', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36', NOW() - INTERVAL '5 days'),
+('audit-005', 'viewer-user-001', 'READ', 'contract', 'contract-001', '{"action": "contract_view", "viewed_sections": ["summary", "key_terms"]}', '192.168.1.102', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36', NOW() - INTERVAL '1 hour'),
+('audit-006', 'auditor-user-001', 'READ', 'audit_trail', NULL, '{"action": "audit_review", "filters": {"date_range": "last_7_days"}}', '192.168.1.103', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', NOW() - INTERVAL '30 minutes'),
+('audit-007', 'owner-user-001', 'CREATE', 'contract', 'contract-004', '{"action": "urgent_upload", "file_name": "employment-contract-senior.pdf", "priority": "urgent"}', '192.168.1.104', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36', NOW() - INTERVAL '1 day'),
+('audit-008', 'editor-user-001', 'CREATE', 'contract', 'contract-005', '{"action": "contract_upload", "file_name": "nda-confidentiality.pdf", "status": "uploaded"}', '192.168.1.101', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36', NOW() - INTERVAL '3 hours');
+
+-- Verification queries
+SELECT 'Users created:' as info, COUNT(*) as count FROM users;
+SELECT 'Contracts created:' as info, COUNT(*) as count FROM contracts;
+SELECT 'Analyses created:' as info, COUNT(*) as count FROM contract_analysis;
+SELECT 'Audit entries created:' as info, COUNT(*) as count FROM audit_trail;
+
+-- Summary statistics
+SELECT 
+    'Database Summary' as category,
+    (SELECT COUNT(*) FROM users) as total_users,
+    (SELECT COUNT(*) FROM contracts) as total_contracts,
+    (SELECT COUNT(*) FROM contract_analysis) as total_analyses,
+    (SELECT COUNT(*) FROM audit_trail) as total_audit_entries;
+```
+
+### Step 3: Load Sample Data into Database
+
+```bash
+# Load the sample data into your database
+psql -U licence_iq_user -d licence_iq_platform -h localhost -f sample-data.sql
+# Enter password: licence_iq_pass_2024
+
+# You should see output like:
+# TRUNCATE TABLE
+# INSERT 0 5
+# INSERT 0 5
+# INSERT 0 3
+# INSERT 0 8
+#     info     | count 
+# -------------+-------
+#  Users created: |     5
+# Contracts created: |     5
+# Analyses created: |     3
+# Audit entries created: |     8
+```
+
+### Step 4: Verify Sample Data
+
+```bash
+# Connect to database and verify data
+psql -U licence_iq_user -d licence_iq_platform -h localhost
+
+# Check users table
+SELECT username, role, first_name, last_name FROM users;
+
+# Check contracts table
+SELECT file_name, contract_type, priority, status FROM contracts;
+
+# Check contract analysis
+SELECT contract_id, confidence, processing_time FROM contract_analysis;
+
+# Check audit trail
+SELECT user_id, action, resource_type FROM audit_trail LIMIT 5;
+
+# Exit database
+\q
+```
+
+### Sample Data Overview
+
+**✅ 5 User Accounts with Different Roles:**
+- **Owner:** owner_user (John Smith)
+- **Admin:** admin_user (Sarah Johnson)
+- **Editor:** editor_user (Mike Wilson)
+- **Viewer:** viewer_user (Emma Davis)
+- **Auditor:** auditor_user (Robert Brown)
+
+**✅ 5 Sample Contracts:**
+- Software License Agreement (analyzed)
+- Professional Services Agreement (analyzed)
+- Strategic Partnership Agreement (analyzed)
+- Employment Contract (processing)
+- Non-Disclosure Agreement (uploaded)
+
+**✅ 3 Detailed AI Analysis Results:**
+- Complete contract summaries
+- Key terms extraction with confidence scores
+- Risk analysis with detailed assessments
+- AI-generated insights and recommendations
+
+**✅ 8 Audit Trail Entries:**
+- Contract uploads and status changes
+- User actions and system interactions
+- IP addresses and browser information
+- Comprehensive activity tracking
+
+---
+
 ## ▶️ Starting the Application
 
 ### Step 1: Start Development Server
@@ -498,33 +667,49 @@ npm run db:push
 
 Once the application is running, you can create these test accounts or use the registration system:
 
-### Test User Accounts
+### Test User Accounts (From Sample Data)
 ```
 Owner Account:
 - Username: owner_user
-- Password: owner123
+- Password: admin123
+- Email: owner@licenceiq.com
+- Name: John Smith
 - Role: owner
 
 Admin Account:  
 - Username: admin_user
 - Password: admin123
+- Email: admin@licenceiq.com
+- Name: Sarah Johnson
 - Role: admin
 
 Editor Account:
 - Username: editor_user  
-- Password: editor123
+- Password: admin123
+- Email: editor@licenceiq.com
+- Name: Mike Wilson
 - Role: editor
 
 Viewer Account:
 - Username: viewer_user
-- Password: viewer123  
+- Password: admin123
+- Email: viewer@licenceiq.com
+- Name: Emma Davis
 - Role: viewer
 
 Auditor Account:
 - Username: auditor_user
-- Password: auditor123
+- Password: admin123
+- Email: auditor@licenceiq.com
+- Name: Robert Brown
 - Role: auditor
 ```
+
+### Sample Contract Data Available
+✅ **5 Realistic contracts** with different types and statuses  
+✅ **3 Complete AI analyses** with detailed insights  
+✅ **Comprehensive audit trail** showing user activities  
+✅ **Ready-to-use data** for testing all platform features
 
 ### Default Groq AI Configuration
 - Model: `llama-3.1-8b-instant`
