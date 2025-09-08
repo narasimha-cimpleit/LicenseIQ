@@ -139,17 +139,20 @@
     z-index: 1100 !important;
   }
   
-  /* Remove excessive z-index overrides */
+  /* Remove excessive z-index overrides but preserve toast z-index */
   .relative.z-\[8000\],
   .z-\[8000\],
-  .z-\[9000\],
-  .z-\[9999\] {
+  .z-\[9000\] {
     z-index: 999 !important;
   }
   
-  /* Toast notifications should be highest but reasonable */
-  .z-\[10000\] {
-    z-index: 100 !important;
+  /* Toast notifications should be highest - preserve their high z-index */
+  [data-radix-toast-viewport] {
+    z-index: 9999 !important;
+  }
+  
+  [data-radix-toast] {
+    z-index: 9999 !important;
   }
   
   /* Completely remove any stacking context from table elements */
