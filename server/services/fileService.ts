@@ -105,9 +105,10 @@ export class FileService {
       }
       
       if (mimeType === 'application/pdf') {
-        // For PDF extraction, you would typically use a library like pdf-parse
-        // For now, return a placeholder
-        return 'PDF text extraction would be implemented here with a library like pdf-parse';
+        const pdfParse = (await import('pdf-parse')).default;
+        const buffer = await fs.readFile(filePath);
+        const pdfData = await pdfParse(buffer);
+        return pdfData.text;
       }
       
       if (mimeType.includes('word')) {
