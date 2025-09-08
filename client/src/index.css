@@ -118,7 +118,7 @@
 }
 
 @layer utilities {
-  /* Nuclear option: Force ALL potential overlay elements to highest z-index */
+  /* Proper z-index stacking for overlay elements */
   [data-radix-portal],
   [data-radix-popper-content-wrapper],
   [data-radix-select-content],
@@ -130,15 +130,26 @@
   [data-radix-menubar-content],
   [role="listbox"],
   [role="menu"],
-  [role="dialog"],
-  [data-state="open"][data-side],
+  [data-state="open"][data-side] {
+    z-index: 1000 !important;
+  }
+  
+  /* Dialog elements should be higher than other overlays */
+  [role="dialog"] {
+    z-index: 1100 !important;
+  }
+  
+  /* Remove excessive z-index overrides */
   .relative.z-\[8000\],
   .z-\[8000\],
   .z-\[9000\],
-  .z-\[9999\],
+  .z-\[9999\] {
+    z-index: 999 !important;
+  }
+  
+  /* Toast notifications should be highest but reasonable */
   .z-\[10000\] {
-    z-index: 2147483647 !important;
-    position: fixed !important;
+    z-index: 100 !important;
   }
   
   /* Completely remove any stacking context from table elements */
@@ -164,35 +175,57 @@
     opacity: 1 !important;
   }
   
-  /* Force portal elements to use maximum z-index */
+  /* Portal elements with proper z-index */
   body > div[data-radix-portal],
   body > div > div[data-radix-select-content],
   body > div > div[role="listbox"] {
-    z-index: 2147483647 !important;
+    z-index: 1000 !important;
     position: fixed !important;
   }
   
-  /* Override Tailwind z-index classes */
-  .z-50,
-  .z-40,
-  .z-30,
-  .z-20,
-  .z-10 {
-    z-index: 2147483647 !important;
+  /* Override Tailwind z-index classes with reasonable values */
+  .z-50 {
+    z-index: 50 !important;
   }
   
-  /* Fix dialog positioning */
+  .z-40 {
+    z-index: 40 !important;
+  }
+  
+  .z-30 {
+    z-index: 30 !important;
+  }
+  
+  .z-20 {
+    z-index: 20 !important;
+  }
+  
+  .z-10 {
+    z-index: 10 !important;
+  }
+  
+  /* Fix dialog positioning with reasonable z-index */
   [data-radix-dialog-overlay] {
-    z-index: 2147483646 !important;
+    z-index: 1099 !important;
   }
   
   [data-radix-dialog-content] {
-    z-index: 2147483647 !important;
+    z-index: 1100 !important;
   }
   
-  /* Fix toast positioning to be even higher */
+  /* Fix toast positioning - should be visible but not cover everything */
   [data-radix-toast-viewport] {
-    z-index: 2147483647 !important;
+    z-index: 100 !important;
+    position: fixed !important;
+    top: 1rem !important;
+    right: 1rem !important;
+    max-width: 420px !important;
+    pointer-events: none !important;
+  }
+  
+  /* Toast items should allow pointer events */
+  [data-radix-toast-root] {
+    pointer-events: auto !important;
   }
 }
 
