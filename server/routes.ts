@@ -762,20 +762,38 @@ async function processContractAsync(contractId: string): Promise<void> {
       throw new Error('Contract not found');
     }
 
+    console.log('🚀 [CONTRACT-PROCESS] Starting contract processing for ID:', contractId);
+    console.log('🚀 [CONTRACT-PROCESS] Contract details:', {
+      fileName: contract.fileName,
+      originalName: contract.originalName,
+      fileType: contract.fileType,
+      filePath: contract.filePath,
+      fileSize: contract.fileSize
+    });
+    
     // Extract text from file
+    console.log('🚀 [CONTRACT-PROCESS] Calling text extraction...');
     const text = await fileService.extractTextFromFile(contract.filePath, contract.fileType);
     
-    // DEBUG: Log what text is being sent to AI
-    console.log('=== DEBUG: Text being sent to AI ===');
-    console.log('Text length:', text.length);
-    console.log('First 300 characters:');
-    console.log(text.substring(0, 300));
-    console.log('Last 300 characters:');
-    console.log(text.substring(Math.max(0, text.length - 300)));
-    console.log('=== END DEBUG ===');
+    console.log('🚀 [CONTRACT-PROCESS] ═══ TEXT EXTRACTION RESULT ═══');
+    console.log('🚀 [CONTRACT-PROCESS] Extracted text length:', text.length);
+    console.log('🚀 [CONTRACT-PROCESS] Text type:', typeof text);
+    console.log('🚀 [CONTRACT-PROCESS] First 400 characters:');
+    console.log(text.substring(0, 400));
+    console.log('🚀 [CONTRACT-PROCESS] Last 200 characters:');
+    console.log(text.substring(Math.max(0, text.length - 200)));
+    console.log('🚀 [CONTRACT-PROCESS] ═══ END EXTRACTION RESULT ═══');
     
     // Analyze with Groq
+    console.log('🤖 [CONTRACT-PROCESS] Sending text to AI analysis...');
     const analysis = await groqService.analyzeContract(text);
+    console.log('🤖 [CONTRACT-PROCESS] AI analysis completed:', {
+      summaryLength: analysis.summary.length,
+      keyTermsCount: analysis.keyTerms.length,
+      riskAnalysisCount: analysis.riskAnalysis.length,
+      insightsCount: analysis.insights.length,
+      confidence: analysis.confidence
+    });
     
     // Save analysis
     const analysisData = {
