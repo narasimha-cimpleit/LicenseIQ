@@ -107,17 +107,42 @@ export class FileService {
       if (mimeType === 'application/pdf') {
         try {
           const buffer = await fs.readFile(filePath);
-          // Use createRequire for ES modules
-          const { createRequire } = await import('module');
-          const require = createRequire(import.meta.url);
-          const pdfParse = require('pdf-parse');
+          
+          // Universal PDF parsing - works in any environment
+          let pdfParse;
+          try {
+            // Try dynamic import first (works in ES modules)
+            pdfParse = (await import('pdf-parse')).default;
+          } catch {
+            try {
+              // Fallback to require (works in CommonJS and mixed environments)
+              pdfParse = require('pdf-parse');
+            } catch {
+              throw new Error('pdf-parse library not found. Please install: npm install pdf-parse');
+            }
+          }
+          
           const pdfData = await pdfParse(buffer);
-          console.log('PDF text extracted successfully, length:', pdfData.text.length);
-          console.log('First 200 chars:', pdfData.text.substring(0, 200) + '...');
-          return pdfData.text;
+          
+          // Validate extraction result
+          if (!pdfData || typeof pdfData.text !== 'string') {
+            throw new Error('Invalid PDF parsing result');
+          }
+          
+          const extractedText = pdfData.text.trim();
+          
+          // Ensure we extracted actual content, not just metadata
+          if (extractedText.length < 10) {
+            throw new Error('PDF appears to be empty or contains no extractable text');
+          }
+          
+          console.log('PDF text extracted successfully, length:', extractedText.length);
+          console.log('First 200 chars:', extractedText.substring(0, 200) + '...');
+          
+          return extractedText;
         } catch (pdfError) {
           console.error('PDF parsing error:', pdfError);
-          throw new Error('Failed to extract text from PDF');
+          throw new Error(`Failed to extract text from PDF: ${pdfError.message}`);
         }
       }
       
@@ -129,7 +154,7 @@ export class FileService {
       return 'Text extraction not supported for this file type';
     } catch (error) {
       console.error('Error extracting text from file:', error);
-      throw new Error('Failed to extract text from file');
+      throw new Error(`Failed to extract text from file: ${error.message}`);
     }
   }
 
