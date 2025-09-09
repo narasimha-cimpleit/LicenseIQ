@@ -94,40 +94,40 @@ Story points consider:
 **Acceptance Criteria:** Complete React frontend with authentication system and responsive design
 
 **Tasks:**
-- **LICIQ-101** Setup React + TypeScript project structure | **Estimate:** 3h | **Assignee:** Frontend Dev | **Due:** Sep 9
-- **LICIQ-102** Implement authentication pages and components | **Estimate:** 4h | **Assignee:** Frontend Dev | **Due:** Sep 10
-- **LICIQ-103** Build responsive layout with TailwindCSS | **Estimate:** 4h | **Assignee:** Frontend Dev | **Due:** Sep 11
-- **LICIQ-104** Implement dashboard and navigation structure | **Estimate:** 3h | **Assignee:** Frontend Dev | **Due:** Sep 12
-- **LICIQ-105** Setup state management with TanStack Query | **Estimate:** 1h | **Assignee:** Frontend Dev | **Due:** Sep 12
+- **LICIQ-101** Setup React + TypeScript project structure | **Estimate:** 3h | **Story Points:** 1 | **Assignee:** Frontend Dev | **Due:** Sep 9
+- **LICIQ-102** Implement authentication pages and components | **Estimate:** 4h | **Story Points:** 1 | **Assignee:** Frontend Dev | **Due:** Sep 10
+- **LICIQ-103** Build responsive layout with TailwindCSS | **Estimate:** 4h | **Story Points:** 1 | **Assignee:** Frontend Dev | **Due:** Sep 11
+- **LICIQ-104** Implement dashboard and navigation structure | **Estimate:** 3h | **Story Points:** 1 | **Assignee:** Frontend Dev | **Due:** Sep 12
+- **LICIQ-105** Setup state management with TanStack Query | **Estimate:** 1h | **Story Points:** 1 | **Assignee:** Frontend Dev | **Due:** Sep 12
 
 #### **User Story 1.2: Backend API Development & Database Setup**
 **Story Points:** 7 | **Priority:** Critical  
 **Acceptance Criteria:** Functional Express.js API with PostgreSQL database and authentication
 
 **Tasks:**
-- **LICIQ-106** Setup Express.js + TypeScript server structure | **Estimate:** 3h | **Assignee:** Backend Dev | **Due:** Sep 9
-- **LICIQ-107** Implement authentication endpoints with sessions | **Estimate:** 4h | **Assignee:** Backend Dev | **Due:** Sep 10
-- **LICIQ-108** Setup PostgreSQL database with Drizzle ORM | **Estimate:** 6h | **Assignee:** Backend Dev | **Due:** Sep 11
-- **LICIQ-109** Create user management and RBAC system | **Estimate:** 4h | **Assignee:** Backend Dev | **Due:** Sep 12
-- **LICIQ-110** Implement audit logging middleware | **Estimate:** 3h | **Assignee:** Backend Dev | **Due:** Sep 13
+- **LICIQ-106** Setup Express.js + TypeScript server structure | **Estimate:** 3h | **Story Points:** 1 | **Assignee:** Backend Dev | **Due:** Sep 9
+- **LICIQ-107** Implement authentication endpoints with sessions | **Estimate:** 4h | **Story Points:** 1 | **Assignee:** Backend Dev | **Due:** Sep 10
+- **LICIQ-108** Setup PostgreSQL database with Drizzle ORM | **Estimate:** 6h | **Story Points:** 2 | **Assignee:** Backend Dev | **Due:** Sep 11
+- **LICIQ-109** Create user management and RBAC system | **Estimate:** 4h | **Story Points:** 1 | **Assignee:** Backend Dev | **Due:** Sep 12
+- **LICIQ-110** Implement audit logging middleware | **Estimate:** 3h | **Story Points:** 1 | **Assignee:** Backend Dev | **Due:** Sep 13
 
 #### **User Story 1.3: File Upload & Contract Management System**
 **Story Points:** 6 | **Priority:** High  
 **Acceptance Criteria:** Complete file upload system with contract storage and management
 
 **Tasks:**
-- **LICIQ-111** Implement file upload with Multer middleware | **Estimate:** 4h | **Assignee:** Backend Dev | **Due:** Sep 13
-- **LICIQ-112** Create contract storage and validation system | **Estimate:** 6h | **Assignee:** Backend Dev | **Due:** Sep 14
-- **LICIQ-113** Build contract management UI components | **Estimate:** 4h | **Assignee:** Frontend Dev | **Due:** Sep 14
-- **LICIQ-114** Implement file type validation and security | **Estimate:** 3h | **Assignee:** Backend Dev | **Due:** Sep 14
+- **LICIQ-111** Implement file upload with Multer middleware | **Estimate:** 4h | **Story Points:** 1 | **Assignee:** Backend Dev | **Due:** Sep 13
+- **LICIQ-112** Create contract storage and validation system | **Estimate:** 6h | **Story Points:** 2 | **Assignee:** Backend Dev | **Due:** Sep 14
+- **LICIQ-113** Build contract management UI components | **Estimate:** 4h | **Story Points:** 1 | **Assignee:** Frontend Dev | **Due:** Sep 14
+- **LICIQ-114** Implement file type validation and security | **Estimate:** 3h | **Story Points:** 1 | **Assignee:** Backend Dev | **Due:** Sep 14
 
 #### **User Story 1.4: Basic Testing Framework Setup**
 **Story Points:** 2 | **Priority:** High  
 **Acceptance Criteria:** Basic testing framework setup for quality assurance
 
 **Tasks:**
-- **LICIQ-115** Setup basic unit testing framework | **Estimate:** 3h | **Assignee:** Frontend Dev | **Due:** Sep 13
-- **LICIQ-116** Configure basic API testing setup | **Estimate:** 2h | **Assignee:** Backend Dev | **Due:** Sep 14
+- **LICIQ-115** Setup basic unit testing framework | **Estimate:** 3h | **Story Points:** 1 | **Assignee:** Frontend Dev | **Due:** Sep 13
+- **LICIQ-116** Configure basic API testing setup | **Estimate:** 2h | **Story Points:** 1 | **Assignee:** Backend Dev | **Due:** Sep 14
 
 ---
 
@@ -143,21 +143,21 @@ Story points consider:
 **Acceptance Criteria:** Complete Groq AI integration with contract analysis capabilities
 
 **Tasks:**
-- **LICIQ-201** Setup Groq API integration service | **Estimate:** 4h | **Assignee:** Backend Dev | **Due:** Sep 16
-- **LICIQ-202** Implement PDF/DOCX text extraction | **Estimate:** 6h | **Assignee:** Backend Dev | **Due:** Sep 17
-- **LICIQ-203** Build contract analysis pipeline | **Estimate:** 8h | **Assignee:** Backend Dev | **Due:** Sep 18
-- **LICIQ-204** Create analysis result storage system | **Estimate:** 4h | **Assignee:** Backend Dev | **Due:** Sep 19
-- **LICIQ-205** Build contract analysis UI components | **Estimate:** 6h | **Assignee:** Frontend Dev | **Due:** Sep 20
+- **LICIQ-201** Setup Groq API integration service | **Estimate:** 4h | **Story Points:** 1 | **Assignee:** Backend Dev | **Due:** Sep 16
+- **LICIQ-202** Implement PDF/DOCX text extraction | **Estimate:** 6h | **Story Points:** 2 | **Assignee:** Backend Dev | **Due:** Sep 17
+- **LICIQ-203** Build contract analysis pipeline | **Estimate:** 8h | **Story Points:** 3 | **Assignee:** Backend Dev | **Due:** Sep 18
+- **LICIQ-204** Create analysis result storage system | **Estimate:** 4h | **Story Points:** 1 | **Assignee:** Backend Dev | **Due:** Sep 19
+- **LICIQ-205** Build contract analysis UI components | **Estimate:** 6h | **Story Points:** 2 | **Assignee:** Frontend Dev | **Due:** Sep 20
 
 #### **User Story 1.6: Analytics Dashboard & User Management**
 **Story Points:** 6 | **Priority:** High  
 **Acceptance Criteria:** Complete analytics dashboard with user management functionality
 
 **Tasks:**
-- **LICIQ-206** Build analytics data aggregation service | **Estimate:** 3h | **Assignee:** Backend Dev | **Due:** Sep 16
-- **LICIQ-207** Create dashboard UI with metrics display | **Estimate:** 4h | **Assignee:** Frontend Dev | **Due:** Sep 17
-- **LICIQ-208** Implement user management interface | **Estimate:** 6h | **Assignee:** Frontend Dev | **Due:** Sep 19
-- **LICIQ-209** Add role-based permission controls | **Estimate:** 5h | **Assignee:** Backend Dev | **Due:** Sep 21
+- **LICIQ-206** Build analytics data aggregation service | **Estimate:** 3h | **Story Points:** 1 | **Assignee:** Backend Dev | **Due:** Sep 16
+- **LICIQ-207** Create dashboard UI with metrics display | **Estimate:** 4h | **Story Points:** 1 | **Assignee:** Frontend Dev | **Due:** Sep 17
+- **LICIQ-208** Implement user management interface | **Estimate:** 6h | **Story Points:** 2 | **Assignee:** Frontend Dev | **Due:** Sep 19
+- **LICIQ-209** Add role-based permission controls | **Estimate:** 5h | **Story Points:** 2 | **Assignee:** Backend Dev | **Due:** Sep 21
 
 ### **Epic 2: Advanced Features & Integration**
 
@@ -166,20 +166,20 @@ Story points consider:
 **Acceptance Criteria:** Complete advanced contract analysis with document type detection and risk assessment
 
 **Tasks:**
-- **LICIQ-210** Implement document type detection algorithm | **Estimate:** 2h | **Assignee:** Backend Dev | **Due:** Sep 15
-- **LICIQ-211** Build risk assessment scoring system | **Estimate:** 6h | **Assignee:** Backend Dev | **Due:** Sep 17
-- **LICIQ-212** Create contract insights generation | **Estimate:** 3h | **Assignee:** Backend Dev | **Due:** Sep 18
-- **LICIQ-213** Implement confidence scoring for AI results | **Estimate:** 2h | **Assignee:** Backend Dev | **Due:** Sep 18
-- **LICIQ-214** Build advanced analysis UI components | **Estimate:** 2h | **Assignee:** Frontend Dev | **Due:** Sep 19
+- **LICIQ-210** Implement document type detection algorithm | **Estimate:** 2h | **Story Points:** 1 | **Assignee:** Backend Dev | **Due:** Sep 15
+- **LICIQ-211** Build risk assessment scoring system | **Estimate:** 6h | **Story Points:** 2 | **Assignee:** Backend Dev | **Due:** Sep 17
+- **LICIQ-212** Create contract insights generation | **Estimate:** 3h | **Story Points:** 1 | **Assignee:** Backend Dev | **Due:** Sep 18
+- **LICIQ-213** Implement confidence scoring for AI results | **Estimate:** 2h | **Story Points:** 1 | **Assignee:** Backend Dev | **Due:** Sep 18
+- **LICIQ-214** Build advanced analysis UI components | **Estimate:** 2h | **Story Points:** 1 | **Assignee:** Frontend Dev | **Due:** Sep 19
 
 #### **User Story 2.2: Reporting & Analytics System**
 **Story Points:** 2 | **Priority:** High  
 **Acceptance Criteria:** Complete reporting system with analytics and export capabilities
 
 **Tasks:**
-- **LICIQ-215** Build comprehensive reporting engine | **Estimate:** 3h | **Assignee:** Backend Dev | **Due:** Sep 20
-- **LICIQ-216** Create analytics dashboard with charts | **Estimate:** 2h | **Assignee:** Frontend Dev | **Due:** Sep 20
-- **LICIQ-217** Implement data export functionality | **Estimate:** 2h | **Assignee:** Backend Dev | **Due:** Sep 21
+- **LICIQ-215** Build comprehensive reporting engine | **Estimate:** 3h | **Story Points:** 1 | **Assignee:** Backend Dev | **Due:** Sep 20
+- **LICIQ-216** Create analytics dashboard with charts | **Estimate:** 2h | **Story Points:** 1 | **Assignee:** Frontend Dev | **Due:** Sep 20
+- **LICIQ-217** Implement data export functionality | **Estimate:** 2h | **Story Points:** 1 | **Assignee:** Backend Dev | **Due:** Sep 21
 
 ---
 
@@ -195,21 +195,21 @@ Story points consider:
 **Acceptance Criteria:** Complete security implementation with data protection measures
 
 **Tasks:**
-- **LICIQ-301** Implement input validation and sanitization | **Estimate:** 3h | **Assignee:** Backend Dev | **Due:** Sep 23
-- **LICIQ-302** Add file upload security scanning | **Estimate:** 2h | **Assignee:** Backend Dev | **Due:** Sep 24
-- **LICIQ-303** Implement rate limiting and CORS | **Estimate:** 3h | **Assignee:** Backend Dev | **Due:** Sep 25
-- **LICIQ-304** Add audit trail logging for all actions | **Estimate:** 3h | **Assignee:** Backend Dev | **Due:** Sep 26
-- **LICIQ-305** Implement data encryption for sensitive fields | **Estimate:** 2h | **Assignee:** Backend Dev | **Due:** Sep 27
+- **LICIQ-301** Implement input validation and sanitization | **Estimate:** 3h | **Story Points:** 1 | **Assignee:** Backend Dev | **Due:** Sep 23
+- **LICIQ-302** Add file upload security scanning | **Estimate:** 2h | **Story Points:** 1 | **Assignee:** Backend Dev | **Due:** Sep 24
+- **LICIQ-303** Implement rate limiting and CORS | **Estimate:** 3h | **Story Points:** 1 | **Assignee:** Backend Dev | **Due:** Sep 25
+- **LICIQ-304** Add audit trail logging for all actions | **Estimate:** 3h | **Story Points:** 1 | **Assignee:** Backend Dev | **Due:** Sep 26
+- **LICIQ-305** Implement data encryption for sensitive fields | **Estimate:** 2h | **Story Points:** 1 | **Assignee:** Backend Dev | **Due:** Sep 27
 
 #### **User Story 2.4: Contract Deletion & Data Management**
 **Story Points:** 3 | **Priority:** Critical  
 **Acceptance Criteria:** Complete contract deletion functionality with proper data cleanup
 
 **Tasks:**
-- **LICIQ-306** Implement secure contract deletion API | **Estimate:** 3h | **Assignee:** Backend Dev | **Due:** Sep 24
-- **LICIQ-307** Build contract deletion UI with confirmations | **Estimate:** 2h | **Assignee:** Frontend Dev | **Due:** Sep 25
-- **LICIQ-308** Add cascade deletion for related data | **Estimate:** 2h | **Assignee:** Backend Dev | **Due:** Sep 26
-- **LICIQ-309** Implement soft delete with recovery options | **Estimate:** 2h | **Assignee:** Backend Dev | **Due:** Sep 26
+- **LICIQ-306** Implement secure contract deletion API | **Estimate:** 3h | **Story Points:** 1 | **Assignee:** Backend Dev | **Due:** Sep 24
+- **LICIQ-307** Build contract deletion UI with confirmations | **Estimate:** 2h | **Story Points:** 1 | **Assignee:** Frontend Dev | **Due:** Sep 25
+- **LICIQ-308** Add cascade deletion for related data | **Estimate:** 2h | **Story Points:** 1 | **Assignee:** Backend Dev | **Due:** Sep 26
+- **LICIQ-309** Implement soft delete with recovery options | **Estimate:** 2h | **Story Points:** 1 | **Assignee:** Backend Dev | **Due:** Sep 26
 
 ### **Epic 3: Testing & Launch Preparation**
 
@@ -218,28 +218,28 @@ Story points consider:
 **Acceptance Criteria:** Complete testing coverage with automated test execution
 
 **Tasks:**
-- **LICIQ-310** Setup end-to-end testing with Playwright | **Estimate:** 2h | **Assignee:** QA Engineer | **Due:** Sep 27
-- **LICIQ-311** Write comprehensive integration tests | **Estimate:** 3h | **Assignee:** Backend Dev | **Due:** Sep 27
-- **LICIQ-312** Execute full testing suite and fix issues | **Estimate:** 2h | **Assignee:** QA Engineer | **Due:** Sep 28
-- **LICIQ-313** Setup automated testing framework | **Estimate:** 2h | **Assignee:** QA Engineer | **Due:** Sep 28
+- **LICIQ-310** Setup end-to-end testing with Playwright | **Estimate:** 2h | **Story Points:** 1 | **Assignee:** QA Engineer | **Due:** Sep 27
+- **LICIQ-311** Write comprehensive integration tests | **Estimate:** 3h | **Story Points:** 1 | **Assignee:** Backend Dev | **Due:** Sep 27
+- **LICIQ-312** Execute full testing suite and fix issues | **Estimate:** 2h | **Story Points:** 1 | **Assignee:** QA Engineer | **Due:** Sep 28
+- **LICIQ-313** Setup automated testing framework | **Estimate:** 2h | **Story Points:** 1 | **Assignee:** QA Engineer | **Due:** Sep 28
 
 #### **User Story 3.2: Performance Optimization & Monitoring**
 **Story Points:** 2 | **Priority:** High  
 **Acceptance Criteria:** Optimized performance with error handling and logging
 
 **Tasks:**
-- **LICIQ-314** Optimize database queries and add indexes | **Estimate:** 2h | **Assignee:** Backend Dev | **Due:** Sep 28
-- **LICIQ-315** Implement error handling and logging | **Estimate:** 3h | **Assignee:** Backend Dev | **Due:** Sep 29
-- **LICIQ-316** Setup basic logging and error tracking | **Estimate:** 2h | **Assignee:** Backend Dev | **Due:** Sep 29
+- **LICIQ-314** Optimize database queries and add indexes | **Estimate:** 2h | **Story Points:** 1 | **Assignee:** Backend Dev | **Due:** Sep 28
+- **LICIQ-315** Implement error handling and logging | **Estimate:** 3h | **Story Points:** 1 | **Assignee:** Backend Dev | **Due:** Sep 29
+- **LICIQ-316** Setup basic logging and error tracking | **Estimate:** 2h | **Story Points:** 1 | **Assignee:** Backend Dev | **Due:** Sep 29
 
 #### **User Story 3.3: POC Launch & Documentation**
 **Story Points:** 2 | **Priority:** Critical  
 **Acceptance Criteria:** POC completed and ready for demonstration with complete documentation
 
 **Tasks:**
-- **LICIQ-317** Execute final POC validation tests | **Estimate:** 2h | **Assignee:** QA Engineer | **Due:** Sep 29
-- **LICIQ-318** Complete technical documentation | **Estimate:** 3h | **Assignee:** Technical Lead | **Due:** Sep 29
-- **LICIQ-319** Prepare POC demonstration materials | **Estimate:** 2h | **Assignee:** Project Manager | **Due:** Sep 29
+- **LICIQ-317** Execute final POC validation tests | **Estimate:** 2h | **Story Points:** 1 | **Assignee:** QA Engineer | **Due:** Sep 29
+- **LICIQ-318** Complete technical documentation | **Estimate:** 3h | **Story Points:** 1 | **Assignee:** Technical Lead | **Due:** Sep 29
+- **LICIQ-319** Prepare POC demonstration materials | **Estimate:** 2h | **Story Points:** 1 | **Assignee:** Project Manager | **Due:** Sep 29
 
 ---
 
