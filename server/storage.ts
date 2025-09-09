@@ -200,6 +200,18 @@ export class DatabaseStorage implements IStorage {
     return contract;
   }
 
+  async updateContractFlag(id: string, flagged: boolean): Promise<Contract> {
+    const [contract] = await db
+      .update(contracts)
+      .set({ 
+        flaggedForReview: flagged,
+        updatedAt: new Date() 
+      })
+      .where(eq(contracts.id, id))
+      .returning();
+    return contract;
+  }
+
   async searchContracts(query: string, userId?: string): Promise<ContractWithAnalysis[]> {
     let searchQuery = db
       .select({

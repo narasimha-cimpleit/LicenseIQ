@@ -1,6 +1,8 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import multer from "multer";
+import fs from "fs";
+import path from "path";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, hashPassword } from "./auth";
 import { fileService } from "./services/fileService";
@@ -32,6 +34,65 @@ async function createAuditLog(req: any, action: string, resourceType?: string, r
       console.error('Failed to create audit log:', error);
     }
   }
+}
+
+// Generate analysis report content
+function generateAnalysisReport(contract: any, analysis: any): string {
+  const report = [];
+  
+  report.push("CONTRACT ANALYSIS REPORT");
+  report.push("=" + "=".repeat(50));
+  report.push("");
+  
+  report.push("Contract Information:");
+  report.push("-".repeat(20));
+  report.push(`File Name: ${contract.originalName}`);
+  report.push(`Upload Date: ${new Date(contract.createdAt).toLocaleDateString()}`);
+  report.push(`File Size: ${(contract.fileSize / 1024 / 1024).toFixed(1)} MB`);
+  report.push(`Status: ${contract.status}`);
+  report.push(`Analysis Confidence: ${Math.round(parseFloat(analysis.confidence) * 100)}%`);
+  report.push("");
+  
+  report.push("AI Summary:");
+  report.push("-".repeat(12));
+  report.push(analysis.summary);
+  report.push("");
+  
+  if (analysis.keyTerms && analysis.keyTerms.length > 0) {
+    report.push("Key Terms:");
+    report.push("-".repeat(10));
+    analysis.keyTerms.forEach((term: any, index: number) => {
+      report.push(`${index + 1}. ${term.type}`);
+      report.push(`   Description: ${term.description}`);
+      report.push(`   Confidence: ${Math.round(term.confidence * 100)}%`);
+      report.push(`   Location: ${term.location}`);
+      report.push("");
+    });
+  }
+  
+  if (analysis.riskAnalysis && analysis.riskAnalysis.length > 0) {
+    report.push("Risk Analysis:");
+    report.push("-".repeat(14));
+    analysis.riskAnalysis.forEach((risk: any, index: number) => {
+      report.push(`${index + 1}. ${risk.level.toUpperCase()} RISK: ${risk.title}`);
+      report.push(`   ${risk.description}`);
+      report.push("");
+    });
+  }
+  
+  if (analysis.insights && analysis.insights.length > 0) {
+    report.push("Business Insights:");
+    report.push("-".repeat(17));
+    analysis.insights.forEach((insight: any, index: number) => {
+      report.push(`${index + 1}. ${insight.title} (${insight.type.toUpperCase()})`);
+      report.push(`   ${insight.description}`);
+      report.push("");
+    });
+  }
+  
+  report.push("Report generated on: " + new Date().toLocaleString());
+  
+  return report.join("\n");
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -136,6 +197,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching contract:', error);
       res.status(500).json({ message: 'Failed to fetch contract' });
+    }
+  });
+
+  // Get contract file (original document)
+  app.get('/api/contracts/:id/file', isAuthenticated, async (req: any, res) => {
+    try {
+      const contractId = req.params.id;
+      const userId = req.user.id;
+      
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ message: 'Contract not found' });
+      }
+
+      // Check permissions
+      const userRole = (await storage.getUser(userId))?.role;
+      const canViewAll = userRole === 'admin' || userRole === 'owner';
+      
+      if (!canViewAll && contract.uploadedBy !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      // Serve the file
+      const filePath = path.join(process.cwd(), contract.filePath);
+      
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ message: 'File not found' });
+      }
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="${contract.originalName}"`);
+      res.sendFile(filePath);
+
+      // Log file access
+      await createAuditLog(req, 'contract_file_accessed', 'contract', contractId, {
+        fileName: contract.originalName,
+      });
+    } catch (error) {
+      console.error('Error serving contract file:', error);
+      res.status(500).json({ message: 'Failed to serve file' });
+    }
+  });
+
+  // Download analysis report
+  app.get('/api/contracts/:id/report', isAuthenticated, async (req: any, res) => {
+    try {
+      const contractId = req.params.id;
+      const userId = req.user.id;
+      
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ message: 'Contract not found' });
+      }
+
+      // Check permissions
+      const userRole = (await storage.getUser(userId))?.role;
+      const canViewAll = userRole === 'admin' || userRole === 'owner';
+      
+      if (!canViewAll && contract.uploadedBy !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      if (!contract.analysis) {
+        return res.status(400).json({ message: 'Analysis not available' });
+      }
+
+      // Generate simple text-based analysis report
+      const reportContent = generateAnalysisReport(contract, contract.analysis);
+      
+      res.setHeader('Content-Type', 'text/plain');
+      res.setHeader('Content-Disposition', `attachment; filename="${contract.originalName}_analysis_report.txt"`);
+      res.send(reportContent);
+      
+
+      // Log report download
+      await createAuditLog(req, 'analysis_report_downloaded', 'contract', contractId, {
+        fileName: contract.originalName,
+      });
+    } catch (error) {
+      console.error('Error generating analysis report:', error);
+      res.status(500).json({ message: 'Failed to generate report' });
+    }
+  });
+
+  // Flag contract for review
+  app.patch('/api/contracts/:id/flag', isAuthenticated, async (req: any, res) => {
+    try {
+      const contractId = req.params.id;
+      const userId = req.user.id;
+      const { flagged } = req.body;
+      
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ message: 'Contract not found' });
+      }
+
+      // Update flag status
+      const updatedContract = await storage.updateContractFlag(contractId, flagged);
+      
+      // Log flag action
+      await createAuditLog(req, flagged ? 'contract_flagged' : 'contract_unflagged', 'contract', contractId, {
+        fileName: contract.originalName,
+        flaggedBy: userId,
+      });
+
+      res.json({ 
+        message: flagged ? 'Contract flagged for review' : 'Flag removed from contract',
+        flagged: updatedContract.flaggedForReview 
+      });
+    } catch (error) {
+      console.error('Error updating contract flag:', error);
+      res.status(500).json({ message: 'Failed to update flag status' });
     }
   });
 
