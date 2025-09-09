@@ -32,15 +32,15 @@
 ## 📊 Epic Breakdown Structure
 
 ### **Epic 1: Core Platform Development**
-**Priority:** Critical | **Story Points:** 44 | **Duration:** Sprint 1-2
+**Priority:** Critical | **Story Points:** 32 | **Duration:** Sprint 1-2
 
 ### **Epic 2: Advanced Features & Integration**
-**Priority:** High | **Story Points:** 15 | **Duration:** Sprint 2-3
+**Priority:** High | **Story Points:** 17 | **Duration:** Sprint 2-3
 
 ### **Epic 3: Testing & Launch Preparation**
-**Priority:** High | **Story Points:** 9 | **Duration:** Sprint 3
+**Priority:** High | **Story Points:** 7 | **Duration:** Sprint 3
 
-**Total Story Points:** 68 | **Team Velocity:** ~23 points/sprint
+**Total Story Points:** 56 | **Team Velocity:** ~19 points/sprint
 
 ---
 
@@ -49,7 +49,7 @@
 ## **SPRINT 1** | September 8-14, 2025
 **Theme:** Core Platform Foundation  
 **Sprint Goal:** Build fundamental platform architecture with authentication and database foundation  
-**Story Points:** 23
+**Story Points:** 20
 
 ### **Epic 1: Core Platform Development**
 
@@ -65,7 +65,7 @@
 - **LICIQ-105** Setup state management with TanStack Query | **Estimate:** 1h | **Assignee:** Frontend Dev | **Due:** Sep 12
 
 #### **User Story 1.2: Backend API Development & Database Setup**
-**Story Points:** 8 | **Priority:** Critical  
+**Story Points:** 7 | **Priority:** Critical  
 **Acceptance Criteria:** Functional Express.js API with PostgreSQL database and authentication
 
 **Tasks:**
@@ -76,7 +76,7 @@
 - **LICIQ-110** Implement audit logging middleware | **Estimate:** 3h | **Assignee:** Backend Dev | **Due:** Sep 13
 
 #### **User Story 1.3: File Upload & Contract Management System**
-**Story Points:** 8 | **Priority:** High  
+**Story Points:** 6 | **Priority:** High  
 **Acceptance Criteria:** Complete file upload system with contract storage and management
 
 **Tasks:**
@@ -98,12 +98,12 @@
 ## **SPRINT 2** | September 15-21, 2025
 **Theme:** AI Integration & Advanced Features  
 **Sprint Goal:** Implement Groq AI integration and build contract analysis capabilities  
-**Story Points:** 28
+**Story Points:** 22
 
 ### **Epic 1: Core Platform Development (Continued)**
 
 #### **User Story 1.5: AI Integration & Contract Analysis**
-**Story Points:** 13 | **Priority:** Critical  
+**Story Points:** 9 | **Priority:** Critical  
 **Acceptance Criteria:** Complete Groq AI integration with contract analysis capabilities
 
 **Tasks:**
@@ -114,7 +114,7 @@
 - **LICIQ-205** Build contract analysis UI components | **Estimate:** 6h | **Assignee:** Frontend Dev | **Due:** Sep 20
 
 #### **User Story 1.6: Analytics Dashboard & User Management**
-**Story Points:** 8 | **Priority:** High  
+**Story Points:** 6 | **Priority:** High  
 **Acceptance Criteria:** Complete analytics dashboard with user management functionality
 
 **Tasks:**
@@ -150,12 +150,12 @@
 ## **SPRINT 3** | September 22-29, 2025
 **Theme:** Testing, Quality Assurance & POC Completion  
 **Sprint Goal:** Complete comprehensive testing, quality assurance, and finalize POC  
-**Story Points:** 17
+**Story Points:** 14
 
 ### **Epic 2: Advanced Features & Integration (Continued)**
 
 #### **User Story 2.3: Security & Data Protection**
-**Story Points:** 5 | **Priority:** Critical  
+**Story Points:** 4 | **Priority:** Critical  
 **Acceptance Criteria:** Complete security implementation with data protection measures
 
 **Tasks:**
@@ -188,7 +188,7 @@
 - **LICIQ-313** Setup automated testing framework | **Estimate:** 2h | **Assignee:** QA Engineer | **Due:** Sep 28
 
 #### **User Story 3.2: Performance Optimization & Monitoring**
-**Story Points:** 3 | **Priority:** High  
+**Story Points:** 2 | **Priority:** High  
 **Acceptance Criteria:** Optimized performance with error handling and logging
 
 **Tasks:**
@@ -197,7 +197,7 @@
 - **LICIQ-316** Setup basic logging and error tracking | **Estimate:** 2h | **Assignee:** Backend Dev | **Due:** Sep 29
 
 #### **User Story 3.3: POC Launch & Documentation**
-**Story Points:** 3 | **Priority:** Critical  
+**Story Points:** 2 | **Priority:** Critical  
 **Acceptance Criteria:** POC completed and ready for demonstration with complete documentation
 
 **Tasks:**
