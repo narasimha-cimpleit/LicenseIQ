@@ -89,6 +89,29 @@ export default function ContractAnalysis() {
     },
   });
 
+  const flagMutation = useMutation({
+    mutationFn: async (flagged: boolean) => {
+      const response = await apiRequest("PATCH", `/api/contracts/${id}/flag`, { flagged });
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/contracts/${id}`] });
+      toast({
+        title: data.flagged ? "Flagged for Review" : "Flag Removed",
+        description: data.flagged 
+          ? "Contract has been flagged for review by administrators."
+          : "Review flag has been removed from this contract.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Action Failed",
+        description: error.message || "Failed to update flag status.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const { data: contract, isLoading, error } = useQuery({
     queryKey: ["/api/contracts", id],
     enabled: !!id,
@@ -140,7 +163,7 @@ export default function ContractAnalysis() {
     );
   }
 
-  if (!contract) {
+  if (!contract || !contract.id) {
     return (
       <MainLayout title="Contract Not Found" description="The requested contract could not be found">
         <Card>
@@ -159,8 +182,8 @@ export default function ContractAnalysis() {
     );
   }
 
-  const analysis = contract.analysis;
-  const hasAnalysis = analysis && contract.status === 'analyzed';
+  const analysis = contract?.analysis;
+  const hasAnalysis = analysis && contract?.status === 'analyzed';
 
   const handleViewOriginal = () => {
     // Open the original PDF file in a new window
@@ -175,7 +198,7 @@ export default function ContractAnalysis() {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${contract.originalName}_analysis_report.pdf`;
+        a.download = `${contract?.originalName || 'contract'}_analysis_report.pdf`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
@@ -200,7 +223,7 @@ export default function ContractAnalysis() {
   const handleShareAnalysis = async () => {
     try {
       const shareData = {
-        title: `${contract.originalName} Analysis`,
+        title: `${contract?.originalName || 'Contract'} Analysis`,
         text: analysis?.summary || 'Contract Analysis Report',
         url: window.location.href,
       };
@@ -229,31 +252,8 @@ export default function ContractAnalysis() {
     }
   };
 
-  const flagMutation = useMutation({
-    mutationFn: async (flagged: boolean) => {
-      const response = await apiRequest("PATCH", `/api/contracts/${id}/flag`, { flagged });
-      return response.json();
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/contracts/${id}`] });
-      toast({
-        title: data.flagged ? "Flagged for Review" : "Flag Removed",
-        description: data.flagged 
-          ? "Contract has been flagged for review by administrators."
-          : "Review flag has been removed from this contract.",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Action Failed",
-        description: error.message || "Failed to update flag status.",
-        variant: "destructive",
-      });
-    },
-  });
-
   const handleFlagForReview = () => {
-    const isCurrentlyFlagged = contract.flaggedForReview;
+    const isCurrentlyFlagged = contract?.flaggedForReview || false;
     flagMutation.mutate(!isCurrentlyFlagged);
   };
 
@@ -290,18 +290,18 @@ export default function ContractAnalysis() {
 
   return (
     <MainLayout 
-      title={`${contract.originalName} Analysis`}
-      description={`${hasAnalysis ? 'Processed' : 'Processing'} ${formatDistanceToNow(new Date(contract.createdAt), { addSuffix: true })}`}
+      title={`${contract?.originalName || 'Contract'} Analysis`}
+      description={`${hasAnalysis ? 'Processed' : 'Processing'} ${contract?.createdAt ? formatDistanceToNow(new Date(contract.createdAt), { addSuffix: true }) : 'recently'}`}
     >
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Badge 
-              variant={contract.status === 'analyzed' ? 'default' : 
-                      contract.status === 'processing' ? 'secondary' : 'outline'}
+              variant={contract?.status === 'analyzed' ? 'default' : 
+                      contract?.status === 'processing' ? 'secondary' : 'outline'}
             >
-              {contract.status}
+              {contract?.status}
             </Badge>
             {hasAnalysis && analysis.confidence && (
               <Badge variant="outline" className={getConfidenceColor(parseFloat(analysis.confidence))}>
@@ -367,17 +367,17 @@ export default function ContractAnalysis() {
             <CardContent className="text-center py-12">
               <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4" />
               <h3 className="text-lg font-medium mb-2">
-                {contract.status === 'processing' ? 'Analysis in Progress' : 'Waiting for Analysis'}
+                {contract?.status === 'processing' ? 'Analysis in Progress' : 'Waiting for Analysis'}
               </h3>
               <p className="text-muted-foreground mb-6">
-                {contract.status === 'processing' 
+                {contract?.status === 'processing' 
                   ? 'Our AI is analyzing your contract. This usually takes a few minutes.'
-                  : contract.status === 'failed'
+                  : contract?.status === 'failed'
                   ? 'Analysis failed. Please try uploading the contract again.'
                   : 'Analysis will begin shortly.'
                 }
               </p>
-              {contract.status !== 'failed' && (
+              {contract?.status !== 'failed' && (
                 <Button variant="outline" onClick={() => setLocation("/contracts")}>
                   Back to Contracts
                 </Button>
@@ -504,31 +504,31 @@ export default function ContractAnalysis() {
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">File Name:</span>
-                      <span className="text-foreground font-medium">{contract.originalName}</span>
+                      <span className="text-foreground font-medium">{contract?.originalName}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">File Size:</span>
-                      <span className="text-foreground">{(contract.fileSize / 1024 / 1024).toFixed(1)} MB</span>
+                      <span className="text-foreground">{((contract?.fileSize || 0) / 1024 / 1024).toFixed(1)} MB</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Type:</span>
-                      <span className="text-foreground capitalize">{contract.contractType || 'Unknown'}</span>
+                      <span className="text-foreground capitalize">{contract?.contractType || 'Unknown'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Priority:</span>
-                      <Badge variant="outline" className="capitalize">{contract.priority}</Badge>
+                      <Badge variant="outline" className="capitalize">{contract?.priority}</Badge>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Upload Date:</span>
-                      <span className="text-foreground">{new Date(contract.createdAt).toLocaleDateString()}</span>
+                      <span className="text-foreground">{contract?.createdAt ? new Date(contract.createdAt).toLocaleDateString() : 'Unknown'}</span>
                     </div>
-                    {contract.uploadedByUser && (
+                    {contract?.uploadedByUser && (
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Uploaded By:</span>
                         <span className="text-foreground">
-                          {contract.uploadedByUser.firstName && contract.uploadedByUser.lastName
+                          {contract?.uploadedByUser?.firstName && contract?.uploadedByUser?.lastName
                             ? `${contract.uploadedByUser.firstName} ${contract.uploadedByUser.lastName}`
-                            : contract.uploadedByUser.email
+                            : contract?.uploadedByUser?.email
                           }
                         </span>
                       </div>
@@ -578,27 +578,27 @@ export default function ContractAnalysis() {
                       Share Analysis
                     </Button>
                     <Button
-                      variant={contract.flaggedForReview ? "default" : "outline"}
+                      variant={contract?.flaggedForReview ? "default" : "outline"}
                       className="w-full justify-start"
                       onClick={handleFlagForReview}
                       disabled={flagMutation.isPending}
                       data-testid="button-flag-review"
                     >
-                      <Flag className={`h-4 w-4 mr-2 ${contract.flaggedForReview ? 'text-white' : ''}`} />
-                      {contract.flaggedForReview ? 'Remove Flag' : 'Flag for Review'}
+                      <Flag className={`h-4 w-4 mr-2 ${contract?.flaggedForReview ? 'text-white' : ''}`} />
+                      {contract?.flaggedForReview ? 'Remove Flag' : 'Flag for Review'}
                     </Button>
                   </div>
                 </CardContent>
               </Card>
 
               {/* Notes */}
-              {contract.notes && (
+              {contract?.notes && (
                 <Card>
                   <CardHeader>
                     <CardTitle>Notes</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-muted-foreground">{contract.notes}</p>
+                    <p className="text-sm text-muted-foreground">{contract?.notes}</p>
                   </CardContent>
                 </Card>
               )}
