@@ -29,6 +29,42 @@
 
 ---
 
+## 📏 Story Points Methodology
+
+### **What are Story Points?**
+Story points are a unit of measure for expressing the overall effort required to fully implement a user story. They represent the **complexity, effort, and risk** involved, not the time duration.
+
+### **Story Point Estimation Scale**
+We use the Fibonacci sequence: **1, 2, 3, 5, 8, 13, 21**
+
+- **1 Point:** Simple task, 1-2 hours, minimal complexity
+- **2 Points:** Straightforward work, 3-5 hours, low complexity  
+- **3 Points:** Moderate complexity, 6-9 hours, some unknowns
+- **5 Points:** Complex work, 12-15 hours, multiple dependencies
+- **8 Points:** Very complex, 18-24 hours, high technical risk
+- **13 Points:** Extremely complex, 30+ hours, should be broken down
+- **21+ Points:** Epic-level work, must be decomposed
+
+### **Estimation Factors**
+Story points consider:
+- **Effort:** Total work hours across all tasks
+- **Complexity:** Technical difficulty and integration challenges  
+- **Uncertainty:** Risk, unknowns, and potential blockers
+- **Dependencies:** External systems, team coordination
+
+### **Key Principles**
+- **Relative Sizing:** Points are relative to each other, not absolute time
+- **Team Velocity:** Measured as average story points completed per sprint
+- **Not Equal to Tasks:** A story can have 1 task or 10 tasks - points reflect total effort
+- **Consistent Scale:** Same point value should represent similar effort across stories
+
+### **Calculation Formula**
+**Story Points ≈ Total Task Hours ÷ 2.5-3**
+- Example: 20 hours of tasks = 7-8 story points
+- This ratio helps maintain consistency across estimates
+
+---
+
 ## 📊 Epic Breakdown Structure
 
 ### **Epic 1: Core Platform Development**
