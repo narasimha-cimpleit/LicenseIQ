@@ -765,6 +765,15 @@ async function processContractAsync(contractId: string): Promise<void> {
     // Extract text from file
     const text = await fileService.extractTextFromFile(contract.filePath, contract.fileType);
     
+    // DEBUG: Log what text is being sent to AI
+    console.log('=== DEBUG: Text being sent to AI ===');
+    console.log('Text length:', text.length);
+    console.log('First 300 characters:');
+    console.log(text.substring(0, 300));
+    console.log('Last 300 characters:');
+    console.log(text.substring(Math.max(0, text.length - 300)));
+    console.log('=== END DEBUG ===');
+    
     // Analyze with Groq
     const analysis = await groqService.analyzeContract(text);
     
