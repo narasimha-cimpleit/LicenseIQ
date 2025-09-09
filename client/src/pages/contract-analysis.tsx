@@ -162,11 +162,103 @@ export default function ContractAnalysis() {
   const analysis = contract.analysis;
   const hasAnalysis = analysis && contract.status === 'analyzed';
 
+  const handleViewOriginal = () => {
+    // Open the original PDF file in a new window
+    window.open(`/api/contracts/${id}/file`, '_blank');
+  };
+
+  const handleDownloadReport = async () => {
+    try {
+      const response = await apiRequest("GET", `/api/contracts/${id}/report`);
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${contract.originalName}_analysis_report.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        toast({
+          title: "Report Downloaded",
+          description: "Analysis report has been downloaded successfully.",
+        });
+      } else {
+        throw new Error('Failed to download report');
+      }
+    } catch (error) {
+      toast({
+        title: "Download Failed",
+        description: "Failed to download analysis report. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleShareAnalysis = async () => {
+    try {
+      const shareData = {
+        title: `${contract.originalName} Analysis`,
+        text: analysis?.summary || 'Contract Analysis Report',
+        url: window.location.href,
+      };
+
+      if (navigator.share) {
+        await navigator.share(shareData);
+        toast({
+          title: "Shared Successfully",
+          description: "Analysis has been shared.",
+        });
+      } else {
+        // Fallback: copy link to clipboard
+        await navigator.clipboard.writeText(window.location.href);
+        toast({
+          title: "Link Copied",
+          description: "Analysis link has been copied to your clipboard.",
+        });
+      }
+    } catch (error) {
+      console.error('Share failed:', error);
+      toast({
+        title: "Share Failed",
+        description: "Unable to share analysis. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const flagMutation = useMutation({
+    mutationFn: async (flagged: boolean) => {
+      const response = await apiRequest("PATCH", `/api/contracts/${id}/flag`, { flagged });
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/contracts/${id}`] });
+      toast({
+        title: data.flagged ? "Flagged for Review" : "Flag Removed",
+        description: data.flagged 
+          ? "Contract has been flagged for review by administrators."
+          : "Review flag has been removed from this contract.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Action Failed",
+        description: error.message || "Failed to update flag status.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleFlagForReview = () => {
+    const isCurrentlyFlagged = contract.flaggedForReview;
+    flagMutation.mutate(!isCurrentlyFlagged);
+  };
+
   const handleExport = () => {
-    toast({
-      title: "Export Started",
-      description: "Your analysis report is being prepared for download.",
-    });
+    handleDownloadReport();
   };
 
   const handleReprocess = () => {
@@ -461,6 +553,7 @@ export default function ContractAnalysis() {
                     <Button
                       variant="outline"
                       className="w-full justify-start"
+                      onClick={handleViewOriginal}
                       data-testid="button-view-original"
                     >
                       <Eye className="h-4 w-4 mr-2" />
@@ -469,7 +562,7 @@ export default function ContractAnalysis() {
                     <Button
                       variant="outline"
                       className="w-full justify-start"
-                      onClick={handleExport}
+                      onClick={handleDownloadReport}
                       data-testid="button-download-analysis"
                     >
                       <Download className="h-4 w-4 mr-2" />
@@ -478,18 +571,21 @@ export default function ContractAnalysis() {
                     <Button
                       variant="outline"
                       className="w-full justify-start"
+                      onClick={handleShareAnalysis}
                       data-testid="button-share-analysis"
                     >
                       <Share className="h-4 w-4 mr-2" />
                       Share Analysis
                     </Button>
                     <Button
-                      variant="outline"
+                      variant={contract.flaggedForReview ? "default" : "outline"}
                       className="w-full justify-start"
+                      onClick={handleFlagForReview}
+                      disabled={flagMutation.isPending}
                       data-testid="button-flag-review"
                     >
-                      <Flag className="h-4 w-4 mr-2" />
-                      Flag for Review
+                      <Flag className={`h-4 w-4 mr-2 ${contract.flaggedForReview ? 'text-white' : ''}`} />
+                      {contract.flaggedForReview ? 'Remove Flag' : 'Flag for Review'}
                     </Button>
                   </div>
                 </CardContent>
