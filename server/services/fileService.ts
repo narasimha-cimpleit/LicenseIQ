@@ -183,8 +183,8 @@ export class FileService {
                 try {
                   // Method 4: createRequire fallback
                   console.log('📕 [FILE-EXTRACT] Trying createRequire fallback...');
-                  const moduleLib = await import('node:module');
-                  const require = moduleLib.createRequire(import.meta.url);
+                  const Module = await import('module');
+                  const require = (Module as any).createRequire(import.meta.url);
                   pdfParse = require('pdf-parse');
                   importMethod = 'create-require';
                   console.log('✅ [FILE-EXTRACT] pdf-parse loaded via createRequire');

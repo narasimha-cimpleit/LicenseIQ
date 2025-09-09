@@ -304,7 +304,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ 
         message: flagged ? 'Contract flagged for review' : 'Flag removed from contract',
-        flagged: updatedContract.flaggedForReview 
+        flagged: flagged
       });
     } catch (error) {
       console.error('Error updating contract flag:', error);
