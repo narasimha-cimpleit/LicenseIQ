@@ -45,6 +45,26 @@ export default function Analytics() {
     queryKey: ["/api/contracts"],
   });
 
+  const { data: financialAnalytics } = useQuery({
+    queryKey: ["/api/analytics/financial"],
+  });
+
+  const { data: complianceAnalytics } = useQuery({
+    queryKey: ["/api/analytics/compliance"],
+  });
+
+  const { data: strategicAnalytics } = useQuery({
+    queryKey: ["/api/analytics/strategic"],
+  });
+
+  const { data: performanceAnalytics } = useQuery({
+    queryKey: ["/api/analytics/performance"],
+  });
+
+  const { data: riskAnalytics } = useQuery({
+    queryKey: ["/api/analytics/risks"],
+  });
+
   const contracts = contractsData?.contracts || [];
 
   // Calculate analytics data
@@ -68,26 +88,26 @@ export default function Analytics() {
   const hasFinancialAnalysis = analyzedContracts.filter((c: any) => c.analysis?.keyTerms?.some((t: any) => t.term?.toLowerCase().includes('payment')));
   const hasComplianceIssues = analyzedContracts.filter((c: any) => c.analysis?.riskAnalysis?.some((r: any) => r.level === 'high'));
   
-  // Mock advanced analytics data (in production, this would come from API)
-  const financialMetrics = {
-    totalValue: 2450000,
-    avgContractValue: 125000,
-    currencyRisk: 23,
-    revenueProjection: 3200000
+  // Dynamic analytics data from real API endpoints
+  const financialMetrics = financialAnalytics || {
+    totalValue: 0,
+    avgContractValue: 0,
+    currencyRisk: 0,
+    revenueProjection: 0
   };
 
-  const complianceMetrics = {
-    overallScore: 87,
-    gdprCompliant: 94,
-    regulatoryGaps: 3,
-    jurisdictionIssues: 1
+  const complianceMetrics = complianceAnalytics || {
+    overallScore: 0,
+    gdprCompliant: 0,
+    regulatoryGaps: 0,
+    jurisdictionIssues: 0
   };
 
-  const strategicMetrics = {
-    portfolioAlignment: 82,
-    competitiveAdvantage: 76,
-    standardizationScore: 91,
-    riskConcentration: 34
+  const strategicMetrics = strategicAnalytics || {
+    portfolioAlignment: 0,
+    competitiveAdvantage: 0,
+    standardizationScore: 0,
+    riskConcentration: 0
   };
 
   return (
