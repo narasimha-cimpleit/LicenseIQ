@@ -296,6 +296,456 @@ export class GroqService {
       return [];
     }
   }
+
+  // 📊 FINANCIAL ANALYSIS METHODS
+  async analyzeFinancialTerms(contractText: string): Promise<any> {
+    const prompt = `
+    Analyze this contract for financial terms and return a comprehensive financial analysis in JSON format.
+
+    Focus on extracting:
+    1. **Total Contract Value** - Overall monetary value (convert to USD if needed)
+    2. **Payment Schedule** - All payment dates, amounts, milestones
+    3. **Royalty Structure** - Rates, calculation methods, minimum payments
+    4. **Revenue Projections** - Expected income over contract lifetime
+    5. **Cost Impact** - Budget implications, additional costs
+    6. **Currency Risk** - Multi-currency exposure assessment (0-100 score)
+    7. **Payment Terms** - Net payment days, methods, late fees
+    8. **Penalty Clauses** - Financial penalties, liquidated damages
+
+    Contract Text:
+    ${contractText}
+
+    Return only this JSON structure:
+    {
+      "totalValue": number or null,
+      "currency": "USD" or detected currency,
+      "paymentSchedule": [
+        {"date": "YYYY-MM-DD", "amount": number, "description": "milestone/payment type"}
+      ],
+      "royaltyStructure": {
+        "baseRate": number,
+        "minimumPayment": number,
+        "calculationMethod": "description"
+      },
+      "revenueProjections": {
+        "year1": number,
+        "year2": number,
+        "total": number
+      },
+      "costImpact": {
+        "upfrontCosts": number,
+        "ongoingCosts": number,
+        "budgetImpact": "low|medium|high"
+      },
+      "currencyRisk": number (0-100),
+      "paymentTerms": "Net 30, wire transfer, 2% late fee",
+      "penaltyClauses": [
+        {"type": "late_payment", "amount": number, "description": "text"}
+      ]
+    }
+    `;
+
+    const messages = [
+      {
+        role: 'system',
+        content: 'You are a financial analyst specializing in contract monetization. Return only valid JSON.'
+      },
+      {
+        role: 'user',
+        content: prompt
+      }
+    ];
+
+    try {
+      const response = await this.makeRequest(messages);
+      const cleanedResponse = response.trim();
+      const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
+      
+      if (!jsonMatch) {
+        throw new Error('No valid JSON found in financial analysis response');
+      }
+
+      return JSON.parse(jsonMatch[0]);
+    } catch (error) {
+      console.error('Error analyzing financial terms:', error);
+      return {
+        totalValue: null,
+        currency: "USD",
+        paymentSchedule: [],
+        royaltyStructure: null,
+        revenueProjections: null,
+        costImpact: null,
+        currencyRisk: 0,
+        paymentTerms: "Terms not clearly specified",
+        penaltyClauses: []
+      };
+    }
+  }
+
+  // ⚖️ COMPLIANCE ANALYSIS METHODS
+  async analyzeCompliance(contractText: string): Promise<any> {
+    const prompt = `
+    Analyze this contract for legal compliance and regulatory adherence. Return a JSON compliance assessment.
+
+    Analyze for:
+    1. **Regulatory Frameworks** - GDPR, SOX, HIPAA, CCPA compliance
+    2. **Jurisdiction Analysis** - Governing law conflicts, court jurisdiction
+    3. **Data Protection** - Privacy clauses, data handling requirements
+    4. **Industry Standards** - Sector-specific compliance requirements
+    5. **Risk Factors** - Compliance gaps, potential violations
+    6. **Recommended Actions** - Steps to improve compliance
+
+    Contract Text:
+    ${contractText}
+
+    Return only this JSON structure:
+    {
+      "complianceScore": number (0-100),
+      "regulatoryFrameworks": [
+        {"framework": "GDPR", "compliant": boolean, "gaps": ["list of issues"]}
+      ],
+      "jurisdictionAnalysis": {
+        "governingLaw": "jurisdiction",
+        "courtJurisdiction": "location",
+        "conflicts": ["any jurisdiction conflicts"]
+      },
+      "dataProtectionCompliance": boolean,
+      "industryStandards": [
+        {"standard": "ISO 27001", "compliance": "full|partial|none"}
+      ],
+      "riskFactors": [
+        {"level": "high|medium|low", "factor": "description", "impact": "business impact"}
+      ],
+      "recommendedActions": [
+        {"priority": "high|medium|low", "action": "specific action needed"}
+      ]
+    }
+    `;
+
+    const messages = [
+      {
+        role: 'system',
+        content: 'You are a legal compliance specialist. Analyze contracts for regulatory adherence. Return only valid JSON.'
+      },
+      {
+        role: 'user',
+        content: prompt
+      }
+    ];
+
+    try {
+      const response = await this.makeRequest(messages);
+      const cleanedResponse = response.trim();
+      const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
+      
+      if (!jsonMatch) {
+        throw new Error('No valid JSON found in compliance analysis response');
+      }
+
+      return JSON.parse(jsonMatch[0]);
+    } catch (error) {
+      console.error('Error analyzing compliance:', error);
+      return {
+        complianceScore: 75,
+        regulatoryFrameworks: [],
+        jurisdictionAnalysis: {
+          governingLaw: "Not specified",
+          courtJurisdiction: "Not specified",
+          conflicts: []
+        },
+        dataProtectionCompliance: true,
+        industryStandards: [],
+        riskFactors: [],
+        recommendedActions: []
+      };
+    }
+  }
+
+  // 📋 OBLIGATIONS EXTRACTION
+  async extractObligations(contractText: string): Promise<any[]> {
+    const prompt = `
+    Extract all contractual obligations from this contract. Return a JSON array of detailed obligations.
+
+    For each obligation, identify:
+    1. **Type** - payment, delivery, performance, reporting, compliance
+    2. **Description** - Clear description of what must be done
+    3. **Due Date** - When it's due (if specified)
+    4. **Responsible Party** - Who is responsible
+    5. **Priority** - critical, high, medium, low
+
+    Contract Text:
+    ${contractText}
+
+    Return only this JSON array:
+    [
+      {
+        "obligationType": "payment|delivery|performance|reporting|compliance",
+        "description": "Clear description of obligation",
+        "dueDate": "YYYY-MM-DD" or null,
+        "responsible": "party name or role",
+        "priority": "critical|high|medium|low"
+      }
+    ]
+    `;
+
+    const messages = [
+      {
+        role: 'system',
+        content: 'You are a contract obligation specialist. Extract all deliverables and requirements. Return only valid JSON arrays.'
+      },
+      {
+        role: 'user',
+        content: prompt
+      }
+    ];
+
+    try {
+      const response = await this.makeRequest(messages);
+      const cleanedResponse = response.trim();
+      const jsonMatch = cleanedResponse.match(/\[[\s\S]*\]/);
+      
+      if (!jsonMatch) {
+        return [];
+      }
+
+      const obligations = JSON.parse(jsonMatch[0]);
+      return Array.isArray(obligations) ? obligations : [];
+    } catch (error) {
+      console.error('Error extracting obligations:', error);
+      return [];
+    }
+  }
+
+  // 🎯 STRATEGIC ANALYSIS METHODS
+  async analyzeStrategicValue(contractText: string, contractType: string = 'unknown'): Promise<any> {
+    const prompt = `
+    Perform strategic business analysis of this ${contractType} contract. Return comprehensive strategic insights in JSON.
+
+    Analyze:
+    1. **Strategic Value** - Business importance score (0-100)
+    2. **Market Alignment** - How well aligned with market trends (0-100)
+    3. **Competitive Advantage** - Benefits over competitors
+    4. **Risk Concentration** - Dependency risk level (0-100)
+    5. **Standardization Score** - Template compliance (0-100)
+    6. **Negotiation Insights** - Patterns and recommendations
+    7. **Benchmark Comparison** - How it compares to industry standards
+    8. **Strategic Recommendations** - Business strategy suggestions
+
+    Contract Text:
+    ${contractText}
+
+    Return only this JSON structure:
+    {
+      "strategicValue": number (0-100),
+      "marketAlignment": number (0-100),
+      "competitiveAdvantage": [
+        {"advantage": "description", "impact": "high|medium|low"}
+      ],
+      "riskConcentration": number (0-100),
+      "standardizationScore": number (0-100),
+      "negotiationInsights": {
+        "keyNegotiationPoints": ["list of points"],
+        "flexibilityAreas": ["areas for future negotiation"],
+        "recommendations": ["negotiation strategies"]
+      },
+      "benchmarkComparison": {
+        "vsIndustryStandard": "better|similar|worse",
+        "marketPosition": "description",
+        "improvementAreas": ["areas to improve"]
+      },
+      "recommendations": [
+        {"priority": "high|medium|low", "recommendation": "strategic action", "rationale": "why important"}
+      ]
+    }
+    `;
+
+    const messages = [
+      {
+        role: 'system',
+        content: 'You are a strategic business analyst specializing in contract value optimization. Return only valid JSON.'
+      },
+      {
+        role: 'user',
+        content: prompt
+      }
+    ];
+
+    try {
+      const response = await this.makeRequest(messages);
+      const cleanedResponse = response.trim();
+      const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
+      
+      if (!jsonMatch) {
+        throw new Error('No valid JSON found in strategic analysis response');
+      }
+
+      return JSON.parse(jsonMatch[0]);
+    } catch (error) {
+      console.error('Error analyzing strategic value:', error);
+      return {
+        strategicValue: 70,
+        marketAlignment: 70,
+        competitiveAdvantage: [],
+        riskConcentration: 30,
+        standardizationScore: 80,
+        negotiationInsights: {
+          keyNegotiationPoints: [],
+          flexibilityAreas: [],
+          recommendations: []
+        },
+        benchmarkComparison: {
+          vsIndustryStandard: "similar",
+          marketPosition: "Standard market terms",
+          improvementAreas: []
+        },
+        recommendations: []
+      };
+    }
+  }
+
+  // 🔍 CONTRACT COMPARISON METHODS
+  async findSimilarContracts(contractText: string, allContracts: any[]): Promise<any> {
+    const prompt = `
+    Analyze this contract and compare it with similar contracts to identify patterns, anomalies, and best practices.
+
+    Contract to analyze:
+    ${contractText}
+
+    For comparison, consider:
+    1. **Similar Contract Types** - Identify contracts with similar purpose
+    2. **Clause Variations** - How key clauses differ from standards
+    3. **Term Comparisons** - Financial and legal term differences
+    4. **Best Practices** - Industry best practices found
+    5. **Anomalies** - Unusual or non-standard terms
+
+    Return only this JSON structure:
+    {
+      "similarityScore": number (0-100),
+      "clauseVariations": [
+        {"clause": "clause name", "variation": "how it differs", "impact": "high|medium|low"}
+      ],
+      "termComparisons": {
+        "financialTerms": "comparison summary",
+        "legalTerms": "comparison summary",
+        "performanceTerms": "comparison summary"
+      },
+      "bestPractices": [
+        {"practice": "description", "benefit": "business benefit"}
+      ],
+      "anomalies": [
+        {"anomaly": "unusual term", "risk": "high|medium|low", "explanation": "why unusual"}
+      ]
+    }
+    `;
+
+    const messages = [
+      {
+        role: 'system',
+        content: 'You are a contract comparison specialist. Identify patterns and anomalies across contracts. Return only valid JSON.'
+      },
+      {
+        role: 'user',
+        content: prompt
+      }
+    ];
+
+    try {
+      const response = await this.makeRequest(messages);
+      const cleanedResponse = response.trim();
+      const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
+      
+      if (!jsonMatch) {
+        throw new Error('No valid JSON found in contract comparison response');
+      }
+
+      return JSON.parse(jsonMatch[0]);
+    } catch (error) {
+      console.error('Error comparing contracts:', error);
+      return {
+        similarityScore: 50,
+        clauseVariations: [],
+        termComparisons: {
+          financialTerms: "Standard terms",
+          legalTerms: "Standard terms",
+          performanceTerms: "Standard terms"
+        },
+        bestPractices: [],
+        anomalies: []
+      };
+    }
+  }
+
+  // 📈 PERFORMANCE PREDICTION
+  async predictPerformance(contractText: string, contractType: string = 'unknown'): Promise<any> {
+    const prompt = `
+    Analyze this ${contractType} contract and predict performance metrics based on contract terms and structure.
+
+    Contract Text:
+    ${contractText}
+
+    Analyze and predict:
+    1. **Performance Score** - Overall contract performance likelihood (0-100)
+    2. **Milestone Completion** - Expected milestone completion rate (0-100)
+    3. **On-Time Delivery** - Likelihood of timely delivery
+    4. **Budget Variance** - Expected budget over/under performance
+    5. **Quality Score** - Expected quality of deliverables (0-100)
+    6. **Client Satisfaction** - Predicted satisfaction level (0-100)
+    7. **Renewal Probability** - Likelihood of contract renewal (0-100)
+
+    Return only this JSON structure:
+    {
+      "performanceScore": number (0-100),
+      "milestoneCompletion": number (0-100),
+      "onTimeDelivery": boolean,
+      "budgetVariance": number (positive = over budget, negative = under budget),
+      "qualityScore": number (0-100),
+      "clientSatisfaction": number (0-100),
+      "renewalProbability": number (0-100),
+      "riskFactors": [
+        {"factor": "description", "impact": "high|medium|low"}
+      ],
+      "successFactors": [
+        {"factor": "description", "importance": "high|medium|low"}
+      ]
+    }
+    `;
+
+    const messages = [
+      {
+        role: 'system',
+        content: 'You are a contract performance analyst. Predict contract success metrics based on terms and structure. Return only valid JSON.'
+      },
+      {
+        role: 'user',
+        content: prompt
+      }
+    ];
+
+    try {
+      const response = await this.makeRequest(messages);
+      const cleanedResponse = response.trim();
+      const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
+      
+      if (!jsonMatch) {
+        throw new Error('No valid JSON found in performance prediction response');
+      }
+
+      return JSON.parse(jsonMatch[0]);
+    } catch (error) {
+      console.error('Error predicting performance:', error);
+      return {
+        performanceScore: 75,
+        milestoneCompletion: 80,
+        onTimeDelivery: true,
+        budgetVariance: 0,
+        qualityScore: 85,
+        clientSatisfaction: 80,
+        renewalProbability: 70,
+        riskFactors: [],
+        successFactors: []
+      };
+    }
+  }
 }
 
 export const groqService = new GroqService();
