@@ -66,27 +66,11 @@ function EditUserDialog({ user, onUpdate }: { user: any; onUpdate: () => void })
           <Edit className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent 
-        className="sm:max-w-[425px] bg-background border text-foreground"
-        onPointerDownOutside={(e) => {
-          // Prevent closing when clicking inside the dialog
-          e.preventDefault();
-        }}
-        onInteractOutside={(e) => {
-          // Only close on escape key or explicit close button
-          if (e.detail.originalEvent.type === 'keydown') {
-            return; // Allow escape key
-          }
-          e.preventDefault();
-        }}
-      >
+      <DialogContent className="sm:max-w-[425px] bg-background border text-foreground">
         <DialogHeader>
           <DialogTitle>Edit User</DialogTitle>
         </DialogHeader>
-        <div 
-          className="space-y-4"
-          onClick={(e) => e.stopPropagation()}
-        >
+        <div className="space-y-4">
           <div>
             <Label htmlFor="edit-first-name">First Name</Label>
             <Input
@@ -121,19 +105,13 @@ function EditUserDialog({ user, onUpdate }: { user: any; onUpdate: () => void })
           <div className="flex justify-end space-x-3 pt-4">
             <Button 
               variant="outline" 
-              onClick={(e) => {
-                e.stopPropagation();
-                setOpen(false);
-              }}
+              onClick={() => setOpen(false)}
               data-testid="button-cancel-edit"
             >
               Cancel
             </Button>
             <Button 
-              onClick={(e) => {
-                e.stopPropagation();
-                handleSave();
-              }}
+              onClick={handleSave}
               data-testid="button-save-edit"
             >
               Save Changes
@@ -337,25 +315,11 @@ export default function Users() {
                 Create User
               </Button>
             </DialogTrigger>
-            <DialogContent 
-              className="sm:max-w-[500px] bg-background border text-foreground"
-              onPointerDownOutside={(e) => {
-                e.preventDefault();
-              }}
-              onInteractOutside={(e) => {
-                if (e.detail.originalEvent.type === 'keydown') {
-                  return;
-                }
-                e.preventDefault();
-              }}
-            >
+            <DialogContent className="sm:max-w-[500px] bg-background border text-foreground">
               <DialogHeader>
                 <DialogTitle>Create New User</DialogTitle>
               </DialogHeader>
-              <div 
-                className="space-y-4"
-                onClick={(e) => e.stopPropagation()}
-              >
+              <div className="space-y-4">
                 <div>
                   <Label htmlFor="invite-email">Email Address</Label>
                   <Input
@@ -395,19 +359,13 @@ export default function Users() {
                 <div className="flex justify-end space-x-3 pt-4">
                   <Button 
                     variant="outline" 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setInviteModalOpen(false);
-                    }}
+                    onClick={() => setInviteModalOpen(false)}
                     data-testid="button-cancel-invite"
                   >
                     Cancel
                   </Button>
                   <Button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      createUserMutation.mutate();
-                    }}
+                    onClick={() => createUserMutation.mutate()}
                     disabled={!inviteEmail || createUserMutation.isPending}
                     data-testid="button-create-user"
                   >
@@ -612,25 +570,11 @@ export default function Users() {
 
         {/* Reset Password Dialog */}
         <Dialog open={resetPasswordModalOpen} onOpenChange={setResetPasswordModalOpen}>
-          <DialogContent 
-            className="sm:max-w-[425px] bg-background border text-foreground"
-            onPointerDownOutside={(e) => {
-              e.preventDefault();
-            }}
-            onInteractOutside={(e) => {
-              if (e.detail.originalEvent.type === 'keydown') {
-                return;
-              }
-              e.preventDefault();
-            }}
-          >
+          <DialogContent className="sm:max-w-[425px] bg-background border text-foreground">
             <DialogHeader>
               <DialogTitle>Reset Password</DialogTitle>
             </DialogHeader>
-            <div 
-              className="space-y-4"
-              onClick={(e) => e.stopPropagation()}
-            >
+            <div className="space-y-4">
               <div>
                 <Label>User</Label>
                 <div className="text-sm text-muted-foreground">
@@ -669,8 +613,7 @@ export default function Users() {
             <DialogFooter>
               <Button
                 variant="outline"
-                onClick={(e) => {
-                  e.stopPropagation();
+                onClick={() => {
                   setResetPasswordModalOpen(false);
                   setNewPassword("");
                   setConfirmPassword("");
@@ -681,8 +624,7 @@ export default function Users() {
                 Cancel
               </Button>
               <Button
-                onClick={(e) => {
-                  e.stopPropagation();
+                onClick={() => {
                   if (newPassword === confirmPassword && newPassword.length >= 6 && selectedUser) {
                     resetPasswordMutation.mutate({ userId: selectedUser.id, newPassword });
                   }
