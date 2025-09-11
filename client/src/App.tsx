@@ -13,6 +13,7 @@ import Upload from "@/pages/upload";
 import Analytics from "@/pages/analytics";
 import Reports from "@/pages/reports";
 import Users from "@/pages/users";
+import CreateUser from "@/pages/create-user";
 import Audit from "@/pages/audit";
 import ContractAnalysis from "@/pages/contract-analysis";
 import NotFound from "@/pages/not-found";
@@ -37,6 +38,7 @@ function Router() {
           <ProtectedRoute path="/analytics" component={Analytics} />
           <ProtectedRoute path="/reports" component={Reports} />
           <ProtectedRoute path="/users" component={Users} />
+          <ProtectedRoute path="/users/new" component={CreateUser} />
           <ProtectedRoute path="/audit" component={Audit} />
           <ProtectedRoute path="/contracts/:id" component={() => <ContractAnalysis />} />
         </>

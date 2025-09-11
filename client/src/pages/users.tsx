@@ -510,10 +510,7 @@ export default function Users() {
             size="lg" 
             className="w-full sm:w-auto"
             data-testid="button-create-user"
-            onClick={() => {
-              // For now, redirect to dashboard - we'll create the /users/new route next
-              alert('Create User functionality will be implemented in the next step. For now, testing inline editing with existing users.');
-            }}
+            onClick={() => window.location.href = '/users/new'}
           >
             <Plus className="h-5 w-5 mr-2" />
             Create User

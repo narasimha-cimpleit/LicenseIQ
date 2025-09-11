@@ -12,35 +12,8 @@ interface MainLayoutProps {
 }
 
 export default function MainLayout({ children, title, description }: MainLayoutProps) {
-  const { isAuthenticated, isLoading } = useAuth();
-  const { toast } = useToast();
-
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/auth";
-      }, 500);
-      return;
-    }
-  }, [isAuthenticated, isLoading, toast]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return null; // Will redirect to login
-  }
+  // Remove auth checks - ProtectedRoute already handles authentication
+  // This prevents blank screens caused by double auth checking
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
