@@ -385,6 +385,468 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // 📊 FINANCIAL ANALYSIS API ENDPOINTS
+  app.post('/api/contracts/:id/analyze/financial', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await createAuditLog(req, 'analyze_financial', 'contract', id);
+      
+      // Get contract data and text
+      const contract = await storage.getContract(id);
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+      
+      const text = await fileService.extractTextFromFile(contract.filePath, contract.fileType);
+      const analysis = await groqService.analyzeFinancialTerms(text);
+      
+      // Save financial analysis
+      const financialData = {
+        contractId: id,
+        totalValue: analysis.totalValue,
+        currency: analysis.currency,
+        paymentSchedule: analysis.paymentSchedule,
+        royaltyStructure: analysis.royaltyStructure,
+        revenueProjections: analysis.revenueProjections,
+        costImpact: analysis.costImpact,
+        currencyRisk: analysis.currencyRisk,
+        paymentTerms: analysis.paymentTerms,
+        penaltyClauses: analysis.penaltyClauses,
+      };
+      
+      const savedAnalysis = await storage.createFinancialAnalysis(financialData);
+      res.json(savedAnalysis);
+    } catch (error) {
+      console.error('Error analyzing financial terms:', error);
+      res.status(500).json({ error: 'Failed to analyze financial terms' });
+    }
+  });
+
+  app.get('/api/contracts/:id/analysis/financial', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const analysis = await storage.getFinancialAnalysis(id);
+      
+      if (!analysis) {
+        return res.status(404).json({ error: 'Financial analysis not found' });
+      }
+      
+      res.json(analysis);
+    } catch (error) {
+      console.error('Error fetching financial analysis:', error);
+      res.status(500).json({ error: 'Failed to fetch financial analysis' });
+    }
+  });
+
+  // ⚖️ COMPLIANCE ANALYSIS API ENDPOINTS
+  app.post('/api/contracts/:id/analyze/compliance', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await createAuditLog(req, 'analyze_compliance', 'contract', id);
+      
+      const contract = await storage.getContract(id);
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+      
+      const text = await fileService.extractTextFromFile(contract.filePath, contract.fileType);
+      const analysis = await groqService.analyzeCompliance(text);
+      
+      const complianceData = {
+        contractId: id,
+        complianceScore: analysis.complianceScore,
+        regulatoryFrameworks: analysis.regulatoryFrameworks,
+        jurisdictionAnalysis: analysis.jurisdictionAnalysis,
+        dataProtectionCompliance: analysis.dataProtectionCompliance,
+        industryStandards: analysis.industryStandards,
+        riskFactors: analysis.riskFactors,
+        recommendedActions: analysis.recommendedActions,
+      };
+      
+      const savedAnalysis = await storage.createComplianceAnalysis(complianceData);
+      res.json(savedAnalysis);
+    } catch (error) {
+      console.error('Error analyzing compliance:', error);
+      res.status(500).json({ error: 'Failed to analyze compliance' });
+    }
+  });
+
+  app.get('/api/contracts/:id/analysis/compliance', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const analysis = await storage.getComplianceAnalysis(id);
+      
+      if (!analysis) {
+        return res.status(404).json({ error: 'Compliance analysis not found' });
+      }
+      
+      res.json(analysis);
+    } catch (error) {
+      console.error('Error fetching compliance analysis:', error);
+      res.status(500).json({ error: 'Failed to fetch compliance analysis' });
+    }
+  });
+
+  // 📋 CONTRACT OBLIGATIONS API ENDPOINTS
+  app.post('/api/contracts/:id/analyze/obligations', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await createAuditLog(req, 'extract_obligations', 'contract', id);
+      
+      const contract = await storage.getContract(id);
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+      
+      const text = await fileService.extractTextFromFile(contract.filePath, contract.fileType);
+      const obligations = await groqService.extractObligations(text);
+      
+      // Save all extracted obligations
+      const savedObligations = [];
+      for (const obligation of obligations) {
+        const obligationData = {
+          contractId: id,
+          obligationType: obligation.obligationType,
+          description: obligation.description,
+          dueDate: obligation.dueDate ? new Date(obligation.dueDate) : null,
+          responsible: obligation.responsible,
+          priority: obligation.priority,
+          status: 'pending',
+        };
+        
+        const saved = await storage.createContractObligation(obligationData);
+        savedObligations.push(saved);
+      }
+      
+      res.json(savedObligations);
+    } catch (error) {
+      console.error('Error extracting obligations:', error);
+      res.status(500).json({ error: 'Failed to extract obligations' });
+    }
+  });
+
+  app.get('/api/contracts/:id/obligations', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const obligations = await storage.getContractObligations(id);
+      res.json(obligations);
+    } catch (error) {
+      console.error('Error fetching obligations:', error);
+      res.status(500).json({ error: 'Failed to fetch obligations' });
+    }
+  });
+
+  app.patch('/api/obligations/:id/status', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { status, completionDate } = req.body;
+      
+      await createAuditLog(req, 'update_obligation_status', 'obligation', id, { status, completionDate });
+      
+      const updated = await storage.updateObligationStatus(
+        id, 
+        status, 
+        completionDate ? new Date(completionDate) : undefined
+      );
+      res.json(updated);
+    } catch (error) {
+      console.error('Error updating obligation status:', error);
+      res.status(500).json({ error: 'Failed to update obligation status' });
+    }
+  });
+
+  // 📈 PERFORMANCE METRICS API ENDPOINTS
+  app.post('/api/contracts/:id/analyze/performance', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await createAuditLog(req, 'predict_performance', 'contract', id);
+      
+      const contract = await storage.getContract(id);
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+      
+      const text = await fileService.extractTextFromFile(contract.filePath, contract.fileType);
+      const analysis = await groqService.predictPerformance(text, contract.contractType);
+      
+      const metricsData = {
+        contractId: id,
+        performanceScore: analysis.performanceScore,
+        milestoneCompletion: analysis.milestoneCompletion,
+        onTimeDelivery: analysis.onTimeDelivery,
+        budgetVariance: analysis.budgetVariance,
+        qualityScore: analysis.qualityScore,
+        clientSatisfaction: analysis.clientSatisfaction,
+        renewalProbability: analysis.renewalProbability,
+        riskFactors: analysis.riskFactors,
+        successFactors: analysis.successFactors,
+      };
+      
+      const savedMetrics = await storage.createPerformanceMetrics(metricsData);
+      res.json(savedMetrics);
+    } catch (error) {
+      console.error('Error predicting performance:', error);
+      res.status(500).json({ error: 'Failed to predict performance' });
+    }
+  });
+
+  app.get('/api/contracts/:id/analysis/performance', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const metrics = await storage.getPerformanceMetrics(id);
+      
+      if (!metrics) {
+        return res.status(404).json({ error: 'Performance metrics not found' });
+      }
+      
+      res.json(metrics);
+    } catch (error) {
+      console.error('Error fetching performance metrics:', error);
+      res.status(500).json({ error: 'Failed to fetch performance metrics' });
+    }
+  });
+
+  // 🎯 STRATEGIC ANALYSIS API ENDPOINTS
+  app.post('/api/contracts/:id/analyze/strategic', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await createAuditLog(req, 'analyze_strategic', 'contract', id);
+      
+      const contract = await storage.getContract(id);
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+      
+      const text = await fileService.extractTextFromFile(contract.filePath, contract.fileType);
+      const analysis = await groqService.analyzeStrategicValue(text, contract.contractType);
+      
+      const strategicData = {
+        contractId: id,
+        strategicValue: analysis.strategicValue,
+        marketAlignment: analysis.marketAlignment,
+        competitiveAdvantage: analysis.competitiveAdvantage,
+        riskConcentration: analysis.riskConcentration,
+        standardizationScore: analysis.standardizationScore,
+        negotiationInsights: analysis.negotiationInsights,
+        benchmarkComparison: analysis.benchmarkComparison,
+        recommendations: analysis.recommendations,
+      };
+      
+      const savedAnalysis = await storage.createStrategicAnalysis(strategicData);
+      res.json(savedAnalysis);
+    } catch (error) {
+      console.error('Error analyzing strategic value:', error);
+      res.status(500).json({ error: 'Failed to analyze strategic value' });
+    }
+  });
+
+  app.get('/api/contracts/:id/analysis/strategic', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const analysis = await storage.getStrategicAnalysis(id);
+      
+      if (!analysis) {
+        return res.status(404).json({ error: 'Strategic analysis not found' });
+      }
+      
+      res.json(analysis);
+    } catch (error) {
+      console.error('Error fetching strategic analysis:', error);
+      res.status(500).json({ error: 'Failed to fetch strategic analysis' });
+    }
+  });
+
+  // 🔍 CONTRACT COMPARISON API ENDPOINTS
+  app.post('/api/contracts/:id/analyze/comparison', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await createAuditLog(req, 'compare_contracts', 'contract', id);
+      
+      const contract = await storage.getContract(id);
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+      
+      // Get similar contracts for comparison
+      const userId = req.user.role === 'admin' || req.user.role === 'owner' ? undefined : req.user.id;
+      const { contracts: allContracts } = await storage.getContracts(userId, 1000);
+      
+      const text = await fileService.extractTextFromFile(contract.filePath, contract.fileType);
+      const analysis = await groqService.findSimilarContracts(text, allContracts);
+      
+      const comparisonData = {
+        contractId: id,
+        similarityScore: analysis.similarityScore,
+        clauseVariations: analysis.clauseVariations,
+        termComparisons: analysis.termComparisons,
+        bestPractices: analysis.bestPractices,
+        anomalies: analysis.anomalies,
+      };
+      
+      const savedComparison = await storage.createContractComparison(comparisonData);
+      res.json(savedComparison);
+    } catch (error) {
+      console.error('Error comparing contracts:', error);
+      res.status(500).json({ error: 'Failed to compare contracts' });
+    }
+  });
+
+  app.get('/api/contracts/:id/analysis/comparison', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const comparison = await storage.getContractComparison(id);
+      
+      if (!comparison) {
+        return res.status(404).json({ error: 'Contract comparison not found' });
+      }
+      
+      res.json(comparison);
+    } catch (error) {
+      console.error('Error fetching contract comparison:', error);
+      res.status(500).json({ error: 'Failed to fetch contract comparison' });
+    }
+  });
+
+  // 📊 COMPREHENSIVE ANALYTICS API ENDPOINT
+  app.post('/api/contracts/:id/analyze/comprehensive', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await createAuditLog(req, 'comprehensive_analysis', 'contract', id);
+      
+      const contract = await storage.getContract(id);
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+      
+      const text = await fileService.extractTextFromFile(contract.filePath, contract.fileType);
+      
+      // Run all analyses in parallel for efficiency
+      const [
+        financialAnalysis,
+        complianceAnalysis,
+        obligations,
+        performanceAnalysis,
+        strategicAnalysis,
+        allContracts
+      ] = await Promise.all([
+        groqService.analyzeFinancialTerms(text),
+        groqService.analyzeCompliance(text),
+        groqService.extractObligations(text),
+        groqService.predictPerformance(text, contract.contractType),
+        groqService.analyzeStrategicValue(text, contract.contractType),
+        storage.getContracts(undefined, 1000)
+      ]);
+      
+      const comparisonAnalysis = await groqService.findSimilarContracts(text, allContracts.contracts);
+      
+      // Save all analyses
+      const savedAnalyses = await Promise.all([
+        storage.createFinancialAnalysis({
+          contractId: id,
+          totalValue: financialAnalysis.totalValue,
+          currency: financialAnalysis.currency,
+          paymentSchedule: financialAnalysis.paymentSchedule,
+          royaltyStructure: financialAnalysis.royaltyStructure,
+          revenueProjections: financialAnalysis.revenueProjections,
+          costImpact: financialAnalysis.costImpact,
+          currencyRisk: financialAnalysis.currencyRisk,
+          paymentTerms: financialAnalysis.paymentTerms,
+          penaltyClauses: financialAnalysis.penaltyClauses,
+        }),
+        
+        storage.createComplianceAnalysis({
+          contractId: id,
+          complianceScore: complianceAnalysis.complianceScore,
+          regulatoryFrameworks: complianceAnalysis.regulatoryFrameworks,
+          jurisdictionAnalysis: complianceAnalysis.jurisdictionAnalysis,
+          dataProtectionCompliance: complianceAnalysis.dataProtectionCompliance,
+          industryStandards: complianceAnalysis.industryStandards,
+          riskFactors: complianceAnalysis.riskFactors,
+          recommendedActions: complianceAnalysis.recommendedActions,
+        }),
+        
+        storage.createPerformanceMetrics({
+          contractId: id,
+          performanceScore: performanceAnalysis.performanceScore,
+          milestoneCompletion: performanceAnalysis.milestoneCompletion,
+          onTimeDelivery: performanceAnalysis.onTimeDelivery,
+          budgetVariance: performanceAnalysis.budgetVariance,
+          qualityScore: performanceAnalysis.qualityScore,
+          clientSatisfaction: performanceAnalysis.clientSatisfaction,
+          renewalProbability: performanceAnalysis.renewalProbability,
+          riskFactors: performanceAnalysis.riskFactors,
+          successFactors: performanceAnalysis.successFactors,
+        }),
+        
+        storage.createStrategicAnalysis({
+          contractId: id,
+          strategicValue: strategicAnalysis.strategicValue,
+          marketAlignment: strategicAnalysis.marketAlignment,
+          competitiveAdvantage: strategicAnalysis.competitiveAdvantage,
+          riskConcentration: strategicAnalysis.riskConcentration,
+          standardizationScore: strategicAnalysis.standardizationScore,
+          negotiationInsights: strategicAnalysis.negotiationInsights,
+          benchmarkComparison: strategicAnalysis.benchmarkComparison,
+          recommendations: strategicAnalysis.recommendations,
+        }),
+        
+        storage.createContractComparison({
+          contractId: id,
+          similarityScore: comparisonAnalysis.similarityScore,
+          clauseVariations: comparisonAnalysis.clauseVariations,
+          termComparisons: comparisonAnalysis.termComparisons,
+          bestPractices: comparisonAnalysis.bestPractices,
+          anomalies: comparisonAnalysis.anomalies,
+        })
+      ]);
+      
+      // Save obligations
+      const savedObligations = [];
+      for (const obligation of obligations) {
+        const obligationData = {
+          contractId: id,
+          obligationType: obligation.obligationType,
+          description: obligation.description,
+          dueDate: obligation.dueDate ? new Date(obligation.dueDate) : null,
+          responsible: obligation.responsible,
+          priority: obligation.priority,
+          status: 'pending',
+        };
+        const saved = await storage.createContractObligation(obligationData);
+        savedObligations.push(saved);
+      }
+      
+      res.json({
+        financial: savedAnalyses[0],
+        compliance: savedAnalyses[1],
+        performance: savedAnalyses[2],
+        strategic: savedAnalyses[3],
+        comparison: savedAnalyses[4],
+        obligations: savedObligations,
+        message: 'Comprehensive analysis completed successfully'
+      });
+      
+    } catch (error) {
+      console.error('Error running comprehensive analysis:', error);
+      res.status(500).json({ error: 'Failed to run comprehensive analysis' });
+    }
+  });
+
+  // 📊 PORTFOLIO ANALYTICS API ENDPOINT  
+  app.get('/api/analytics/portfolio', isAuthenticated, async (req: any, res) => {
+    try {
+      await createAuditLog(req, 'view_portfolio_analytics', 'analytics');
+      
+      const userId = req.query.userId || req.user.id;
+      const analytics = await storage.getPortfolioAnalytics(userId === 'all' ? undefined : userId);
+      
+      res.json(analytics);
+    } catch (error) {
+      console.error('Error fetching portfolio analytics:', error);
+      res.status(500).json({ error: 'Failed to fetch portfolio analytics' });
+    }
+  });
+
   // User management routes (admin only)
   app.get('/api/users', isAuthenticated, async (req: any, res) => {
     try {
