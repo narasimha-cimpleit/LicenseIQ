@@ -66,7 +66,11 @@ function EditUserDialog({ user, onUpdate }: { user: any; onUpdate: () => void })
           <Edit className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] bg-background border text-foreground">
+      <DialogContent 
+        className="sm:max-w-[425px] bg-background border text-foreground"
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>Edit User</DialogTitle>
         </DialogHeader>
@@ -570,7 +574,11 @@ export default function Users() {
 
         {/* Reset Password Dialog */}
         <Dialog open={resetPasswordModalOpen} onOpenChange={setResetPasswordModalOpen}>
-          <DialogContent className="sm:max-w-[425px] bg-background border text-foreground">
+          <DialogContent 
+            className="sm:max-w-[425px] bg-background border text-foreground"
+            onPointerDownOutside={(e) => e.preventDefault()}
+            onInteractOutside={(e) => e.preventDefault()}
+          >
             <DialogHeader>
               <DialogTitle>Reset Password</DialogTitle>
             </DialogHeader>
