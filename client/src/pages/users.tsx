@@ -66,11 +66,27 @@ function EditUserDialog({ user, onUpdate }: { user: any; onUpdate: () => void })
           <Edit className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-black dark:text-white">
+      <DialogContent 
+        className="sm:max-w-[425px] bg-background border text-foreground"
+        onPointerDownOutside={(e) => {
+          // Prevent closing when clicking inside the dialog
+          e.preventDefault();
+        }}
+        onInteractOutside={(e) => {
+          // Only close on escape key or explicit close button
+          if (e.detail.originalEvent.type === 'keydown') {
+            return; // Allow escape key
+          }
+          e.preventDefault();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Edit User</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
+        <div 
+          className="space-y-4"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div>
             <Label htmlFor="edit-first-name">First Name</Label>
             <Input
@@ -78,6 +94,7 @@ function EditUserDialog({ user, onUpdate }: { user: any; onUpdate: () => void })
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               placeholder="First name"
+              data-testid="input-edit-first-name"
             />
           </div>
           <div>
@@ -87,6 +104,7 @@ function EditUserDialog({ user, onUpdate }: { user: any; onUpdate: () => void })
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               placeholder="Last name"
+              data-testid="input-edit-last-name"
             />
           </div>
           <div>
@@ -97,16 +115,27 @@ function EditUserDialog({ user, onUpdate }: { user: any; onUpdate: () => void })
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email address"
+              data-testid="input-edit-email"
             />
           </div>
           <div className="flex justify-end space-x-3 pt-4">
             <Button 
               variant="outline" 
-              onClick={() => setOpen(false)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpen(false);
+              }}
+              data-testid="button-cancel-edit"
             >
               Cancel
             </Button>
-            <Button onClick={handleSave}>
+            <Button 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSave();
+              }}
+              data-testid="button-save-edit"
+            >
               Save Changes
             </Button>
           </div>
@@ -308,11 +337,25 @@ export default function Users() {
                 Create User
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-black dark:text-white">
+            <DialogContent 
+              className="sm:max-w-[500px] bg-background border text-foreground"
+              onPointerDownOutside={(e) => {
+                e.preventDefault();
+              }}
+              onInteractOutside={(e) => {
+                if (e.detail.originalEvent.type === 'keydown') {
+                  return;
+                }
+                e.preventDefault();
+              }}
+            >
               <DialogHeader>
                 <DialogTitle>Create New User</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4">
+              <div 
+                className="space-y-4"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <div>
                   <Label htmlFor="invite-email">Email Address</Label>
                   <Input
@@ -352,13 +395,19 @@ export default function Users() {
                 <div className="flex justify-end space-x-3 pt-4">
                   <Button 
                     variant="outline" 
-                    onClick={() => setInviteModalOpen(false)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setInviteModalOpen(false);
+                    }}
                     data-testid="button-cancel-invite"
                   >
                     Cancel
                   </Button>
                   <Button 
-                    onClick={() => createUserMutation.mutate()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      createUserMutation.mutate();
+                    }}
                     disabled={!inviteEmail || createUserMutation.isPending}
                     data-testid="button-create-user"
                   >
@@ -477,37 +526,25 @@ export default function Users() {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div style={{ position: 'relative', zIndex: 9999 }}>
-                              <Select
-                                value={user.role}
-                                onValueChange={(newRole) => 
-                                  updateUserRoleMutation.mutate({ userId: user.id, newRole })
-                                }
-                                disabled={updateUserRoleMutation.isPending}
-                              >
-                                <SelectTrigger className="w-32">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent 
-                                  className="bg-background border shadow-lg"
-                                  style={{ 
-                                    position: 'fixed',
-                                    zIndex: 2147483647,
-                                    backgroundColor: 'white',
-                                    border: '1px solid #e2e8f0',
-                                    borderRadius: '6px',
-                                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
-                                  }}
-                                >
-                                  <SelectItem value="viewer">Viewer</SelectItem>
-                                  <SelectItem value="editor">Editor</SelectItem>
-                                  <SelectItem value="admin">Admin</SelectItem>
-                                  {user?.role === 'owner' && (
-                                    <SelectItem value="owner">Owner</SelectItem>
-                                  )}
-                                </SelectContent>
-                              </Select>
-                            </div>
+                            <Select
+                              value={user.role}
+                              onValueChange={(newRole) => 
+                                updateUserRoleMutation.mutate({ userId: user.id, newRole })
+                              }
+                              disabled={updateUserRoleMutation.isPending}
+                            >
+                              <SelectTrigger className="w-32">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="viewer">Viewer</SelectItem>
+                                <SelectItem value="editor">Editor</SelectItem>
+                                <SelectItem value="admin">Admin</SelectItem>
+                                {user?.role === 'owner' && (
+                                  <SelectItem value="owner">Owner</SelectItem>
+                                )}
+                              </SelectContent>
+                            </Select>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <Badge variant={user.isActive ? "default" : "secondary"}>
@@ -575,11 +612,25 @@ export default function Users() {
 
         {/* Reset Password Dialog */}
         <Dialog open={resetPasswordModalOpen} onOpenChange={setResetPasswordModalOpen}>
-          <DialogContent className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-black dark:text-white">
+          <DialogContent 
+            className="sm:max-w-[425px] bg-background border text-foreground"
+            onPointerDownOutside={(e) => {
+              e.preventDefault();
+            }}
+            onInteractOutside={(e) => {
+              if (e.detail.originalEvent.type === 'keydown') {
+                return;
+              }
+              e.preventDefault();
+            }}
+          >
             <DialogHeader>
               <DialogTitle>Reset Password</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
+            <div 
+              className="space-y-4"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div>
                 <Label>User</Label>
                 <div className="text-sm text-muted-foreground">
@@ -618,7 +669,8 @@ export default function Users() {
             <DialogFooter>
               <Button
                 variant="outline"
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
                   setResetPasswordModalOpen(false);
                   setNewPassword("");
                   setConfirmPassword("");
@@ -629,7 +681,8 @@ export default function Users() {
                 Cancel
               </Button>
               <Button
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
                   if (newPassword === confirmPassword && newPassword.length >= 6 && selectedUser) {
                     resetPasswordMutation.mutate({ userId: selectedUser.id, newPassword });
                   }
