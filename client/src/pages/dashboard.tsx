@@ -49,10 +49,6 @@ export default function Dashboard() {
           >
             📥 Download POC Documentation
           </Button>
-          <Button onClick={handleUpload} data-testid="button-new-contract">
-            <FileText className="h-4 w-4 mr-2 text-emerald-400" />
-            New Contract
-          </Button>
         </div>
 
         {/* Metrics Cards */}
