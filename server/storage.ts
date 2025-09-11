@@ -3,6 +3,13 @@ import {
   contracts,
   contractAnalysis,
   auditTrail,
+  financialAnalysis,
+  complianceAnalysis,
+  contractObligations,
+  performanceMetrics,
+  strategicAnalysis,
+  contractComparisons,
+  marketBenchmarks,
   type User,
   type InsertUser,
   type Contract,
@@ -12,6 +19,20 @@ import {
   type AuditTrail,
   type InsertAuditTrail,
   type ContractWithAnalysis,
+  type FinancialAnalysis,
+  type InsertFinancialAnalysis,
+  type ComplianceAnalysis,
+  type InsertComplianceAnalysis,
+  type ContractObligation,
+  type InsertContractObligation,
+  type PerformanceMetrics,
+  type InsertPerformanceMetrics,
+  type StrategicAnalysis,
+  type InsertStrategicAnalysis,
+  type ContractComparison,
+  type InsertContractComparison,
+  type MarketBenchmark,
+  type InsertMarketBenchmark,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, ilike, count } from "drizzle-orm";
@@ -42,6 +63,49 @@ export interface IStorage {
   createContractAnalysis(analysis: InsertContractAnalysis): Promise<ContractAnalysis>;
   getContractAnalysis(contractId: string): Promise<ContractAnalysis | undefined>;
   updateContractAnalysis(contractId: string, analysis: Partial<InsertContractAnalysis>): Promise<ContractAnalysis>;
+  deleteContractAnalysis(contractId: string): Promise<void>;
+  
+  // Financial analysis operations
+  createFinancialAnalysis(analysis: InsertFinancialAnalysis): Promise<FinancialAnalysis>;
+  getFinancialAnalysis(contractId: string): Promise<FinancialAnalysis | undefined>;
+  updateFinancialAnalysis(contractId: string, analysis: Partial<InsertFinancialAnalysis>): Promise<FinancialAnalysis>;
+  deleteFinancialAnalysis(contractId: string): Promise<void>;
+  
+  // Compliance analysis operations
+  createComplianceAnalysis(analysis: InsertComplianceAnalysis): Promise<ComplianceAnalysis>;
+  getComplianceAnalysis(contractId: string): Promise<ComplianceAnalysis | undefined>;
+  updateComplianceAnalysis(contractId: string, analysis: Partial<InsertComplianceAnalysis>): Promise<ComplianceAnalysis>;
+  deleteComplianceAnalysis(contractId: string): Promise<void>;
+  
+  // Contract obligations operations
+  createContractObligation(obligation: InsertContractObligation): Promise<ContractObligation>;
+  getContractObligations(contractId: string): Promise<ContractObligation[]>;
+  updateObligationStatus(id: string, status: string, completionDate?: Date): Promise<ContractObligation>;
+  deleteContractObligation(id: string): Promise<void>;
+  
+  // Performance metrics operations
+  createPerformanceMetrics(metrics: InsertPerformanceMetrics): Promise<PerformanceMetrics>;
+  getPerformanceMetrics(contractId: string): Promise<PerformanceMetrics | undefined>;
+  updatePerformanceMetrics(contractId: string, metrics: Partial<InsertPerformanceMetrics>): Promise<PerformanceMetrics>;
+  deletePerformanceMetrics(contractId: string): Promise<void>;
+  
+  // Strategic analysis operations
+  createStrategicAnalysis(analysis: InsertStrategicAnalysis): Promise<StrategicAnalysis>;
+  getStrategicAnalysis(contractId: string): Promise<StrategicAnalysis | undefined>;
+  updateStrategicAnalysis(contractId: string, analysis: Partial<InsertStrategicAnalysis>): Promise<StrategicAnalysis>;
+  deleteStrategicAnalysis(contractId: string): Promise<void>;
+  
+  // Contract comparison operations
+  createContractComparison(comparison: InsertContractComparison): Promise<ContractComparison>;
+  getContractComparison(contractId: string): Promise<ContractComparison | undefined>;
+  updateContractComparison(contractId: string, comparison: Partial<InsertContractComparison>): Promise<ContractComparison>;
+  deleteContractComparison(contractId: string): Promise<void>;
+  
+  // Market benchmark operations
+  createMarketBenchmark(benchmark: InsertMarketBenchmark): Promise<MarketBenchmark>;
+  getMarketBenchmarks(contractType?: string, industry?: string): Promise<MarketBenchmark[]>;
+  updateMarketBenchmark(id: string, benchmark: Partial<InsertMarketBenchmark>): Promise<MarketBenchmark>;
+  deleteMarketBenchmark(id: string): Promise<void>;
   
   // Audit trail operations
   createAuditLog(audit: InsertAuditTrail): Promise<AuditTrail>;
@@ -54,6 +118,15 @@ export interface IStorage {
     analyzed: number;
     recentUploads: number;
     activeUsers: number;
+  }>;
+  
+  // Advanced analytics operations
+  getPortfolioAnalytics(userId?: string): Promise<{
+    totalValue: number;
+    avgPerformanceScore: number;
+    complianceRate: number;
+    upcomingObligations: number;
+    renewalsPending: number;
   }>;
 }
 
@@ -352,6 +425,231 @@ export class DatabaseStorage implements IStorage {
     return result[0].count;
   }
 
+  // Delete contract analysis  
+  async deleteContractAnalysis(contractId: string): Promise<void> {
+    await db.delete(contractAnalysis).where(eq(contractAnalysis.contractId, contractId));
+  }
+
+  // Financial analysis operations
+  async createFinancialAnalysis(analysisData: InsertFinancialAnalysis): Promise<FinancialAnalysis> {
+    const [analysis] = await db
+      .insert(financialAnalysis)
+      .values(analysisData)
+      .returning();
+    return analysis;
+  }
+
+  async getFinancialAnalysis(contractId: string): Promise<FinancialAnalysis | undefined> {
+    const [analysis] = await db
+      .select()
+      .from(financialAnalysis)
+      .where(eq(financialAnalysis.contractId, contractId));
+    return analysis;
+  }
+
+  async updateFinancialAnalysis(contractId: string, updates: Partial<InsertFinancialAnalysis>): Promise<FinancialAnalysis> {
+    const [analysis] = await db
+      .update(financialAnalysis)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(financialAnalysis.contractId, contractId))
+      .returning();
+    return analysis;
+  }
+
+  async deleteFinancialAnalysis(contractId: string): Promise<void> {
+    await db.delete(financialAnalysis).where(eq(financialAnalysis.contractId, contractId));
+  }
+
+  // Compliance analysis operations
+  async createComplianceAnalysis(analysisData: InsertComplianceAnalysis): Promise<ComplianceAnalysis> {
+    const [analysis] = await db
+      .insert(complianceAnalysis)
+      .values(analysisData)
+      .returning();
+    return analysis;
+  }
+
+  async getComplianceAnalysis(contractId: string): Promise<ComplianceAnalysis | undefined> {
+    const [analysis] = await db
+      .select()
+      .from(complianceAnalysis)
+      .where(eq(complianceAnalysis.contractId, contractId));
+    return analysis;
+  }
+
+  async updateComplianceAnalysis(contractId: string, updates: Partial<InsertComplianceAnalysis>): Promise<ComplianceAnalysis> {
+    const [analysis] = await db
+      .update(complianceAnalysis)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(complianceAnalysis.contractId, contractId))
+      .returning();
+    return analysis;
+  }
+
+  async deleteComplianceAnalysis(contractId: string): Promise<void> {
+    await db.delete(complianceAnalysis).where(eq(complianceAnalysis.contractId, contractId));
+  }
+
+  // Contract obligations operations
+  async createContractObligation(obligationData: InsertContractObligation): Promise<ContractObligation> {
+    const [obligation] = await db
+      .insert(contractObligations)
+      .values(obligationData)
+      .returning();
+    return obligation;
+  }
+
+  async getContractObligations(contractId: string): Promise<ContractObligation[]> {
+    return await db
+      .select()
+      .from(contractObligations)
+      .where(eq(contractObligations.contractId, contractId))
+      .orderBy(desc(contractObligations.dueDate));
+  }
+
+  async updateObligationStatus(id: string, status: string, completionDate?: Date): Promise<ContractObligation> {
+    const updates: any = { status, updatedAt: new Date() };
+    if (completionDate) {
+      updates.completionDate = completionDate;
+    }
+    
+    const [obligation] = await db
+      .update(contractObligations)
+      .set(updates)
+      .where(eq(contractObligations.id, id))
+      .returning();
+    return obligation;
+  }
+
+  async deleteContractObligation(id: string): Promise<void> {
+    await db.delete(contractObligations).where(eq(contractObligations.id, id));
+  }
+
+  // Performance metrics operations
+  async createPerformanceMetrics(metricsData: InsertPerformanceMetrics): Promise<PerformanceMetrics> {
+    const [metrics] = await db
+      .insert(performanceMetrics)
+      .values(metricsData)
+      .returning();
+    return metrics;
+  }
+
+  async getPerformanceMetrics(contractId: string): Promise<PerformanceMetrics | undefined> {
+    const [metrics] = await db
+      .select()
+      .from(performanceMetrics)
+      .where(eq(performanceMetrics.contractId, contractId));
+    return metrics;
+  }
+
+  async updatePerformanceMetrics(contractId: string, updates: Partial<InsertPerformanceMetrics>): Promise<PerformanceMetrics> {
+    const [metrics] = await db
+      .update(performanceMetrics)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(performanceMetrics.contractId, contractId))
+      .returning();
+    return metrics;
+  }
+
+  async deletePerformanceMetrics(contractId: string): Promise<void> {
+    await db.delete(performanceMetrics).where(eq(performanceMetrics.contractId, contractId));
+  }
+
+  // Strategic analysis operations
+  async createStrategicAnalysis(analysisData: InsertStrategicAnalysis): Promise<StrategicAnalysis> {
+    const [analysis] = await db
+      .insert(strategicAnalysis)
+      .values(analysisData)
+      .returning();
+    return analysis;
+  }
+
+  async getStrategicAnalysis(contractId: string): Promise<StrategicAnalysis | undefined> {
+    const [analysis] = await db
+      .select()
+      .from(strategicAnalysis)
+      .where(eq(strategicAnalysis.contractId, contractId));
+    return analysis;
+  }
+
+  async updateStrategicAnalysis(contractId: string, updates: Partial<InsertStrategicAnalysis>): Promise<StrategicAnalysis> {
+    const [analysis] = await db
+      .update(strategicAnalysis)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(strategicAnalysis.contractId, contractId))
+      .returning();
+    return analysis;
+  }
+
+  async deleteStrategicAnalysis(contractId: string): Promise<void> {
+    await db.delete(strategicAnalysis).where(eq(strategicAnalysis.contractId, contractId));
+  }
+
+  // Contract comparison operations
+  async createContractComparison(comparisonData: InsertContractComparison): Promise<ContractComparison> {
+    const [comparison] = await db
+      .insert(contractComparisons)
+      .values(comparisonData)
+      .returning();
+    return comparison;
+  }
+
+  async getContractComparison(contractId: string): Promise<ContractComparison | undefined> {
+    const [comparison] = await db
+      .select()
+      .from(contractComparisons)
+      .where(eq(contractComparisons.contractId, contractId));
+    return comparison;
+  }
+
+  async updateContractComparison(contractId: string, updates: Partial<InsertContractComparison>): Promise<ContractComparison> {
+    const [comparison] = await db
+      .update(contractComparisons)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(contractComparisons.contractId, contractId))
+      .returning();
+    return comparison;
+  }
+
+  async deleteContractComparison(contractId: string): Promise<void> {
+    await db.delete(contractComparisons).where(eq(contractComparisons.contractId, contractId));
+  }
+
+  // Market benchmark operations
+  async createMarketBenchmark(benchmarkData: InsertMarketBenchmark): Promise<MarketBenchmark> {
+    const [benchmark] = await db
+      .insert(marketBenchmarks)
+      .values(benchmarkData)
+      .returning();
+    return benchmark;
+  }
+
+  async getMarketBenchmarks(contractType?: string, industry?: string): Promise<MarketBenchmark[]> {
+    let query = db.select().from(marketBenchmarks);
+    
+    if (contractType || industry) {
+      const conditions = [];
+      if (contractType) conditions.push(eq(marketBenchmarks.contractType, contractType));
+      if (industry) conditions.push(eq(marketBenchmarks.industry, industry));
+      query = query.where(and(...conditions));
+    }
+    
+    return await query.orderBy(desc(marketBenchmarks.lastUpdated));
+  }
+
+  async updateMarketBenchmark(id: string, updates: Partial<InsertMarketBenchmark>): Promise<MarketBenchmark> {
+    const [benchmark] = await db
+      .update(marketBenchmarks)
+      .set({ ...updates, lastUpdated: new Date() })
+      .where(eq(marketBenchmarks.id, id))
+      .returning();
+    return benchmark;
+  }
+
+  async deleteMarketBenchmark(id: string): Promise<void> {
+    await db.delete(marketBenchmarks).where(eq(marketBenchmarks.id, id));
+  }
+
   // Analytics operations
   async getContractMetrics(userId?: string): Promise<{
     totalContracts: number;
@@ -392,6 +690,25 @@ export class DatabaseStorage implements IStorage {
       analyzed: analyzedResult[0].count,
       recentUploads: recentResult[0].count,
       activeUsers: activeUsersResult[0].count,
+    };
+  }
+
+  // Advanced analytics operations
+  async getPortfolioAnalytics(userId?: string): Promise<{
+    totalValue: number;
+    avgPerformanceScore: number;
+    complianceRate: number;
+    upcomingObligations: number;
+    renewalsPending: number;
+  }> {
+    // This is a complex aggregation that would join multiple analytics tables
+    // For now, return sample data - this would be enhanced in production
+    return {
+      totalValue: 0,
+      avgPerformanceScore: 0,
+      complianceRate: 0,
+      upcomingObligations: 0,
+      renewalsPending: 0,
     };
   }
 }
