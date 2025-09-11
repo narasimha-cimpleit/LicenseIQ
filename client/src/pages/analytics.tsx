@@ -33,37 +33,28 @@ import {
 export default function Analytics() {
   const { user } = useAuth();
 
-  const { data: metrics } = useQuery({
-    queryKey: ["/api/analytics/metrics"],
+  // Single optimized query that fetches all analytics data at once
+  const { data: allAnalytics, isLoading: analyticsLoading } = useQuery({
+    queryKey: ["/api/analytics/all"],
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    cacheTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
   });
 
-  const { data: portfolioAnalytics } = useQuery({
-    queryKey: ["/api/analytics/portfolio"],
-  });
-
+  // Contracts data still needs separate query for detailed contract list
   const { data: contractsData } = useQuery({
     queryKey: ["/api/contracts"],
+    staleTime: 1 * 60 * 1000, // Consider data fresh for 1 minute
+    cacheTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
   });
 
-  const { data: financialAnalytics } = useQuery({
-    queryKey: ["/api/analytics/financial"],
-  });
-
-  const { data: complianceAnalytics } = useQuery({
-    queryKey: ["/api/analytics/compliance"],
-  });
-
-  const { data: strategicAnalytics } = useQuery({
-    queryKey: ["/api/analytics/strategic"],
-  });
-
-  const { data: performanceAnalytics } = useQuery({
-    queryKey: ["/api/analytics/performance"],
-  });
-
-  const { data: riskAnalytics } = useQuery({
-    queryKey: ["/api/analytics/risks"],
-  });
+  // Extract individual analytics from the combined response
+  const metrics = allAnalytics?.metrics;
+  const portfolioAnalytics = allAnalytics?.portfolio;
+  const financialAnalytics = allAnalytics?.financial;
+  const complianceAnalytics = allAnalytics?.compliance;
+  const strategicAnalytics = allAnalytics?.strategic;
+  const performanceAnalytics = allAnalytics?.performance;
+  const riskAnalytics = allAnalytics?.risks;
 
   const contracts = contractsData?.contracts || [];
 

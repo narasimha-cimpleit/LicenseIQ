@@ -192,6 +192,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const offset = parseInt(req.query.offset as string) || 0;
       const userId = req.user.id;
       
+      // Add caching for contracts list (private for user-specific data)
+      res.set('Cache-Control', 'private, max-age=60'); // 1 minute cache
+      
       // Check if user can view all contracts (admin/owner) or only their own
       const userRole = (await storage.getUser(userId))?.role;
       const canViewAll = userRole === 'admin' || userRole === 'owner';
@@ -401,12 +404,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Analytics routes
+  // Single optimized analytics endpoint
+  app.get('/api/analytics/all', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const userRole = (await storage.getUser(userId))?.role;
+      const canViewAll = userRole === 'admin' || userRole === 'owner';
+      const targetUserId = canViewAll ? undefined : userId;
+
+      // Set cache headers - analytics can be cached for 5 minutes (private for user-specific data)
+      res.set('Cache-Control', 'private, max-age=300');
+      
+      // Fetch all analytics data in parallel for better performance
+      const [
+        metrics,
+        financial,
+        compliance,
+        strategic,
+        performance,
+        risks,
+        portfolio
+      ] = await Promise.all([
+        storage.getContractMetrics(targetUserId),
+        storage.getFinancialAnalytics(targetUserId),
+        storage.getComplianceAnalytics(targetUserId),
+        storage.getStrategicAnalytics(targetUserId),
+        storage.getPerformanceAnalytics(targetUserId),
+        storage.getRiskAnalytics(targetUserId),
+        storage.getPortfolioAnalytics(targetUserId)
+      ]);
+
+      const allAnalytics = {
+        metrics,
+        financial,
+        compliance,
+        strategic,
+        performance,
+        risks,
+        portfolio
+      };
+
+      res.json(allAnalytics);
+    } catch (error) {
+      console.error('Error fetching all analytics:', error);
+      res.status(500).json({ message: 'Failed to fetch analytics' });
+    }
+  });
+
+  // Legacy analytics routes for backwards compatibility (with caching)
   app.get('/api/analytics/metrics', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const userRole = (await storage.getUser(userId))?.role;
       const canViewAll = userRole === 'admin' || userRole === 'owner';
+      
+      // Add caching (private for user-specific data)
+      res.set('Cache-Control', 'private, max-age=300');
       
       const metrics = await storage.getContractMetrics(
         canViewAll ? undefined : userId
@@ -872,6 +925,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await createAuditLog(req, 'view_portfolio_analytics', 'analytics');
       
       const userId = req.query.userId || req.user.id;
+      
+      // Add caching (private for user-specific data)
+      res.set('Cache-Control', 'private, max-age=300');
+      
       const analytics = await storage.getPortfolioAnalytics(userId === 'all' ? undefined : userId);
       
       res.json(analytics);
@@ -889,6 +946,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const userRole = (await storage.getUser(userId))?.role;
       const canViewAll = userRole === 'admin' || userRole === 'owner';
+      
+      // Add caching (private for user-specific data)
+      res.set('Cache-Control', 'private, max-age=300');
       
       const analytics = await storage.getFinancialAnalytics(
         canViewAll ? undefined : userId
@@ -910,6 +970,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userRole = (await storage.getUser(userId))?.role;
       const canViewAll = userRole === 'admin' || userRole === 'owner';
       
+      // Add caching (private for user-specific data)
+      res.set('Cache-Control', 'private, max-age=300');
+      
       const analytics = await storage.getComplianceAnalytics(
         canViewAll ? undefined : userId
       );
@@ -929,6 +992,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const userRole = (await storage.getUser(userId))?.role;
       const canViewAll = userRole === 'admin' || userRole === 'owner';
+      
+      // Add caching (private for user-specific data)
+      res.set('Cache-Control', 'private, max-age=300');
       
       const analytics = await storage.getStrategicAnalytics(
         canViewAll ? undefined : userId
@@ -950,6 +1016,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userRole = (await storage.getUser(userId))?.role;
       const canViewAll = userRole === 'admin' || userRole === 'owner';
       
+      // Add caching (private for user-specific data)
+      res.set('Cache-Control', 'private, max-age=300');
+      
       const analytics = await storage.getPerformanceAnalytics(
         canViewAll ? undefined : userId
       );
@@ -969,6 +1038,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const userRole = (await storage.getUser(userId))?.role;
       const canViewAll = userRole === 'admin' || userRole === 'owner';
+      
+      // Add caching (private for user-specific data)
+      res.set('Cache-Control', 'private, max-age=300');
       
       const analytics = await storage.getRiskAnalytics(
         canViewAll ? undefined : userId

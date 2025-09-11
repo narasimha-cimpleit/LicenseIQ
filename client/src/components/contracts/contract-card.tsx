@@ -61,18 +61,62 @@ export default function ContractCard({ contract, className }: ContractCardProps)
         throw error;
       }
     },
+    onMutate: async () => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: ["/api/contracts"] });
+      await queryClient.cancelQueries({ queryKey: ["/api/analytics/all"] });
+
+      // Snapshot the previous values
+      const previousContracts = queryClient.getQueryData(["/api/contracts"]);
+      const previousAnalytics = queryClient.getQueryData(["/api/analytics/all"]);
+
+      // Optimistically update to remove the contract immediately
+      queryClient.setQueryData(["/api/contracts"], (old: any) => {
+        if (!old?.contracts) return old;
+        
+        return {
+          ...old,
+          contracts: old.contracts.filter((c: any) => c.id !== contract.id),
+          total: old.total - 1
+        };
+      });
+
+      // Also update analytics metrics immediately in the new combined endpoint
+      queryClient.setQueryData(["/api/analytics/all"], (old: any) => {
+        if (!old?.metrics) return old;
+        return {
+          ...old,
+          metrics: {
+            ...old.metrics,
+            totalContracts: Math.max(0, (old.metrics.totalContracts || 1) - 1)
+          }
+        };
+      });
+
+      // Return a context object with the snapshotted values
+      return { previousContracts, previousAnalytics };
+    },
     onSuccess: (data) => {
       console.log("Delete mutation success:", data);
       toast({
         title: "Contract Deleted",
         description: "The contract has been permanently deleted.",
       });
-      // Force immediate refetch of contracts list
+      // Invalidate to refetch in the background for consistency
       queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
-      queryClient.refetchQueries({ queryKey: ["/api/contracts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/analytics/all"] });
     },
-    onError: (error: Error) => {
+    onError: (error: Error, variables, context) => {
       console.error("Delete mutation onError:", error);
+      
+      // Rollback the optimistic updates
+      if (context?.previousContracts) {
+        queryClient.setQueryData(["/api/contracts"], context.previousContracts);
+      }
+      if (context?.previousAnalytics) {
+        queryClient.setQueryData(["/api/analytics/all"], context.previousAnalytics);
+      }
+      
       toast({
         title: "Delete Failed", 
         description: error.message || "An unknown error occurred",
