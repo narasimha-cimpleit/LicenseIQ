@@ -3,7 +3,17 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-// Removed AlertDialog imports - using simple browser confirmation instead
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -78,18 +88,7 @@ export default function ContractCard({ contract, className }: ContractCardProps)
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
     console.log("Delete button clicked for contract:", contract.id);
-    
-    // Simple browser confirmation instead of AlertDialog
-    const isConfirmed = window.confirm(
-      `Are you sure you want to delete "${contract.originalName}"?\n\nThis action cannot be undone. The contract file and all analysis data will be permanently removed.`
-    );
-    
-    if (isConfirmed) {
-      console.log("User confirmed deletion");
-      deleteMutation.mutate();
-    } else {
-      console.log("User cancelled deletion");
-    }
+    deleteMutation.mutate();
   };
 
   const getStatusColor = (status: string) => {
@@ -233,20 +232,43 @@ export default function ContractCard({ contract, className }: ContractCardProps)
               >
                 <Download className="h-4 w-4" />
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleDelete}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                data-testid={`button-delete-${contract.id}`}
-                disabled={deleteMutation.isPending}
-              >
-                {deleteMutation.isPending ? (
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-600 border-t-transparent" />
-                ) : (
-                  <Trash2 className="h-4 w-4" />
-                )}
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    data-testid={`button-delete-${contract.id}`}
+                    disabled={deleteMutation.isPending}
+                  >
+                    {deleteMutation.isPending ? (
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-600 border-t-transparent" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Contract</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete "{contract.originalName}"? This action cannot be undone. 
+                      The contract file and all analysis data will be permanently removed.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-red-600 hover:bg-red-700"
+                      onClick={handleDelete}
+                      disabled={deleteMutation.isPending}
+                    >
+                      {deleteMutation.isPending ? "Deleting..." : "Delete Contract"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
         </div>
