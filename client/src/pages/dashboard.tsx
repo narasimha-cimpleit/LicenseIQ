@@ -40,16 +40,6 @@ export default function Dashboard() {
   return (
     <MainLayout title="Dashboard" description="Welcome back, manage your contracts and insights">
       <div className="space-y-6">
-        {/* Header Actions */}
-        <div className="flex justify-end gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => window.open('/api/download/documentation', '_blank')}
-            data-testid="button-download-docs"
-          >
-            📥 Download POC Documentation
-          </Button>
-        </div>
 
         {/* Metrics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
