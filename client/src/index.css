@@ -241,18 +241,18 @@
   }
 }
 
-/* ULTIMATE FIX: Complete dialog overlay override */
+/* FIX: Proper overlay styling for visibility */
 [data-radix-dialog-overlay],
 [data-radix-alert-dialog-overlay] {
-  background: rgba(255, 255, 255, 0.1) !important;
-  backdrop-filter: none !important;
-  opacity: 0.3 !important;
+  background: rgba(0, 0, 0, 0.5) !important;
+  backdrop-filter: blur(4px) !important;
+  opacity: 1 !important;
 }
 
 .dark [data-radix-dialog-overlay],
 .dark [data-radix-alert-dialog-overlay] {
-  background: rgba(0, 0, 0, 0.1) !important;
-  opacity: 0.4 !important;
+  background: rgba(0, 0, 0, 0.7) !important;
+  opacity: 1 !important;
 }
 
 [data-radix-dialog-content] {
@@ -291,4 +291,63 @@
 
 .dark .hover\\:bg-red-700:hover {
   background-color: hsl(0, 84%, 45%) !important;
+}
+
+/* FIX: Ensure all dropdown and popover content is fully visible */
+[data-radix-dropdown-menu-content],
+[data-radix-select-content],
+[data-radix-popover-content],
+[data-radix-context-menu-content],
+[data-radix-hover-card-content],
+[data-radix-menubar-content],
+[data-radix-navigation-menu-content],
+[role="listbox"],
+[role="menu"] {
+  background: hsl(var(--popover)) !important;
+  color: hsl(var(--popover-foreground)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  z-index: 1000 !important;
+}
+
+.dark [data-radix-dropdown-menu-content],
+.dark [data-radix-select-content],
+.dark [data-radix-popover-content],
+.dark [data-radix-context-menu-content],
+.dark [data-radix-hover-card-content],
+.dark [data-radix-menubar-content],
+.dark [data-radix-navigation-menu-content],
+.dark [role="listbox"],
+.dark [role="menu"] {
+  background: hsl(var(--popover)) !important;
+  color: hsl(var(--popover-foreground)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* FIX: Ensure tooltip content is visible */
+[data-radix-tooltip-content] {
+  background: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  border: none !important;
+  opacity: 1 !important;
+  z-index: 1001 !important;
+}
+
+/* FIX: Ensure toast messages are fully visible */
+[data-radix-toast-root] {
+  background: hsl(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+  opacity: 1 !important;
+}
+
+.dark [data-radix-toast-root] {
+  background: hsl(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
 }
