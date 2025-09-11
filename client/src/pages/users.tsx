@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import MainLayout from "@/components/layout/main-layout";
@@ -7,9 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -21,364 +19,505 @@ import {
   Key, 
   Trash2,
   Send,
-  MoreHorizontal
+  ChevronDown,
+  ChevronUp,
+  X,
+  Check
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
-// Edit User Dialog Component
-function EditUserDialog({ user, onUpdate }: { user: any; onUpdate: () => void }) {
-  const [open, setOpen] = useState(false);
-  const [firstName, setFirstName] = useState(user.firstName || "");
-  const [lastName, setLastName] = useState(user.lastName || "");
-  const [email, setEmail] = useState(user.email || "");
-  const { toast } = useToast();
-
-  const handleSave = async () => {
-    try {
-      await apiRequest("PATCH", `/api/users/${user.id}`, {
-        firstName,
-        lastName,
-        email,
-      });
-      toast({
-        title: "User Updated",
-        description: `${email} has been updated successfully`,
-      });
-      setOpen(false);
-      onUpdate();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update user",
-        variant: "destructive",
-      });
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button 
-          variant="ghost" 
-          size="sm"
-          data-testid={`button-edit-user-${user.id}`}
-        >
-          <Edit className="h-4 w-4" />
-        </Button>
-      </DialogTrigger>
-      <DialogContent 
-        className="sm:max-w-[425px] bg-background border text-foreground"
-        onPointerDownOutside={(e) => e.preventDefault()}
-        onInteractOutside={(e) => e.preventDefault()}
-      >
-        <DialogHeader>
-          <DialogTitle>Edit User</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="edit-first-name">First Name</Label>
-            <Input
-              id="edit-first-name"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              placeholder="First name"
-              data-testid="input-edit-first-name"
-            />
-          </div>
-          <div>
-            <Label htmlFor="edit-last-name">Last Name</Label>
-            <Input
-              id="edit-last-name"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              placeholder="Last name"
-              data-testid="input-edit-last-name"
-            />
-          </div>
-          <div>
-            <Label htmlFor="edit-email">Email</Label>
-            <Input
-              id="edit-email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email address"
-              data-testid="input-edit-email"
-            />
-          </div>
-          <div className="flex justify-end space-x-3 pt-4">
-            <Button 
-              variant="outline" 
-              onClick={() => setOpen(false)}
-              data-testid="button-cancel-edit"
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleSave}
-              data-testid="button-save-edit"
-            >
-              Save Changes
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 export default function Users() {
-  const { user } = useAuth();
-  const { toast } = useToast();
+  const { user: currentUser } = useAuth();
   const queryClient = useQueryClient();
-  
+  const { toast } = useToast();
+
+  // Search and filter states
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [inviteModalOpen, setInviteModalOpen] = useState(false);
-  const [resetPasswordModalOpen, setResetPasswordModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<any>(null);
+
+  // Inline editing state
+  const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
+  const [editingSection, setEditingSection] = useState<"profile" | "password" | "delete" | null>(null);
+
+  // Edit form states
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  
+  // Password reset states
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState("viewer");
-  const [inviteMessage, setInviteMessage] = useState("");
 
-  // Check if user has admin permissions
-  const canManageUsers = user?.role === 'admin' || user?.role === 'owner';
+  // Delete confirmation state
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
-  const { data: users, isLoading } = useQuery({
-    queryKey: ["/api/users", searchQuery, roleFilter],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (searchQuery) params.append('search', searchQuery);
-      if (roleFilter !== 'all') params.append('role', roleFilter);
-      
-      const response = await apiRequest("GET", `/api/users?${params.toString()}`);
-      return response.json();
-    },
-    enabled: canManageUsers,
-  });
-
-  const createUserMutation = useMutation({
-    mutationFn: async () => {
-      // Create user with default password
-      const newUser = {
-        username: inviteEmail.split('@')[0], // Use email prefix as username
-        email: inviteEmail,
-        password: "TempPass123!", // Default password
-        firstName: "",
-        lastName: "",
-        role: inviteRole,
-      };
-      
-      // Create user but don't log in as them (admin stays logged in)
-      const response = await apiRequest("POST", "/api/users/create", newUser);
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "User Created",
-        description: `User ${inviteEmail} created successfully with default password: TempPass123!`,
-      });
-      setInviteModalOpen(false);
-      setInviteEmail("");
-      setInviteMessage("");
-      // Refresh users list
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-    },
-    onError: (error: Error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/auth";
-        }, 500);
-        return;
+  // Handle Escape key to close editing panel
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && expandedUserId) {
+        closeEditing();
       }
-      toast({
-        title: "Error",
-        description: "Failed to send invitation",
-        variant: "destructive",
-      });
+    };
+
+    if (expandedUserId) {
+      document.addEventListener("keydown", handleKeyDown);
+      return () => {
+        document.removeEventListener("keydown", handleKeyDown);
+      };
+    }
+  }, [expandedUserId]);
+
+  // Fetch users
+  const { data: users = [] as any[], isLoading } = useQuery({
+    queryKey: ["/api/users"],
+    retry: (failureCount, error) => {
+      if (isUnauthorizedError(error)) {
+        return false;
+      }
+      return failureCount < 3;
     },
   });
 
+  // Role update mutation
   const updateUserRoleMutation = useMutation({
     mutationFn: async ({ userId, newRole }: { userId: string; newRole: string }) => {
-      const response = await apiRequest("PATCH", `/api/users/${userId}/role`, { role: newRole });
-      return response.json();
+      return apiRequest("PATCH", `/api/users/${userId}/role`, { role: newRole });
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       toast({
-        title: "User Updated",
+        title: "Role Updated",
         description: "User role has been updated successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
     },
-    onError: (error: Error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/auth";
-        }, 500);
-        return;
-      }
+    onError: (error: any) => {
       toast({
         title: "Error",
-        description: "Failed to update user role",
+        description: error.message || "Failed to update user role",
         variant: "destructive",
       });
     },
   });
 
+  // Edit user mutation
+  const editUserMutation = useMutation({
+    mutationFn: async ({ userId, data }: { userId: string; data: any }) => {
+      return apiRequest("PATCH", `/api/users/${userId}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      toast({
+        title: "User Updated",
+        description: "User information has been updated successfully",
+      });
+      closeEditing();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update user",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Reset password mutation
   const resetPasswordMutation = useMutation({
-    mutationFn: async ({ userId, newPassword }: { userId: string; newPassword: string }) => {
-      const response = await apiRequest("POST", `/api/users/${userId}/reset-password`, { newPassword });
-      return response.json();
+    mutationFn: async ({ userId, password }: { userId: string; password: string }) => {
+      return apiRequest("POST", `/api/users/${userId}/reset-password`, { newPassword: password });
     },
     onSuccess: () => {
       toast({
         title: "Password Reset",
-        description: "Password has been reset successfully",
+        description: "User password has been reset successfully",
       });
-      setResetPasswordModalOpen(false);
-      setNewPassword("");
-      setConfirmPassword("");
-      setSelectedUser(null);
+      closeEditing();
     },
-    onError: (error: Error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/auth";
-        }, 500);
-        return;
-      }
+    onError: (error: any) => {
       toast({
         title: "Error",
-        description: "Failed to reset password",
+        description: error.message || "Failed to reset password",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete user mutation
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      return apiRequest("DELETE", `/api/users/${userId}`);
+    },
+    onSuccess: (_, userId) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      const deletedUser = users.find((u: any) => u.id === userId);
+      toast({
+        title: "User Deleted",
+        description: `${deletedUser?.email || 'User'} has been removed from the system`,
+        variant: "destructive",
+      });
+      closeEditing();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete user",
         variant: "destructive",
       });
     },
   });
 
   // Filter users based on search and filters
-  const filteredUsers = (users || []).filter((user: any) => {
-    const matchesSearch = user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredUsers = users.filter((user: any) => {
+    const matchesSearch = !searchQuery || 
+      user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.lastName?.toLowerCase().includes(searchQuery.toLowerCase());
+    
     const matchesRole = roleFilter === "all" || user.role === roleFilter;
-    const matchesStatus = statusFilter === "all" || (user.isActive ? "active" : "inactive") === statusFilter;
+    const matchesStatus = statusFilter === "all" || 
+      (statusFilter === "active" && user.isActive) ||
+      (statusFilter === "inactive" && !user.isActive);
+    
     return matchesSearch && matchesRole && matchesStatus;
   });
 
-  if (!canManageUsers) {
-    return (
-      <MainLayout title="Access Denied" description="You don't have permission to view this page">
-        <Card>
-          <CardContent className="text-center py-12">
-            <UsersIcon className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">Access Denied</h3>
-            <p className="text-muted-foreground">
-              You need admin privileges to manage users.
-            </p>
-          </CardContent>
-        </Card>
-      </MainLayout>
-    );
-  }
+  // Inline editing handlers
+  const openEditing = (userId: string, section: "profile" | "password" | "delete") => {
+    const user = users.find((u: any) => u.id === userId);
+    if (!user) return;
 
-  return (
-    <MainLayout 
-      title="User Management" 
-      description="Manage user access and permissions"
-    >
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Badge variant="outline" className="text-sm">
-              {filteredUsers.length} users
-            </Badge>
-          </div>
-          <Dialog open={inviteModalOpen} onOpenChange={setInviteModalOpen}>
-            <DialogTrigger asChild>
-              <Button data-testid="button-invite-user">
-                <Plus className="h-4 w-4 mr-2" />
-                Create User
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px] bg-background border text-foreground">
-              <DialogHeader>
-                <DialogTitle>Create New User</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="invite-email">Email Address</Label>
-                  <Input
-                    id="invite-email"
-                    type="email"
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                    placeholder="user@company.com"
-                    data-testid="input-invite-email"
-                  />
+    setExpandedUserId(userId);
+    setEditingSection(section);
+
+    // Pre-fill form data for profile editing
+    if (section === "profile") {
+      setFirstName(user.firstName || "");
+      setLastName(user.lastName || "");
+      setEmail(user.email || "");
+    }
+
+    // Clear password fields
+    if (section === "password") {
+      setNewPassword("");
+      setConfirmPassword("");
+    }
+
+    // Clear delete confirmation
+    if (section === "delete") {
+      setDeleteConfirmText("");
+    }
+  };
+
+  const closeEditing = () => {
+    setExpandedUserId(null);
+    setEditingSection(null);
+    setFirstName("");
+    setLastName("");
+    setEmail("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setDeleteConfirmText("");
+  };
+
+  const handleSaveProfile = async () => {
+    if (!expandedUserId) return;
+    
+    editUserMutation.mutate({
+      userId: expandedUserId,
+      data: { firstName, lastName, email }
+    });
+  };
+
+  const handleResetPassword = async () => {
+    if (!expandedUserId) return;
+
+    if (newPassword.length < 6) {
+      toast({
+        title: "Invalid Password",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Password Mismatch",
+        description: "Passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    resetPasswordMutation.mutate({
+      userId: expandedUserId,
+      password: newPassword
+    });
+  };
+
+  const handleDeleteUser = async () => {
+    if (!expandedUserId) return;
+
+    const user = users.find((u: any) => u.id === expandedUserId);
+    if (!user) return;
+
+    if (deleteConfirmText !== user.email) {
+      toast({
+        title: "Confirmation Required",
+        description: "Please type the user's email address to confirm deletion",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (user.id === currentUser?.id) {
+      toast({
+        title: "Cannot Delete",
+        description: "You cannot delete your own account",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    deleteUserMutation.mutate(expandedUserId);
+  };
+
+  // Render inline editing panel
+  const renderInlineEditingPanel = (user: any) => {
+    if (expandedUserId !== user.id) return null;
+
+    return (
+      <tr>
+        <td colSpan={5} className="px-6 py-4 bg-muted/20 border-t">
+          <div className="space-y-6">
+            {/* Section Tabs */}
+            <div className="flex space-x-4 border-b border-border">
+              <button
+                className={`pb-2 px-1 text-sm font-medium border-b-2 ${
+                  editingSection === "profile" 
+                    ? "border-primary text-primary" 
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+                onClick={() => openEditing(user.id, "profile")}
+                data-testid={`tab-profile-${user.id}`}
+              >
+                Profile
+              </button>
+              <button
+                className={`pb-2 px-1 text-sm font-medium border-b-2 ${
+                  editingSection === "password" 
+                    ? "border-primary text-primary" 
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+                onClick={() => openEditing(user.id, "password")}
+                data-testid={`tab-password-${user.id}`}
+              >
+                Reset Password
+              </button>
+              <button
+                className={`pb-2 px-1 text-sm font-medium border-b-2 ${
+                  editingSection === "delete" 
+                    ? "border-destructive text-destructive" 
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+                onClick={() => openEditing(user.id, "delete")}
+                data-testid={`tab-delete-${user.id}`}
+              >
+                Delete User
+              </button>
+            </div>
+
+            {/* Profile Section */}
+            {editingSection === "profile" && (
+              <div className="space-y-4 max-w-md">
+                <h3 className="text-lg font-medium">Edit Profile</h3>
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor={`first-name-${user.id}`}>First Name</Label>
+                    <Input
+                      id={`first-name-${user.id}`}
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      placeholder="First name"
+                      data-testid={`input-first-name-${user.id}`}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor={`last-name-${user.id}`}>Last Name</Label>
+                    <Input
+                      id={`last-name-${user.id}`}
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      placeholder="Last name"
+                      data-testid={`input-last-name-${user.id}`}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor={`email-${user.id}`}>Email</Label>
+                    <Input
+                      id={`email-${user.id}`}
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Email address"
+                      data-testid={`input-email-${user.id}`}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="invite-role">Role</Label>
-                  <Select value={inviteRole} onValueChange={setInviteRole}>
-                    <SelectTrigger data-testid="select-invite-role">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="viewer">Viewer</SelectItem>
-                      <SelectItem value="editor">Editor</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="invite-message">Message (Optional)</Label>
-                  <Textarea
-                    id="invite-message"
-                    value={inviteMessage}
-                    onChange={(e) => setInviteMessage(e.target.value)}
-                    placeholder="Welcome message for the new user..."
-                    rows={3}
-                    data-testid="textarea-invite-message"
-                  />
-                </div>
-                
-                <div className="flex justify-end space-x-3 pt-4">
+                <div className="flex space-x-2">
                   <Button 
-                    variant="outline" 
-                    onClick={() => setInviteModalOpen(false)}
-                    data-testid="button-cancel-invite"
+                    onClick={handleSaveProfile}
+                    disabled={editUserMutation.isPending}
+                    data-testid={`button-save-profile-${user.id}`}
                   >
-                    Cancel
+                    <Check className="h-4 w-4 mr-2" />
+                    {editUserMutation.isPending ? "Saving..." : "Save Changes"}
                   </Button>
                   <Button 
-                    onClick={() => createUserMutation.mutate()}
-                    disabled={!inviteEmail || createUserMutation.isPending}
-                    data-testid="button-create-user"
+                    variant="outline" 
+                    onClick={closeEditing}
+                    data-testid={`button-cancel-profile-${user.id}`}
                   >
-                    {createUserMutation.isPending ? "Creating..." : "Create User"}
+                    <X className="h-4 w-4 mr-2" />
+                    Cancel
                   </Button>
                 </div>
               </div>
-            </DialogContent>
-          </Dialog>
+            )}
+
+            {/* Password Section */}
+            {editingSection === "password" && (
+              <div className="space-y-4 max-w-md">
+                <h3 className="text-lg font-medium">Reset Password</h3>
+                <div className="text-sm text-muted-foreground mb-3">
+                  Resetting password for: <strong>{user.email}</strong>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor={`new-password-${user.id}`}>New Password</Label>
+                    <Input
+                      id={`new-password-${user.id}`}
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Enter new password (min 6 characters)"
+                      data-testid={`input-new-password-${user.id}`}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor={`confirm-password-${user.id}`}>Confirm Password</Label>
+                    <Input
+                      id={`confirm-password-${user.id}`}
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Confirm new password"
+                      data-testid={`input-confirm-password-${user.id}`}
+                    />
+                  </div>
+                </div>
+                {newPassword && confirmPassword && newPassword !== confirmPassword && (
+                  <p className="text-sm text-destructive">Passwords do not match</p>
+                )}
+                {newPassword && newPassword.length < 6 && (
+                  <p className="text-sm text-destructive">Password must be at least 6 characters long</p>
+                )}
+                <div className="flex space-x-2">
+                  <Button 
+                    onClick={handleResetPassword}
+                    disabled={resetPasswordMutation.isPending || !newPassword || !confirmPassword || newPassword !== confirmPassword || newPassword.length < 6}
+                    data-testid={`button-reset-password-${user.id}`}
+                  >
+                    <Key className="h-4 w-4 mr-2" />
+                    {resetPasswordMutation.isPending ? "Resetting..." : "Reset Password"}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={closeEditing}
+                    data-testid={`button-cancel-password-${user.id}`}
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Delete Section */}
+            {editingSection === "delete" && (
+              <div className="space-y-4 max-w-md">
+                <h3 className="text-lg font-medium text-destructive">Delete User</h3>
+                <div className="bg-destructive/10 p-3 rounded-lg border border-destructive/20">
+                  <p className="text-sm text-foreground mb-2">
+                    <strong>Warning:</strong> This action cannot be undone. The user will be permanently removed from the system.
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    User to delete: <strong>{user.email}</strong>
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor={`delete-confirm-${user.id}`}>
+                    Type the user's email address to confirm deletion:
+                  </Label>
+                  <Input
+                    id={`delete-confirm-${user.id}`}
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    placeholder={user.email}
+                    data-testid={`input-delete-confirm-${user.id}`}
+                  />
+                </div>
+                <div className="flex space-x-2">
+                  <Button 
+                    variant="destructive"
+                    onClick={handleDeleteUser}
+                    disabled={deleteUserMutation.isPending || deleteConfirmText !== user.email}
+                    data-testid={`button-confirm-delete-${user.id}`}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    {deleteUserMutation.isPending ? "Deleting..." : "Delete User"}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={closeEditing}
+                    data-testid={`button-cancel-delete-${user.id}`}
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </td>
+      </tr>
+    );
+  };
+
+  return (
+    <MainLayout title="User Management">
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
+            <p className="text-muted-foreground">
+              Manage your team members, roles, and permissions
+            </p>
+          </div>
+          <Button 
+            size="lg" 
+            className="w-full sm:w-auto"
+            data-testid="button-create-user"
+            onClick={() => {
+              // For now, redirect to dashboard - we'll create the /users/new route next
+              alert('Create User functionality will be implemented in the next step. For now, testing inline editing with existing users.');
+            }}
+          >
+            <Plus className="h-5 w-5 mr-2" />
+            Create User
+          </Button>
         </div>
 
         {/* Filters */}
@@ -436,7 +575,7 @@ export default function Users() {
                 <p className="text-muted-foreground">
                   {searchQuery || roleFilter !== "all" || statusFilter !== "all"
                     ? "Try adjusting your search criteria or filters"
-                    : "Invite your first team member to get started"
+                    : "Create your first user to get started"
                   }
                 </p>
               </div>
@@ -465,8 +604,10 @@ export default function Users() {
                   <tbody className="bg-card divide-y divide-border">
                     {filteredUsers.map((user: any) => {
                       const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase() || user.email?.[0]?.toUpperCase() || 'U';
-                      return (
-                        <tr key={user.id} className="hover:bg-muted/30">
+                      const isExpanded = expandedUserId === user.id;
+                      
+                      return [
+                        <tr key={user.id} className={`hover:bg-muted/30 ${isExpanded ? 'bg-muted/20' : ''}`}>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
                               <div className="h-10 w-10 bg-primary rounded-full flex items-center justify-center">
@@ -521,136 +662,32 @@ export default function Users() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div className="flex items-center space-x-2">
-                              <EditUserDialog user={user} onUpdate={() => queryClient.invalidateQueries({ queryKey: ["/api/users"] })} />
                               <Button 
                                 variant="ghost" 
                                 size="sm"
                                 onClick={() => {
-                                  setSelectedUser(user);
-                                  setResetPasswordModalOpen(true);
-                                }}
-                                data-testid={`button-reset-password-${user.id}`}
-                              >
-                                <Key className="h-4 w-4" />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="text-destructive hover:text-destructive/80"
-                                onClick={async () => {
-                                  if (confirm(`Are you sure you want to delete ${user.email}? This action cannot be undone.`)) {
-                                    try {
-                                      await apiRequest("DELETE", `/api/users/${user.id}`);
-                                      toast({
-                                        title: "User Deleted",
-                                        description: `${user.email} has been removed from the system`,
-                                        variant: "destructive",
-                                      });
-                                      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-                                    } catch (error) {
-                                      toast({
-                                        title: "Error",
-                                        description: "Failed to delete user",
-                                        variant: "destructive",
-                                      });
-                                    }
+                                  if (isExpanded) {
+                                    closeEditing();
+                                  } else {
+                                    openEditing(user.id, "profile");
                                   }
                                 }}
-                                data-testid={`button-delete-user-${user.id}`}
+                                data-testid={`button-edit-user-${user.id}`}
                               >
-                                <Trash2 className="h-4 w-4" />
+                                {isExpanded ? <ChevronUp className="h-4 w-4" /> : <Edit className="h-4 w-4" />}
                               </Button>
                             </div>
                           </td>
-                        </tr>
-                      );
-                    })}
+                        </tr>,
+                        renderInlineEditingPanel(user)
+                      ];
+                    }).flat()}
                   </tbody>
                 </table>
               </div>
             )}
           </CardContent>
         </Card>
-
-        {/* Reset Password Dialog */}
-        <Dialog open={resetPasswordModalOpen} onOpenChange={setResetPasswordModalOpen}>
-          <DialogContent 
-            className="sm:max-w-[425px] bg-background border text-foreground"
-            onPointerDownOutside={(e) => e.preventDefault()}
-            onInteractOutside={(e) => e.preventDefault()}
-          >
-            <DialogHeader>
-              <DialogTitle>Reset Password</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label>User</Label>
-                <div className="text-sm text-muted-foreground">
-                  {selectedUser?.email}
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="new-password">New Password</Label>
-                <Input
-                  id="new-password"
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Enter new password (min 6 characters)"
-                  data-testid="input-new-password"
-                />
-              </div>
-              <div>
-                <Label htmlFor="confirm-password">Confirm Password</Label>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm new password"
-                  data-testid="input-confirm-password"
-                />
-              </div>
-              {newPassword && confirmPassword && newPassword !== confirmPassword && (
-                <p className="text-sm text-red-500">Passwords do not match</p>
-              )}
-              {newPassword && newPassword.length < 6 && (
-                <p className="text-sm text-red-500">Password must be at least 6 characters long</p>
-              )}
-            </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setResetPasswordModalOpen(false);
-                  setNewPassword("");
-                  setConfirmPassword("");
-                  setSelectedUser(null);
-                }}
-                data-testid="button-cancel-reset"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={() => {
-                  if (newPassword === confirmPassword && newPassword.length >= 6 && selectedUser) {
-                    resetPasswordMutation.mutate({ userId: selectedUser.id, newPassword });
-                  }
-                }}
-                disabled={
-                  !newPassword || 
-                  !confirmPassword || 
-                  newPassword !== confirmPassword || 
-                  newPassword.length < 6 || 
-                  resetPasswordMutation.isPending
-                }
-                data-testid="button-confirm-reset"
-              >
-                {resetPasswordMutation.isPending ? "Resetting..." : "Reset Password"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
     </MainLayout>
   );
