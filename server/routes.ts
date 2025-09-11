@@ -9,11 +9,37 @@ import { fileService } from "./services/fileService";
 import { groqService } from "./services/groqService";
 import { insertContractSchema, insertContractAnalysisSchema, insertAuditTrailSchema } from "@shared/schema";
 
-// Configure multer for file uploads
+// Configure multer for secure file uploads with disk storage
+const uploadDir = path.join(process.cwd(), 'uploads');
 const upload = multer({
-  storage: multer.memoryStorage(),
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+      // Generate secure filename with UUID
+      const { randomUUID } = require('crypto');
+      const fileExtension = path.extname(file.originalname);
+      const fileName = `${randomUUID()}${fileExtension}`;
+      cb(null, fileName);
+    },
+  }),
   limits: {
-    fileSize: 1024 * 1024 * 1024, // 1GB
+    fileSize: 100 * 1024 * 1024, // Reduced to 100MB for better security
+  },
+  fileFilter: (req, file, cb) => {
+    // Security: Only allow specific file types
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'text/plain'
+    ];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only PDF, DOC, DOCX, and TXT files are allowed.'));
+    }
   },
 });
 
@@ -108,18 +134,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'No file uploaded' });
       }
 
-      // Validate file
-      const validation = fileService.validateFile(req.file);
+      // Validate file (using disk-based file instead of buffer)
+      const validation = fileService.validateFile({
+        size: req.file.size,
+        mimetype: req.file.mimetype,
+        originalname: req.file.originalname
+      });
       if (!validation.isValid) {
+        // Clean up uploaded file if validation fails
+        await fs.promises.unlink(req.file.path).catch(console.error);
         return res.status(400).json({ message: validation.error });
       }
 
-      // Save file
-      const fileResult = await fileService.saveFile(
-        req.file.buffer,
-        req.file.originalname,
-        req.file.mimetype
-      );
+      // File is already saved by multer diskStorage
+      const fileResult = {
+        fileName: req.file.filename,
+        originalName: req.file.originalname,
+        fileSize: req.file.size,
+        fileType: req.file.mimetype,
+        filePath: req.file.path,
+      };
 
       // Create contract record
       const contractData = {
@@ -847,6 +881,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // 💰 FINANCIAL ANALYTICS API ENDPOINT
+  app.get('/api/analytics/financial', isAuthenticated, async (req: any, res) => {
+    try {
+      await createAuditLog(req, 'view_financial_analytics', 'analytics');
+      
+      const userId = req.user.id;
+      const userRole = (await storage.getUser(userId))?.role;
+      const canViewAll = userRole === 'admin' || userRole === 'owner';
+      
+      const analytics = await storage.getFinancialAnalytics(
+        canViewAll ? undefined : userId
+      );
+      
+      res.json(analytics);
+    } catch (error) {
+      console.error('Error fetching financial analytics:', error);
+      res.status(500).json({ error: 'Failed to fetch financial analytics' });
+    }
+  });
+
+  // ⚖️ COMPLIANCE ANALYTICS API ENDPOINT
+  app.get('/api/analytics/compliance', isAuthenticated, async (req: any, res) => {
+    try {
+      await createAuditLog(req, 'view_compliance_analytics', 'analytics');
+      
+      const userId = req.user.id;
+      const userRole = (await storage.getUser(userId))?.role;
+      const canViewAll = userRole === 'admin' || userRole === 'owner';
+      
+      const analytics = await storage.getComplianceAnalytics(
+        canViewAll ? undefined : userId
+      );
+      
+      res.json(analytics);
+    } catch (error) {
+      console.error('Error fetching compliance analytics:', error);
+      res.status(500).json({ error: 'Failed to fetch compliance analytics' });
+    }
+  });
+
+  // 🎯 STRATEGIC ANALYTICS API ENDPOINT
+  app.get('/api/analytics/strategic', isAuthenticated, async (req: any, res) => {
+    try {
+      await createAuditLog(req, 'view_strategic_analytics', 'analytics');
+      
+      const userId = req.user.id;
+      const userRole = (await storage.getUser(userId))?.role;
+      const canViewAll = userRole === 'admin' || userRole === 'owner';
+      
+      const analytics = await storage.getStrategicAnalytics(
+        canViewAll ? undefined : userId
+      );
+      
+      res.json(analytics);
+    } catch (error) {
+      console.error('Error fetching strategic analytics:', error);
+      res.status(500).json({ error: 'Failed to fetch strategic analytics' });
+    }
+  });
+
+  // 📈 PERFORMANCE ANALYTICS API ENDPOINT
+  app.get('/api/analytics/performance', isAuthenticated, async (req: any, res) => {
+    try {
+      await createAuditLog(req, 'view_performance_analytics', 'analytics');
+      
+      const userId = req.user.id;
+      const userRole = (await storage.getUser(userId))?.role;
+      const canViewAll = userRole === 'admin' || userRole === 'owner';
+      
+      const analytics = await storage.getPerformanceAnalytics(
+        canViewAll ? undefined : userId
+      );
+      
+      res.json(analytics);
+    } catch (error) {
+      console.error('Error fetching performance analytics:', error);
+      res.status(500).json({ error: 'Failed to fetch performance analytics' });
+    }
+  });
+
+  // ⚠️ RISK ANALYTICS API ENDPOINT
+  app.get('/api/analytics/risks', isAuthenticated, async (req: any, res) => {
+    try {
+      await createAuditLog(req, 'view_risk_analytics', 'analytics');
+      
+      const userId = req.user.id;
+      const userRole = (await storage.getUser(userId))?.role;
+      const canViewAll = userRole === 'admin' || userRole === 'owner';
+      
+      const analytics = await storage.getRiskAnalytics(
+        canViewAll ? undefined : userId
+      );
+      
+      res.json(analytics);
+    } catch (error) {
+      console.error('Error fetching risk analytics:', error);
+      res.status(500).json({ error: 'Failed to fetch risk analytics' });
+    }
+  });
+
   // User management routes (admin only)
   app.get('/api/users', isAuthenticated, async (req: any, res) => {
     try {
@@ -1210,7 +1344,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   return httpServer;
 }
 
-// Async contract processing function
+// Async contract processing function with comprehensive analytics
 async function processContractAsync(contractId: string): Promise<void> {
   try {
     const startTime = Date.now();
@@ -1224,13 +1358,14 @@ async function processContractAsync(contractId: string): Promise<void> {
       throw new Error('Contract not found');
     }
 
-    console.log('🚀 [CONTRACT-PROCESS] Starting contract processing for ID:', contractId);
+    console.log('🚀 [CONTRACT-PROCESS] Starting comprehensive contract processing for ID:', contractId);
     console.log('🚀 [CONTRACT-PROCESS] Contract details:', {
       fileName: contract.fileName,
       originalName: contract.originalName,
       fileType: contract.fileType,
       filePath: contract.filePath,
-      fileSize: contract.fileSize
+      fileSize: contract.fileSize,
+      contractType: contract.contractType
     });
     
     // Extract text from file
@@ -1246,37 +1381,170 @@ async function processContractAsync(contractId: string): Promise<void> {
     console.log(text.substring(Math.max(0, text.length - 200)));
     console.log('🚀 [CONTRACT-PROCESS] ═══ END EXTRACTION RESULT ═══');
     
-    // Analyze with Groq
-    console.log('🤖 [CONTRACT-PROCESS] Sending text to AI analysis...');
-    const analysis = await groqService.analyzeContract(text);
-    console.log('🤖 [CONTRACT-PROCESS] AI analysis completed:', {
-      summaryLength: analysis.summary.length,
-      keyTermsCount: analysis.keyTerms.length,
-      riskAnalysisCount: analysis.riskAnalysis.length,
-      insightsCount: analysis.insights.length,
-      confidence: analysis.confidence
-    });
+    // Perform comprehensive AI analysis in parallel for efficiency
+    console.log('🤖 [CONTRACT-PROCESS] Starting comprehensive AI analysis...');
     
-    // Save analysis
-    const analysisData = {
+    const [
+      basicAnalysis,
+      financialAnalysis,
+      complianceAnalysis,
+      strategicAnalysis,
+      performanceAnalysis,
+      riskAnalysis,
+      obligations,
+      comparisonAnalysis
+    ] = await Promise.all([
+      // Basic contract analysis
+      groqService.analyzeContract(text),
+      
+      // Specialized analyses
+      groqService.analyzeFinancialTerms(text),
+      groqService.analyzeCompliance(text),
+      groqService.analyzeStrategicValue(text, contract.contractType || 'unknown'),
+      groqService.predictPerformance(text, contract.contractType || 'unknown'),
+      groqService.analyzeRiskFactors(text, contract.contractType || 'unknown'),
+      groqService.extractContractObligations(text),
+      groqService.analyzeContractComparison(text, contract.contractType || 'unknown', 'general')
+    ]);
+    
+    console.log('🤖 [CONTRACT-PROCESS] All AI analyses completed');
+    console.log('🤖 [CONTRACT-PROCESS] Analysis results:', {
+      basicAnalysis: {
+        summaryLength: basicAnalysis.summary.length,
+        keyTermsCount: basicAnalysis.keyTerms.length,
+        riskAnalysisCount: basicAnalysis.riskAnalysis.length,
+        insightsCount: basicAnalysis.insights.length,
+        confidence: basicAnalysis.confidence
+      },
+      financialAnalysis: { totalValue: financialAnalysis.totalValue, currency: financialAnalysis.currency },
+      complianceAnalysis: { complianceScore: complianceAnalysis.complianceScore },
+      strategicAnalysis: { strategicValue: strategicAnalysis.strategicValue },
+      performanceAnalysis: { performanceScore: performanceAnalysis.performanceScore },
+      riskAnalysis: { overallRiskScore: riskAnalysis.overallRiskScore },
+      obligationsCount: obligations.length,
+      comparisonAnalysis: { similarityScore: comparisonAnalysis.similarityScore }
+    });
+
+    // Save all analyses to database in parallel
+    console.log('💾 [CONTRACT-PROCESS] Saving all analyses to database...');
+    
+    const processingTime = Math.round((Date.now() - startTime) / 1000);
+    
+    // Prepare all data for database insertion
+    const basicAnalysisData = {
       contractId,
-      summary: analysis.summary,
-      keyTerms: analysis.keyTerms,
-      riskAnalysis: analysis.riskAnalysis,
-      insights: analysis.insights,
-      confidence: analysis.confidence.toString(),
-      processingTime: Math.round((Date.now() - startTime) / 1000),
+      summary: basicAnalysis.summary,
+      keyTerms: basicAnalysis.keyTerms,
+      riskAnalysis: basicAnalysis.riskAnalysis,
+      insights: basicAnalysis.insights,
+      confidence: basicAnalysis.confidence.toString(),
+      processingTime,
     };
 
-    const validatedAnalysis = insertContractAnalysisSchema.parse(analysisData);
-    await storage.createContractAnalysis(validatedAnalysis);
+    const financialData = {
+      contractId,
+      totalValue: financialAnalysis.totalValue ? financialAnalysis.totalValue.toString() : null,
+      currency: financialAnalysis.currency || 'USD',
+      paymentSchedule: financialAnalysis.paymentSchedule || [],
+      royaltyStructure: financialAnalysis.royaltyStructure || [],
+      revenueProjections: financialAnalysis.revenueProjections || [],
+      costImpact: financialAnalysis.costImpact || [],
+      currencyRisk: financialAnalysis.currencyRisk ? financialAnalysis.currencyRisk.toString() : null,
+      paymentTerms: financialAnalysis.paymentTerms || null,
+      penaltyClauses: financialAnalysis.penaltyClauses || [],
+    };
+
+    const complianceData = {
+      contractId,
+      complianceScore: complianceAnalysis.complianceScore ? complianceAnalysis.complianceScore.toString() : null,
+      regulatoryFrameworks: complianceAnalysis.regulatoryFrameworks || [],
+      jurisdictionAnalysis: complianceAnalysis.jurisdictionAnalysis || {},
+      dataProtectionCompliance: complianceAnalysis.dataProtectionCompliance || false,
+      industryStandards: complianceAnalysis.industryStandards || [],
+      riskFactors: complianceAnalysis.riskFactors || [],
+      recommendedActions: complianceAnalysis.recommendedActions || [],
+    };
+
+    const strategicData = {
+      contractId,
+      strategicValue: strategicAnalysis.strategicValue ? strategicAnalysis.strategicValue.toString() : null,
+      marketAlignment: strategicAnalysis.marketAlignment ? strategicAnalysis.marketAlignment.toString() : null,
+      competitiveAdvantage: strategicAnalysis.competitiveAdvantage || [],
+      riskConcentration: strategicAnalysis.riskConcentration ? strategicAnalysis.riskConcentration.toString() : null,
+      standardizationScore: strategicAnalysis.standardizationScore ? strategicAnalysis.standardizationScore.toString() : null,
+      negotiationInsights: strategicAnalysis.negotiationInsights || [],
+      benchmarkComparison: strategicAnalysis.benchmarkComparison || {},
+      recommendations: strategicAnalysis.recommendations || [],
+    };
+
+    const performanceData = {
+      contractId,
+      performanceScore: performanceAnalysis.performanceScore ? performanceAnalysis.performanceScore.toString() : null,
+      milestoneCompletion: performanceAnalysis.milestoneCompletion ? performanceAnalysis.milestoneCompletion.toString() : null,
+      onTimeDelivery: performanceAnalysis.onTimeDelivery || false,
+      budgetVariance: performanceAnalysis.budgetVariance ? performanceAnalysis.budgetVariance.toString() : null,
+      qualityScore: performanceAnalysis.qualityScore ? performanceAnalysis.qualityScore.toString() : null,
+      clientSatisfaction: performanceAnalysis.clientSatisfaction ? performanceAnalysis.clientSatisfaction.toString() : null,
+      renewalProbability: performanceAnalysis.renewalProbability ? performanceAnalysis.renewalProbability.toString() : null,
+    };
+
+    const comparisonData = {
+      contractId,
+      similarContracts: [], // Would be populated with actual similar contract IDs in production
+      clauseVariations: comparisonAnalysis.clauseVariations || [],
+      termComparisons: comparisonAnalysis.termComparisons || [],
+      bestPractices: comparisonAnalysis.bestPractices || [],
+      anomalies: comparisonAnalysis.anomalies || [],
+    };
+
+    // Save all analyses in parallel for performance
+    const [savedBasicAnalysis, savedFinancial, savedCompliance, savedStrategic, savedPerformance, savedComparison] = await Promise.all([
+      storage.createContractAnalysis(basicAnalysisData),
+      storage.createFinancialAnalysis(financialData),
+      storage.createComplianceAnalysis(complianceData),
+      storage.createStrategicAnalysis(strategicData),
+      storage.createPerformanceMetrics(performanceData),
+      storage.createContractComparison(comparisonData),
+    ]);
+
+    // Save contract obligations separately (sequential to handle potential duplicates)
+    console.log('💾 [CONTRACT-PROCESS] Saving contract obligations...');
+    const savedObligations = [];
+    for (const obligation of obligations) {
+      try {
+        const obligationData = {
+          contractId,
+          obligationType: obligation.obligationType,
+          description: obligation.description,
+          dueDate: obligation.dueDate ? new Date(obligation.dueDate) : null,
+          responsible: obligation.responsible,
+          priority: obligation.priority,
+          status: 'pending',
+        };
+        const saved = await storage.createContractObligation(obligationData);
+        savedObligations.push(saved);
+      } catch (obligationError) {
+        console.error('Error saving obligation:', obligation, obligationError);
+      }
+    }
     
     // Update contract status to analyzed
-    await storage.updateContractStatus(contractId, 'analyzed', analysisData.processingTime);
+    await storage.updateContractStatus(contractId, 'analyzed', processingTime);
     
-    console.log(`Contract ${contractId} processed successfully`);
+    console.log(`✅ [CONTRACT-PROCESS] Contract ${contractId} processed successfully with comprehensive analytics`);
+    console.log('📊 [CONTRACT-PROCESS] Saved analyses:', {
+      basicAnalysisId: savedBasicAnalysis.id,
+      financialAnalysisId: savedFinancial.id,
+      complianceAnalysisId: savedCompliance.id,
+      strategicAnalysisId: savedStrategic.id,
+      performanceAnalysisId: savedPerformance.id,
+      comparisonAnalysisId: savedComparison.id,
+      obligationsCount: savedObligations.length,
+      totalProcessingTime: processingTime
+    });
+    
   } catch (error) {
-    console.error(`Error processing contract ${contractId}:`, error);
+    console.error(`❌ [CONTRACT-PROCESS] Error processing contract ${contractId}:`, error);
     
     // Update status to failed
     try {

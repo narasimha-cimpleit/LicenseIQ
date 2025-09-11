@@ -128,6 +128,49 @@ export interface IStorage {
     upcomingObligations: number;
     renewalsPending: number;
   }>;
+
+  // Aggregate analytics operations
+  getFinancialAnalytics(userId?: string): Promise<{
+    totalContractValue: number;
+    avgContractValue: number;
+    totalPaymentScheduled: number;
+    currencyDistribution: Record<string, number>;
+    riskDistribution: { low: number; medium: number; high: number };
+    topPaymentTerms: Array<{ term: string; count: number }>;
+  }>;
+
+  getComplianceAnalytics(userId?: string): Promise<{
+    avgComplianceScore: number;
+    complianceDistribution: { compliant: number; partial: number; nonCompliant: number };
+    topRegulatoryFrameworks: Array<{ framework: string; count: number }>;
+    jurisdictionBreakdown: Record<string, number>;
+    dataProtectionCompliance: number;
+  }>;
+
+  getStrategicAnalytics(userId?: string): Promise<{
+    avgStrategicValue: number;
+    marketAlignmentDistribution: { high: number; medium: number; low: number };
+    competitiveAdvantages: Array<{ advantage: string; count: number }>;
+    avgRiskConcentration: number;
+    topRecommendations: Array<{ recommendation: string; frequency: number }>;
+  }>;
+
+  getPerformanceAnalytics(userId?: string): Promise<{
+    avgPerformanceScore: number;
+    avgMilestoneCompletion: number;
+    onTimeDeliveryRate: number;
+    avgBudgetVariance: number;
+    avgQualityScore: number;
+    avgRenewalProbability: number;
+  }>;
+
+  getRiskAnalytics(userId?: string): Promise<{
+    riskDistribution: { high: number; medium: number; low: number };
+    topRiskFactors: Array<{ risk: string; frequency: number }>;
+    avgRiskScore: number;
+    contractsAtRisk: number;
+    riskTrends: Array<{ date: string; riskScore: number }>;
+  }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -709,6 +752,393 @@ export class DatabaseStorage implements IStorage {
       complianceRate: 0,
       upcomingObligations: 0,
       renewalsPending: 0,
+    };
+  }
+
+  // Aggregate analytics implementations
+  async getFinancialAnalytics(userId?: string): Promise<{
+    totalContractValue: number;
+    avgContractValue: number;
+    totalPaymentScheduled: number;
+    currencyDistribution: Record<string, number>;
+    riskDistribution: { low: number; medium: number; high: number };
+    topPaymentTerms: Array<{ term: string; count: number }>;
+  }> {
+    let contractsQuery = db
+      .select({
+        contractId: contracts.id,
+        totalValue: financialAnalysis.totalValue,
+        currency: financialAnalysis.currency,
+        currencyRisk: financialAnalysis.currencyRisk,
+        paymentTerms: financialAnalysis.paymentTerms,
+      })
+      .from(contracts)
+      .leftJoin(financialAnalysis, eq(contracts.id, financialAnalysis.contractId));
+
+    if (userId) {
+      contractsQuery = contractsQuery.where(eq(contracts.uploadedBy, userId));
+    }
+
+    const results = await contractsQuery;
+    
+    const totalValue = results
+      .filter(r => r.totalValue)
+      .reduce((sum, r) => sum + parseFloat(r.totalValue?.toString() || '0'), 0);
+    
+    const avgValue = results.filter(r => r.totalValue).length > 0 ? 
+      totalValue / results.filter(r => r.totalValue).length : 0;
+
+    const currencyDistribution: Record<string, number> = {};
+    const paymentTermsCount: Record<string, number> = {};
+    const riskCounts = { low: 0, medium: 0, high: 0 };
+
+    results.forEach(r => {
+      if (r.currency) {
+        currencyDistribution[r.currency] = (currencyDistribution[r.currency] || 0) + 1;
+      }
+      if (r.paymentTerms) {
+        paymentTermsCount[r.paymentTerms] = (paymentTermsCount[r.paymentTerms] || 0) + 1;
+      }
+      if (r.currencyRisk) {
+        const risk = parseFloat(r.currencyRisk.toString());
+        if (risk < 30) riskCounts.low++;
+        else if (risk < 70) riskCounts.medium++;
+        else riskCounts.high++;
+      }
+    });
+
+    const topPaymentTerms = Object.entries(paymentTermsCount)
+      .map(([term, count]) => ({ term, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    return {
+      totalContractValue: totalValue,
+      avgContractValue: avgValue,
+      totalPaymentScheduled: totalValue, // Simplified - would calculate from payment schedules
+      currencyDistribution,
+      riskDistribution: riskCounts,
+      topPaymentTerms,
+    };
+  }
+
+  async getComplianceAnalytics(userId?: string): Promise<{
+    avgComplianceScore: number;
+    complianceDistribution: { compliant: number; partial: number; nonCompliant: number };
+    topRegulatoryFrameworks: Array<{ framework: string; count: number }>;
+    jurisdictionBreakdown: Record<string, number>;
+    dataProtectionCompliance: number;
+  }> {
+    let complianceQuery = db
+      .select({
+        complianceScore: complianceAnalysis.complianceScore,
+        regulatoryFrameworks: complianceAnalysis.regulatoryFrameworks,
+        jurisdictionAnalysis: complianceAnalysis.jurisdictionAnalysis,
+        dataProtectionCompliance: complianceAnalysis.dataProtectionCompliance,
+      })
+      .from(contracts)
+      .leftJoin(complianceAnalysis, eq(contracts.id, complianceAnalysis.contractId));
+
+    if (userId) {
+      complianceQuery = complianceQuery.where(eq(contracts.uploadedBy, userId));
+    }
+
+    const results = await complianceQuery;
+    const validResults = results.filter(r => r.complianceScore);
+
+    const avgScore = validResults.length > 0 ? 
+      validResults.reduce((sum, r) => sum + parseFloat(r.complianceScore?.toString() || '0'), 0) / validResults.length : 0;
+
+    const distribution = { compliant: 0, partial: 0, nonCompliant: 0 };
+    let dataProtectionCount = 0;
+    const frameworkCounts: Record<string, number> = {};
+    const jurisdictionCounts: Record<string, number> = {};
+
+    validResults.forEach(r => {
+      const score = parseFloat(r.complianceScore?.toString() || '0');
+      if (score >= 80) distribution.compliant++;
+      else if (score >= 50) distribution.partial++;
+      else distribution.nonCompliant++;
+
+      if (r.dataProtectionCompliance) dataProtectionCount++;
+
+      // Process regulatory frameworks and jurisdictions from JSONB data
+      if (r.regulatoryFrameworks && Array.isArray(r.regulatoryFrameworks)) {
+        r.regulatoryFrameworks.forEach((fw: any) => {
+          if (typeof fw === 'string') {
+            frameworkCounts[fw] = (frameworkCounts[fw] || 0) + 1;
+          }
+        });
+      }
+    });
+
+    const topFrameworks = Object.entries(frameworkCounts)
+      .map(([framework, count]) => ({ framework, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    return {
+      avgComplianceScore: avgScore,
+      complianceDistribution: distribution,
+      topRegulatoryFrameworks: topFrameworks,
+      jurisdictionBreakdown: jurisdictionCounts,
+      dataProtectionCompliance: dataProtectionCount,
+    };
+  }
+
+  async getStrategicAnalytics(userId?: string): Promise<{
+    avgStrategicValue: number;
+    marketAlignmentDistribution: { high: number; medium: number; low: number };
+    competitiveAdvantages: Array<{ advantage: string; count: number }>;
+    avgRiskConcentration: number;
+    topRecommendations: Array<{ recommendation: string; frequency: number }>;
+  }> {
+    let strategicQuery = db
+      .select({
+        strategicValue: strategicAnalysis.strategicValue,
+        marketAlignment: strategicAnalysis.marketAlignment,
+        competitiveAdvantage: strategicAnalysis.competitiveAdvantage,
+        riskConcentration: strategicAnalysis.riskConcentration,
+        recommendations: strategicAnalysis.recommendations,
+      })
+      .from(contracts)
+      .leftJoin(strategicAnalysis, eq(contracts.id, strategicAnalysis.contractId));
+
+    if (userId) {
+      strategicQuery = strategicQuery.where(eq(contracts.uploadedBy, userId));
+    }
+
+    const results = await strategicQuery;
+    const validResults = results.filter(r => r.strategicValue);
+
+    const avgStrategicValue = validResults.length > 0 ? 
+      validResults.reduce((sum, r) => sum + parseFloat(r.strategicValue?.toString() || '0'), 0) / validResults.length : 0;
+
+    const avgRiskConcentration = validResults.length > 0 ? 
+      validResults.reduce((sum, r) => sum + parseFloat(r.riskConcentration?.toString() || '0'), 0) / validResults.length : 0;
+
+    const alignmentDistribution = { high: 0, medium: 0, low: 0 };
+    const advantageCounts: Record<string, number> = {};
+    const recommendationCounts: Record<string, number> = {};
+
+    validResults.forEach(r => {
+      const alignment = parseFloat(r.marketAlignment?.toString() || '0');
+      if (alignment >= 80) alignmentDistribution.high++;
+      else if (alignment >= 50) alignmentDistribution.medium++;
+      else alignmentDistribution.low++;
+
+      // Process competitive advantages and recommendations from JSONB
+      if (r.competitiveAdvantage && Array.isArray(r.competitiveAdvantage)) {
+        r.competitiveAdvantage.forEach((adv: any) => {
+          if (typeof adv === 'object' && adv.advantage) {
+            advantageCounts[adv.advantage] = (advantageCounts[adv.advantage] || 0) + 1;
+          }
+        });
+      }
+
+      if (r.recommendations && Array.isArray(r.recommendations)) {
+        r.recommendations.forEach((rec: any) => {
+          if (typeof rec === 'object' && rec.title) {
+            recommendationCounts[rec.title] = (recommendationCounts[rec.title] || 0) + 1;
+          }
+        });
+      }
+    });
+
+    return {
+      avgStrategicValue,
+      marketAlignmentDistribution: alignmentDistribution,
+      competitiveAdvantages: Object.entries(advantageCounts)
+        .map(([advantage, count]) => ({ advantage, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5),
+      avgRiskConcentration,
+      topRecommendations: Object.entries(recommendationCounts)
+        .map(([recommendation, frequency]) => ({ recommendation, frequency }))
+        .sort((a, b) => b.frequency - a.frequency)
+        .slice(0, 5),
+    };
+  }
+
+  async getPerformanceAnalytics(userId?: string): Promise<{
+    avgPerformanceScore: number;
+    avgMilestoneCompletion: number;
+    onTimeDeliveryRate: number;
+    avgBudgetVariance: number;
+    avgQualityScore: number;
+    avgRenewalProbability: number;
+  }> {
+    let performanceQuery = db
+      .select({
+        performanceScore: performanceMetrics.performanceScore,
+        milestoneCompletion: performanceMetrics.milestoneCompletion,
+        onTimeDelivery: performanceMetrics.onTimeDelivery,
+        budgetVariance: performanceMetrics.budgetVariance,
+        qualityScore: performanceMetrics.qualityScore,
+        renewalProbability: performanceMetrics.renewalProbability,
+      })
+      .from(contracts)
+      .leftJoin(performanceMetrics, eq(contracts.id, performanceMetrics.contractId));
+
+    if (userId) {
+      performanceQuery = performanceQuery.where(eq(contracts.uploadedBy, userId));
+    }
+
+    const results = await performanceQuery;
+    const validResults = results.filter(r => r.performanceScore);
+
+    if (validResults.length === 0) {
+      return {
+        avgPerformanceScore: 0,
+        avgMilestoneCompletion: 0,
+        onTimeDeliveryRate: 0,
+        avgBudgetVariance: 0,
+        avgQualityScore: 0,
+        avgRenewalProbability: 0,
+      };
+    }
+
+    const avgPerformanceScore = validResults.reduce((sum, r) => 
+      sum + parseFloat(r.performanceScore?.toString() || '0'), 0) / validResults.length;
+    
+    const avgMilestoneCompletion = validResults.reduce((sum, r) => 
+      sum + parseFloat(r.milestoneCompletion?.toString() || '0'), 0) / validResults.length;
+    
+    const onTimeCount = validResults.filter(r => r.onTimeDelivery).length;
+    const onTimeDeliveryRate = (onTimeCount / validResults.length) * 100;
+    
+    const avgBudgetVariance = validResults.reduce((sum, r) => 
+      sum + parseFloat(r.budgetVariance?.toString() || '0'), 0) / validResults.length;
+    
+    const avgQualityScore = validResults.reduce((sum, r) => 
+      sum + parseFloat(r.qualityScore?.toString() || '0'), 0) / validResults.length;
+    
+    const avgRenewalProbability = validResults.reduce((sum, r) => 
+      sum + parseFloat(r.renewalProbability?.toString() || '0'), 0) / validResults.length;
+
+    return {
+      avgPerformanceScore,
+      avgMilestoneCompletion,
+      onTimeDeliveryRate,
+      avgBudgetVariance,
+      avgQualityScore,
+      avgRenewalProbability,
+    };
+  }
+
+  async getRiskAnalytics(userId?: string): Promise<{
+    riskDistribution: { high: number; medium: number; low: number };
+    topRiskFactors: Array<{ risk: string; frequency: number }>;
+    avgRiskScore: number;
+    contractsAtRisk: number;
+    riskTrends: Array<{ date: string; riskScore: number }>;
+  }> {
+    // Aggregate risk data from multiple analysis tables
+    let analysisQuery = db
+      .select({
+        contractId: contracts.id,
+        createdAt: contracts.createdAt,
+        riskAnalysis: contractAnalysis.riskAnalysis,
+        currencyRisk: financialAnalysis.currencyRisk,
+        complianceScore: complianceAnalysis.complianceScore,
+        riskConcentration: strategicAnalysis.riskConcentration,
+      })
+      .from(contracts)
+      .leftJoin(contractAnalysis, eq(contracts.id, contractAnalysis.contractId))
+      .leftJoin(financialAnalysis, eq(contracts.id, financialAnalysis.contractId))
+      .leftJoin(complianceAnalysis, eq(contracts.id, complianceAnalysis.contractId))
+      .leftJoin(strategicAnalysis, eq(contracts.id, strategicAnalysis.contractId));
+
+    if (userId) {
+      analysisQuery = analysisQuery.where(eq(contracts.uploadedBy, userId));
+    }
+
+    const results = await analysisQuery;
+
+    const riskDistribution = { high: 0, medium: 0, low: 0 };
+    const riskFactorCounts: Record<string, number> = {};
+    const riskScores: number[] = [];
+    let contractsAtRisk = 0;
+    const riskTrends: Array<{ date: string; riskScore: number }> = [];
+
+    results.forEach(r => {
+      let overallRisk = 0;
+      let riskCount = 0;
+
+      // Aggregate various risk scores
+      if (r.currencyRisk) {
+        overallRisk += parseFloat(r.currencyRisk.toString());
+        riskCount++;
+      }
+      
+      if (r.complianceScore) {
+        // Convert compliance score to risk (inverse relationship)
+        overallRisk += (100 - parseFloat(r.complianceScore.toString()));
+        riskCount++;
+      }
+
+      if (r.riskConcentration) {
+        overallRisk += parseFloat(r.riskConcentration.toString());
+        riskCount++;
+      }
+
+      if (riskCount > 0) {
+        const avgRisk = overallRisk / riskCount;
+        riskScores.push(avgRisk);
+
+        // Categorize risk level
+        if (avgRisk >= 70) {
+          riskDistribution.high++;
+          contractsAtRisk++;
+        } else if (avgRisk >= 40) {
+          riskDistribution.medium++;
+        } else {
+          riskDistribution.low++;
+        }
+
+        // Add to risk trends (simplified monthly aggregation)
+        if (r.createdAt) {
+          const monthKey = r.createdAt.toISOString().slice(0, 7); // YYYY-MM
+          riskTrends.push({ date: monthKey, riskScore: avgRisk });
+        }
+      }
+
+      // Process risk factors from contract analysis
+      if (r.riskAnalysis && Array.isArray(r.riskAnalysis)) {
+        r.riskAnalysis.forEach((risk: any) => {
+          if (typeof risk === 'object' && risk.title) {
+            riskFactorCounts[risk.title] = (riskFactorCounts[risk.title] || 0) + 1;
+          }
+        });
+      }
+    });
+
+    const avgRiskScore = riskScores.length > 0 ? 
+      riskScores.reduce((sum, score) => sum + score, 0) / riskScores.length : 0;
+
+    // Group risk trends by month and average
+    const trendMap = new Map<string, { total: number; count: number }>();
+    riskTrends.forEach(trend => {
+      const existing = trendMap.get(trend.date) || { total: 0, count: 0 };
+      existing.total += trend.riskScore;
+      existing.count += 1;
+      trendMap.set(trend.date, existing);
+    });
+
+    const aggregatedTrends = Array.from(trendMap.entries())
+      .map(([date, data]) => ({ date, riskScore: data.total / data.count }))
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .slice(-6); // Last 6 months
+
+    return {
+      riskDistribution,
+      topRiskFactors: Object.entries(riskFactorCounts)
+        .map(([risk, frequency]) => ({ risk, frequency }))
+        .sort((a, b) => b.frequency - a.frequency)
+        .slice(0, 10),
+      avgRiskScore,
+      contractsAtRisk,
+      riskTrends: aggregatedTrends,
     };
   }
 }

@@ -746,6 +746,274 @@ export class GroqService {
       };
     }
   }
+
+  // 📋 CONTRACT OBLIGATIONS EXTRACTION
+  async extractContractObligations(contractText: string): Promise<Array<{
+    obligationType: string;
+    description: string;
+    dueDate: string | null;
+    responsible: string;
+    priority: string;
+  }>> {
+    const prompt = `
+    Extract all contractual obligations from this contract. Identify who is responsible for what and when.
+
+    Contract Text:
+    ${contractText}
+
+    Return a JSON array of obligations with:
+    1. **obligationType** - "payment", "delivery", "performance", "reporting", "maintenance", "compliance", etc.
+    2. **description** - Clear description of the obligation
+    3. **dueDate** - Due date in YYYY-MM-DD format (null if no specific date)
+    4. **responsible** - Who is responsible (party name or role)
+    5. **priority** - "low", "medium", "high", "critical"
+
+    Return only this JSON array:
+    [
+      {
+        "obligationType": "payment",
+        "description": "Monthly payment of $10,000",
+        "dueDate": "2024-12-01",
+        "responsible": "Client",
+        "priority": "high"
+      }
+    ]
+    `;
+
+    const messages = [
+      {
+        role: 'system',
+        content: 'You are a contract obligation specialist. Extract all obligations with precise details. Return only valid JSON array.'
+      },
+      {
+        role: 'user',
+        content: prompt
+      }
+    ];
+
+    try {
+      const response = await this.makeRequest(messages);
+      const cleanedResponse = response.trim();
+      const jsonMatch = cleanedResponse.match(/\[[\s\S]*\]/);
+      
+      if (!jsonMatch) {
+        return [];
+      }
+
+      const obligations = JSON.parse(jsonMatch[0]);
+      return Array.isArray(obligations) ? obligations : [];
+    } catch (error) {
+      console.error('Error extracting obligations:', error);
+      return [];
+    }
+  }
+
+  // ⚠️ COMPREHENSIVE RISK ANALYSIS
+  async analyzeRiskFactors(contractText: string, contractType: string = 'unknown'): Promise<{
+    overallRiskScore: number;
+    riskCategories: Array<{
+      category: string;
+      score: number;
+      factors: Array<{ factor: string; impact: string; description: string }>;
+    }>;
+    mitigation: Array<{ risk: string; recommendation: string; priority: string }>;
+    riskTrends: Array<{ period: string; riskLevel: string; factors: string[] }>;
+  }> {
+    const prompt = `
+    Perform a comprehensive risk analysis of this ${contractType} contract across multiple dimensions.
+
+    Contract Text:
+    ${contractText}
+
+    Analyze these risk categories:
+    1. **Financial Risk** - Payment terms, currency exposure, financial stability
+    2. **Legal Risk** - Compliance, jurisdiction, liability exposure
+    3. **Operational Risk** - Delivery, performance, resource availability
+    4. **Strategic Risk** - Market changes, competitive positioning
+    5. **Reputational Risk** - Brand impact, stakeholder relations
+    6. **Technical Risk** - Technology dependencies, obsolescence
+
+    Return only this JSON structure:
+    {
+      "overallRiskScore": number (0-100, higher = more risk),
+      "riskCategories": [
+        {
+          "category": "Financial Risk",
+          "score": number (0-100),
+          "factors": [
+            {
+              "factor": "Payment delay risk",
+              "impact": "high|medium|low", 
+              "description": "Detailed risk description"
+            }
+          ]
+        }
+      ],
+      "mitigation": [
+        {
+          "risk": "Risk description",
+          "recommendation": "Mitigation strategy", 
+          "priority": "high|medium|low"
+        }
+      ],
+      "riskTrends": [
+        {
+          "period": "short-term|medium-term|long-term",
+          "riskLevel": "increasing|stable|decreasing",
+          "factors": ["List of contributing factors"]
+        }
+      ]
+    }
+    `;
+
+    const messages = [
+      {
+        role: 'system',
+        content: 'You are a comprehensive risk analyst. Evaluate all risk dimensions and provide detailed mitigation strategies. Return only valid JSON.'
+      },
+      {
+        role: 'user',
+        content: prompt
+      }
+    ];
+
+    try {
+      const response = await this.makeRequest(messages);
+      const cleanedResponse = response.trim();
+      const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
+      
+      if (!jsonMatch) {
+        throw new Error('No valid JSON found in risk analysis response');
+      }
+
+      return JSON.parse(jsonMatch[0]);
+    } catch (error) {
+      console.error('Error analyzing risk factors:', error);
+      return {
+        overallRiskScore: 50,
+        riskCategories: [
+          {
+            category: "General Risk",
+            score: 50,
+            factors: [
+              {
+                factor: "Analysis incomplete",
+                impact: "medium",
+                description: "Risk analysis could not be completed automatically"
+              }
+            ]
+          }
+        ],
+        mitigation: [
+          {
+            risk: "Incomplete analysis",
+            recommendation: "Manual review recommended",
+            priority: "medium"
+          }
+        ],
+        riskTrends: [
+          {
+            period: "short-term",
+            riskLevel: "stable",
+            factors: ["Analysis pending"]
+          }
+        ]
+      };
+    }
+  }
+
+  // 🔄 CONTRACT COMPARISON ANALYSIS
+  async analyzeContractComparison(
+    contractText: string, 
+    contractType: string, 
+    industry: string = 'unknown'
+  ): Promise<{
+    similarityScore: number;
+    clauseVariations: Array<{ clause: string; variation: string; impact: string }>;
+    termComparisons: Array<{ term: string; marketStandard: string; contractValue: string; variance: string }>;
+    bestPractices: Array<{ practice: string; recommendation: string; benefit: string }>;
+    anomalies: Array<{ anomaly: string; description: string; recommendation: string }>;
+  }> {
+    const prompt = `
+    Analyze this ${contractType} contract in the ${industry} industry for comparison with market standards and best practices.
+
+    Contract Text:
+    ${contractText}
+
+    Compare against typical ${contractType} contracts and identify:
+    1. **Similarity Score** - How similar to standard contracts (0-100)
+    2. **Clause Variations** - Non-standard clauses and their impact
+    3. **Term Comparisons** - How terms compare to market standards
+    4. **Best Practices** - Adherence to industry best practices
+    5. **Anomalies** - Unusual terms that may need attention
+
+    Return only this JSON structure:
+    {
+      "similarityScore": number (0-100),
+      "clauseVariations": [
+        {
+          "clause": "Termination clause",
+          "variation": "Unusually restrictive",
+          "impact": "high|medium|low"
+        }
+      ],
+      "termComparisons": [
+        {
+          "term": "Payment terms",
+          "marketStandard": "Net 30 days",
+          "contractValue": "Net 60 days", 
+          "variance": "Unfavorable to payer"
+        }
+      ],
+      "bestPractices": [
+        {
+          "practice": "Force majeure clause",
+          "recommendation": "Include comprehensive force majeure provisions",
+          "benefit": "Protection against unforeseen events"
+        }
+      ],
+      "anomalies": [
+        {
+          "anomaly": "Unusual liability cap",
+          "description": "Liability limited to 10% of contract value",
+          "recommendation": "Consider increasing liability cap for better protection"
+        }
+      ]
+    }
+    `;
+
+    const messages = [
+      {
+        role: 'system',
+        content: 'You are a contract comparison specialist. Compare contracts against industry standards and best practices. Return only valid JSON.'
+      },
+      {
+        role: 'user',
+        content: prompt
+      }
+    ];
+
+    try {
+      const response = await this.makeRequest(messages);
+      const cleanedResponse = response.trim();
+      const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
+      
+      if (!jsonMatch) {
+        throw new Error('No valid JSON found in comparison analysis response');
+      }
+
+      return JSON.parse(jsonMatch[0]);
+    } catch (error) {
+      console.error('Error analyzing contract comparison:', error);
+      return {
+        similarityScore: 75,
+        clauseVariations: [],
+        termComparisons: [],
+        bestPractices: [],
+        anomalies: []
+      };
+    }
+  }
 }
 
 export const groqService = new GroqService();
