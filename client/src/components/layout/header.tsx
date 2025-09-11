@@ -14,6 +14,9 @@ export default function Header({ title, description }: HeaderProps) {
     setLocation("/upload");
   };
 
+  // Hide New Contract button on Analytics page since it's already in main dashboard
+  const showNewContractButton = title !== "Enterprise Analytics";
+
   return (
     <header className="bg-card border-b border-border px-6 py-4">
       <div className="flex items-center justify-between">
@@ -33,10 +36,12 @@ export default function Header({ title, description }: HeaderProps) {
             <Bell className="h-4 w-4" />
             <span className="absolute top-0 right-0 h-2 w-2 bg-destructive rounded-full" />
           </Button>
-          <Button onClick={handleNewContract} data-testid="button-header-new-contract">
-            <Plus className="h-4 w-4 mr-2" />
-            New Contract
-          </Button>
+          {showNewContractButton && (
+            <Button onClick={handleNewContract} data-testid="button-header-new-contract">
+              <Plus className="h-4 w-4 mr-2" />
+              New Contract
+            </Button>
+          )}
         </div>
       </div>
     </header>
