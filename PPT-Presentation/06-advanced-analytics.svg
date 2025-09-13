@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+  <defs>
+    <style>
+      .title-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 32px; font-weight: bold; fill: #1e40af; }
+      .subtitle-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 18px; fill: #6b7280; }
+      .header-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 20px; font-weight: 600; fill: #1f2937; }
+      .body-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; fill: #374151; }
+      .small-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; fill: #6b7280; }
+      .button-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 600; fill: white; }
+      .nav-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; fill: #374151; }
+      .metric-number { font-family: 'Segoe UI', Arial, sans-serif; font-size: 28px; font-weight: bold; }
+      .metric-label { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; fill: #6b7280; }
+      
+      .screen { stroke: #e5e7eb; stroke-width: 2; fill: white; }
+      .primary-btn { fill: #3b82f6; stroke: none; }
+      .secondary-btn { fill: #e5e7eb; stroke: #d1d5db; }
+      .card { fill: white; stroke: #e5e7eb; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="600" fill="#f9fafb"/>
+
+  <!-- Main Title -->
+  <text x="400" y="40" text-anchor="middle" class="title-text">Advanced Analytics</text>
+  <text x="400" y="65" text-anchor="middle" class="subtitle-text">Financial Performance &amp; Portfolio Intelligence</text>
+
+  <!-- Analytics Screen -->
+  <g transform="translate(75, 90)">
+    <rect class="screen" width="650" height="400" rx="12"/>
+    
+    <!-- Tab Navigation -->
+    <rect x="30" y="30" width="100" height="35" class="primary-btn" rx="6"/>
+    <text x="80" y="50" text-anchor="middle" class="button-text">Financial</text>
+    
+    <rect x="140" y="30" width="100" height="35" class="secondary-btn" rx="6"/>
+    <text x="190" y="50" text-anchor="middle" class="nav-text">Risk</text>
+    
+    <rect x="250" y="30" width="100" height="35" class="secondary-btn" rx="6"/>
+    <text x="300" y="50" text-anchor="middle" class="nav-text">Portfolio</text>
+    
+    <rect x="360" y="30" width="100" height="35" class="secondary-btn" rx="6"/>
+    <text x="410" y="50" text-anchor="middle" class="nav-text">Trends</text>
+    
+    <rect x="470" y="30" width="100" height="35" class="secondary-btn" rx="6"/>
+    <text x="520" y="50" text-anchor="middle" class="nav-text">Insights</text>
+    
+    <!-- Financial Metrics Dashboard -->
+    <rect x="30" y="80" width="590" height="300" class="card" rx="8"/>
+    <text x="40" y="105" class="header-text">Financial Performance Overview</text>
+    
+    <!-- Top Metric Cards -->
+    <rect x="50" y="120" width="160" height="80" fill="#f0fdf4" stroke="#10b981" rx="6"/>
+    <text x="130" y="145" text-anchor="middle" class="metric-number" fill="#10b981">$2.4M</text>
+    <text x="130" y="165" text-anchor="middle" class="metric-label">Total Portfolio Value</text>
+    <text x="130" y="180" text-anchor="middle" class="small-text">↑ 12% vs last quarter</text>
+    
+    <rect x="230" y="120" width="160" height="80" fill="#fefce8" stroke="#f59e0b" rx="6"/>
+    <text x="310" y="145" text-anchor="middle" class="metric-number" fill="#f59e0b">$180K</text>
+    <text x="310" y="165" text-anchor="middle" class="metric-label">Value at Risk</text>
+    <text x="310" y="180" text-anchor="middle" class="small-text">7.5% of total portfolio</text>
+    
+    <rect x="410" y="120" width="160" height="80" fill="#f0f9ff" stroke="#3b82f6" rx="6"/>
+    <text x="490" y="145" text-anchor="middle" class="metric-number" fill="#3b82f6">15%</text>
+    <text x="490" y="165" text-anchor="middle" class="metric-label">Cost Savings</text>
+    <text x="490" y="180" text-anchor="middle" class="small-text">Through optimization</text>
+    
+    <!-- Chart Section -->
+    <rect x="50" y="220" width="520" height="140" fill="#f8fafc" stroke="#e5e7eb" rx="6"/>
+    <text x="310" y="245" text-anchor="middle" class="header-text">Financial Performance Trends</text>
+    
+    <!-- Revenue Trend Line -->
+    <polyline points="70,330 110,315 150,325 190,305 230,310 270,290 310,295 350,275 390,280 430,260 470,265 510,245 550,250" 
+              stroke="#10b981" stroke-width="4" fill="none"/>
+    
+    <!-- Cost Trend Line -->
+    <polyline points="70,340 110,330 150,345 190,325 230,335 270,315 310,325 350,305 390,315 430,295 470,305 510,285 550,290" 
+              stroke="#ef4444" stroke-width="3" fill="none"/>
+    
+    <!-- Risk Trend Line -->
+    <polyline points="70,345 110,335 150,350 190,330 230,340 270,320 310,330 350,310 390,320 430,300 470,310 510,290 550,295" 
+              stroke="#f59e0b" stroke-width="2" fill="none"/>
+    
+    <!-- Legend -->
+    <rect x="80" y="275" width="15" height="3" fill="#10b981"/>
+    <text x="105" y="282" class="small-text">Revenue Growth</text>
+    
+    <rect x="200" y="275" width="15" height="3" fill="#ef4444"/>
+    <text x="225" y="282" class="small-text">Total Costs</text>
+    
+    <rect x="300" y="275" width="15" height="3" fill="#f59e0b"/>
+    <text x="325" y="282" class="small-text">Risk Exposure</text>
+    
+    <rect x="420" y="275" width="15" height="3" fill="#3b82f6"/>
+    <text x="445" y="282" class="small-text">Net Savings</text>
+  </g>
+
+  <!-- Key Insights -->
+  <g transform="translate(50, 510)">
+    <text x="350" y="25" text-anchor="middle" class="header-text">Strategic Insights &amp; Recommendations</text>
+    
+    <rect x="50" y="35" width="180" height="50" fill="#f0fdf4" stroke="#10b981" rx="6"/>
+    <text x="140" y="55" text-anchor="middle" class="body-text" fill="#10b981">💰 Optimize Renewals</text>
+    <text x="140" y="72" text-anchor="middle" class="small-text">12 contracts due Q2 2024</text>
+    
+    <rect x="260" y="35" width="180" height="50" fill="#fef3c7" stroke="#f59e0b" rx="6"/>
+    <text x="350" y="55" text-anchor="middle" class="body-text" fill="#f59e0b">⚠️ Risk Mitigation</text>
+    <text x="350" y="72" text-anchor="middle" class="small-text">8 high-risk contracts need review</text>
+    
+    <rect x="470" y="35" width="180" height="50" fill="#f0f9ff" stroke="#3b82f6" rx="6"/>
+    <text x="560" y="55" text-anchor="middle" class="body-text" fill="#3b82f6">📈 Growth Opportunity</text>
+    <text x="560" y="72" text-anchor="middle" class="small-text">$450K potential savings identified</text>
+  </g>
+</svg>

@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+  <defs>
+    <style>
+      .title-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 32px; font-weight: bold; fill: #1e40af; }
+      .subtitle-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 18px; fill: #6b7280; }
+      .header-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 24px; font-weight: 600; fill: #1f2937; }
+      .body-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 16px; fill: #374151; }
+      .small-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; fill: #6b7280; }
+      .button-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 16px; font-weight: 600; fill: white; }
+      
+      .screen { stroke: #e5e7eb; stroke-width: 2; fill: white; }
+      .primary-btn { fill: #3b82f6; stroke: none; }
+      .card { fill: white; stroke: #e5e7eb; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="600" fill="#f9fafb"/>
+
+  <!-- Main Title -->
+  <text x="400" y="60" text-anchor="middle" class="title-text">User Authentication</text>
+  <text x="400" y="90" text-anchor="middle" class="subtitle-text">Secure Login to Licence IQ Research Platform</text>
+
+  <!-- Authentication Screen -->
+  <g transform="translate(200, 150)">
+    <rect class="screen" width="400" height="300" rx="12"/>
+    
+    <!-- Logo Area -->
+    <rect x="150" y="30" width="100" height="40" fill="#1e40af" rx="6"/>
+    <text x="200" y="55" text-anchor="middle" class="button-text">Licence IQ</text>
+    
+    <text x="200" y="85" text-anchor="middle" class="body-text">Sign in to access your contract management platform</text>
+    
+    <!-- Login Form -->
+    <rect x="50" y="120" width="300" height="150" rx="8" class="card"/>
+    <text x="200" y="145" text-anchor="middle" class="header-text">Sign In</text>
+    
+    <!-- Username field -->
+    <text x="70" y="170" class="small-text">Username</text>
+    <rect x="70" y="175" width="260" height="40" rx="6" fill="#f9fafb" stroke="#d1d5db" stroke-width="2"/>
+    <text x="80" y="198" class="body-text">Enter your username</text>
+    
+    <!-- Password field -->
+    <text x="70" y="230" class="small-text">Password</text>
+    <rect x="70" y="235" width="260" height="40" rx="6" fill="#f9fafb" stroke="#d1d5db" stroke-width="2"/>
+    <text x="80" y="258" class="body-text">••••••••••</text>
+    
+    <!-- Sign In Button -->
+    <rect x="120" y="285" width="160" height="45" rx="8" class="primary-btn"/>
+    <text x="200" y="312" text-anchor="middle" class="button-text">Sign In</text>
+  </g>
+
+  <!-- Features -->
+  <g transform="translate(100, 480)">
+    <text x="300" y="25" text-anchor="middle" class="header-text">Authentication Features</text>
+    
+    <rect x="50" y="40" width="150" height="60" class="card" rx="6"/>
+    <text x="125" y="60" text-anchor="middle" class="body-text">🔒 Secure Sessions</text>
+    <text x="125" y="80" text-anchor="middle" class="small-text">Session-based authentication</text>
+    
+    <rect x="225" y="40" width="150" height="60" class="card" rx="6"/>
+    <text x="300" y="60" text-anchor="middle" class="body-text">👤 Role-Based Access</text>
+    <text x="300" y="80" text-anchor="middle" class="small-text">Admin, Editor, Viewer roles</text>
+    
+    <rect x="400" y="40" width="150" height="60" class="card" rx="6"/>
+    <text x="475" y="60" text-anchor="middle" class="body-text">📋 Audit Trail</text>
+    <text x="475" y="80" text-anchor="middle" class="small-text">Complete login tracking</text>
+  </g>
+</svg>

@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+  <defs>
+    <style>
+      .title-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 32px; font-weight: bold; fill: #1e40af; }
+      .subtitle-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 18px; fill: #6b7280; }
+      .header-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 20px; font-weight: 600; fill: #1f2937; }
+      .body-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; fill: #374151; }
+      .small-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; fill: #6b7280; }
+      .button-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; font-weight: 600; fill: white; }
+      
+      .screen { stroke: #e5e7eb; stroke-width: 2; fill: white; }
+      .card { fill: white; stroke: #e5e7eb; }
+      .success { fill: #10b981; }
+      .primary-btn { fill: #3b82f6; }
+      .warning { fill: #f59e0b; }
+      .secondary-btn { fill: #e5e7eb; stroke: #d1d5db; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="600" fill="#f9fafb"/>
+
+  <!-- Main Title -->
+  <text x="400" y="40" text-anchor="middle" class="title-text">Reports &amp; Audit Trail</text>
+  <text x="400" y="65" text-anchor="middle" class="subtitle-text">Comprehensive Reporting &amp; Compliance Management</text>
+
+  <!-- Reports Screen -->
+  <g transform="translate(100, 90)">
+    <rect class="screen" width="600" height="380" rx="12"/>
+    
+    <!-- Report Generation Section -->
+    <rect x="30" y="30" width="280" height="160" class="card" rx="8"/>
+    <text x="40" y="55" class="header-text">📊 Contract Reports</text>
+    
+    <!-- Report Types -->
+    <rect x="50" y="70" width="240" height="30" class="secondary-btn" rx="4"/>
+    <text x="170" y="88" text-anchor="middle" class="body-text">📈 Financial Performance Report</text>
+    
+    <rect x="50" y="110" width="240" height="30" class="secondary-btn" rx="4"/>
+    <text x="170" y="128" text-anchor="middle" class="body-text">⚠️ Risk Assessment Summary</text>
+    
+    <rect x="50" y="150" width="240" height="30" class="secondary-btn" rx="4"/>
+    <text x="170" y="168" text-anchor="middle" class="body-text">📅 Contract Expiration Report</text>
+    
+    <!-- Audit Trail Section -->
+    <rect x="320" y="30" width="250" height="160" class="card" rx="8"/>
+    <text x="330" y="55" class="header-text">🔍 Recent Activity</text>
+    
+    <!-- Audit Entries -->
+    <text x="340" y="80" class="small-text">2:45 PM - User login (john@company.com)</text>
+    <text x="340" y="100" class="small-text">2:50 PM - Contract uploaded: agreement.pdf</text>
+    <text x="340" y="120" class="small-text">3:15 PM - AI analysis completed</text>
+    <text x="340" y="140" class="small-text">3:20 PM - Risk assessment generated</text>
+    <text x="340" y="160" class="small-text">3:25 PM - Report exported (PDF format)</text>
+    <text x="340" y="180" class="small-text">3:30 PM - User permission updated</text>
+    
+    <!-- Export Options -->
+    <rect x="30" y="210" width="540" height="80" class="card" rx="8"/>
+    <text x="40" y="235" class="header-text">📥 Export &amp; Download Options</text>
+    
+    <!-- Export Format Buttons -->
+    <rect x="50" y="250" width="80" height="30" class="success" rx="4"/>
+    <text x="90" y="268" text-anchor="middle" class="button-text">📄 PDF</text>
+    
+    <rect x="140" y="250" width="80" height="30" class="primary-btn" rx="4"/>
+    <text x="180" y="268" text-anchor="middle" class="button-text">📊 Excel</text>
+    
+    <rect x="230" y="250" width="80" height="30" class="warning" rx="4"/>
+    <text x="270" y="268" text-anchor="middle" class="button-text">📋 CSV</text>
+    
+    <rect x="320" y="250" width="80" height="30" class="secondary-btn" rx="4"/>
+    <text x="360" y="268" text-anchor="middle" class="small-text">📧 Email</text>
+    
+    <rect x="410" y="250" width="80" height="30" class="secondary-btn" rx="4"/>
+    <text x="450" y="268" text-anchor="middle" class="small-text">🔗 Share</text>
+    
+    <!-- Schedule Reports -->
+    <rect x="500" y="250" width="60" height="30" class="primary-btn" rx="4"/>
+    <text x="530" y="268" text-anchor="middle" class="button-text">⏰ Schedule</text>
+    
+    <!-- Compliance Status -->
+    <rect x="30" y="310" width="540" height="50" fill="#f0fdf4" stroke="#10b981" rx="8"/>
+    <text x="300" y="330" text-anchor="middle" class="body-text" fill="#10b981">✅ All Systems Compliant</text>
+    <text x="300" y="345" text-anchor="middle" class="small-text" fill="#10b981">Last audit: March 15, 2024 | Next scheduled: June 15, 2024</text>
+  </g>
+
+  <!-- Report Analytics -->
+  <g transform="translate(50, 490)">
+    <text x="350" y="25" text-anchor="middle" class="header-text">Reporting &amp; Compliance Features</text>
+    
+    <rect x="50" y="35" width="160" height="60" fill="#f0f9ff" stroke="#3b82f6" rx="6"/>
+    <text x="130" y="55" text-anchor="middle" class="body-text" fill="#3b82f6">📈 Real-time Reports</text>
+    <text x="130" y="72" text-anchor="middle" class="small-text">Dynamic data updates</text>
+    <text x="130" y="85" text-anchor="middle" class="small-text">Interactive dashboards</text>
+    
+    <rect x="230" y="35" width="160" height="60" fill="#fef3c7" stroke="#f59e0b" rx="6"/>
+    <text x="310" y="55" text-anchor="middle" class="body-text" fill="#f59e0b">🔒 Audit Trail</text>
+    <text x="310" y="72" text-anchor="middle" class="small-text">Complete activity logs</text>
+    <text x="310" y="85" text-anchor="middle" class="small-text">Compliance tracking</text>
+    
+    <rect x="410" y="35" width="160" height="60" fill="#f0fdf4" stroke="#10b981" rx="6"/>
+    <text x="490" y="55" text-anchor="middle" class="body-text" fill="#10b981">⏰ Scheduled Reports</text>
+    <text x="490" y="72" text-anchor="middle" class="small-text">Automated delivery</text>
+    <text x="490" y="85" text-anchor="middle" class="small-text">Custom frequencies</text>
+    
+    <rect x="590" y="35" width="160" height="60" fill="#fdf2f8" stroke="#ec4899" rx="6"/>
+    <text x="670" y="55" text-anchor="middle" class="body-text" fill="#ec4899">📤 Multi-format Export</text>
+    <text x="670" y="72" text-anchor="middle" class="small-text">PDF, Excel, CSV</text>
+    <text x="670" y="85" text-anchor="middle" class="small-text">Email integration</text>
+  </g>
+</svg>
