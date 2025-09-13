@@ -1,0 +1,393 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 1400">
+  <defs>
+    <style>
+      .title-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 28px; font-weight: bold; fill: #1e40af; }
+      .subtitle-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 16px; fill: #6b7280; }
+      .header-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 16px; font-weight: 600; fill: #1f2937; }
+      .body-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; fill: #374151; }
+      .small-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10px; fill: #6b7280; }
+      .button-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; font-weight: 600; fill: white; }
+      .nav-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; fill: #374151; }
+      .metric-number { font-family: 'Segoe UI', Arial, sans-serif; font-size: 24px; font-weight: bold; fill: #1e40af; }
+      .metric-label { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; fill: #6b7280; }
+      
+      .screen { stroke: #e5e7eb; stroke-width: 2; fill: white; }
+      .primary-btn { fill: #3b82f6; stroke: none; }
+      .secondary-btn { fill: #e5e7eb; stroke: #d1d5db; }
+      .sidebar { fill: #f8fafc; stroke: #e5e7eb; }
+      .card { fill: white; stroke: #e5e7eb; }
+      .progress-bar { fill: #3b82f6; }
+      .progress-bg { fill: #e5e7eb; }
+      .success { fill: #10b981; }
+      .warning { fill: #f59e0b; }
+      .danger { fill: #ef4444; }
+      .arrow { stroke: #6b7280; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+      .human-review { fill: #fef3c7; stroke: #f59e0b; }
+      .ai-rules { fill: #f0f9ff; stroke: #3b82f6; }
+    </style>
+    
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#6b7280" />
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1800" height="1400" fill="#f9fafb"/>
+
+  <!-- Main Title -->
+  <text x="900" y="40" text-anchor="middle" class="title-text">Licence IQ Research Platform - Complete End-to-End Journey</text>
+  <text x="900" y="65" text-anchor="middle" class="subtitle-text">AI-Powered Contract Management &amp; Analysis with Human-in-Loop &amp; Automated Royalty Processing</text>
+
+  <!-- Row 1: Steps 1-5 -->
+  <!-- Step 1: Authentication -->
+  <g transform="translate(50, 100)">
+    <rect class="screen" width="280" height="180" rx="8"/>
+    <text x="140" y="20" text-anchor="middle" class="header-text">1. User Authentication</text>
+    <rect x="30" y="40" width="220" height="100" rx="6" class="card"/>
+    <text x="140" y="65" text-anchor="middle" class="body-text">Sign In</text>
+    <rect x="50" y="75" width="180" height="20" rx="4" fill="#f9fafb" stroke="#d1d5db"/>
+    <text x="60" y="87" class="small-text">Username</text>
+    <rect x="50" y="100" width="180" height="20" rx="4" fill="#f9fafb" stroke="#d1d5db"/>
+    <text x="60" y="112" class="small-text">Password</text>
+    <rect x="80" y="125" width="120" height="25" rx="6" class="primary-btn"/>
+    <text x="140" y="140" text-anchor="middle" class="button-text">Sign In</text>
+  </g>
+
+  <!-- Step 2: Dashboard -->
+  <g transform="translate(380, 100)">
+    <rect class="screen" width="280" height="180" rx="8"/>
+    <text x="140" y="20" text-anchor="middle" class="header-text">2. Analytics Dashboard</text>
+    <rect x="10" y="30" width="60" height="140" class="sidebar" rx="4"/>
+    <text x="40" y="50" text-anchor="middle" class="small-text">Dashboard</text>
+    <text x="40" y="70" text-anchor="middle" class="small-text">Analytics</text>
+    <text x="40" y="90" text-anchor="middle" class="small-text">Users</text>
+    <rect x="80" y="30" width="190" height="140" class="card" rx="4"/>
+    <rect x="90" y="45" width="50" height="35" class="card" rx="3"/>
+    <text x="115" y="58" text-anchor="middle" class="metric-number">247</text>
+    <text x="115" y="70" text-anchor="middle" class="metric-label">Contracts</text>
+    <rect x="150" y="45" width="50" height="35" class="card" rx="3"/>
+    <text x="175" y="58" text-anchor="middle" class="metric-number">94%</text>
+    <text x="175" y="70" text-anchor="middle" class="metric-label">Accuracy</text>
+    <polyline points="90,130 120,115 150,125 180,110 210,115 240,100 260,110" 
+              stroke="#3b82f6" stroke-width="2" fill="none"/>
+  </g>
+
+  <!-- Step 3: Upload -->
+  <g transform="translate(710, 100)">
+    <rect class="screen" width="280" height="180" rx="8"/>
+    <text x="140" y="20" text-anchor="middle" class="header-text">3. Contract Upload</text>
+    <rect x="30" y="40" width="220" height="80" rx="6" fill="#f0f9ff" stroke="#3b82f6" stroke-dasharray="5,5"/>
+    <text x="140" y="75" text-anchor="middle" class="body-text">Drag &amp; Drop PDF Files</text>
+    <text x="140" y="95" text-anchor="middle" class="small-text">or click to browse</text>
+    <rect x="30" y="130" width="220" height="25" class="card" rx="4"/>
+    <text x="40" y="145" class="small-text">contract_agreement.pdf - 2.4MB</text>
+    <rect x="200" y="135" width="40" height="15" rx="8" class="primary-btn"/>
+    <text x="220" y="144" text-anchor="middle" class="small-text" fill="white">Upload</text>
+  </g>
+
+  <!-- Step 4: AI Processing -->
+  <g transform="translate(1040, 100)">
+    <rect class="screen" width="280" height="180" rx="8"/>
+    <text x="140" y="20" text-anchor="middle" class="header-text">4. AI Analysis</text>
+    <rect x="30" y="40" width="220" height="100" class="card" rx="6"/>
+    <text x="140" y="65" text-anchor="middle" class="body-text">Processing Contract...</text>
+    <rect x="50" y="75" width="180" height="8" class="progress-bg" rx="4"/>
+    <rect x="50" y="75" width="126" height="8" class="progress-bar" rx="4"/>
+    <text x="140" y="95" text-anchor="middle" class="small-text">70% Complete</text>
+    <circle cx="60" cy="110" r="6" class="success"/>
+    <text x="75" y="115" class="small-text">Document Extraction ✓</text>
+    <circle cx="60" cy="125" r="6" class="primary-btn"/>
+    <text x="75" y="130" class="small-text">AI Analysis ⟳</text>
+  </g>
+
+  <!-- Step 5: Results -->
+  <g transform="translate(1370, 100)">
+    <rect class="screen" width="280" height="180" rx="8"/>
+    <text x="140" y="20" text-anchor="middle" class="header-text">5. Analysis Results</text>
+    <rect x="20" y="35" width="240" height="50" class="card" rx="6"/>
+    <text x="30" y="50" class="header-text">Contract Summary</text>
+    <text x="30" y="65" class="body-text">Service Agreement - $125,000</text>
+    <rect x="200" y="40" width="50" height="25" class="success" rx="4"/>
+    <text x="225" y="55" text-anchor="middle" class="button-text">94%</text>
+    <rect x="20" y="95" width="110" height="75" class="card" rx="6"/>
+    <text x="30" y="110" class="header-text">Key Terms</text>
+    <text x="30" y="125" class="small-text">• Payment: Net 30</text>
+    <text x="30" y="140" class="small-text">• Term: 3 years</text>
+    <text x="30" y="155" class="small-text">• Renewal: Auto</text>
+    <rect x="140" y="95" width="120" height="75" class="card" rx="6"/>
+    <text x="150" y="110" class="header-text">Risk Assessment</text>
+    <rect x="150" y="120" width="80" height="15" class="warning" rx="8"/>
+    <text x="190" y="130" text-anchor="middle" class="small-text" fill="white">Medium Risk</text>
+    <text x="150" y="150" class="small-text">• High penalty clauses</text>
+    <text x="150" y="165" class="small-text">• Limited liability</text>
+  </g>
+
+  <!-- Flow Arrows Row 1 -->
+  <line x1="340" y1="190" x2="370" y2="190" class="arrow"/>
+  <line x1="670" y1="190" x2="700" y2="190" class="arrow"/>
+  <line x1="1000" y1="190" x2="1030" y2="190" class="arrow"/>
+  <line x1="1330" y1="190" x2="1360" y2="190" class="arrow"/>
+
+  <!-- Row 2: Steps 6-10 -->
+  <!-- Step 6: Advanced Analytics -->
+  <g transform="translate(50, 320)">
+    <rect class="screen" width="280" height="180" rx="8"/>
+    <text x="140" y="20" text-anchor="middle" class="header-text">6. Advanced Analytics</text>
+    <rect x="20" y="35" width="60" height="20" class="primary-btn" rx="4"/>
+    <text x="50" y="47" text-anchor="middle" class="button-text">Financial</text>
+    <rect x="90" y="35" width="60" height="20" class="secondary-btn" rx="4"/>
+    <text x="120" y="47" text-anchor="middle" class="nav-text">Risk</text>
+    <rect x="20" y="65" width="240" height="100" class="card" rx="6"/>
+    <rect x="30" y="80" width="70" height="40" fill="#f0fdf4" stroke="#10b981" rx="4"/>
+    <text x="65" y="95" text-anchor="middle" class="metric-number" fill="#10b981">$2.4M</text>
+    <text x="65" y="108" text-anchor="middle" class="metric-label">Total Value</text>
+    <rect x="110" y="80" width="70" height="40" fill="#fefce8" stroke="#f59e0b" rx="4"/>
+    <text x="145" y="95" text-anchor="middle" class="metric-number" fill="#f59e0b">$180K</text>
+    <text x="145" y="108" text-anchor="middle" class="metric-label">At Risk</text>
+    <rect x="190" y="80" width="60" height="40" fill="#f0f9ff" stroke="#3b82f6" rx="4"/>
+    <text x="220" y="95" text-anchor="middle" class="metric-number" fill="#3b82f6">15%</text>
+    <text x="220" y="108" text-anchor="middle" class="metric-label">Savings</text>
+    <polyline points="35,145 65,135 95,140 125,130 155,135 185,125 215,130 245,120" 
+              stroke="#10b981" stroke-width="2" fill="none"/>
+  </g>
+
+  <!-- Step 7: User Management -->
+  <g transform="translate(380, 320)">
+    <rect class="screen" width="280" height="180" rx="8"/>
+    <text x="140" y="20" text-anchor="middle" class="header-text">7. User Management</text>
+    <rect x="20" y="35" width="240" height="20" fill="#f8fafc" stroke="#e5e7eb" rx="4"/>
+    <text x="30" y="47" class="small-text">Name</text>
+    <text x="100" y="47" class="small-text">Role</text>
+    <text x="160" y="47" class="small-text">Status</text>
+    <text x="220" y="47" class="small-text">Actions</text>
+    <rect x="20" y="55" width="240" height="25" class="card" rx="4"/>
+    <text x="30" y="70" class="small-text">John Smith</text>
+    <text x="100" y="70" class="small-text">Admin</text>
+    <circle cx="172" cy="66" r="3" class="success"/>
+    <text x="180" y="70" class="small-text">Active</text>
+    <rect x="225" y="62" width="25" height="12" class="primary-btn" rx="2"/>
+    <text x="237" y="69" text-anchor="middle" class="small-text" fill="white">Edit</text>
+    <!-- Inline Editing Panel -->
+    <rect x="20" y="80" width="240" height="60" class="human-review" rx="4"/>
+    <text x="30" y="95" class="small-text">Editing: Sarah Johnson</text>
+    <rect x="30" y="105" width="40" height="15" class="primary-btn" rx="2"/>
+    <text x="50" y="114" text-anchor="middle" class="small-text" fill="white">Profile</text>
+    <rect x="80" y="105" width="50" height="15" class="secondary-btn" rx="2"/>
+    <text x="105" y="114" text-anchor="middle" class="small-text">Password</text>
+    <rect x="30" y="125" width="60" height="12" fill="white" stroke="#d1d5db" rx="2"/>
+    <text x="35" y="132" class="small-text">First Name</text>
+    <rect x="100" y="125" width="60" height="12" fill="white" stroke="#d1d5db" rx="2"/>
+    <text x="105" y="132" class="small-text">Last Name</text>
+    <rect x="170" y="125" width="40" height="12" class="primary-btn" rx="2"/>
+    <text x="190" y="132" text-anchor="middle" class="small-text" fill="white">Save</text>
+  </g>
+
+  <!-- Step 8: Reports -->
+  <g transform="translate(710, 320)">
+    <rect class="screen" width="280" height="180" rx="8"/>
+    <text x="140" y="20" text-anchor="middle" class="header-text">8. Reports &amp; Audit</text>
+    <rect x="20" y="35" width="110" height="70" class="card" rx="6"/>
+    <text x="75" y="50" text-anchor="middle" class="body-text">Contract Reports</text>
+    <rect x="30" y="60" width="90" height="15" class="secondary-btn" rx="2"/>
+    <text x="75" y="69" text-anchor="middle" class="small-text">Risk Summary</text>
+    <rect x="30" y="80" width="90" height="15" class="secondary-btn" rx="2"/>
+    <text x="75" y="89" text-anchor="middle" class="small-text">Financial Analysis</text>
+    <rect x="140" y="35" width="120" height="70" class="card" rx="6"/>
+    <text x="200" y="50" text-anchor="middle" class="body-text">Audit Trail</text>
+    <text x="150" y="65" class="small-text">• User login - 2:30 PM</text>
+    <text x="150" y="80" class="small-text">• Contract upload - 2:45 PM</text>
+    <text x="150" y="95" class="small-text">• Analysis complete - 3:15 PM</text>
+    <rect x="20" y="115" width="240" height="35" class="card" rx="6"/>
+    <text x="30" y="130" class="body-text">Export Options</text>
+    <rect x="30" y="138" width="40" height="10" class="success" rx="2"/>
+    <text x="50" y="145" text-anchor="middle" class="small-text" fill="white">PDF</text>
+    <rect x="80" y="138" width="40" height="10" class="primary-btn" rx="2"/>
+    <text x="100" y="145" text-anchor="middle" class="small-text" fill="white">Excel</text>
+    <rect x="20" y="160" width="240" height="15" fill="#f0fdf4" stroke="#10b981" rx="6"/>
+    <text x="140" y="170" text-anchor="middle" class="body-text" fill="#10b981">✓ All Systems Compliant</text>
+  </g>
+
+  <!-- Step 9: Human-in-Loop -->
+  <g transform="translate(1040, 320)">
+    <rect class="screen" width="280" height="180" rx="8"/>
+    <text x="140" y="20" text-anchor="middle" class="header-text">9. Human-in-Loop Review</text>
+    <rect x="20" y="35" width="120" height="60" class="card" rx="6"/>
+    <text x="25" y="50" class="header-text">🤖 AI Summary</text>
+    <text x="25" y="65" class="small-text">• Risk Level: Medium</text>
+    <text x="25" y="78" class="small-text">• 2 items flagged</text>
+    <rect x="110" y="40" width="25" height="12" class="warning" rx="6"/>
+    <text x="122" y="48" text-anchor="middle" class="small-text" fill="white">Review</text>
+    <rect x="150" y="35" width="110" height="60" class="human-review" rx="6"/>
+    <text x="155" y="50" class="header-text">👤 Expert Review</text>
+    <text x="155" y="65" class="small-text">Ambiguous clauses:</text>
+    <rect x="160" y="72" width="8" height="8" class="warning" rx="4"/>
+    <text x="175" y="79" class="small-text">Penalty clause</text>
+    <rect x="160" y="85" width="8" height="8" class="success" rx="4"/>
+    <text x="175" y="92" class="small-text">Payment terms ✓</text>
+    <rect x="20" y="105" width="240" height="65" class="card" rx="6"/>
+    <text x="25" y="120" class="header-text">Interactive Review</text>
+    <rect x="30" y="130" width="100" height="30" fill="#f8fafc" stroke="#e5e7eb" rx="4"/>
+    <text x="35" y="140" class="small-text">Clause Under Review:</text>
+    <text x="35" y="152" class="small-text">"90-day notice required"</text>
+    <rect x="140" y="130" width="110" height="30" fill="#f0f9ff" stroke="#3b82f6" rx="4"/>
+    <rect x="145" y="135" width="30" height="12" class="success" rx="4"/>
+    <text x="160" y="143" text-anchor="middle" class="small-text" fill="white">✓ Confirm</text>
+    <rect x="180" y="135" width="30" height="12" class="warning" rx="4"/>
+    <text x="195" y="143" text-anchor="middle" class="small-text" fill="white">⚠ Modify</text>
+  </g>
+
+  <!-- Step 10: Royalty Calculations -->
+  <g transform="translate(1370, 320)">
+    <rect class="screen" width="280" height="180" rx="8"/>
+    <text x="140" y="20" text-anchor="middle" class="header-text">10. Royalty Calculations</text>
+    <rect x="20" y="35" width="120" height="70" class="ai-rules" rx="6"/>
+    <text x="25" y="50" class="header-text">🤖 AI Rules</text>
+    <rect x="30" y="58" width="8" height="8" class="success" rx="4"/>
+    <text x="45" y="65" class="small-text">Streaming: 15%</text>
+    <rect x="30" y="72" width="8" height="8" class="success" rx="4"/>
+    <text x="45" y="79" class="small-text">Physical: 12%</text>
+    <rect x="30" y="86" width="8" height="8" class="warning" rx="4"/>
+    <text x="45" y="93" class="small-text">Sync: 50% split</text>
+    <rect x="100" y="40" width="30" height="15" class="success" rx="8"/>
+    <text x="115" y="49" text-anchor="middle" class="small-text" fill="white">92%</text>
+    <rect x="150" y="35" width="110" height="70" class="card" rx="6"/>
+    <text x="155" y="50" class="header-text">📊 Live Totals</text>
+    <rect x="160" y="58" width="90" height="12" fill="#f0fdf4" stroke="#10b981" rx="2"/>
+    <text x="165" y="66" class="small-text">Streaming:</text>
+    <text x="245" y="66" text-anchor="end" class="body-text" fill="#10b981">$18,450</text>
+    <rect x="160" y="75" width="90" height="12" fill="#f0f9ff" stroke="#3b82f6" rx="2"/>
+    <text x="165" y="83" class="small-text">Physical:</text>
+    <text x="245" y="83" text-anchor="end" class="body-text" fill="#3b82f6">$7,230</text>
+    <rect x="160" y="92" width="90" height="12" fill="#1e40af" rx="2"/>
+    <text x="165" y="100" class="small-text" fill="white">Total:</text>
+    <text x="245" y="100" text-anchor="end" class="body-text" fill="white">$38,180</text>
+    <rect x="20" y="115" width="240" height="55" class="card" rx="6"/>
+    <text x="25" y="130" class="header-text">⚡ Processing Engine</text>
+    <rect x="30" y="140" width="70" height="25" fill="#f8fafc" stroke="#e5e7eb" rx="4"/>
+    <text x="35" y="150" class="small-text">1. Extract</text>
+    <text x="35" y="160" class="small-text">Clauses</text>
+    <rect x="110" y="140" width="70" height="25" fill="#f8fafc" stroke="#e5e7eb" rx="4"/>
+    <text x="115" y="150" class="small-text">2. Generate</text>
+    <text x="115" y="160" class="small-text">Rules</text>
+    <rect x="190" y="140" width="60" height="25" fill="#f8fafc" stroke="#e5e7eb" rx="4"/>
+    <text x="195" y="150" class="small-text">3. Calculate</text>
+    <text x="195" y="160" class="small-text">Totals</text>
+  </g>
+
+  <!-- Flow Arrows Row 2 -->
+  <line x1="340" y1="410" x2="370" y2="410" class="arrow"/>
+  <line x1="670" y1="410" x2="700" y2="410" class="arrow"/>
+  <line x1="1000" y1="410" x2="1030" y2="410" class="arrow"/>
+  <line x1="1330" y1="410" x2="1360" y2="410" class="arrow"/>
+
+  <!-- Key Features Section -->
+  <g transform="translate(50, 550)">
+    <text x="0" y="25" class="title-text">Enhanced Platform Capabilities</text>
+    
+    <!-- Feature 1: AI Analysis -->
+    <rect x="0" y="40" width="350" height="100" class="card" rx="8"/>
+    <rect x="20" y="55" width="35" height="35" class="primary-btn" rx="18"/>
+    <text x="37" y="76" text-anchor="middle" class="button-text" font-size="16px">🤖</text>
+    <text x="70" y="70" class="header-text">AI-Powered Analysis</text>
+    <text x="70" y="85" class="body-text">• LLaMA 3.1 8B Instant model</text>
+    <text x="70" y="98" class="body-text">• 94% accuracy in term extraction</text>
+    <text x="70" y="111" class="body-text">• Real-time risk assessment</text>
+    <text x="70" y="124" class="body-text">• Automated compliance checking</text>
+    
+    <!-- Feature 2: Human-in-Loop -->
+    <rect x="370" y="40" width="350" height="100" class="card" rx="8"/>
+    <rect x="390" y="55" width="35" height="35" class="warning" rx="18"/>
+    <text x="407" y="76" text-anchor="middle" class="button-text" font-size="16px">👤</text>
+    <text x="440" y="70" class="header-text">Human-in-Loop Validation</text>
+    <text x="440" y="85" class="body-text">• Expert review for complex terms</text>
+    <text x="440" y="98" class="body-text">• Auto-escalation for low confidence</text>
+    <text x="440" y="111" class="body-text">• Continuous AI learning</text>
+    <text x="440" y="124" class="body-text">• Risk mitigation oversight</text>
+    
+    <!-- Feature 3: Royalty Engine -->
+    <rect x="740" y="40" width="350" height="100" class="card" rx="8"/>
+    <rect x="760" y="55" width="35" height="35" class="success" rx="18"/>
+    <text x="777" y="76" text-anchor="middle" class="button-text" font-size="16px">💰</text>
+    <text x="810" y="70" class="header-text">Dynamic Royalty Processing</text>
+    <text x="810" y="85" class="body-text">• AI-generated calculation rules</text>
+    <text x="810" y="98" class="body-text">• Real-time revenue tracking</text>
+    <text x="810" y="111" class="body-text">• Multi-source data integration</text>
+    <text x="810" y="124" class="body-text">• 95% calculation accuracy</text>
+    
+    <!-- Feature 4: Security -->
+    <rect x="1110" y="40" width="350" height="100" class="card" rx="8"/>
+    <rect x="1130" y="55" width="35" height="35" fill="#8b5cf6" rx="18"/>
+    <text x="1147" y="76" text-anchor="middle" class="button-text" font-size="16px">🔒</text>
+    <text x="1180" y="70" class="header-text">Enterprise Security</text>
+    <text x="1180" y="85" class="body-text">• Role-based access control</text>
+    <text x="1180" y="98" class="body-text">• Complete audit trail logging</text>
+    <text x="1180" y="111" class="body-text">• Session-based authentication</text>
+    <text x="1180" y="124" class="body-text">• Data encryption &amp; compliance</text>
+  </g>
+
+  <!-- Technology Stack -->
+  <g transform="translate(50, 700)">
+    <text x="0" y="25" class="title-text">Technology Stack &amp; Architecture</text>
+    
+    <!-- Frontend -->
+    <rect x="0" y="40" width="180" height="90" class="card" rx="8"/>
+    <text x="90" y="60" text-anchor="middle" class="header-text">Frontend</text>
+    <text x="20" y="75" class="body-text">• React + TypeScript</text>
+    <text x="20" y="88" class="body-text">• TailwindCSS + shadcn/ui</text>
+    <text x="20" y="101" class="body-text">• TanStack Query</text>
+    <text x="20" y="114" class="body-text">• Vite Build System</text>
+    
+    <!-- Backend -->
+    <rect x="200" y="40" width="180" height="90" class="card" rx="8"/>
+    <text x="290" y="60" text-anchor="middle" class="header-text">Backend</text>
+    <text x="220" y="75" class="body-text">• Express.js + TypeScript</text>
+    <text x="220" y="88" class="body-text">• Session Authentication</text>
+    <text x="220" y="101" class="body-text">• RESTful API Design</text>
+    <text x="220" y="114" class="body-text">• Middleware Pipeline</text>
+    
+    <!-- Database -->
+    <rect x="400" y="40" width="180" height="90" class="card" rx="8"/>
+    <text x="490" y="60" text-anchor="middle" class="header-text">Database</text>
+    <text x="420" y="75" class="body-text">• PostgreSQL (Neon)</text>
+    <text x="420" y="88" class="body-text">• Drizzle ORM</text>
+    <text x="420" y="101" class="body-text">• Type-Safe Queries</text>
+    <text x="420" y="114" class="body-text">• Migration System</text>
+    
+    <!-- AI Services -->
+    <rect x="600" y="40" width="180" height="90" class="card" rx="8"/>
+    <text x="690" y="60" text-anchor="middle" class="header-text">AI Services</text>
+    <text x="620" y="75" class="body-text">• Groq API Integration</text>
+    <text x="620" y="88" class="body-text">• LLaMA 3.1 8B Model</text>
+    <text x="620" y="101" class="body-text">• Async Processing</text>
+    <text x="620" y="114" class="body-text">• Confidence Scoring</text>
+  </g>
+
+  <!-- Benefits Section -->
+  <g transform="translate(50, 850)">
+    <text x="0" y="25" class="title-text">Business Impact &amp; ROI</text>
+    
+    <rect x="0" y="40" width="280" height="70" fill="#f0fdf4" stroke="#10b981" rx="8"/>
+    <text x="140" y="60" text-anchor="middle" class="header-text" fill="#10b981">80% Time Reduction</text>
+    <text x="140" y="78" text-anchor="middle" class="body-text">Contract analysis automation</text>
+    <text x="140" y="93" text-anchor="middle" class="body-text">eliminates manual review processes</text>
+    
+    <rect x="300" y="40" width="280" height="70" fill="#fef3c7" stroke="#f59e0b" rx="8"/>
+    <text x="440" y="60" text-anchor="middle" class="header-text" fill="#f59e0b">95% Risk Detection</text>
+    <text x="440" y="78" text-anchor="middle" class="body-text">AI-powered risk assessment with</text>
+    <text x="440" y="93" text-anchor="middle" class="body-text">human expert validation</text>
+    
+    <rect x="600" y="40" width="280" height="70" fill="#f0f9ff" stroke="#3b82f6" rx="8"/>
+    <text x="740" y="60" text-anchor="middle" class="header-text" fill="#3b82f6">$2M+ Value Tracking</text>
+    <text x="740" y="78" text-anchor="middle" class="body-text">Comprehensive portfolio analytics</text>
+    <text x="740" y="93" text-anchor="middle" class="body-text">with automated royalty processing</text>
+    
+    <rect x="900" y="40" width="280" height="70" fill="#fdf2f8" stroke="#ec4899" rx="8"/>
+    <text x="1040" y="60" text-anchor="middle" class="header-text" fill="#ec4899">Enterprise Ready</text>
+    <text x="1040" y="78" text-anchor="middle" class="body-text">Role-based security, audit trails</text>
+    <text x="1040" y="93" text-anchor="middle" class="body-text">and compliance reporting</text>
+  </g>
+
+  <!-- Footer -->
+  <text x="900" y="990" text-anchor="middle" class="small-text">Licence IQ Research Platform - Complete AI-Powered Contract Intelligence Solution</text>
+  <text x="900" y="1010" text-anchor="middle" class="small-text">© 2024 Cimpleit. Advanced Document Analysis, Human-AI Collaboration &amp; Automated Royalty Processing</text>
+</svg>
