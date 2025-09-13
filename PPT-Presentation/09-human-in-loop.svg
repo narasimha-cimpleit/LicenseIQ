@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+  <defs>
+    <style>
+      .title-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 32px; font-weight: bold; fill: #1e40af; }
+      .subtitle-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 18px; fill: #6b7280; }
+      .header-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 20px; font-weight: 600; fill: #1f2937; }
+      .body-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; fill: #374151; }
+      .small-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; fill: #6b7280; }
+      .button-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 600; fill: white; }
+      
+      .screen { stroke: #e5e7eb; stroke-width: 2; fill: white; }
+      .card { fill: white; stroke: #e5e7eb; }
+      .primary-btn { fill: #3b82f6; }
+      .success { fill: #10b981; }
+      .warning { fill: #f59e0b; }
+      .secondary-btn { fill: #e5e7eb; stroke: #d1d5db; }
+      .human-review { fill: #fef3c7; stroke: #f59e0b; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="600" fill="#f9fafb"/>
+
+  <!-- Main Title -->
+  <text x="400" y="40" text-anchor="middle" class="title-text">Human-in-the-Loop Review</text>
+  <text x="400" y="65" text-anchor="middle" class="subtitle-text">AI Analysis with Human Expert Validation</text>
+
+  <!-- Review Screen -->
+  <g transform="translate(75, 90)">
+    <rect class="screen" width="650" height="380" rx="12"/>
+    
+    <!-- Header -->
+    <text x="30" y="30" class="header-text">📋 Contract Analysis Review Required</text>
+    <text x="30" y="50" class="body-text">AI has completed initial analysis - Human expert review requested</text>
+    
+    <!-- AI Analysis Summary -->
+    <rect x="20" y="70" width="300" height="130" class="card" rx="6"/>
+    <text x="30" y="90" class="header-text">🤖 AI Analysis Summary</text>
+    <text x="30" y="110" class="body-text">Contract: Software_License_Agreement.pdf</text>
+    <text x="30" y="130" class="small-text">• Total Value: $125,000 (High confidence)</text>
+    <text x="30" y="145" class="small-text">• Term Length: 36 months (High confidence)</text>
+    <text x="30" y="160" class="small-text">• Risk Level: Medium (Requires review)</text>
+    <text x="30" y="175" class="small-text">• Key Terms: 15 extracted (2 flagged)</text>
+    <rect x="230" y="85" width="70" height="25" class="warning" rx="12"/>
+    <text x="265" y="100" text-anchor="middle" class="button-text" font-size="12px">Review Needed</text>
+    
+    <!-- Human Review Panel -->
+    <rect x="340" y="70" width="290" height="130" class="human-review" rx="6"/>
+    <text x="350" y="90" class="header-text">👤 Expert Review Required</text>
+    <text x="350" y="110" class="body-text">AI identified ambiguous clauses requiring validation:</text>
+    
+    <!-- Flagged Items -->
+    <rect x="360" y="120" width="12" height="12" class="warning" rx="6"/>
+    <text x="380" y="130" class="small-text">Penalty clause interpretation (85% confidence)</text>
+    
+    <rect x="360" y="140" width="12" height="12" class="warning" rx="6"/>
+    <text x="380" y="150" class="small-text">Termination notice period (78% confidence)</text>
+    
+    <rect x="360" y="160" width="12" height="12" class="success" rx="6"/>
+    <text x="380" y="170" class="small-text">Payment terms validated (96% confidence)</text>
+    
+    <rect x="550" y="180" width="70" height="15" class="primary-btn" rx="3"/>
+    <text x="585" y="190" text-anchor="middle" class="button-text" font-size="11px">Start Review</text>
+    
+    <!-- Review Interface -->
+    <rect x="20" y="220" width="610" height="140" class="card" rx="6"/>
+    <text x="30" y="240" class="header-text">📝 Interactive Review Interface</text>
+    
+    <!-- Clause Review -->
+    <rect x="30" y="250" width="280" height="100" fill="#f8fafc" stroke="#e5e7eb" rx="4"/>
+    <text x="40" y="270" class="body-text" font-weight="600">Clause Under Review:</text>
+    <text x="40" y="290" class="small-text">"Party A shall provide 90-day written notice...</text>
+    <text x="40" y="305" class="small-text">for termination, unless material breach occurs"</text>
+    
+    <text x="40" y="330" class="body-text" font-weight="600">AI Interpretation:</text>
+    <text x="40" y="345" class="small-text">90-day termination notice required</text>
+    
+    <!-- Expert Input -->
+    <rect x="330" y="250" width="280" height="100" fill="#f0f9ff" stroke="#3b82f6" rx="4"/>
+    <text x="340" y="270" class="body-text" font-weight="600">Expert Validation:</text>
+    
+    <rect x="340" y="280" width="80" height="25" class="success" rx="4"/>
+    <text x="380" y="295" text-anchor="middle" class="button-text" font-size="12px">✓ Confirm</text>
+    
+    <rect x="430" y="280" width="80" height="25" class="warning" rx="4"/>
+    <text x="470" y="295" text-anchor="middle" class="button-text" font-size="12px">⚠ Modify</text>
+    
+    <rect x="520" y="280" width="80" height="25" class="secondary-btn" rx="4"/>
+    <text x="560" y="295" text-anchor="middle" class="small-text">🔍 Research</text>
+    
+    <!-- Comments Box -->
+    <rect x="340" y="315" width="260" height="25" fill="white" stroke="#d1d5db" rx="3"/>
+    <text x="350" y="330" class="small-text">Add expert comments or corrections...</text>
+  </g>
+
+  <!-- Workflow Benefits -->
+  <g transform="translate(50, 490)">
+    <text x="350" y="25" text-anchor="middle" class="header-text">Human-in-the-Loop Benefits</text>
+    
+    <rect x="50" y="35" width="160" height="60" fill="#f0fdf4" stroke="#10b981" rx="6"/>
+    <text x="130" y="55" text-anchor="middle" class="body-text" fill="#10b981">🎯 Enhanced Accuracy</text>
+    <text x="130" y="72" text-anchor="middle" class="small-text">Expert validation of</text>
+    <text x="130" y="85" text-anchor="middle" class="small-text">complex legal terms</text>
+    
+    <rect x="230" y="35" width="160" height="60" fill="#f0f9ff" stroke="#3b82f6" rx="6"/>
+    <text x="310" y="55" text-anchor="middle" class="body-text" fill="#3b82f6">⚡ Smart Routing</text>
+    <text x="310" y="72" text-anchor="middle" class="small-text">Auto-escalation for</text>
+    <text x="310" y="85" text-anchor="middle" class="small-text">low-confidence items</text>
+    
+    <rect x="410" y="35" width="160" height="60" fill="#fef3c7" stroke="#f59e0b" rx="6"/>
+    <text x="490" y="55" text-anchor="middle" class="body-text" fill="#f59e0b">📚 Continuous Learning</text>
+    <text x="490" y="72" text-anchor="middle" class="small-text">AI improves from</text>
+    <text x="490" y="85" text-anchor="middle" class="small-text">expert feedback</text>
+    
+    <rect x="590" y="35" width="160" height="60" fill="#fdf2f8" stroke="#ec4899" rx="6"/>
+    <text x="670" y="55" text-anchor="middle" class="body-text" fill="#ec4899">🔐 Risk Mitigation</text>
+    <text x="670" y="72" text-anchor="middle" class="small-text">Expert oversight for</text>
+    <text x="670" y="85" text-anchor="middle" class="small-text">critical decisions</text>
+  </g>
+</svg>
