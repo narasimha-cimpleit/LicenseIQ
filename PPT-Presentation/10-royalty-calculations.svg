@@ -66,19 +66,19 @@
     <!-- Calculation Results -->
     <rect x="365" y="100" width="300" height="16" fill="#f0fdf4" stroke="#10b981" rx="3"/>
     <text x="375" y="110" class="body-text">Q4 Streaming Royalty:</text>
-    <text x="655" y="110" text-anchor="end" class="metric-number" fill="#10b981">$18,450</text>
+    <text x="645" y="110" text-anchor="end" class="metric-number" fill="#10b981">$18,450</text>
     
     <rect x="365" y="120" width="300" height="16" fill="#f0f9ff" stroke="#3b82f6" rx="3"/>
     <text x="375" y="130" class="body-text">Physical Sales Royalty:</text>
-    <text x="655" y="130" text-anchor="end" class="metric-number" fill="#3b82f6">$7,230</text>
+    <text x="645" y="130" text-anchor="end" class="metric-number" fill="#3b82f6">$7,230</text>
     
     <rect x="365" y="140" width="300" height="16" fill="#fef3c7" stroke="#f59e0b" rx="3"/>
     <text x="375" y="150" class="body-text">Sync License Revenue:</text>
-    <text x="655" y="150" text-anchor="end" class="metric-number" fill="#f59e0b">$12,500</text>
+    <text x="645" y="150" text-anchor="end" class="metric-number" fill="#f59e0b">$12,500</text>
     
     <rect x="365" y="160" width="300" height="14" fill="#1e40af" rx="3"/>
     <text x="375" y="170" class="body-text" fill="white">Total Quarterly Royalty:</text>
-    <text x="655" y="170" text-anchor="end" class="metric-number" fill="white">$38,180</text>
+    <text x="645" y="170" text-anchor="end" class="metric-number" fill="white">$38,180</text>
     
     <!-- Dynamic Rule Processing -->
     <rect x="20" y="185" width="660" height="110" class="card" rx="6"/>

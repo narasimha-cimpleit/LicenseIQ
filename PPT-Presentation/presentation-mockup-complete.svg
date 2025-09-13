@@ -332,13 +332,13 @@
     <text x="187" y="40" text-anchor="middle" class="header-text" font-size="12px">📊 Live Totals</text>
     <rect x="142" y="45" width="90" height="6" fill="#f0fdf4" stroke="#10b981" rx="2"/>
     <text x="147" y="49" class="small-text" font-size="7px">Streaming:</text>
-    <text x="225" y="49" text-anchor="end" class="body-text" fill="#10b981" font-size="8px">$18,450</text>
+    <text x="220" y="49" text-anchor="end" class="body-text" fill="#10b981" font-size="8px">$18,450</text>
     <rect x="142" y="53" width="90" height="6" fill="#f0f9ff" stroke="#3b82f6" rx="2"/>
     <text x="147" y="57" class="small-text" font-size="7px">Physical:</text>
-    <text x="225" y="57" text-anchor="end" class="body-text" fill="#3b82f6" font-size="8px">$7,230</text>
+    <text x="220" y="57" text-anchor="end" class="body-text" fill="#3b82f6" font-size="8px">$7,230</text>
     <rect x="142" y="61" width="90" height="6" fill="#1e40af" rx="2"/>
     <text x="147" y="65" class="small-text" fill="white" font-size="7px">Total:</text>
-    <text x="225" y="65" text-anchor="end" class="body-text" fill="white" font-size="8px">$38,180</text>
+    <text x="220" y="65" text-anchor="end" class="body-text" fill="white" font-size="8px">$38,180</text>
     
     <rect x="20" y="82" width="220" height="35" class="card" rx="6"/>
     <text x="25" y="94" class="header-text" font-size="12px">⚡ Processing Engine</text>
