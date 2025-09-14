@@ -4,7 +4,7 @@ hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["imagemagick"]
+packages = ["imagemagick", "pandoc"]
 
 [deployment]
 deploymentTarget = "autoscale"
@@ -30,6 +30,10 @@ externalPort = 3002
 [[ports]]
 localPort = 42925
 externalPort = 3001
+
+[[ports]]
+localPort = 44351
+externalPort = 3003
 
 [env]
 PORT = "5000"
