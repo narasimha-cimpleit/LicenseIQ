@@ -179,7 +179,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Start processing asynchronously
       processContractAsync(contract.id);
 
-      res.status(201).json(contract);
+      // Return contract with immediate status
+      const contractWithStatus = {
+        ...contract,
+        status: 'uploaded', // Explicit status for immediate UI feedback
+        processingStarted: true
+      };
+
+      res.status(201).json(contractWithStatus);
     } catch (error) {
       console.error('Error uploading contract:', error);
       res.status(500).json({ message: 'Failed to upload contract' });

@@ -19,6 +19,9 @@ export default function Contracts() {
 
   const { data: contractsData, isLoading } = useQuery({
     queryKey: ["/api/contracts"],
+    staleTime: 30000, // Consider stale after 30 seconds
+    refetchInterval: 30000, // Refetch every 30 seconds to catch status updates
+    refetchOnWindowFocus: true,
   });
 
   const contracts = contractsData?.contracts || [];
