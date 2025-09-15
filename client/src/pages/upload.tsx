@@ -45,15 +45,24 @@ export default function Upload() {
       const response = await apiRequest("POST", "/api/contracts/upload", formData);
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       toast({
         title: "Upload Successful",
         description: "Your contract has been uploaded and processing has started.",
       });
       
-      // Invalidate contracts cache
-      queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/analytics/metrics"] });
+      // Comprehensive cache invalidation for immediate UI updates
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["/api/contracts"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/analytics/metrics"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/analytics/all"] }),
+        // Force immediate refetch to ensure UI shows new contract
+        queryClient.refetchQueries({ queryKey: ["/api/contracts"] }),
+        queryClient.refetchQueries({ queryKey: ["/api/analytics/metrics"] })
+      ]);
+      
+      // Small delay to ensure database transaction is committed
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       // Redirect to contract view
       setLocation(`/contracts/${data.id}`);

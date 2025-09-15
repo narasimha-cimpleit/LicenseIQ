@@ -96,15 +96,21 @@ export default function ContractCard({ contract, className }: ContractCardProps)
       // Return a context object with the snapshotted values
       return { previousContracts, previousAnalytics };
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       console.log("Delete mutation success:", data);
       toast({
         title: "Contract Deleted",
         description: "The contract has been permanently deleted.",
       });
-      // Invalidate to refetch in the background for consistency
-      queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/analytics/all"] });
+      // Comprehensive cache invalidation for immediate UI updates
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["/api/contracts"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/analytics/all"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/analytics/metrics"] }),
+        // Force immediate refetch to ensure UI updates
+        queryClient.refetchQueries({ queryKey: ["/api/contracts"] }),
+        queryClient.refetchQueries({ queryKey: ["/api/analytics/metrics"] })
+      ]);
     },
     onError: (error: Error, variables, context) => {
       console.error("Delete mutation onError:", error);

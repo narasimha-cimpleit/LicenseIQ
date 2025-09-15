@@ -25,10 +25,15 @@ export default function Dashboard() {
 
   const { data: metrics } = useQuery({
     queryKey: ["/api/analytics/metrics"],
+    staleTime: 30000, // Consider stale after 30 seconds
+    refetchInterval: 60000, // Auto-refresh every minute
+    refetchOnWindowFocus: true, // Refresh when user returns to tab
   });
 
   const { data: contractsData } = useQuery({
     queryKey: ["/api/contracts"],
+    staleTime: 30000, // Consider stale after 30 seconds  
+    refetchOnWindowFocus: true,
   });
 
   const recentContracts = contractsData?.contracts?.slice(0, 3) || [];
