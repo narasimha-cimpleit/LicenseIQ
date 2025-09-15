@@ -35,7 +35,7 @@ import {
   type InsertMarketBenchmark,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, or, ilike, count } from "drizzle-orm";
+import { eq, desc, and, or, ilike, count, gte } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -722,8 +722,8 @@ export class DatabaseStorage implements IStorage {
         ? db.select({ count: count() }).from(contracts).where(and(eq(contracts.uploadedBy, userId), eq(contracts.status, 'analyzed')))
         : db.select({ count: count() }).from(contracts).where(eq(contracts.status, 'analyzed')),
       userId
-        ? db.select({ count: count() }).from(contracts).where(and(eq(contracts.uploadedBy, userId), eq(contracts.createdAt, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000))))
-        : db.select({ count: count() }).from(contracts).where(eq(contracts.createdAt, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000))),
+        ? db.select({ count: count() }).from(contracts).where(and(eq(contracts.uploadedBy, userId), gte(contracts.createdAt, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000))))
+        : db.select({ count: count() }).from(contracts).where(gte(contracts.createdAt, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000))),
       db.select({ count: count() }).from(users).where(eq(users.isActive, true))
     ]);
 
