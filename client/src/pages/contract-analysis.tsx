@@ -386,7 +386,107 @@ export default function ContractAnalysis() {
           </Card>
         ) : (
           /* Analysis Results */
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="space-y-6">
+            {/* Key Contract Details - Top Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Parties Card */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    Contract Parties
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Licensor</p>
+                    <p className="text-sm font-medium" data-testid="text-licensor">
+                      {analysis.licensor || "Not identified"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Licensee</p>
+                    <p className="text-sm font-medium" data-testid="text-licensee">
+                      {analysis.licensee || "Not identified"}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Key Dates Card */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Key Dates
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Start Date</p>
+                    <p className="text-sm font-medium" data-testid="text-start-date">
+                      {analysis.startDate || "Not specified"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">End Date</p>
+                    <p className="text-sm font-medium" data-testid="text-end-date">
+                      {analysis.endDate || analysis.expirationDate || "Not specified"}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Financial Terms Card */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    Financial Terms
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Payment Terms</p>
+                    <p className="text-sm font-medium" data-testid="text-payment-terms">
+                      {analysis.paymentTerms || "Not specified"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Amount/Rate</p>
+                    <p className="text-sm font-medium" data-testid="text-amount">
+                      {analysis.contractValue || analysis.royaltyRate || "Not specified"}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Agreement Type Card */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4" />
+                    Agreement Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Agreement Type</p>
+                    <p className="text-sm font-medium" data-testid="text-agreement-type">
+                      {analysis.agreementType || contract?.contractType || "Not identified"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Jurisdiction</p>
+                    <p className="text-sm font-medium" data-testid="text-jurisdiction">
+                      {analysis.jurisdiction || analysis.governingLaw || "Not specified"}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Main Analysis Panel */}
             <div className="lg:col-span-2 space-y-6">
               {/* AI Summary */}
