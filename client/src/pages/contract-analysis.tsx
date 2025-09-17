@@ -185,6 +185,40 @@ export default function ContractAnalysis() {
   const analysis = contract?.analysis;
   const hasAnalysis = analysis && contract?.status === 'analyzed';
 
+  // Extract key contract details from analysis data
+  const extractContractDetails = () => {
+    if (!analysis) return {};
+
+    // Extract parties from summary
+    const summary = analysis.summary || '';
+    const licensorMatch = summary.match(/([^(]+)\s*\(Licensor\)/i);
+    const licenseeMatch = summary.match(/([^(]+)\s*\(Licensee\)/i);
+    
+    // Extract information from keyTerms with safe type checking
+    const paymentTerms = analysis.keyTerms?.find((term: any) => term?.type && term.type.toLowerCase().includes('payment'))?.description;
+    const financialObligation = analysis.keyTerms?.find((term: any) => term?.type && term.type.toLowerCase().includes('financial'))?.description;
+    const territory = analysis.keyTerms?.find((term: any) => term?.type && term.type.toLowerCase().includes('territory'))?.description;
+    
+    // Extract dates and amounts using regex patterns
+    const datePattern = /(\w+\s+\d{1,2},\s+\d{4})/g;
+    const amountPattern = /\$[\d,]+(?:\.\d{2})?/g;
+    
+    const dates = summary.match(datePattern) || [];
+    const amounts = (paymentTerms || financialObligation || '').match(amountPattern) || [];
+
+    return {
+      licensor: licensorMatch?.[1]?.trim() || null,
+      licensee: licenseeMatch?.[1]?.trim() || null,
+      paymentTerms: paymentTerms || null,
+      contractValue: amounts?.[0] || null,
+      territory: territory || null,
+      startDate: dates?.[0] || null,
+      endDate: dates?.[1] || (analysis as any)?.expirationDate || null,
+    };
+  };
+
+  const contractDetails = extractContractDetails();
+
   const handleViewOriginal = () => {
     // Open the original PDF file in a new window
     window.open(`/api/contracts/${id}/file`, '_blank');
@@ -401,13 +435,13 @@ export default function ContractAnalysis() {
                   <div>
                     <p className="text-xs text-muted-foreground uppercase tracking-wide">Licensor</p>
                     <p className="text-sm font-medium" data-testid="text-licensor">
-                      {analysis.licensor || "Not identified"}
+                      {contractDetails.licensor || "Not identified"}
                     </p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground uppercase tracking-wide">Licensee</p>
                     <p className="text-sm font-medium" data-testid="text-licensee">
-                      {analysis.licensee || "Not identified"}
+                      {contractDetails.licensee || "Not identified"}
                     </p>
                   </div>
                 </CardContent>
@@ -425,13 +459,13 @@ export default function ContractAnalysis() {
                   <div>
                     <p className="text-xs text-muted-foreground uppercase tracking-wide">Start Date</p>
                     <p className="text-sm font-medium" data-testid="text-start-date">
-                      {analysis.startDate || "Not specified"}
+                      {contractDetails.startDate || "Not specified"}
                     </p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground uppercase tracking-wide">End Date</p>
                     <p className="text-sm font-medium" data-testid="text-end-date">
-                      {analysis.endDate || analysis.expirationDate || "Not specified"}
+                      {contractDetails.endDate || "Not specified"}
                     </p>
                   </div>
                 </CardContent>
@@ -449,13 +483,13 @@ export default function ContractAnalysis() {
                   <div>
                     <p className="text-xs text-muted-foreground uppercase tracking-wide">Payment Terms</p>
                     <p className="text-sm font-medium" data-testid="text-payment-terms">
-                      {analysis.paymentTerms || "Not specified"}
+                      {contractDetails.paymentTerms || "Not specified"}
                     </p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground uppercase tracking-wide">Amount/Rate</p>
                     <p className="text-sm font-medium" data-testid="text-amount">
-                      {analysis.contractValue || analysis.royaltyRate || "Not specified"}
+                      {contractDetails.contractValue || "Variable royalty rates"}
                     </p>
                   </div>
                 </CardContent>
@@ -473,13 +507,13 @@ export default function ContractAnalysis() {
                   <div>
                     <p className="text-xs text-muted-foreground uppercase tracking-wide">Agreement Type</p>
                     <p className="text-sm font-medium" data-testid="text-agreement-type">
-                      {analysis.agreementType || contract?.contractType || "Not identified"}
+                      {contract?.contractType || "License Agreement"}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Jurisdiction</p>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Territory</p>
                     <p className="text-sm font-medium" data-testid="text-jurisdiction">
-                      {analysis.jurisdiction || analysis.governingLaw || "Not specified"}
+                      {contractDetails.territory || "Not specified"}
                     </p>
                   </div>
                 </CardContent>
