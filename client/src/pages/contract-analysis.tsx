@@ -698,11 +698,14 @@ export default function ContractAnalysis() {
                     <CardTitle>Notes</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-muted-foreground">{contract?.notes}</p>
+                    <p className="text-sm text-foreground whitespace-pre-wrap" data-testid="text-notes">
+                      {contract.notes}
+                    </p>
                   </CardContent>
                 </Card>
               )}
             </div>
+          </div>
           </div>
         )}
       </div>
