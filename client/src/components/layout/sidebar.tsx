@@ -69,12 +69,6 @@ export default function Sidebar({ className }: SidebarProps) {
       current: location === "/vendors" || location.startsWith("/vendors/"),
     },
     {
-      name: "License Documents",
-      href: "/license-documents",
-      icon: Receipt,
-      current: location === "/license-documents" || location.startsWith("/license-documents/"),
-    },
-    {
       name: "Royalty Calculations",
       href: "/royalty-runs",
       icon: Calculator,
