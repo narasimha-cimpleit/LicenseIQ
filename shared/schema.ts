@@ -108,6 +108,8 @@ export const registerSchema = insertUserSchema.extend({
   password: z.string().min(6, "Password must be at least 6 characters"),
   username: z.string().min(3, "Username must be at least 3 characters"),
   email: z.string().email("Invalid email address").optional(),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
 }).pick({
   username: true,
   password: true,
@@ -370,4 +372,289 @@ export type ContractWithAnalysis = Contract & {
   strategicAnalysis?: StrategicAnalysis;
   comparisons?: ContractComparison;
   uploadedByUser?: User;
+};
+
+// ======================
+// ROYALTY CALCULATION SYSTEM TABLES
+// ======================
+
+// Vendors/Licensors table
+export const vendors = pgTable("vendors", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  code: varchar("code").unique().notNull(), // Short vendor code for identification
+  contactEmail: varchar("contact_email"),
+  contactPhone: varchar("contact_phone"),
+  address: text("address"),
+  taxId: varchar("tax_id"),
+  currency: varchar("currency").default("USD"),
+  paymentTerms: varchar("payment_terms"), // Net 30, Net 60, etc
+  notes: text("notes"),
+  isActive: boolean("is_active").default(true),
+  createdBy: varchar("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// License Documents table (separate from general contracts)
+export const licenseDocuments = pgTable("license_documents", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  vendorId: varchar("vendor_id").notNull().references(() => vendors.id),
+  fileName: varchar("file_name").notNull(),
+  originalName: varchar("original_name").notNull(),
+  filePath: varchar("file_path").notNull(),
+  fileSize: integer("file_size").notNull(),
+  licenseType: varchar("license_type"), // Royalty, Fixed Fee, Revenue Share, etc
+  effectiveDate: timestamp("effective_date"),
+  expirationDate: timestamp("expiration_date"),
+  status: varchar("status").default("uploaded"), // uploaded, processing, extracted, active
+  uploadedBy: varchar("uploaded_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// License RuleSets (versioned)
+export const licenseRuleSets = pgTable("license_rule_sets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  licenseDocumentId: varchar("license_document_id").notNull().references(() => licenseDocuments.id),
+  vendorId: varchar("vendor_id").notNull().references(() => vendors.id),
+  version: integer("version").notNull(),
+  name: varchar("name").notNull(),
+  status: varchar("status").default("draft"), // draft, published, archived
+  effectiveDate: timestamp("effective_date"),
+  expirationDate: timestamp("expiration_date"),
+  rulesDsl: jsonb("rules_dsl").notNull(), // JSON DSL for calculation rules
+  extractionMetadata: jsonb("extraction_metadata"), // AI extraction confidence, source spans, etc
+  publishedBy: varchar("published_by").references(() => users.id),
+  publishedAt: timestamp("published_at"),
+  createdBy: varchar("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Individual License Rules within a RuleSet
+export const licenseRules = pgTable("license_rules", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  ruleSetId: varchar("rule_set_id").notNull().references(() => licenseRuleSets.id),
+  ruleType: varchar("rule_type").notNull(), // percentage, tiered, minimum_guarantee, cap, deduction
+  ruleName: varchar("rule_name").notNull(),
+  conditions: jsonb("conditions"), // Conditions when this rule applies
+  calculation: jsonb("calculation"), // Calculation parameters
+  priority: integer("priority").default(0), // Order of execution
+  isActive: boolean("is_active").default(true),
+  sourceSpan: jsonb("source_span"), // PDF page/coordinates where this rule was found
+  confidence: decimal("confidence", { precision: 5, scale: 2 }), // AI extraction confidence
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// ERP Connections table
+export const erpConnections = pgTable("erp_connections", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  erpType: varchar("erp_type").notNull(), // csv, sftp, netsuite, sap, dynamics, etc
+  connectionConfig: jsonb("connection_config"), // Encrypted connection details
+  mappingConfig: jsonb("mapping_config"), // Field mapping configuration
+  isActive: boolean("is_active").default(true),
+  lastSyncAt: timestamp("last_sync_at"),
+  createdBy: varchar("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Sales Data Staging table
+export const salesStaging = pgTable("sales_staging", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  importJobId: varchar("import_job_id").notNull(),
+  externalId: varchar("external_id"), // ID from source system
+  rowData: jsonb("row_data").notNull(), // Raw imported data
+  validationStatus: varchar("validation_status").default("pending"), // pending, valid, invalid
+  validationErrors: jsonb("validation_errors"), // Array of validation errors
+  processedAt: timestamp("processed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Normalized Sales Data table
+export const salesData = pgTable("sales_data", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  vendorId: varchar("vendor_id").references(() => vendors.id),
+  transactionDate: timestamp("transaction_date").notNull(),
+  transactionId: varchar("transaction_id"), // External transaction ID
+  productCode: varchar("product_code"),
+  productName: varchar("product_name"),
+  category: varchar("category"),
+  territory: varchar("territory"),
+  currency: varchar("currency").default("USD"),
+  grossAmount: decimal("gross_amount", { precision: 15, scale: 2 }).notNull(),
+  netAmount: decimal("net_amount", { precision: 15, scale: 2 }),
+  quantity: decimal("quantity", { precision: 12, scale: 4 }),
+  unitPrice: decimal("unit_price", { precision: 15, scale: 2 }),
+  customFields: jsonb("custom_fields"), // Additional flexible fields
+  importJobId: varchar("import_job_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Royalty Calculation Runs
+export const royaltyRuns = pgTable("royalty_runs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  vendorId: varchar("vendor_id").references(() => vendors.id),
+  ruleSetId: varchar("rule_set_id").references(() => licenseRuleSets.id),
+  periodStart: timestamp("period_start").notNull(),
+  periodEnd: timestamp("period_end").notNull(),
+  status: varchar("status").default("pending"), // pending, running, completed, failed
+  totalSalesAmount: decimal("total_sales_amount", { precision: 15, scale: 2 }),
+  totalRoyalty: decimal("total_royalty", { precision: 15, scale: 2 }),
+  recordsProcessed: integer("records_processed"),
+  executionLog: jsonb("execution_log"), // Detailed calculation log
+  runBy: varchar("run_by").references(() => users.id),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Detailed Royalty Calculation Results
+export const royaltyResults = pgTable("royalty_results", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  runId: varchar("run_id").notNull().references(() => royaltyRuns.id),
+  salesDataId: varchar("sales_data_id").references(() => salesData.id),
+  ruleId: varchar("rule_id").references(() => licenseRules.id),
+  salesAmount: decimal("sales_amount", { precision: 15, scale: 2 }).notNull(),
+  royaltyAmount: decimal("royalty_amount", { precision: 15, scale: 2 }).notNull(),
+  royaltyRate: decimal("royalty_rate", { precision: 8, scale: 4 }), // Actual rate applied
+  calculationDetails: jsonb("calculation_details"), // Step-by-step calculation
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Product Mappings (for vendor product codes to internal categories)
+export const productMappings = pgTable("product_mappings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  vendorId: varchar("vendor_id").references(() => vendors.id),
+  externalCode: varchar("external_code").notNull(), // Product code from ERP
+  internalCategory: varchar("internal_category").notNull(),
+  description: varchar("description"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// ERP Import Jobs tracking
+export const erpImportJobs = pgTable("erp_import_jobs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  connectionId: varchar("connection_id").references(() => erpConnections.id),
+  jobType: varchar("job_type").notNull(), // manual_upload, scheduled_import, api_sync
+  fileName: varchar("file_name"),
+  status: varchar("status").default("pending"), // pending, processing, completed, failed
+  recordsImported: integer("records_imported"),
+  recordsFailed: integer("records_failed"),
+  errors: jsonb("errors"), // Import errors
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  createdBy: varchar("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// ======================
+// INSERT SCHEMAS FOR NEW TABLES
+// ======================
+
+export const insertVendorSchema = createInsertSchema(vendors).pick({
+  name: true,
+  code: true,
+  contactEmail: true,
+  contactPhone: true,
+  address: true,
+  taxId: true,
+  currency: true,
+  paymentTerms: true,
+  notes: true,
+  isActive: true,
+  createdBy: true,
+});
+
+export const insertLicenseDocumentSchema = createInsertSchema(licenseDocuments).pick({
+  vendorId: true,
+  fileName: true,
+  originalName: true,
+  filePath: true,
+  fileSize: true,
+  licenseType: true,
+  effectiveDate: true,
+  expirationDate: true,
+  uploadedBy: true,
+});
+
+export const insertLicenseRuleSetSchema = createInsertSchema(licenseRuleSets).pick({
+  licenseDocumentId: true,
+  vendorId: true,
+  version: true,
+  name: true,
+  effectiveDate: true,
+  expirationDate: true,
+  rulesDsl: true,
+  extractionMetadata: true,
+  createdBy: true,
+});
+
+export const insertSalesDataSchema = createInsertSchema(salesData).pick({
+  vendorId: true,
+  transactionDate: true,
+  transactionId: true,
+  productCode: true,
+  productName: true,
+  category: true,
+  territory: true,
+  currency: true,
+  grossAmount: true,
+  netAmount: true,
+  quantity: true,
+  unitPrice: true,
+  customFields: true,
+  importJobId: true,
+});
+
+export const insertRoyaltyRunSchema = createInsertSchema(royaltyRuns).pick({
+  name: true,
+  vendorId: true,
+  ruleSetId: true,
+  periodStart: true,
+  periodEnd: true,
+  runBy: true,
+});
+
+// ======================
+// TYPES FOR NEW TABLES
+// ======================
+
+export type Vendor = typeof vendors.$inferSelect;
+export type InsertVendor = z.infer<typeof insertVendorSchema>;
+export type LicenseDocument = typeof licenseDocuments.$inferSelect;
+export type InsertLicenseDocument = z.infer<typeof insertLicenseDocumentSchema>;
+export type LicenseRuleSet = typeof licenseRuleSets.$inferSelect;
+export type InsertLicenseRuleSet = z.infer<typeof insertLicenseRuleSetSchema>;
+export type LicenseRule = typeof licenseRules.$inferSelect;
+export type ErpConnection = typeof erpConnections.$inferSelect;
+export type SalesStaging = typeof salesStaging.$inferSelect;
+export type SalesData = typeof salesData.$inferSelect;
+export type InsertSalesData = z.infer<typeof insertSalesDataSchema>;
+export type RoyaltyRun = typeof royaltyRuns.$inferSelect;
+export type InsertRoyaltyRun = z.infer<typeof insertRoyaltyRunSchema>;
+export type RoyaltyResult = typeof royaltyResults.$inferSelect;
+export type ProductMapping = typeof productMappings.$inferSelect;
+export type ErpImportJob = typeof erpImportJobs.$inferSelect;
+
+// Enhanced types with relationships
+export type VendorWithLicenses = Vendor & {
+  licenseDocuments?: LicenseDocument[];
+  ruleSets?: LicenseRuleSet[];
+  salesData?: SalesData[];
+};
+
+export type LicenseDocumentWithRules = LicenseDocument & {
+  vendor?: Vendor;
+  ruleSets?: LicenseRuleSet[];
+};
+
+export type RoyaltyRunWithDetails = RoyaltyRun & {
+  vendor?: Vendor;
+  ruleSet?: LicenseRuleSet;
+  results?: RoyaltyResult[];
 };
