@@ -1223,6 +1223,245 @@ export class DatabaseStorage implements IStorage {
       riskTrends: aggregatedTrends,
     };
   }
+
+  // ==========================================
+  // ROYALTY SYSTEM IMPLEMENTATIONS
+  // ==========================================
+  
+  // Vendor operations
+  async createVendor(vendor: InsertVendor): Promise<Vendor> {
+    const [created] = await db.insert(vendors).values(vendor).returning();
+    return created;
+  }
+
+  async getVendor(id: string): Promise<VendorWithLicenses | undefined> {
+    const [vendor] = await db.select().from(vendors).where(eq(vendors.id, id));
+    if (!vendor) return undefined;
+
+    const licenses = await db.select().from(licenseDocuments).where(eq(licenseDocuments.vendorId, id));
+    return { ...vendor, licenses };
+  }
+
+  async getVendors(search?: string): Promise<VendorWithLicenses[]> {
+    let query = db.select().from(vendors);
+    if (search) {
+      query = query.where(or(ilike(vendors.name, `%${search}%`), ilike(vendors.contactEmail, `%${search}%`)));
+    }
+    
+    const vendorList = await query;
+    const vendorsWithLicenses = await Promise.all(
+      vendorList.map(async (vendor) => {
+        const licenses = await db.select().from(licenseDocuments).where(eq(licenseDocuments.vendorId, vendor.id));
+        return { ...vendor, licenses };
+      })
+    );
+    
+    return vendorsWithLicenses;
+  }
+
+  async updateVendor(id: string, updates: Partial<InsertVendor>): Promise<Vendor> {
+    const [updated] = await db.update(vendors).set({...updates, updatedAt: new Date()}).where(eq(vendors.id, id)).returning();
+    return updated;
+  }
+
+  async deleteVendor(id: string): Promise<void> {
+    await db.delete(vendors).where(eq(vendors.id, id));
+  }
+
+  // License Document operations
+  async createLicenseDocument(licenseDoc: InsertLicenseDocument): Promise<LicenseDocument> {
+    const [created] = await db.insert(licenseDocuments).values(licenseDoc).returning();
+    return created;
+  }
+
+  async getLicenseDocument(id: string): Promise<LicenseDocumentWithRules | undefined> {
+    const [doc] = await db.select().from(licenseDocuments).where(eq(licenseDocuments.id, id));
+    if (!doc) return undefined;
+
+    const ruleSets = await db.select().from(licenseRuleSets).where(eq(licenseRuleSets.licenseDocumentId, id));
+    return { ...doc, ruleSets };
+  }
+
+  async getLicenseDocuments(vendorId?: string): Promise<LicenseDocumentWithRules[]> {
+    let query = db.select().from(licenseDocuments);
+    if (vendorId) {
+      query = query.where(eq(licenseDocuments.vendorId, vendorId));
+    }
+    
+    const docs = await query;
+    const docsWithRules = await Promise.all(
+      docs.map(async (doc) => {
+        const ruleSets = await db.select().from(licenseRuleSets).where(eq(licenseRuleSets.licenseDocumentId, doc.id));
+        return { ...doc, ruleSets };
+      })
+    );
+    
+    return docsWithRules;
+  }
+
+  async updateLicenseDocumentStatus(id: string, status: string): Promise<LicenseDocument> {
+    const [updated] = await db.update(licenseDocuments).set({status, updatedAt: new Date()}).where(eq(licenseDocuments.id, id)).returning();
+    return updated;
+  }
+
+  async deleteLicenseDocument(id: string): Promise<void> {
+    await db.delete(licenseDocuments).where(eq(licenseDocuments.id, id));
+  }
+
+  // License Rule Set operations
+  async createLicenseRuleSet(ruleSet: InsertLicenseRuleSet): Promise<LicenseRuleSet> {
+    const [created] = await db.insert(licenseRuleSets).values(ruleSet).returning();
+    return created;
+  }
+
+  async getLicenseRuleSet(id: string): Promise<LicenseRuleSet | undefined> {
+    const [ruleSet] = await db.select().from(licenseRuleSets).where(eq(licenseRuleSets.id, id));
+    return ruleSet;
+  }
+
+  async getLicenseRuleSets(licenseDocumentId?: string, vendorId?: string, status?: string): Promise<LicenseRuleSet[]> {
+    let conditions = [];
+    if (licenseDocumentId) conditions.push(eq(licenseRuleSets.licenseDocumentId, licenseDocumentId));
+    if (vendorId) conditions.push(eq(licenseRuleSets.vendorId, vendorId));
+    if (status) conditions.push(eq(licenseRuleSets.status, status));
+    
+    let query = db.select().from(licenseRuleSets);
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+    
+    return await query;
+  }
+
+  async publishLicenseRuleSet(id: string, publishedBy: string): Promise<LicenseRuleSet> {
+    const [published] = await db.update(licenseRuleSets)
+      .set({status: 'published', publishedBy, publishedAt: new Date(), updatedAt: new Date()})
+      .where(eq(licenseRuleSets.id, id))
+      .returning();
+    return published;
+  }
+
+  async updateLicenseRuleSet(id: string, updates: Partial<InsertLicenseRuleSet>): Promise<LicenseRuleSet> {
+    const [updated] = await db.update(licenseRuleSets).set({...updates, updatedAt: new Date()}).where(eq(licenseRuleSets.id, id)).returning();
+    return updated;
+  }
+
+  async deleteLicenseRuleSet(id: string): Promise<void> {
+    await db.delete(licenseRuleSets).where(eq(licenseRuleSets.id, id));
+  }
+
+  // License Rule operations  
+  async createLicenseRule(rule: Omit<LicenseRule, 'id' | 'createdAt'>): Promise<LicenseRule> {
+    const [created] = await db.insert(licenseRules).values(rule).returning();
+    return created;
+  }
+
+  async getLicenseRules(ruleSetId: string): Promise<LicenseRule[]> {
+    return await db.select().from(licenseRules).where(eq(licenseRules.ruleSetId, ruleSetId));
+  }
+
+  async updateLicenseRule(id: string, updates: Partial<Omit<LicenseRule, 'id' | 'createdAt'>>): Promise<LicenseRule> {
+    const [updated] = await db.update(licenseRules).set(updates).where(eq(licenseRules.id, id)).returning();
+    return updated;
+  }
+
+  async deleteLicenseRule(id: string): Promise<void> {
+    await db.delete(licenseRules).where(eq(licenseRules.id, id));
+  }
+
+  // Sales Data operations
+  async createSalesData(salesData: InsertSalesData): Promise<SalesData> {
+    const [created] = await db.insert(salesData).values(salesData).returning();
+    return created;
+  }
+  
+  async getSalesData(vendorId?: string, startDate?: Date, endDate?: Date): Promise<SalesData[]> {
+    let conditions = [];
+    if (vendorId) conditions.push(eq(salesData.vendorId, vendorId));
+    if (startDate) conditions.push(gte(salesData.transactionDate, startDate));
+    
+    let query = db.select().from(salesData);
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+    
+    return await query;
+  }
+  
+  async importSalesDataBatch(salesDataList: InsertSalesData[]): Promise<SalesData[]> {
+    const created = await db.insert(salesData).values(salesDataList).returning();
+    return created;
+  }
+  
+  async deleteSalesData(vendorId: string, importJobId?: string): Promise<void> {
+    let conditions = [eq(salesData.vendorId, vendorId)];
+    if (importJobId) conditions.push(eq(salesData.importJobId, importJobId));
+    
+    await db.delete(salesData).where(and(...conditions));
+  }
+  
+  // Royalty Run operations
+  async createRoyaltyRun(run: InsertRoyaltyRun): Promise<RoyaltyRun> {
+    const [created] = await db.insert(royaltyRuns).values(run).returning();
+    return created;
+  }
+  
+  async getRoyaltyRun(id: string): Promise<RoyaltyRunWithDetails | undefined> {
+    const [run] = await db.select().from(royaltyRuns).where(eq(royaltyRuns.id, id));
+    if (!run) return undefined;
+    
+    const results = await db.select().from(royaltyResults).where(eq(royaltyResults.runId, id));
+    return { ...run, results };
+  }
+  
+  async getRoyaltyRuns(vendorId?: string, status?: string): Promise<RoyaltyRunWithDetails[]> {
+    let conditions = [];
+    if (vendorId) conditions.push(eq(royaltyRuns.vendorId, vendorId));
+    if (status) conditions.push(eq(royaltyRuns.status, status));
+    
+    let query = db.select().from(royaltyRuns);
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+    
+    const runs = await query;
+    const runsWithDetails = await Promise.all(
+      runs.map(async (run) => {
+        const results = await db.select().from(royaltyResults).where(eq(royaltyResults.runId, run.id));
+        return { ...run, results };
+      })
+    );
+    
+    return runsWithDetails;
+  }
+  
+  async updateRoyaltyRunStatus(id: string, status: string, totals?: {totalSalesAmount?: number, totalRoyalty?: number, recordsProcessed?: number}): Promise<RoyaltyRun> {
+    const updateData: any = { status, updatedAt: new Date() };
+    if (totals?.totalSalesAmount) updateData.totalSalesAmount = totals.totalSalesAmount;
+    if (totals?.totalRoyalty) updateData.totalRoyalty = totals.totalRoyalty;
+    if (totals?.recordsProcessed) updateData.recordsProcessed = totals.recordsProcessed;
+    
+    const [updated] = await db.update(royaltyRuns).set(updateData).where(eq(royaltyRuns.id, id)).returning();
+    return updated;
+  }
+  
+  async deleteRoyaltyRun(id: string): Promise<void> {
+    await db.delete(royaltyRuns).where(eq(royaltyRuns.id, id));
+  }
+  
+  // Royalty Result operations
+  async createRoyaltyResults(results: Omit<RoyaltyResult, 'id' | 'createdAt'>[]): Promise<RoyaltyResult[]> {
+    const created = await db.insert(royaltyResults).values(results).returning();
+    return created;
+  }
+  
+  async getRoyaltyResults(runId: string): Promise<RoyaltyResult[]> {
+    return await db.select().from(royaltyResults).where(eq(royaltyResults.runId, runId));
+  }
+  
+  async deleteRoyaltyResults(runId: string): Promise<void> {
+    await db.delete(royaltyResults).where(eq(royaltyResults.runId, runId));
+  }
 }
 
 export const storage = new DatabaseStorage();

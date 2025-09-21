@@ -8,7 +8,16 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated, hashPassword } from "./auth";
 import { fileService } from "./services/fileService";
 import { groqService } from "./services/groqService";
-import { insertContractSchema, insertContractAnalysisSchema, insertAuditTrailSchema } from "@shared/schema";
+import { 
+  insertContractSchema, 
+  insertContractAnalysisSchema, 
+  insertAuditTrailSchema,
+  insertVendorSchema,
+  insertLicenseDocumentSchema,
+  insertLicenseRuleSetSchema,
+  insertSalesDataSchema,
+  insertRoyaltyRunSchema
+} from "@shared/schema";
 
 // Configure multer for secure file uploads with disk storage
 const uploadDir = path.join(process.cwd(), 'uploads');
@@ -1633,3 +1642,294 @@ async function processContractAsync(contractId: string): Promise<void> {
     }
   }
 }
+
+// Background processing function for license documents
+async function processLicenseDocument(licenseDocId: string, filePath: string, userId: string) {
+  try {
+    // Update status to processing
+    await storage.updateLicenseDocumentStatus(licenseDocId, 'processing');
+
+    // Extract text from PDF
+    const extractedText = await fileService.extractTextFromFile(filePath);
+    
+    // Use AI to extract royalty rules
+    const extractionResult = await groqService.extractLicenseRules(extractedText);
+
+    // Validate extracted rules
+    const validation = await groqService.validateExtractedRules(extractionResult.rules);
+    
+    if (!validation.isValid) {
+      console.error('Rule validation failed:', validation.errors);
+      await storage.updateLicenseDocumentStatus(licenseDocId, 'failed');
+      return;
+    }
+
+    // Generate DSL for rule engine
+    const ruleDSL = await groqService.generateRuleDSL(extractionResult);
+
+    // Get license document to get vendor ID
+    const licenseDoc = await storage.getLicenseDocument(licenseDocId);
+    if (!licenseDoc) {
+      throw new Error('License document not found');
+    }
+
+    // Create rule set from extracted data
+    const ruleSetData = insertLicenseRuleSetSchema.parse({
+      licenseDocumentId: licenseDocId,
+      vendorId: licenseDoc.vendorId,
+      version: '1.0.0',
+      extractedRules: extractionResult,
+      ruleDSL: ruleDSL,
+      status: 'draft',
+      extractedBy: userId,
+      extractionMetadata: {
+        totalRulesExtracted: extractionResult.rules.length,
+        avgConfidence: extractionResult.extractionMetadata.avgConfidence,
+        validationWarnings: validation.warnings
+      }
+    });
+
+    const ruleSet = await storage.createLicenseRuleSet(ruleSetData);
+
+    // Create individual rule records
+    for (const rule of extractionResult.rules) {
+      await storage.createLicenseRule({
+        ruleSetId: ruleSet.id,
+        ruleName: rule.ruleName,
+        ruleType: rule.ruleType,
+        description: rule.description,
+        conditions: rule.conditions,
+        calculation: rule.calculation,
+        priority: rule.priority,
+        sourceSpan: rule.sourceSpan,
+        confidence: rule.confidence,
+        isActive: true
+      });
+    }
+
+    // Update status to completed
+    await storage.updateLicenseDocumentStatus(licenseDocId, 'processed');
+
+    console.log(`License document ${licenseDocId} processed successfully. ${extractionResult.rules.length} rules extracted.`);
+
+  } catch (error) {
+    console.error(`Failed to process license document ${licenseDocId}:`, error);
+    await storage.updateLicenseDocumentStatus(licenseDocId, 'failed');
+  }
+}
+
+// Missing parts of the registerRoutes function - these routes should be added inside registerRoutes function
+// Here's the API implementation for the royalty system that connects all the components:
+
+/*
+IMPORTANT: Add these routes inside the registerRoutes function before the return statement:
+
+  // ==========================================
+  // ROYALTY SYSTEM API ROUTES
+  // ==========================================
+  
+  // Vendor Management Routes
+  app.post("/api/vendors", isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const vendorData = insertVendorSchema.parse(req.body);
+      const vendor = await storage.createVendor(vendorData);
+      
+      await createAuditLog(req, "create_vendor", "vendor", vendor.id, { name: vendor.name });
+      
+      res.json(vendor);
+    } catch (error) {
+      console.error("Create vendor error:", error);
+      res.status(400).json({ error: "Failed to create vendor" });
+    }
+  });
+
+  app.get("/api/vendors", isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { search } = req.query;
+      const vendors = await storage.getVendors(search);
+      res.json({ vendors });
+    } catch (error) {
+      console.error("Get vendors error:", error);
+      res.status(500).json({ error: "Failed to fetch vendors" });
+    }
+  });
+
+  app.get("/api/vendors/:id", isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const vendor = await storage.getVendor(req.params.id);
+      if (!vendor) {
+        return res.status(404).json({ error: "Vendor not found" });
+      }
+      res.json(vendor);
+    } catch (error) {
+      console.error("Get vendor error:", error);
+      res.status(500).json({ error: "Failed to fetch vendor" });
+    }
+  });
+
+  // License Document Processing Routes
+  app.post("/api/license-documents", isAuthenticated, upload.single("file"), async (req: any, res: Response) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      const { vendorId, licenseType, name, description } = req.body;
+      
+      if (!vendorId) {
+        return res.status(400).json({ error: "Vendor ID is required" });
+      }
+
+      // Create license document record
+      const licenseDocData = insertLicenseDocumentSchema.parse({
+        vendorId,
+        name: name || req.file.originalname,
+        licenseType: licenseType || 'general',
+        description: description || '',
+        filePath: req.file.path,
+        fileName: req.file.originalname,
+        fileSize: req.file.size,
+        mimeType: req.file.mimetype,
+        status: 'uploaded',
+        uploadedBy: req.user.id,
+      });
+
+      const licenseDoc = await storage.createLicenseDocument(licenseDocData);
+
+      await createAuditLog(req, "upload_license", "license_document", licenseDoc.id, {
+        fileName: req.file.originalname,
+        vendorId: vendorId
+      });
+
+      // Start AI processing in background
+      processLicenseDocument(licenseDoc.id, req.file.path, req.user.id);
+
+      res.json({
+        id: licenseDoc.id,
+        name: licenseDoc.name,
+        status: licenseDoc.status,
+        message: "License document uploaded successfully. AI processing started."
+      });
+
+    } catch (error) {
+      console.error("Upload license error:", error);
+      res.status(500).json({ error: "Failed to upload license document" });
+    }
+  });
+
+  app.get("/api/license-documents", isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { vendorId } = req.query;
+      const documents = await storage.getLicenseDocuments(vendorId);
+      res.json({ documents });
+    } catch (error) {
+      console.error("Get license documents error:", error);
+      res.status(500).json({ error: "Failed to fetch license documents" });
+    }
+  });
+
+  app.get("/api/license-documents/:id", isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const document = await storage.getLicenseDocument(req.params.id);
+      if (!document) {
+        return res.status(404).json({ error: "License document not found" });
+      }
+      res.json(document);
+    } catch (error) {
+      console.error("Get license document error:", error);
+      res.status(500).json({ error: "Failed to fetch license document" });
+    }
+  });
+
+  // License Rule Set Management Routes
+  app.get("/api/license-rule-sets", isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { licenseDocumentId, vendorId, status } = req.query;
+      const ruleSets = await storage.getLicenseRuleSets(licenseDocumentId, vendorId, status);
+      res.json({ ruleSets });
+    } catch (error) {
+      console.error("Get rule sets error:", error);
+      res.status(500).json({ error: "Failed to fetch rule sets" });
+    }
+  });
+
+  app.get("/api/license-rule-sets/:id", isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const ruleSet = await storage.getLicenseRuleSet(req.params.id);
+      if (!ruleSet) {
+        return res.status(404).json({ error: "Rule set not found" });
+      }
+      
+      const rules = await storage.getLicenseRules(ruleSet.id);
+      res.json({ ...ruleSet, rules });
+    } catch (error) {
+      console.error("Get rule set error:", error);
+      res.status(500).json({ error: "Failed to fetch rule set" });
+    }
+  });
+
+  app.post("/api/license-rule-sets/:id/publish", isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const ruleSet = await storage.publishLicenseRuleSet(req.params.id, req.user.id);
+      
+      await createAuditLog(req, "publish_rule_set", "license_rule_set", ruleSet.id, {
+        version: ruleSet.version
+      });
+      
+      res.json(ruleSet);
+    } catch (error) {
+      console.error("Publish rule set error:", error);
+      res.status(500).json({ error: "Failed to publish rule set" });
+    }
+  });
+
+  // Royalty Run Management Routes
+  app.post("/api/royalty-runs", isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const runData = insertRoyaltyRunSchema.parse({
+        ...req.body,
+        status: 'pending',
+        createdBy: req.user.id
+      });
+      
+      const run = await storage.createRoyaltyRun(runData);
+      
+      await createAuditLog(req, "create_royalty_run", "royalty_run", run.id, {
+        vendorId: run.vendorId,
+        period: run.period
+      });
+      
+      res.json(run);
+    } catch (error) {
+      console.error("Create royalty run error:", error);
+      res.status(400).json({ error: "Failed to create royalty run" });
+    }
+  });
+
+  app.get("/api/royalty-runs", isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { vendorId, status } = req.query;
+      const runs = await storage.getRoyaltyRuns(vendorId, status);
+      res.json({ runs });
+    } catch (error) {
+      console.error("Get royalty runs error:", error);
+      res.status(500).json({ error: "Failed to fetch royalty runs" });
+    }
+  });
+
+  app.get("/api/royalty-runs/:id", isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const run = await storage.getRoyaltyRun(req.params.id);
+      if (!run) {
+        return res.status(404).json({ error: "Royalty run not found" });
+      }
+      res.json(run);
+    } catch (error) {
+      console.error("Get royalty run error:", error);
+      res.status(500).json({ error: "Failed to fetch royalty run" });
+    }
+  });
+
+*/
+
+export default registerRoutes;
