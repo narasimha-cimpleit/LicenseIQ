@@ -113,6 +113,7 @@ export interface IStorage {
   createLicenseRuleSet(ruleSet: InsertLicenseRuleSet): Promise<LicenseRuleSet>;
   getLicenseRuleSet(id: string): Promise<LicenseRuleSet | undefined>;
   getLicenseRuleSets(licenseDocumentId?: string, vendorId?: string, status?: string): Promise<LicenseRuleSet[]>;
+  getLicenseRuleSetsByContract(contractId: string): Promise<LicenseRuleSet[]>;
   publishLicenseRuleSet(id: string, publishedBy: string): Promise<LicenseRuleSet>;
   updateLicenseRuleSet(id: string, updates: Partial<InsertLicenseRuleSet>): Promise<LicenseRuleSet>;
   deleteLicenseRuleSet(id: string): Promise<void>;
@@ -1331,6 +1332,12 @@ export class DatabaseStorage implements IStorage {
     }
     
     return await query;
+  }
+
+  async getLicenseRuleSetsByContract(contractId: string): Promise<LicenseRuleSet[]> {
+    return await db.select().from(licenseRuleSets)
+      .where(eq(licenseRuleSets.contractId, contractId))
+      .orderBy(desc(licenseRuleSets.createdAt));
   }
 
   async publishLicenseRuleSet(id: string, publishedBy: string): Promise<LicenseRuleSet> {

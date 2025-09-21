@@ -1584,7 +1584,8 @@ async function processContractAsync(contractId: string): Promise<void> {
       performanceAnalysis,
       riskAnalysis,
       obligations,
-      comparisonAnalysis
+      comparisonAnalysis,
+      licenseRules
     ] = await Promise.all([
       // Basic contract analysis
       groqService.analyzeContract(text),
@@ -1596,7 +1597,10 @@ async function processContractAsync(contractId: string): Promise<void> {
       groqService.predictPerformance(text, contract.contractType || 'unknown'),
       groqService.analyzeRiskFactors(text, contract.contractType || 'unknown'),
       groqService.extractContractObligations(text),
-      groqService.analyzeContractComparison(text, contract.contractType || 'unknown', 'general')
+      groqService.analyzeContractComparison(text, contract.contractType || 'unknown', 'general'),
+      
+      // Royalty rule extraction (NEW)
+      groqService.extractLicenseRules(text, contract.contractType || 'unknown')
     ]);
     
     console.log('🤖 [CONTRACT-PROCESS] All AI analyses completed');
@@ -1614,7 +1618,13 @@ async function processContractAsync(contractId: string): Promise<void> {
       performanceAnalysis: { performanceScore: performanceAnalysis.performanceScore },
       riskAnalysis: { overallRiskScore: riskAnalysis.overallRiskScore },
       obligationsCount: obligations.length,
-      comparisonAnalysis: { similarityScore: comparisonAnalysis.similarityScore }
+      comparisonAnalysis: { similarityScore: comparisonAnalysis.similarityScore },
+      licenseRules: { 
+        documentType: licenseRules.documentType, 
+        rulesCount: licenseRules.rules.length,
+        licensor: licenseRules.parties.licensor,
+        licensee: licenseRules.parties.licensee
+      }
     });
 
     // Save all analyses to database in parallel
@@ -1719,6 +1729,64 @@ async function processContractAsync(contractId: string): Promise<void> {
         console.error('Error saving obligation:', obligation, obligationError);
       }
     }
+
+    // Save extracted license rules (NEW) 
+    console.log('💾 [CONTRACT-PROCESS] Saving extracted royalty rules...');
+    let savedRuleSet = null;
+    if (licenseRules && licenseRules.rules.length > 0) {
+      try {
+        // Create LicenseRuleSet linked to the contract
+        const ruleSetData = {
+          contractId: contractId, // Link to contract instead of licenseDocumentId
+          version: 1,
+          status: 'draft' as const,
+          extractedBy: contract.uploadedBy,
+          extractedFromSource: 'contract' as const,
+          licenseType: licenseRules.licenseType || contract.contractType || 'unknown',
+          licensor: licenseRules.parties.licensor || 'Unknown',
+          licensee: licenseRules.parties.licensee || 'Unknown',
+          effectiveDate: licenseRules.effectiveDate,
+          expirationDate: licenseRules.expirationDate,
+          currency: licenseRules.currency || 'USD',
+        };
+
+        savedRuleSet = await storage.createLicenseRuleSet(ruleSetData);
+        console.log('💾 [CONTRACT-PROCESS] Created rule set:', savedRuleSet.id);
+
+        // Create individual license rules
+        const savedRules = [];
+        for (const rule of licenseRules.rules) {
+          try {
+            const ruleData = {
+              ruleSetId: savedRuleSet.id,
+              ruleType: rule.type || 'percentage',
+              description: rule.description,
+              calculationMethod: rule.calculation?.method || 'percentage',
+              percentage: rule.calculation?.percentage,
+              fixedAmount: rule.calculation?.fixedAmount,
+              minimumAmount: rule.calculation?.minimumAmount,
+              maximumAmount: rule.calculation?.maximumAmount,
+              tieredRates: rule.calculation?.tieredRates || [],
+              applicableProducts: rule.conditions?.applicableProducts || [],
+              territories: rule.conditions?.territories || [],
+              timeframes: rule.conditions?.timeframes || [],
+              volumeThresholds: rule.conditions?.volumeThresholds || [],
+              priority: rule.priority || 1,
+              isActive: true,
+            };
+            
+            const savedRule = await storage.createLicenseRule(ruleData);
+            savedRules.push(savedRule);
+          } catch (ruleError) {
+            console.error('Error saving individual license rule:', rule, ruleError);
+          }
+        }
+
+        console.log(`💾 [CONTRACT-PROCESS] Saved ${savedRules.length} license rules for rule set ${savedRuleSet.id}`);
+      } catch (ruleSetError) {
+        console.error('Error saving license rule set:', ruleSetError);
+      }
+    }
     
     // Update contract status to analyzed
     await storage.updateContractStatus(contractId, 'analyzed', processingTime);
@@ -1732,6 +1800,8 @@ async function processContractAsync(contractId: string): Promise<void> {
       performanceAnalysisId: savedPerformance.id,
       comparisonAnalysisId: savedComparison.id,
       obligationsCount: savedObligations.length,
+      royaltyRuleSetId: savedRuleSet?.id || null,
+      royaltyRulesCount: licenseRules?.rules?.length || 0,
       totalProcessingTime: processingTime
     });
     
@@ -1942,6 +2012,47 @@ IMPORTANT: Add these routes inside the registerRoutes function before the return
     } catch (error) {
       console.error("Get license document error:", error);
       res.status(500).json({ error: "Failed to fetch license document" });
+    }
+  });
+
+  // Contract Royalty Rules API Endpoint (NEW)
+  app.get("/api/contracts/:id/rules", isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const contractId = req.params.id;
+      
+      // Check if contract exists and user has access
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ error: "Contract not found" });
+      }
+
+      const userId = req.user.id;
+      const userRole = (await storage.getUser(userId))?.role;
+      const canView = userRole === 'admin' || userRole === 'owner' || contract.uploadedBy === userId;
+      
+      if (!canView) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      // Get rule sets linked to this contract
+      const ruleSets = await storage.getLicenseRuleSetsByContract(contractId);
+      
+      // Get rules for each rule set
+      const ruleSetsWithRules = await Promise.all(
+        ruleSets.map(async (ruleSet) => {
+          const rules = await storage.getLicenseRules(ruleSet.id);
+          return { ...ruleSet, rules };
+        })
+      );
+
+      res.json({ 
+        contractId,
+        ruleSets: ruleSetsWithRules,
+        hasRules: ruleSetsWithRules.length > 0 && ruleSetsWithRules.some(rs => rs.rules.length > 0)
+      });
+    } catch (error) {
+      console.error("Get contract rules error:", error);
+      res.status(500).json({ error: "Failed to fetch contract rules" });
     }
   });
 
