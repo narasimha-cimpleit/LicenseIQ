@@ -10,7 +10,11 @@ import {
   FileText, 
   Users, 
   History,
-  LogOut
+  LogOut,
+  Building2,
+  Receipt,
+  Calculator,
+  Brain
 } from "lucide-react";
 import cimpleitLogo from "@assets/image_1757086402738.png";
 
@@ -56,6 +60,25 @@ export default function Sidebar({ className }: SidebarProps) {
       href: "/reports",
       icon: FileText,
       current: location === "/reports",
+    },
+    // Royalty System Navigation
+    {
+      name: "Vendors",
+      href: "/vendors",
+      icon: Building2,
+      current: location === "/vendors" || location.startsWith("/vendors/"),
+    },
+    {
+      name: "License Documents",
+      href: "/license-documents",
+      icon: Receipt,
+      current: location === "/license-documents" || location.startsWith("/license-documents/"),
+    },
+    {
+      name: "Royalty Calculations",
+      href: "/royalty-runs",
+      icon: Calculator,
+      current: location === "/royalty-runs" || location.startsWith("/royalty-runs/"),
     },
   ];
 

@@ -1428,6 +1428,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ==========================================
+  // ROYALTY SYSTEM API ROUTES
+  // ==========================================
+  
+  // Vendor Management Routes
+  app.post("/api/vendors", isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const vendorData = insertVendorSchema.parse(req.body);
+      const vendor = await storage.createVendor(vendorData);
+      
+      await createAuditLog(req, "create_vendor", "vendor", vendor.id, { name: vendor.name });
+      
+      res.json(vendor);
+    } catch (error) {
+      console.error("Create vendor error:", error);
+      res.status(400).json({ error: "Failed to create vendor" });
+    }
+  });
+
+  app.get("/api/vendors", isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { search } = req.query;
+      const vendors = await storage.getVendors(search);
+      res.json({ vendors });
+    } catch (error) {
+      console.error("Get vendors error:", error);
+      res.status(500).json({ error: "Failed to fetch vendors" });
+    }
+  });
+
+  app.get("/api/vendors/:id", isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const vendor = await storage.getVendor(req.params.id);
+      if (!vendor) {
+        return res.status(404).json({ error: "Vendor not found" });
+      }
+      res.json(vendor);
+    } catch (error) {
+      console.error("Get vendor error:", error);
+      res.status(500).json({ error: "Failed to fetch vendor" });
+    }
+  });
+
+  // License Document Processing Routes
+  app.post("/api/license-documents", isAuthenticated, upload.single("file"), async (req: any, res: Response) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      const { vendorId, licenseType, name, description } = req.body;
+      
+      if (!vendorId) {
+        return res.status(400).json({ error: "Vendor ID is required" });
+      }
+
+      // Create license document record
+      const licenseDocData = insertLicenseDocumentSchema.parse({
+        vendorId,
+        name: name || req.file.originalname,
+        licenseType: licenseType || 'general',
+        description: description || '',
+        filePath: req.file.path,
+        fileName: req.file.originalname,
+        fileSize: req.file.size,
+        mimeType: req.file.mimetype,
+        status: 'uploaded',
+        uploadedBy: req.user.id,
+      });
+
+      const licenseDoc = await storage.createLicenseDocument(licenseDocData);
+
+      await createAuditLog(req, "upload_license", "license_document", licenseDoc.id, {
+        fileName: req.file.originalname,
+        vendorId: vendorId
+      });
+
+      // Start AI processing in background
+      processLicenseDocument(licenseDoc.id, req.file.path, req.user.id);
+
+      res.json({
+        id: licenseDoc.id,
+        name: licenseDoc.name,
+        status: licenseDoc.status,
+        message: "License document uploaded successfully. AI processing started."
+      });
+
+    } catch (error) {
+      console.error("Upload license error:", error);
+      res.status(500).json({ error: "Failed to upload license document" });
+    }
+  });
+
+  app.get("/api/license-documents", isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { vendorId } = req.query;
+      const documents = await storage.getLicenseDocuments(vendorId);
+      res.json({ documents });
+    } catch (error) {
+      console.error("Get license documents error:", error);
+      res.status(500).json({ error: "Failed to fetch license documents" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -17,6 +17,8 @@ import CreateUser from "@/pages/create-user";
 import Audit from "@/pages/audit";
 import ContractAnalysis from "@/pages/contract-analysis";
 import NotFound from "@/pages/not-found";
+import VendorsPage from "@/pages/vendors";
+import LicenseDocumentsPage from "@/pages/license-documents";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -41,6 +43,9 @@ function Router() {
           <ProtectedRoute path="/users/new" component={CreateUser} />
           <ProtectedRoute path="/audit" component={Audit} />
           <ProtectedRoute path="/contracts/:id" component={() => <ContractAnalysis />} />
+          {/* Royalty System Routes */}
+          <ProtectedRoute path="/vendors" component={VendorsPage} />
+          <ProtectedRoute path="/license-documents" component={LicenseDocumentsPage} />
         </>
       )}
       
