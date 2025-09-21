@@ -10,6 +10,18 @@ import {
   strategicAnalysis,
   contractComparisons,
   marketBenchmarks,
+  // Royalty system imports
+  vendors,
+  licenseDocuments,
+  licenseRuleSets,
+  licenseRules,
+  erpConnections,
+  salesStaging,
+  salesData,
+  royaltyRuns,
+  royaltyResults,
+  productMappings,
+  erpImportJobs,
   type User,
   type InsertUser,
   type Contract,
@@ -33,6 +45,26 @@ import {
   type InsertContractComparison,
   type MarketBenchmark,
   type InsertMarketBenchmark,
+  // Royalty system types
+  type Vendor,
+  type InsertVendor,
+  type LicenseDocument,
+  type InsertLicenseDocument,
+  type LicenseRuleSet,
+  type InsertLicenseRuleSet,
+  type LicenseRule,
+  type ErpConnection,
+  type SalesStaging,
+  type SalesData,
+  type InsertSalesData,
+  type RoyaltyRun,
+  type InsertRoyaltyRun,
+  type RoyaltyResult,
+  type ProductMapping,
+  type ErpImportJob,
+  type VendorWithLicenses,
+  type LicenseDocumentWithRules,
+  type RoyaltyRunWithDetails,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, ilike, count, gte } from "drizzle-orm";
@@ -58,6 +90,56 @@ export interface IStorage {
   searchContracts(query: string, userId?: string): Promise<ContractWithAnalysis[]>;
   getContractsByUser(userId: string): Promise<Contract[]>;
   deleteContract(id: string): Promise<void>;
+
+  // ==========================================
+  // ROYALTY SYSTEM OPERATIONS
+  // ==========================================
+  
+  // Vendor operations
+  createVendor(vendor: InsertVendor): Promise<Vendor>;
+  getVendor(id: string): Promise<VendorWithLicenses | undefined>;
+  getVendors(search?: string): Promise<VendorWithLicenses[]>;
+  updateVendor(id: string, updates: Partial<InsertVendor>): Promise<Vendor>;
+  deleteVendor(id: string): Promise<void>;
+  
+  // License Document operations
+  createLicenseDocument(licenseDoc: InsertLicenseDocument): Promise<LicenseDocument>;
+  getLicenseDocument(id: string): Promise<LicenseDocumentWithRules | undefined>;
+  getLicenseDocuments(vendorId?: string): Promise<LicenseDocumentWithRules[]>;
+  updateLicenseDocumentStatus(id: string, status: string): Promise<LicenseDocument>;
+  deleteLicenseDocument(id: string): Promise<void>;
+  
+  // License Rule Set operations
+  createLicenseRuleSet(ruleSet: InsertLicenseRuleSet): Promise<LicenseRuleSet>;
+  getLicenseRuleSet(id: string): Promise<LicenseRuleSet | undefined>;
+  getLicenseRuleSets(licenseDocumentId?: string, vendorId?: string, status?: string): Promise<LicenseRuleSet[]>;
+  publishLicenseRuleSet(id: string, publishedBy: string): Promise<LicenseRuleSet>;
+  updateLicenseRuleSet(id: string, updates: Partial<InsertLicenseRuleSet>): Promise<LicenseRuleSet>;
+  deleteLicenseRuleSet(id: string): Promise<void>;
+  
+  // License Rule operations
+  createLicenseRule(rule: Omit<LicenseRule, 'id' | 'createdAt'>): Promise<LicenseRule>;
+  getLicenseRules(ruleSetId: string): Promise<LicenseRule[]>;
+  updateLicenseRule(id: string, updates: Partial<Omit<LicenseRule, 'id' | 'createdAt'>>): Promise<LicenseRule>;
+  deleteLicenseRule(id: string): Promise<void>;
+  
+  // Sales Data operations
+  createSalesData(salesData: InsertSalesData): Promise<SalesData>;
+  getSalesData(vendorId?: string, startDate?: Date, endDate?: Date): Promise<SalesData[]>;
+  importSalesDataBatch(salesDataList: InsertSalesData[]): Promise<SalesData[]>;
+  deleteSalesData(vendorId: string, importJobId?: string): Promise<void>;
+  
+  // Royalty Run operations
+  createRoyaltyRun(run: InsertRoyaltyRun): Promise<RoyaltyRun>;
+  getRoyaltyRun(id: string): Promise<RoyaltyRunWithDetails | undefined>;
+  getRoyaltyRuns(vendorId?: string, status?: string): Promise<RoyaltyRunWithDetails[]>;
+  updateRoyaltyRunStatus(id: string, status: string, totals?: {totalSalesAmount?: number, totalRoyalty?: number, recordsProcessed?: number}): Promise<RoyaltyRun>;
+  deleteRoyaltyRun(id: string): Promise<void>;
+  
+  // Royalty Result operations
+  createRoyaltyResults(results: Omit<RoyaltyResult, 'id' | 'createdAt'>[]): Promise<RoyaltyResult[]>;
+  getRoyaltyResults(runId: string): Promise<RoyaltyResult[]>;
+  deleteRoyaltyResults(runId: string): Promise<void>;
   
   // Contract analysis operations
   createContractAnalysis(analysis: InsertContractAnalysis): Promise<ContractAnalysis>;

@@ -27,6 +27,66 @@ interface ContractAnalysisResult {
   confidence: number;
 }
 
+// =====================================================
+// LICENSE RULE EXTRACTION INTERFACES (NEW EXTENSION)
+// =====================================================
+
+interface RoyaltyRule {
+  ruleType: 'percentage' | 'tiered' | 'minimum_guarantee' | 'cap' | 'deduction' | 'fixed_fee';
+  ruleName: string;
+  description: string;
+  conditions: {
+    productCategories?: string[];
+    territories?: string[];
+    salesVolumeMin?: number;
+    salesVolumeMax?: number;
+    timeperiod?: string;
+    currency?: string;
+  };
+  calculation: {
+    rate?: number; // For percentage rules
+    tiers?: Array<{
+      min: number;
+      max?: number; 
+      rate: number;
+    }>; // For tiered rules
+    amount?: number; // For fixed amounts
+    formula?: string; // For complex calculations
+  };
+  priority: number;
+  sourceSpan: {
+    page?: number;
+    section?: string;
+    text: string;
+  };
+  confidence: number;
+}
+
+interface LicenseRuleExtractionResult {
+  documentType: 'license' | 'royalty_agreement' | 'revenue_share' | 'other';
+  licenseType: string;
+  parties: {
+    licensor: string;
+    licensee: string;
+  };
+  effectiveDate?: string;
+  expirationDate?: string;
+  rules: RoyaltyRule[];
+  currency: string;
+  paymentTerms: string;
+  reportingRequirements: Array<{
+    frequency: string;
+    dueDate: string;
+    description: string;
+  }>;
+  extractionMetadata: {
+    totalRulesFound: number;
+    avgConfidence: number;
+    processingTime: number;
+    ruleComplexity: 'simple' | 'moderate' | 'complex';
+  };
+}
+
 export class GroqService {
   private apiKey: string;
   private baseUrl = 'https://api.groq.com/openai/v1';
@@ -1013,6 +1073,230 @@ export class GroqService {
         anomalies: []
       };
     }
+  }
+
+  // =====================================================
+  // LICENSE RULE EXTRACTION METHODS (NEW EXTENSION)
+  // =====================================================
+
+  async extractLicenseRules(licenseText: string, licenseType?: string): Promise<LicenseRuleExtractionResult> {
+    const startTime = Date.now();
+    
+    const prompt = `
+    You are a specialized AI expert in extracting royalty calculation rules from license agreements and contracts.
+    Your task is to analyze the license document and extract structured, machine-readable royalty calculation rules.
+
+    Document Text:
+    ${licenseText}
+
+    OBJECTIVE: Extract ALL royalty, fee, and payment calculation rules from this license document.
+
+    Look for these types of rules:
+    1. **Percentage Royalties**: "X% of net sales", "Y% of gross revenue"
+    2. **Tiered Royalties**: Different rates for different sales volumes
+    3. **Minimum Guarantees**: "Minimum payment of $X per year"
+    4. **Caps and Limits**: "Maximum royalty of $Y per quarter"
+    5. **Fixed Fees**: "One-time fee of $Z", "Annual license fee of $A"
+    6. **Deductions**: "Less 3% for marketing expenses"
+    7. **Territory-based**: Different rates for different regions
+    8. **Product-based**: Different rates for different product categories
+
+    For EACH rule you find, extract:
+    - Rule type and name
+    - When it applies (conditions)
+    - How to calculate it (rates, amounts, formulas)
+    - Where you found it (page/section reference)
+    - Your confidence level
+
+    Respond with this EXACT JSON structure:
+    {
+      "documentType": "license|royalty_agreement|revenue_share|other",
+      "licenseType": "${licenseType || 'general'}",
+      "parties": {
+        "licensor": "Company name of the party granting the license",
+        "licensee": "Company name of the party receiving the license"
+      },
+      "effectiveDate": "YYYY-MM-DD format if found",
+      "expirationDate": "YYYY-MM-DD format if found", 
+      "rules": [
+        {
+          "ruleType": "percentage|tiered|minimum_guarantee|cap|deduction|fixed_fee",
+          "ruleName": "Descriptive name for this rule",
+          "description": "Plain English description of what this rule does",
+          "conditions": {
+            "productCategories": ["list of products this applies to"],
+            "territories": ["list of territories/regions"],
+            "salesVolumeMin": number_or_null,
+            "salesVolumeMax": number_or_null,
+            "timeperiod": "monthly|quarterly|annually|one-time",
+            "currency": "USD|EUR|etc"
+          },
+          "calculation": {
+            "rate": number_for_percentage_rules,
+            "tiers": [{"min": number, "max": number_or_null, "rate": number}],
+            "amount": number_for_fixed_amounts,
+            "formula": "mathematical_formula_if_complex"
+          },
+          "priority": number_1_to_10_execution_order,
+          "sourceSpan": {
+            "page": page_number_if_available,
+            "section": "section_name_or_number",
+            "text": "exact_text_snippet_where_found"
+          },
+          "confidence": number_0_to_1
+        }
+      ],
+      "currency": "Primary currency mentioned",
+      "paymentTerms": "When payments are due (e.g., within 30 days of quarter end)",
+      "reportingRequirements": [
+        {
+          "frequency": "monthly|quarterly|annually",
+          "dueDate": "when reports are due",
+          "description": "what must be reported"
+        }
+      ],
+      "extractionMetadata": {
+        "totalRulesFound": number_of_rules_found,
+        "avgConfidence": average_confidence_across_all_rules,
+        "processingTime": ${Date.now() - startTime},
+        "ruleComplexity": "simple|moderate|complex"
+      }
+    }
+
+    IMPORTANT GUIDELINES:
+    1. Extract ALL calculation rules, even if they seem minor
+    2. Be specific about conditions (when each rule applies)
+    3. Use exact text snippets in sourceSpan for traceability
+    4. Assign realistic confidence scores (0.7-0.95 for clear rules, 0.4-0.6 for ambiguous ones)
+    5. If you can't find clear parties, rules, or dates, use null values
+    6. Focus on CALCULATION rules, not general contract terms
+
+    Analyze the document thoroughly and extract all royalty calculation rules:
+    `;
+
+    try {
+      const response = await this.makeRequest([
+        {
+          role: 'system',
+          content: 'You are a license agreement analysis expert. Return only valid JSON responses for royalty rule extraction.'
+        },
+        {
+          role: 'user', 
+          content: prompt
+        }
+      ], 0.2); // Lower temperature for more consistent structure
+
+      // Clean and parse the JSON response
+      const cleanedResponse = response.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      const result = JSON.parse(cleanedResponse);
+      
+      // Validate the structure and add processing metadata
+      const processingTime = Date.now() - startTime;
+      result.extractionMetadata.processingTime = processingTime;
+      
+      return result as LicenseRuleExtractionResult;
+
+    } catch (error) {
+      console.error('Error extracting license rules:', error);
+      
+      // Return a fallback structure if parsing fails
+      return {
+        documentType: 'other',
+        licenseType: licenseType || 'unknown',
+        parties: {
+          licensor: 'Unable to extract',
+          licensee: 'Unable to extract'
+        },
+        rules: [],
+        currency: 'USD',
+        paymentTerms: 'Unable to extract',
+        reportingRequirements: [],
+        extractionMetadata: {
+          totalRulesFound: 0,
+          avgConfidence: 0,
+          processingTime: Date.now() - startTime,
+          ruleComplexity: 'simple'
+        }
+      };
+    }
+  }
+
+  async validateExtractedRules(rules: RoyaltyRule[]): Promise<{isValid: boolean, errors: string[], warnings: string[]}> {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    for (const rule of rules) {
+      // Check for required fields
+      if (!rule.ruleName || !rule.ruleType) {
+        errors.push(`Rule missing name or type: ${JSON.stringify(rule)}`);
+      }
+
+      // Validate calculation structure based on rule type
+      if (rule.ruleType === 'percentage' && (!rule.calculation.rate || rule.calculation.rate <= 0)) {
+        errors.push(`Percentage rule "${rule.ruleName}" missing or invalid rate`);
+      }
+
+      if (rule.ruleType === 'tiered' && (!rule.calculation.tiers || rule.calculation.tiers.length === 0)) {
+        errors.push(`Tiered rule "${rule.ruleName}" missing tier structure`);
+      }
+
+      // Check confidence levels
+      if (rule.confidence < 0.3) {
+        warnings.push(`Low confidence rule: "${rule.ruleName}" (${rule.confidence})`);
+      }
+
+      // Validate priority ordering
+      if (rule.priority < 1 || rule.priority > 10) {
+        warnings.push(`Rule "${rule.ruleName}" has unusual priority: ${rule.priority}`);
+      }
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+      warnings
+    };
+  }
+
+  async generateRuleDSL(extractedResult: LicenseRuleExtractionResult): Promise<object> {
+    // Convert extracted rules into a structured DSL format for the rule engine
+    const dsl = {
+      version: "1.0",
+      licenseInfo: {
+        type: extractedResult.licenseType,
+        licensor: extractedResult.parties.licensor,
+        licensee: extractedResult.parties.licensee,
+        effectiveDate: extractedResult.effectiveDate,
+        expirationDate: extractedResult.expirationDate,
+        currency: extractedResult.currency
+      },
+      calculationRules: extractedResult.rules.map(rule => ({
+        id: `rule_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        name: rule.ruleName,
+        type: rule.ruleType,
+        description: rule.description,
+        priority: rule.priority,
+        conditions: rule.conditions,
+        calculation: rule.calculation,
+        metadata: {
+          confidence: rule.confidence,
+          sourceSpan: rule.sourceSpan,
+          extractedAt: new Date().toISOString()
+        }
+      })).sort((a, b) => a.priority - b.priority), // Sort by priority
+      reportingRules: extractedResult.reportingRequirements.map(req => ({
+        frequency: req.frequency,
+        dueDate: req.dueDate,
+        description: req.description
+      })),
+      metadata: {
+        ...extractedResult.extractionMetadata,
+        generatedAt: new Date().toISOString(),
+        dslVersion: "1.0"
+      }
+    };
+
+    return dsl;
   }
 }
 
