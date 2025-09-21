@@ -50,7 +50,6 @@ export default function LicenseDocumentsPage() {
   // Fetch vendors for dropdown
   const { data: vendorsData } = useQuery({
     queryKey: ["/api/vendors"],
-    queryFn: () => apiRequest("/api/vendors"),
   });
 
   const vendors = vendorsData?.vendors || [];
@@ -58,12 +57,6 @@ export default function LicenseDocumentsPage() {
   // Fetch license documents
   const { data: documentsData, isLoading } = useQuery({
     queryKey: ["/api/license-documents", searchQuery],
-    queryFn: () => {
-      const url = searchQuery 
-        ? `/api/license-documents?search=${encodeURIComponent(searchQuery)}`
-        : "/api/license-documents";
-      return apiRequest(url);
-    },
   });
 
   const documents = documentsData?.documents || [];

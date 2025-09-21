@@ -47,17 +47,16 @@ export default function VendorsPage() {
   // Fetch vendors
   const { data: vendorsData, isLoading } = useQuery({
     queryKey: ["/api/vendors", searchQuery],
-    queryFn: () => apiRequest(`/api/vendors?search=${encodeURIComponent(searchQuery)}`),
   });
 
   const vendors = vendorsData?.vendors || [];
 
   // Create vendor mutation
   const createVendorMutation = useMutation({
-    mutationFn: (data: VendorFormData) => apiRequest("/api/vendors", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
+    mutationFn: async (data: VendorFormData) => {
+      const response = await apiRequest("POST", "/api/vendors", data);
+      return response.json();
+    },
     onSuccess: () => {
       toast({
         title: "Success",
