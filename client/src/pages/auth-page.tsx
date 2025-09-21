@@ -71,7 +71,7 @@ export default function AuthPage() {
           <div className="text-center space-y-2">
             <div className="flex items-center justify-center space-x-2 mb-4">
               <img src={cimpleitLogo} alt="Cimpleit Logo" className="w-8 h-8" />
-              <h1 className="text-2xl font-bold">Licence IQ</h1>
+              <h1 className="text-2xl font-bold">LicenceIQ</h1>
             </div>
             <p className="text-muted-foreground">
               Sign in to access your contract management platform

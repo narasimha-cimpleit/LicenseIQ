@@ -12,7 +12,7 @@ export default function Landing() {
         <div className="text-center space-y-8 max-w-4xl mx-auto">
           <div className="flex items-center justify-center space-x-3 mb-8">
             <FileText className="h-12 w-12 text-primary" />
-            <h1 className="text-4xl font-bold">Licence IQ</h1>
+            <h1 className="text-4xl font-bold">LicenceIQ</h1>
           </div>
           
           <h2 className="text-5xl font-bold tracking-tight text-foreground">
