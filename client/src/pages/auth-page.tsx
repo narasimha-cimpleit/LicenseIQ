@@ -266,6 +266,28 @@ export default function AuthPage() {
               </Card>
             </TabsContent>
           </Tabs>
+          
+          {/* OIDC Login Option */}
+          <div className="mt-6 text-center">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+              </div>
+            </div>
+            <div className="mt-4">
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => window.location.href = '/api/login'}
+                data-testid="login-btn"
+              >
+                Log in with Replit
+              </Button>
+            </div>
+          </div>
 
           {/* Footer */}
           <div className="text-center text-xs text-muted-foreground mt-8 pt-4 border-t">
