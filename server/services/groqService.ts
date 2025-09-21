@@ -1178,16 +1178,38 @@ export class GroqService {
       const response = await this.makeRequest([
         {
           role: 'system',
-          content: 'You are a license agreement analysis expert. Return only valid JSON responses for royalty rule extraction.'
+          content: `You are a license agreement analysis expert. You MUST respond with valid JSON ONLY. 
+          Do not include any explanations, markdown formatting, or text outside the JSON structure.
+          Your response must start with { and end with }. No other text is allowed.`
         },
         {
           role: 'user', 
           content: prompt
         }
-      ], 0.2); // Lower temperature for more consistent structure
+      ], 0.1); // Very low temperature for consistent JSON structure
 
-      // Clean and parse the JSON response
-      const cleanedResponse = response.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      console.log('Raw AI response for license rules:', response.substring(0, 200) + '...');
+
+      // More aggressive cleaning of the JSON response
+      let cleanedResponse = response.trim();
+      
+      // Remove any markdown code blocks
+      cleanedResponse = cleanedResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+      
+      // Remove any text before the first {
+      const firstBrace = cleanedResponse.indexOf('{');
+      if (firstBrace > 0) {
+        cleanedResponse = cleanedResponse.substring(firstBrace);
+      }
+      
+      // Remove any text after the last }
+      const lastBrace = cleanedResponse.lastIndexOf('}');
+      if (lastBrace >= 0 && lastBrace < cleanedResponse.length - 1) {
+        cleanedResponse = cleanedResponse.substring(0, lastBrace + 1);
+      }
+      
+      console.log('Cleaned response for JSON parsing:', cleanedResponse.substring(0, 200) + '...');
+      
       const result = JSON.parse(cleanedResponse);
       
       // Validate the structure and add processing metadata

@@ -120,6 +120,13 @@ export default function ContractAnalysis() {
     refetchIntervalInBackground: false,
   });
 
+  // Fetch royalty rules for this contract (NEW)
+  const { data: royaltyRules, isLoading: rulesLoading } = useQuery({
+    queryKey: ["/api/contracts", id, "rules"],
+    enabled: !!id && !!contract,
+    retry: false,
+  });
+
   // Handle unauthorized errors
   if (error && isUnauthorizedError(error as Error)) {
     toast({

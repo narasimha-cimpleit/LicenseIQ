@@ -416,8 +416,9 @@ export const licenseDocuments = pgTable("license_documents", {
 // License RuleSets (versioned)
 export const licenseRuleSets = pgTable("license_rule_sets", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  licenseDocumentId: varchar("license_document_id").notNull().references(() => licenseDocuments.id),
-  vendorId: varchar("vendor_id").notNull().references(() => vendors.id),
+  licenseDocumentId: varchar("license_document_id").references(() => licenseDocuments.id), // Made optional for unified workflow
+  vendorId: varchar("vendor_id").references(() => vendors.id), // Made optional for unified workflow
+  contractId: varchar("contract_id").references(() => contracts.id), // NEW: Support contracts in unified workflow
   version: integer("version").notNull(),
   name: varchar("name").notNull(),
   status: varchar("status").default("draft"), // draft, published, archived
