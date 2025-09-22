@@ -1745,8 +1745,8 @@ async function processContractAsync(contractId: string): Promise<void> {
           licenseType: licenseRules.licenseType || contract.contractType || 'unknown',
           licensor: licenseRules.parties.licensor || 'Unknown',
           licensee: licenseRules.parties.licensee || 'Unknown',
-          effectiveDate: licenseRules.effectiveDate,
-          expirationDate: licenseRules.expirationDate,
+          effectiveDate: licenseRules.effectiveDate ? new Date(licenseRules.effectiveDate) : null,
+          expirationDate: licenseRules.expirationDate ? new Date(licenseRules.expirationDate) : null,
           currency: licenseRules.currency || 'USD',
         };
 
