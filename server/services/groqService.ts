@@ -1210,7 +1210,26 @@ export class GroqService {
       
       console.log('Cleaned response for JSON parsing:', cleanedResponse.substring(0, 200) + '...');
       
-      const result = JSON.parse(cleanedResponse);
+      let result;
+      try {
+        result = JSON.parse(cleanedResponse);
+      } catch (parseError) {
+        console.log('JSON parsing failed, attempting to repair...');
+        // Try to fix common JSON issues
+        let repairedResponse = cleanedResponse
+          .replace(/,\s*}/g, '}')  // Remove trailing commas before }
+          .replace(/,\s*]/g, ']')  // Remove trailing commas before ]
+          .replace(/([a-zA-Z_$][a-zA-Z0-9_$]*)\s*:/g, '"$1":')  // Quote unquoted keys
+          .replace(/:\s*([a-zA-Z_$][a-zA-Z0-9_$]*)\s*([,}])/g, ': "$1"$2');  // Quote unquoted string values
+        
+        try {
+          result = JSON.parse(repairedResponse);
+          console.log('JSON repair successful!');
+        } catch (repairError) {
+          console.log('JSON repair failed, using fallback structure');
+          throw parseError; // Use original error to trigger fallback
+        }
+      }
       
       // Validate the structure and add processing metadata
       const processingTime = Date.now() - startTime;

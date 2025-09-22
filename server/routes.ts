@@ -1739,7 +1739,7 @@ async function processContractAsync(contractId: string): Promise<void> {
         const ruleSetData = {
           contractId: contractId, // Link to contract instead of licenseDocumentId
           version: 1,
-          name: `${licenseRules.licenseType || 'License'} Rules - ${contract.originalName || 'Contract'}`,
+          name: `${licenseRules.licenseType || 'License'} Rules - ${(contract.originalName || 'Contract').replace(/&/g, 'and').replace(/[^\w\s-]/g, '').substring(0, 100)}`,
           status: 'draft' as const,
           effectiveDate: licenseRules.effectiveDate ? new Date(licenseRules.effectiveDate) : null,
           expirationDate: licenseRules.expirationDate ? new Date(licenseRules.expirationDate) : null,
