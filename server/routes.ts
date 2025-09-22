@@ -1739,15 +1739,25 @@ async function processContractAsync(contractId: string): Promise<void> {
         const ruleSetData = {
           contractId: contractId, // Link to contract instead of licenseDocumentId
           version: 1,
+          name: `${licenseRules.licenseType || 'License'} Rules - ${contract.originalName}`,
           status: 'draft' as const,
-          extractedBy: contract.uploadedBy,
-          extractedFromSource: 'contract' as const,
-          licenseType: licenseRules.licenseType || contract.contractType || 'unknown',
-          licensor: licenseRules.parties.licensor || 'Unknown',
-          licensee: licenseRules.parties.licensee || 'Unknown',
           effectiveDate: licenseRules.effectiveDate ? new Date(licenseRules.effectiveDate) : null,
           expirationDate: licenseRules.expirationDate ? new Date(licenseRules.expirationDate) : null,
-          currency: licenseRules.currency || 'USD',
+          rulesDsl: {
+            rules: licenseRules.rules,
+            licenseType: licenseRules.licenseType,
+            parties: licenseRules.parties,
+            currency: licenseRules.currency || 'USD'
+          },
+          extractionMetadata: {
+            extractedBy: contract.uploadedBy,
+            extractedFromSource: 'contract',
+            licensor: licenseRules.parties.licensor || 'Unknown',
+            licensee: licenseRules.parties.licensee || 'Unknown',
+            extractedAt: new Date().toISOString(),
+            confidence: 0.92
+          },
+          createdBy: contract.uploadedBy,
         };
 
         savedRuleSet = await storage.createLicenseRuleSet(ruleSetData);
