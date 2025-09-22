@@ -33,7 +33,8 @@ import {
   Clock,
   User,
   Calendar,
-  Trash2
+  Trash2,
+  Calculator
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
