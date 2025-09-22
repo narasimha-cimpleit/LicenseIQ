@@ -5,10 +5,10 @@ This guide provides a comprehensive walkthrough for deploying LicenseIQ to Azure
 
 ## Table of Contents
 1. [Prerequisites](#prerequisites)
-2. [Azure Resource Setup](#azure-resource-setup)
-3. [PostgreSQL Flexible Server Setup](#postgresql-flexible-server-setup)
-4. [Application Configuration](#application-configuration)
-5. [Deployment Steps](#deployment-steps)
+2. [Deployment Options](#deployment-options)
+3. [Azure Portal Deployment](#azure-portal-deployment)
+4. [Azure CLI Deployment](#azure-cli-deployment)
+5. [Application Configuration](#application-configuration)
 6. [Environment Variables](#environment-variables)
 7. [Post-Deployment Verification](#post-deployment-verification)
 8. [Troubleshooting](#troubleshooting)
@@ -16,6 +16,12 @@ This guide provides a comprehensive walkthrough for deploying LicenseIQ to Azure
 ## Prerequisites
 
 ### Required Tools
+**For Portal Deployment:**
+- Azure subscription with appropriate permissions
+- Web browser to access Azure Portal
+- Git repository access (for code deployment)
+
+**For CLI Deployment:**
 - Azure CLI installed and configured
 - Node.js 20+ (for local testing)
 - Git repository access
@@ -39,7 +45,251 @@ az login
 az account set --subscription "your-subscription-id"
 ```
 
-## Azure Resource Setup
+## Deployment Options
+
+This guide provides two deployment methods:
+
+### **Method 1: Azure Portal (GUI-based)**
+- **Best for:** Beginners, visual learners, one-time deployments
+- **Advantages:** User-friendly interface, guided setup, no CLI required
+- **Time:** 45-60 minutes (guided setup)
+
+### **Method 2: Azure CLI (Command-line)**
+- **Best for:** DevOps, automation, experienced users
+- **Advantages:** Scriptable, repeatable, faster for multiple deployments
+- **Time:** 20-30 minutes (if familiar with CLI)
+
+---
+
+## Azure Portal Deployment
+
+### Step 1: Create Resource Group
+
+1. **Navigate to Azure Portal**
+   - Open [portal.azure.com](https://portal.azure.com)
+   - Sign in with your Azure account
+
+2. **Create Resource Group**
+   - Click **"Resource groups"** in the left sidebar
+   - Click **"+ Create"**
+   - Fill in the details:
+     - **Subscription:** Select your subscription
+     - **Resource group name:** `licenseiq-prod`
+     - **Region:** `East US` (or your preferred region)
+   - Click **"Review + create"** → **"Create"**
+
+### Step 2: Create PostgreSQL Flexible Server
+
+1. **Navigate to PostgreSQL Creation**
+   - In the Azure Portal, click **"+ Create a resource"**
+   - Search for **"Azure Database for PostgreSQL Flexible Server"**
+   - Click **"Create"**
+
+2. **Configure Basic Settings**
+   - **Subscription:** Your subscription
+   - **Resource group:** `licenseiq-prod`
+   - **Server name:** `licenseiq-db-server` (must be globally unique)
+   - **Region:** Same as resource group
+   - **PostgreSQL version:** `14`
+   - **Workload type:** `Development` (for testing) or `Production` (for live use)
+
+3. **Configure Authentication**
+   - **Authentication method:** `PostgreSQL authentication only`
+   - **Admin username:** `licenseiqadmin`
+   - **Password:** Create a strong password (save this!)
+   - **Confirm password:** Re-enter password
+
+4. **Configure Networking**
+   - **Connectivity method:** `Public access (allowed IP addresses)`
+   - **Firewall rules:**
+     - Check **"Allow public access from any Azure service within Azure to this server"**
+     - Add your current IP address for management
+   - **Connection security:** Keep SSL enforcement enabled
+
+5. **Additional Settings**
+   - **Database name:** `licenseiq` (leave blank to create later)
+   - **Backup retention:** `7 days` (or adjust as needed)
+   - **Compute + storage:** Keep defaults for Development workload
+
+6. **Review and Create**
+   - Review all settings
+   - Click **"Create"**
+   - Wait for deployment to complete (5-10 minutes)
+
+### Step 3: Configure Database
+
+1. **Access the PostgreSQL Server**
+   - Go to your PostgreSQL server resource
+   - Click **"Databases"** in the left menu
+   - Click **"+ Add"**
+   - **Database name:** `licenseiq`
+   - Click **"Save"**
+
+2. **Configure Firewall Rules** (if needed)
+   - Go to **"Networking"** in the left menu
+   - Under **"Firewall rules"**, ensure these rules exist:
+     - **AllowAllAzureServicesAndResourcesWithinAzureIps:** `0.0.0.0` to `0.0.0.0`
+     - Your IP address for management access
+   - Click **"Save"** if you made changes
+
+### Step 4: Create App Service Plan
+
+1. **Navigate to App Service Plans**
+   - Click **"+ Create a resource"**
+   - Search for **"App Service Plan"**
+   - Click **"Create"**
+
+2. **Configure App Service Plan**
+   - **Subscription:** Your subscription
+   - **Resource group:** `licenseiq-prod`
+   - **Name:** `licenseiq-app-plan`
+   - **Operating System:** `Linux`
+   - **Region:** Same as your resource group
+   - **Pricing Tier:** Click **"Change size"**
+     - For **Production:** Select `P1V3` (Production)
+     - For **Development:** Select `B1` (Basic)
+   - Click **"Review + create"** → **"Create"**
+
+### Step 5: Create Web App
+
+1. **Navigate to Web App Creation**
+   - Click **"+ Create a resource"**
+   - Search for **"Web App"**
+   - Click **"Create"**
+
+2. **Configure Basic Settings**
+   - **Subscription:** Your subscription
+   - **Resource group:** `licenseiq-prod`
+   - **Name:** `licenseiq-app` (must be globally unique)
+   - **Publish:** `Code`
+   - **Runtime stack:** `Node 20 LTS`
+   - **Operating System:** `Linux`
+   - **Region:** Same as resource group
+   - **App Service Plan:** Select the plan you created (`licenseiq-app-plan`)
+
+3. **Configure Deployment** (Optional)
+   - **GitHub Actions settings:** Can be configured later
+   - **Continuous deployment:** Enable if you want automatic deployments
+
+4. **Configure Monitoring**
+   - **Enable Application Insights:** `Yes`
+   - **Application Insights:** Create new or use existing
+
+5. **Review and Create**
+   - Review all settings
+   - Click **"Create"**
+   - Wait for deployment (3-5 minutes)
+
+### Step 6: Configure Web App Settings
+
+1. **Access Your Web App**
+   - Go to your Web App resource
+   - In the left menu, go to **"Settings"** → **"Configuration"**
+
+2. **Set Application Settings**
+   Click **"+ New application setting"** for each of these:
+
+   ```
+   NODE_ENV = production
+   PORT = 8080
+   WEBSITE_NODE_DEFAULT_VERSION = 20.11.0
+   DATABASE_URL = postgresql://licenseiqadmin:YOUR_PASSWORD@licenseiq-db-server.postgres.database.azure.com:5432/licenseiq?sslmode=require
+   SESSION_SECRET = your-super-secure-session-secret-here
+   GROQ_API_KEY = your-groq-api-key-here
+   ```
+
+   **Important:** Replace `YOUR_PASSWORD` with your actual PostgreSQL password!
+
+3. **Configure Startup Command**
+   - In the **"General settings"** tab
+   - **Startup Command:** `npm start`
+   - Click **"Save"**
+
+### Step 7: Enable Security Features
+
+1. **Enable HTTPS Only**
+   - In your Web App, go to **"Settings"** → **"Configuration"**
+   - **General settings** tab
+   - **HTTPS Only:** `On`
+   - Click **"Save"**
+
+2. **Enable Managed Identity**
+   - Go to **"Settings"** → **"Identity"**
+   - **System assigned** tab
+   - **Status:** `On`
+   - Click **"Save"**
+
+### Step 8: Deploy Your Code
+
+**Option A: GitHub Integration**
+1. **Connect GitHub Repository**
+   - Go to **"Deployment"** → **"Deployment Center"**
+   - **Source:** `GitHub`
+   - Authorize and select your repository
+   - **Branch:** `main`
+   - **Build provider:** `GitHub Actions`
+   - Click **"Save"**
+
+**Option B: Local Git Deployment**
+1. **Enable Local Git**
+   - Go to **"Deployment"** → **"Deployment Center"**
+   - **Source:** `Local Git`
+   - Click **"Save"**
+   - Copy the **Git Clone URL**
+
+2. **Deploy via Git**
+   ```bash
+   # Add Azure as remote
+   git remote add azure <Git-Clone-URL>
+   
+   # Deploy
+   git push azure main
+   ```
+
+**Option C: ZIP Deployment**
+1. **Prepare ZIP File**
+   - Build your application locally: `npm run build`
+   - Create ZIP file excluding `node_modules` and `.git`
+
+2. **Deploy ZIP**
+   - Go to **"Development Tools"** → **"Advanced Tools"** → **"Go"**
+   - Navigate to **"Tools"** → **"ZIP Push Deploy"**
+   - Drag and drop your ZIP file
+
+### Step 9: Setup Database Schema
+
+1. **Access Kudu Console**
+   - In your Web App, go to **"Development Tools"** → **"Advanced Tools"**
+   - Click **"Go"** (opens Kudu)
+   - Go to **"Debug console"** → **"CMD"**
+
+2. **Navigate to Application Directory**
+   ```bash
+   cd site/wwwroot
+   ```
+
+3. **Run Database Migration**
+   ```bash
+   npm run db:push --force
+   ```
+
+### Step 10: Configure Application Insights
+
+1. **Access Application Insights**
+   - Go to your Application Insights resource
+   - Copy the **Instrumentation Key**
+
+2. **Add to Web App Settings**
+   - Go back to your Web App
+   - **Configuration** → **Application settings**
+   - Add: `APPINSIGHTS_INSTRUMENTATIONKEY = your-instrumentation-key`
+   - Click **"Save"**
+
+---
+
+## Azure CLI Deployment
+
+### CLI Resource Setup
 
 ### 1. Create Resource Group
 ```bash
@@ -64,9 +314,9 @@ az appservice plan create \
   --is-linux
 ```
 
-## PostgreSQL Flexible Server Setup
+### CLI PostgreSQL Flexible Server Setup
 
-### 1. Create PostgreSQL Flexible Server
+### 1. Create PostgreSQL Flexible Server (CLI)
 ```bash
 # Create PostgreSQL Flexible Server
 az postgres flexible-server create \
@@ -82,7 +332,7 @@ az postgres flexible-server create \
   --public-access 0.0.0.0
 ```
 
-### 2. Configure Database
+### 2. Configure Database (CLI)
 ```bash
 # Create application database
 az postgres flexible-server db create \
@@ -99,7 +349,7 @@ az postgres flexible-server firewall-rule create \
   --end-ip-address 0.0.0.0
 ```
 
-### 3. Get Database Connection String
+### 3. Get Database Connection String (CLI)
 ```bash
 # Get connection details
 az postgres flexible-server show \
@@ -108,6 +358,8 @@ az postgres flexible-server show \
   --query "fullyQualifiedDomainName" \
   --output tsv
 ```
+
+---
 
 ## Application Configuration
 
@@ -187,7 +439,7 @@ WEBSITES_ENABLE_APP_SERVICE_STORAGE=false
 WEBSITE_NODE_DEFAULT_VERSION=20.11.0
 ```
 
-## Deployment Steps
+## CLI Deployment Steps
 
 ### 1. Create Web App
 ```bash
@@ -256,7 +508,7 @@ az webapp deployment source config-zip \
   --src licenseiq-deploy.zip
 ```
 
-### 4. Database Schema Migration
+### 4. Database Schema Migration (CLI)
 ```bash
 # SSH into the app service for database setup
 az webapp ssh --resource-group $RESOURCE_GROUP --name $APP_NAME
