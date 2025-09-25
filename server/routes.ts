@@ -3,13 +3,12 @@ import { createServer, type Server } from "http";
 import multer from "multer";
 import fs from "fs";
 import path from "path";
-import { randomUUID } from "crypto";
+import crypto, { randomUUID } from "crypto";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, hashPassword } from "./auth";
 import { fileService } from "./services/fileService";
 import { groqService } from "./services/groqService";
-import { RulesEngine } from "./services/rulesEngine";
-import type { RoyaltyCalculationInput } from "./services/rulesEngine";
+import { registerRulesRoutes } from "./rulesRoutes";
 import { 
   insertContractSchema, 
   insertContractAnalysisSchema, 
@@ -2159,8 +2158,9 @@ IMPORTANT: Add these routes inside the registerRoutes function before the return
 
 */
 
+  /*
   // =====================================================
-  // RULES ENGINE API ENDPOINTS
+  // RULES ENGINE API ENDPOINTS (TEMPORARILY DISABLED)
   // =====================================================
 
   // Get royalty rules for a contract
@@ -2447,6 +2447,10 @@ IMPORTANT: Add these routes inside the registerRoutes function before the return
       res.status(500).json({ message: 'Failed to calculate royalties' });
     }
   });
+  */
+
+  // Register rules engine routes
+  registerRulesRoutes(app);
 
   // Start the HTTP server
   const server = createServer(app);
