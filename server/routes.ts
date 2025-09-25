@@ -199,8 +199,10 @@ async function processContractAnalysis(contractId: string, filePath: string) {
   try {
     console.log(`Starting analysis for contract ${contractId}`);
 
-    // Extract text from file
-    const extractedText = await fileService.extractTextFromFile(filePath, 'pdf');
+    // Extract text from file based on file type
+    const contract = await storage.getContract(contractId);
+    const mimeType = contract?.fileType || 'application/pdf';
+    const extractedText = await fileService.extractTextFromFile(filePath, mimeType);
     
     // Analyze with Groq AI
     const aiAnalysis = await groqService.analyzeContract(extractedText);
@@ -208,8 +210,11 @@ async function processContractAnalysis(contractId: string, filePath: string) {
     // Save analysis
     const analysisData = insertContractAnalysisSchema.parse({
       contractId,
-      extractedText,
-      ...aiAnalysis
+      summary: aiAnalysis.summary,
+      keyTerms: aiAnalysis.keyTerms,
+      riskAnalysis: aiAnalysis.riskAnalysis,
+      insights: aiAnalysis.insights,
+      confidence: aiAnalysis.confidence.toString() // Convert to string for decimal field
     });
 
     await storage.createContractAnalysis(analysisData);
