@@ -722,11 +722,11 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
       {/* Rule Edit Dialog */}
       {editingRule && (
         <Dialog open={!!editingRule} onOpenChange={(open) => { if (!open) { setEditingRule(null); setLocalEditRule(null); } }}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
             <DialogHeader className="pb-4">
               <DialogTitle className="text-xl font-semibold">Edit Royalty Rule</DialogTitle>
             </DialogHeader>
-            <div className="pr-2">
+            <div className="pr-2" onClick={(e) => e.stopPropagation()}>
               {renderRuleEditor(editingRule.rule, (updatedRule) => 
                 updateRuleMutation.mutate({
                   ruleSetId: editingRule.ruleSetId,
@@ -742,11 +742,11 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
       {/* Add Rule Dialog */}
       {isAddingRule && (
         <Dialog open={!!isAddingRule} onOpenChange={(open) => { if (!open) { setIsAddingRule(null); setLocalEditRule(null); } }}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
             <DialogHeader className="pb-4">
               <DialogTitle className="text-xl font-semibold">Add New Royalty Rule</DialogTitle>
             </DialogHeader>
-            <div className="pr-2">
+            <div className="pr-2" onClick={(e) => e.stopPropagation()}>
               {renderRuleEditor(
                 {
                   id: '',

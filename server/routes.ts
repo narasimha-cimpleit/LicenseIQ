@@ -144,6 +144,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Analytics API endpoints
+  app.get('/api/analytics/metrics', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const userRole = (await storage.getUser(userId))?.role;
+      const canViewAll = userRole === 'admin' || userRole === 'owner';
+      
+      // Add caching (private for user-specific data)
+      res.set('Cache-Control', 'private, max-age=300');
+      
+      const metrics = await storage.getContractMetrics(
+        canViewAll ? undefined : userId
+      );
+
+      res.json(metrics);
+    } catch (error) {
+      console.error('Error fetching metrics:', error);
+      res.status(500).json({ message: 'Failed to fetch metrics' });
+    }
+  });
+
   // Get contracts list
   app.get('/api/contracts', isAuthenticated, async (req: any, res: Response) => {
     try {
