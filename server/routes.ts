@@ -343,6 +343,7 @@ async function processLicenseRules(contractId: string, extractionResult: any) {
 
     // Create license rule set
     const ruleSet = await storage.createLicenseRuleSet({
+      contractId: contractId, // FIXED: Link to the contract!
       name: extractionResult.licenseType || 'Extracted License Rules',
       version: 1,
       rulesDsl: {
