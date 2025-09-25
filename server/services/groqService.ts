@@ -203,6 +203,8 @@ Find tier-based rules like:
 - "Tier 2 — Perennials: $1.10 per unit" 
 - Volume thresholds and tier conditions
 
+IMPORTANT: ruleType must be one of: "percentage", "tiered", "minimum_guarantee", "cap", "deduction", "fixed_fee"
+
 Return JSON array of rules:
 [
   {
@@ -237,7 +239,9 @@ Return only JSON array.`;
       const cleanResponse = response.trim();
       const jsonMatch = cleanResponse.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
+        // Fix Infinity values that break JSON parsing
+        const fixedJson = jsonMatch[0].replace(/:\s*Infinity/g, ': 999999999');
+        return JSON.parse(fixedJson);
       }
       return [];
     } catch (error) {
@@ -258,11 +262,13 @@ Find rules like:
 - Calculation formulas
 - Container size multipliers
 
+IMPORTANT: ruleType must be one of: "percentage", "tiered", "minimum_guarantee", "cap", "deduction", "fixed_fee"
+
 Return JSON array of rules:
 [
   {
     "ruleType": "minimum_guarantee",
-    "ruleName": "Annual Minimum Guarantee",
+    "ruleName": "Annual Minimum Guarantee", 
     "description": "minimum payment required annually",
     "conditions": {"timeperiod": "annually", "currency": "USD"},
     "calculation": {"amount": 85000, "formula": "minimum annual payment"},
@@ -284,7 +290,9 @@ Return only JSON array.`;
       const cleanResponse = response.trim();
       const jsonMatch = cleanResponse.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
+        // Fix Infinity values that break JSON parsing
+        const fixedJson = jsonMatch[0].replace(/:\s*Infinity/g, ': 999999999');
+        return JSON.parse(fixedJson);
       }
       return [];
     } catch (error) {
@@ -331,7 +339,9 @@ Return only JSON array.`;
       const cleanResponse = response.trim();
       const jsonMatch = cleanResponse.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
+        // Fix Infinity values that break JSON parsing
+        const fixedJson = jsonMatch[0].replace(/:\s*Infinity/g, ': 999999999');
+        return JSON.parse(fixedJson);
       }
       return [];
     } catch (error) {
