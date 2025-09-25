@@ -93,7 +93,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fileName: req.file.filename,
         fileSize: req.file.size,
         filePath: req.file.path,
-        mimeType: req.file.mimetype,
+        fileType: req.file.mimetype,
         uploadedBy: req.user.id,
         status: 'processing'
       });
@@ -200,7 +200,7 @@ async function processContractAnalysis(contractId: string, filePath: string) {
     console.log(`Starting analysis for contract ${contractId}`);
 
     // Extract text from file
-    const extractedText = await fileService.extractTextFromFile(filePath);
+    const extractedText = await fileService.extractTextFromFile(filePath, 'pdf');
     
     // Analyze with Groq AI
     const aiAnalysis = await groqService.analyzeContract(extractedText);
