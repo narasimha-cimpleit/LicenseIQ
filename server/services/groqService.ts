@@ -277,26 +277,50 @@ export class GroqService {
   }
 
   private async makeRequest(messages: Array<{ role: string; content: string }>, temperature = 0.1): Promise<string> {
-    const response = await fetch(`${this.baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
-        messages,
-        temperature,
-        max_tokens: 4000,
-      }),
-    });
+    let lastError: Error | undefined;
+    
+    // Retry logic for rate limits
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const response = await fetch(`${this.baseUrl}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'llama-3.1-8b-instant',
+            messages,
+            temperature,
+            max_tokens: 4000,
+          }),
+        });
 
-    if (!response.ok) {
-      throw new Error(`Groq API error: ${response.status} ${response.statusText}`);
+        if (response.status === 429) {
+          // Rate limit - wait and retry
+          const waitTime = Math.pow(2, attempt) * 1000; // Exponential backoff
+          console.log(`🔄 Groq rate limit hit (attempt ${attempt}/3), waiting ${waitTime}ms...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          continue;
+        }
+
+        if (!response.ok) {
+          throw new Error(`Groq API error: ${response.status} ${response.statusText}`);
+        }
+
+        const data: GroqResponse = await response.json();
+        return data.choices[0]?.message?.content || '';
+        
+      } catch (error) {
+        lastError = error as Error;
+        if (attempt < 3) {
+          console.log(`⚠️ Groq request failed (attempt ${attempt}/3):`, error.message);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
     }
-
-    const data: GroqResponse = await response.json();
-    return data.choices[0]?.message?.content || '';
+    
+    throw lastError || new Error('Unknown error occurred');
   }
 
   async analyzeContract(contractText: string): Promise<ContractAnalysisResult> {

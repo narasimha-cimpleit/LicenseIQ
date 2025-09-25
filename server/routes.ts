@@ -286,4 +286,5 @@ async function processLicenseRules(contractId: string, extractionResult: any) {
   }
 }
 
+
 export default registerRoutes;
