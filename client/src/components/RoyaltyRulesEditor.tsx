@@ -357,7 +357,7 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t">
-          <Button variant="outline" onClick={() => { setEditingRule(null); setLocalEditRule(null); }}>Cancel</Button>
+          <Button variant="outline" onClick={() => { setEditingRule(null); setLocalEditRule(null); }} data-testid="button-cancel-edit">Cancel</Button>
           <Button
             onClick={() => onSave(currentRule)}
             disabled={updateRuleMutation.isPending}
@@ -722,7 +722,7 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
       {/* Rule Edit Dialog */}
       {editingRule && (
         <Dialog open={!!editingRule} onOpenChange={(open) => { if (!open) { setEditingRule(null); setLocalEditRule(null); } }}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader className="pb-4">
               <DialogTitle className="text-xl font-semibold">Edit Royalty Rule</DialogTitle>
             </DialogHeader>
@@ -742,7 +742,7 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
       {/* Add Rule Dialog */}
       {isAddingRule && (
         <Dialog open={!!isAddingRule} onOpenChange={(open) => { if (!open) { setIsAddingRule(null); setLocalEditRule(null); } }}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader className="pb-4">
               <DialogTitle className="text-xl font-semibold">Add New Royalty Rule</DialogTitle>
             </DialogHeader>
