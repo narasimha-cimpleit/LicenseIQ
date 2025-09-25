@@ -323,8 +323,8 @@ async function processLicenseRules(contractId: string, extractionResult: any) {
         paymentTerms: extractionResult.paymentTerms,
         rules: extractionResult.rules
       },
-      effectiveDate: extractionResult.effectiveDate,
-      expirationDate: extractionResult.expirationDate,
+      effectiveDate: extractionResult.effectiveDate ? new Date(extractionResult.effectiveDate) : null,
+      expirationDate: extractionResult.expirationDate ? new Date(extractionResult.expirationDate) : null,
       extractionMetadata: {
         documentType: extractionResult.documentType,
         extractionMetadata: extractionResult.extractionMetadata,
