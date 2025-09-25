@@ -228,7 +228,7 @@ async function processContractAnalysis(contractId: string, filePath: string) {
     await storage.createContractAnalysis(analysisData);
 
     // Update contract status
-    await storage.updateContractStatus(contractId, 'completed');
+    await storage.updateContractStatus(contractId, 'analyzed');
 
     console.log(`Analysis completed for contract ${contractId}`);
 
