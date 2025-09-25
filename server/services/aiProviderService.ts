@@ -46,7 +46,7 @@ export interface AIProvider {
 
 export class AIProviderService {
   private groqService: GroqService;
-  private openaiService: OpenAIService;
+  private openaiService: OpenAIService | null = null;
   private groqFailureCount = 0;
   private groqCooldownUntil: number = 0;
   private readonly MAX_FAILURES = 3;
@@ -54,13 +54,24 @@ export class AIProviderService {
 
   constructor() {
     this.groqService = new GroqService();
-    this.openaiService = new OpenAIService();
+    // Initialize OpenAI service lazily only when needed
+  }
+
+  private getOpenAIService(): OpenAIService {
+    if (!this.openaiService) {
+      try {
+        this.openaiService = new OpenAIService();
+      } catch (error) {
+        throw new Error('OpenAI service not available - API key not configured. Please add OPENAI_API_KEY to environment variables for backup extraction.');
+      }
+    }
+    return this.openaiService;
   }
 
   async analyzeContract(contractText: string): Promise<ContractAnalysisResult> {
     return this.executeWithFailover(
       () => this.groqService.analyzeContract(contractText),
-      () => this.openaiService.analyzeContract(contractText),
+      () => this.getOpenAIService().analyzeContract(contractText),
       'analyzeContract'
     );
   }
@@ -71,7 +82,7 @@ export class AIProviderService {
     
     return this.executeWithFailover(
       () => this.groqService.extractDetailedRoyaltyRules(royaltyRelevantText),
-      () => this.openaiService.extractDetailedRoyaltyRules(royaltyRelevantText),
+      () => this.getOpenAIService().extractDetailedRoyaltyRules(royaltyRelevantText),
       'extractDetailedRoyaltyRules'
     );
   }
@@ -116,7 +127,12 @@ export class AIProviderService {
         
         // Fallback to OpenAI
         console.log(`🔄 Falling back to OpenAI for ${operation}`);
-        return fallbackFn();
+        try {
+          return fallbackFn();
+        } catch (openaiError) {
+          console.error(`❌ OpenAI fallback also failed: ${openaiError}`);
+          throw new Error(`Both Groq and OpenAI failed. Groq: ${errorMsg}, OpenAI: ${openaiError}`);
+        }
       }
       
       // For non-retriable errors, throw immediately

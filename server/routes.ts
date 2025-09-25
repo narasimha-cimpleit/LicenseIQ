@@ -7,7 +7,7 @@ import crypto, { randomUUID } from "crypto";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, hashPassword } from "./auth";
 import { fileService } from "./services/fileService";
-import { AIProviderService } from "./services/aiProviderService";
+import { groqService } from "./services/groqService";
 import { registerRulesRoutes } from "./rulesRoutes";
 import { 
   insertContractSchema, 
@@ -205,10 +205,13 @@ async function processContractAnalysis(contractId: string, filePath: string) {
     const mimeType = contract?.fileType || 'application/pdf';
     const extractedText = await fileService.extractTextFromFile(filePath, mimeType);
     
-    // Analyze with AI (Groq primary, OpenAI fallback) - both general contract analysis and detailed rules extraction
-    const aiProviderService = new AIProviderService();
-    const aiAnalysis = await aiProviderService.analyzeContract(extractedText);
-    const detailedRules = await aiProviderService.extractDetailedRoyaltyRules(extractedText);
+    // Pre-filter text to royalty-relevant sections to reduce Groq API load
+    const royaltyRelevantText = extractRoyaltyRelevantSections(extractedText);
+    console.log(`📝 Filtered text: ${royaltyRelevantText.length} chars (from ${extractedText.length})`);
+    
+    // Analyze with Groq AI with smart rate limiting
+    const aiAnalysis = await groqService.analyzeContract(royaltyRelevantText);
+    const detailedRules = await groqService.extractDetailedRoyaltyRules(royaltyRelevantText);
     
     // Log extracted rules for debugging
     console.log(`📋 Extracted ${detailedRules.rules.length} detailed royalty rules from contract ${contractId}`);
@@ -239,6 +242,64 @@ async function processContractAnalysis(contractId: string, filePath: string) {
     await storage.updateContractStatus(contractId, finalStatus);
 
     console.log(`Analysis completed for contract ${contractId}`);
+
+// Helper function to extract royalty-relevant sections
+function extractRoyaltyRelevantSections(contractText: string): string {
+  const royaltyKeywords = [
+    'royalty', 'royalties', 'tier', 'tier 1', 'tier 2', 'tier 3', 
+    'per unit', 'per-unit', 'minimum', 'guarantee', 'payment', 'payments',
+    'seasonal', 'spring', 'fall', 'holiday', 'premium', 'organic',
+    'container', 'multiplier', 'schedule', 'exhibit', 'calculation',
+    'territory', 'primary', 'secondary', 'volume', 'threshold',
+    'ornamental', 'perennials', 'shrubs', 'roses', 'hydrangea',
+    'licensee shall pay', 'per plant', 'quarterly payment'
+  ];
+
+  const lines = contractText.split('\n');
+  const relevantLines: string[] = [];
+  const contextWindow = 3; // Include 3 lines before and after relevant content
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].toLowerCase();
+    
+    if (royaltyKeywords.some(keyword => line.includes(keyword))) {
+      // Add context lines before
+      for (let j = Math.max(0, i - contextWindow); j < i; j++) {
+        if (!relevantLines.includes(lines[j])) {
+          relevantLines.push(lines[j]);
+        }
+      }
+      
+      // Add the relevant line
+      if (!relevantLines.includes(lines[i])) {
+        relevantLines.push(lines[i]);
+      }
+      
+      // Add context lines after
+      for (let j = i + 1; j <= Math.min(lines.length - 1, i + contextWindow); j++) {
+        if (!relevantLines.includes(lines[j])) {
+          relevantLines.push(lines[j]);
+        }
+      }
+    }
+  }
+
+  const filteredText = relevantLines.join('\n');
+  
+  // If filtered text is too short, use first part of original (but truncated)
+  if (filteredText.length < 1000) {
+    console.log(`📝 Filtered text too short (${filteredText.length}), using truncated original`);
+    return contractText.substring(0, 6000); // Smaller truncation for Groq
+  }
+  
+  // If filtered text is too long, truncate it
+  if (filteredText.length > 8000) {
+    console.log(`📝 Filtered text too long (${filteredText.length}), truncating`);
+    return filteredText.substring(0, 8000);
+  }
+  
+  return filteredText;
+}
 
   } catch (error) {
     console.error(`Analysis failed for contract ${contractId}:`, error);

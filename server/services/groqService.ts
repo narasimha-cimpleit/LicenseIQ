@@ -103,6 +103,245 @@ export class GroqService {
   // =====================================================
   
   async extractDetailedRoyaltyRules(contractText: string): Promise<LicenseRuleExtractionResult> {
+    console.log(`🚀 Starting multi-request royalty extraction...`);
+    
+    // Step 1: Extract basic contract info (small request)
+    const basicInfo = await this.extractBasicContractInfo(contractText);
+    await this.delay(2000); // 2 second delay between requests
+    
+    // Step 2: Extract tier-based rules (focused request)
+    const tierRules = await this.extractTierBasedRules(contractText);
+    await this.delay(2000);
+    
+    // Step 3: Extract payment and calculation rules (focused request)  
+    const paymentRules = await this.extractPaymentCalculationRules(contractText);
+    await this.delay(2000);
+    
+    // Step 4: Extract special adjustments (focused request)
+    const adjustmentRules = await this.extractSpecialAdjustments(contractText);
+    
+    // Combine all results
+    const allRules = [...tierRules, ...paymentRules, ...adjustmentRules];
+    
+    console.log(`✅ Multi-request extraction complete: ${allRules.length} rules found`);
+    
+    return {
+      documentType: basicInfo.documentType,
+      licenseType: basicInfo.licenseType,
+      parties: basicInfo.parties,
+      effectiveDate: basicInfo.effectiveDate,
+      expirationDate: basicInfo.expirationDate,
+      rules: allRules,
+      currency: basicInfo.currency,
+      paymentTerms: basicInfo.paymentTerms,
+      reportingRequirements: basicInfo.reportingRequirements,
+      extractionMetadata: {
+        totalRulesFound: allRules.length,
+        avgConfidence: allRules.length > 0 
+          ? allRules.reduce((sum, rule) => sum + rule.confidence, 0) / allRules.length
+          : 0.8,
+        processingTime: 12, // Estimated for multi-request
+        ruleComplexity: allRules.length > 5 ? 'complex' : allRules.length > 2 ? 'moderate' : 'simple'
+      }
+    };
+  }
+
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  private async extractBasicContractInfo(contractText: string): Promise<any> {
+    const prompt = `Extract basic contract information from this licensing agreement. Focus only on basic details.
+
+Contract Text:
+${contractText.substring(0, 3000)}
+
+Return JSON with these fields only:
+{
+  "documentType": "license",
+  "licenseType": "specific type found",
+  "parties": { "licensor": "name", "licensee": "name" },
+  "effectiveDate": "date or null",
+  "expirationDate": "date or null", 
+  "currency": "USD",
+  "paymentTerms": "quarterly/monthly/etc",
+  "reportingRequirements": []
+}
+
+Return only valid JSON.`;
+
+    try {
+      const response = await this.makeRequest([
+        { role: 'system', content: 'Extract basic contract info. Return only JSON.' },
+        { role: 'user', content: prompt }
+      ], 0.1, 1000); // Reduced tokens
+      
+      return JSON.parse(response.trim());
+    } catch (error) {
+      console.error('Basic info extraction failed:', error);
+      return {
+        documentType: 'license',
+        licenseType: 'License Agreement',
+        parties: { licensor: 'Not specified', licensee: 'Not specified' },
+        effectiveDate: null,
+        expirationDate: null,
+        currency: 'USD',
+        paymentTerms: 'Not specified',
+        reportingRequirements: []
+      };
+    }
+  }
+
+  private async extractTierBasedRules(contractText: string): Promise<RoyaltyRule[]> {
+    const prompt = `Extract TIER-BASED royalty rules from this contract. Look for Tier 1, Tier 2, etc. with specific rates and product categories.
+
+Contract Text:
+${contractText}
+
+Find tier-based rules like:
+- "Tier 1 — Ornamental Trees & Shrubs: $1.25 per unit"
+- "Tier 2 — Perennials: $1.10 per unit" 
+- Volume thresholds and tier conditions
+
+Return JSON array of rules:
+[
+  {
+    "ruleType": "tiered",
+    "ruleName": "Tier 1 — Ornamental Trees & Shrubs",
+    "description": "full description with rates",
+    "conditions": {
+      "productCategories": ["Ornamental Trees", "Shrubs"],
+      "salesVolumeMin": 5000,
+      "territories": ["Primary Territory"],
+      "currency": "USD"
+    },
+    "calculation": {
+      "tiers": [{"min": 0, "max": 4999, "rate": 1.25}, {"min": 5000, "rate": 1.10}],
+      "formula": "per unit * tier rate"
+    },
+    "priority": 1,
+    "sourceSpan": {"section": "found section", "text": "extracted text"},
+    "confidence": 0.9
+  }
+]
+
+Return only JSON array.`;
+
+    try {
+      console.log(`🔍 Extracting tier-based rules...`);
+      const response = await this.makeRequest([
+        { role: 'system', content: 'Extract tier-based royalty rules. Return only JSON array.' },
+        { role: 'user', content: prompt }
+      ], 0.1, 1500);
+      
+      const cleanResponse = response.trim();
+      const jsonMatch = cleanResponse.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      }
+      return [];
+    } catch (error) {
+      console.error('Tier rules extraction failed:', error);
+      return [];
+    }
+  }
+
+  private async extractPaymentCalculationRules(contractText: string): Promise<RoyaltyRule[]> {
+    const prompt = `Extract PAYMENT and CALCULATION rules from this contract. Look for minimum guarantees, payment schedules, and calculation formulas.
+
+Contract Text:
+${contractText}
+
+Find rules like:
+- Minimum annual guarantees
+- Quarterly payment requirements  
+- Calculation formulas
+- Container size multipliers
+
+Return JSON array of rules:
+[
+  {
+    "ruleType": "minimum_guarantee",
+    "ruleName": "Annual Minimum Guarantee",
+    "description": "minimum payment required annually",
+    "conditions": {"timeperiod": "annually", "currency": "USD"},
+    "calculation": {"amount": 85000, "formula": "minimum annual payment"},
+    "priority": 2,
+    "sourceSpan": {"section": "found section", "text": "extracted text"},
+    "confidence": 0.9
+  }
+]
+
+Return only JSON array.`;
+
+    try {
+      console.log(`💰 Extracting payment calculation rules...`);
+      const response = await this.makeRequest([
+        { role: 'system', content: 'Extract payment and calculation rules. Return only JSON array.' },
+        { role: 'user', content: prompt }
+      ], 0.1, 1500);
+      
+      const cleanResponse = response.trim();
+      const jsonMatch = cleanResponse.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      }
+      return [];
+    } catch (error) {
+      console.error('Payment rules extraction failed:', error);
+      return [];
+    }
+  }
+
+  private async extractSpecialAdjustments(contractText: string): Promise<RoyaltyRule[]> {
+    const prompt = `Extract SPECIAL ADJUSTMENTS and PREMIUM rules from this contract. Look for seasonal adjustments, territory premiums, organic premiums.
+
+Contract Text:
+${contractText}
+
+Find adjustment rules like:
+- Seasonal adjustments (Spring +10-15%, Fall, Holiday)
+- Territory premiums  
+- Organic premiums (+25%)
+- Special multipliers
+
+Return JSON array of rules:
+[
+  {
+    "ruleType": "percentage",
+    "ruleName": "Spring Seasonal Premium",
+    "description": "seasonal adjustment for spring sales",
+    "conditions": {"timeperiod": "Spring", "currency": "USD"},
+    "calculation": {"rate": 15, "formula": "base rate + 15%"},
+    "priority": 3,
+    "sourceSpan": {"section": "found section", "text": "extracted text"},
+    "confidence": 0.85
+  }
+]
+
+Return only JSON array.`;
+
+    try {
+      console.log(`🌟 Extracting special adjustments...`);
+      const response = await this.makeRequest([
+        { role: 'system', content: 'Extract special adjustments and premiums. Return only JSON array.' },
+        { role: 'user', content: prompt }
+      ], 0.1, 1500);
+      
+      const cleanResponse = response.trim();
+      const jsonMatch = cleanResponse.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      }
+      return [];
+    } catch (error) {
+      console.error('Special adjustments extraction failed:', error);
+      return [];
+    }
+  }
+
+  // Keep the old single-request method as backup
+  async extractDetailedRoyaltyRulesSingleRequest(contractText: string): Promise<LicenseRuleExtractionResult> {
     const prompt = `
     You are a specialized contract analyst expert in extracting detailed royalty calculation rules from licensing agreements. 
 
@@ -276,7 +515,7 @@ export class GroqService {
     }
   }
 
-  private async makeRequest(messages: Array<{ role: string; content: string }>, temperature = 0.1): Promise<string> {
+  private async makeRequest(messages: Array<{ role: string; content: string }>, temperature = 0.1, maxTokens = 2000): Promise<string> {
     let lastError: Error | undefined;
     
     // Retry logic for rate limits
@@ -292,7 +531,7 @@ export class GroqService {
             model: 'llama-3.1-8b-instant',
             messages,
             temperature,
-            max_tokens: 4000,
+            max_tokens: maxTokens,
           }),
         });
 
