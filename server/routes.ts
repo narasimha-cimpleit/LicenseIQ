@@ -188,6 +188,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reprocess contract endpoint for testing
+  app.post('/api/contracts/:id/reprocess', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const contractId = req.params.id;
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+
+      // Check permissions
+      const userId = req.user.id;
+      const userRole = (await storage.getUser(userId))?.role;
+      const canReprocess = userRole === 'admin' || userRole === 'owner' || contract.uploadedBy === userId;
+      
+      if (!canReprocess) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      res.json({ message: 'Reprocessing started', contractId });
+
+      // Trigger analysis in background
+      processContractAnalysis(contractId, contract.filePath);
+
+    } catch (error) {
+      console.error('Reprocess error:', error);
+      res.status(500).json({ error: 'Failed to reprocess contract' });
+    }
+  });
+
   // Register rules engine routes
   registerRulesRoutes(app);
 
