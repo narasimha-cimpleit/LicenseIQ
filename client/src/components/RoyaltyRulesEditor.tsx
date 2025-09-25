@@ -92,6 +92,7 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
   
   const [editingRule, setEditingRule] = useState<{ ruleSetId: string; ruleIndex: number; rule: RoyaltyRule } | null>(null);
   const [isAddingRule, setIsAddingRule] = useState<string | null>(null);
+  const [localEditRule, setLocalEditRule] = useState<RoyaltyRule | null>(null);
   const [calculationInput, setCalculationInput] = useState<RoyaltyCalculationInput>({
     grossRevenue: 0,
     netRevenue: 0,
@@ -117,6 +118,7 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
       queryClient.invalidateQueries({ queryKey: ['/api/contracts', contractId, 'rules'] });
       onRulesUpdate();
       setEditingRule(null);
+      setLocalEditRule(null);
       toast({ description: "Rule updated successfully" });
     },
     onError: () => {
@@ -179,7 +181,8 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
   });
 
   const renderRuleEditor = (rule: RoyaltyRule, onSave: (updatedRule: RoyaltyRule) => void) => {
-    const [localRule, setLocalRule] = useState<RoyaltyRule>(rule);
+    // Use parent component's state instead of local useState
+    const currentRule = localEditRule || rule;
 
     return (
       <div className="space-y-4">
@@ -187,8 +190,8 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
           <div>
             <Label>Rule Name</Label>
             <Input
-              value={localRule.ruleName}
-              onChange={(e) => setLocalRule(prev => ({ ...prev, ruleName: e.target.value }))}
+              value={currentRule.ruleName}
+              onChange={(e) => setLocalEditRule(prev => ({ ...(prev || rule), ruleName: e.target.value }))}
               placeholder="Enter rule name"
               data-testid="input-rule-name"
             />
@@ -196,8 +199,8 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
           <div>
             <Label>Rule Type</Label>
             <Select
-              value={localRule.ruleType}
-              onValueChange={(value: any) => setLocalRule(prev => ({ ...prev, ruleType: value }))}
+              value={currentRule.ruleType}
+              onValueChange={(value: any) => setLocalEditRule(prev => ({ ...(prev || rule), ruleType: value }))}
             >
               <SelectTrigger data-testid="select-rule-type">
                 <SelectValue />
@@ -214,8 +217,8 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
         <div>
           <Label>Description</Label>
           <Textarea
-            value={localRule.description}
-            onChange={(e) => setLocalRule(prev => ({ ...prev, description: e.target.value }))}
+            value={currentRule.description}
+            onChange={(e) => setLocalEditRule(prev => ({ ...(prev || rule), description: e.target.value }))}
             placeholder="Describe when and how this rule applies"
             data-testid="input-rule-description"
           />
@@ -225,17 +228,17 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
         <div className="space-y-3">
           <Label className="text-sm font-medium">Calculation Settings</Label>
           <div className="grid grid-cols-3 gap-3">
-            {localRule.ruleType === 'percentage' && (
+            {currentRule.ruleType === 'percentage' && (
               <>
                 <div>
                   <Label className="text-xs">Rate (%)</Label>
                   <Input
                     type="number"
                     step="0.01"
-                    value={localRule.calculation.rate || ''}
-                    onChange={(e) => setLocalRule(prev => ({
-                      ...prev,
-                      calculation: { ...prev.calculation, rate: parseFloat(e.target.value) || 0 }
+                    value={currentRule.calculation.rate || ''}
+                    onChange={(e) => setLocalEditRule(prev => ({
+                      ...(prev || rule),
+                      calculation: { ...(prev || rule).calculation, rate: parseFloat(e.target.value) || 0 }
                     }))}
                     data-testid="input-rule-rate"
                   />
@@ -243,10 +246,10 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
                 <div>
                   <Label className="text-xs">Base Field</Label>
                   <Select
-                    value={localRule.calculation.baseField || 'netRevenue'}
-                    onValueChange={(value: any) => setLocalRule(prev => ({
-                      ...prev,
-                      calculation: { ...prev.calculation, baseField: value }
+                    value={currentRule.calculation.baseField || 'netRevenue'}
+                    onValueChange={(value: any) => setLocalEditRule(prev => ({
+                      ...(prev || rule),
+                      calculation: { ...(prev || rule).calculation, baseField: value }
                     }))}
                   >
                     <SelectTrigger>
@@ -262,16 +265,16 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
               </>
             )}
             
-            {(localRule.ruleType === 'fixed_fee' || localRule.ruleType === 'minimum_guarantee' || localRule.ruleType === 'cap') && (
+            {(currentRule.ruleType === 'fixed_fee' || currentRule.ruleType === 'minimum_guarantee' || currentRule.ruleType === 'cap') && (
               <div>
                 <Label className="text-xs">Amount ($)</Label>
                 <Input
                   type="number"
                   step="0.01"
-                  value={localRule.calculation.amount || ''}
-                  onChange={(e) => setLocalRule(prev => ({
-                    ...prev,
-                    calculation: { ...prev.calculation, amount: parseFloat(e.target.value) || 0 }
+                  value={currentRule.calculation.amount || ''}
+                  onChange={(e) => setLocalEditRule(prev => ({
+                    ...(prev || rule),
+                    calculation: { ...(prev || rule).calculation, amount: parseFloat(e.target.value) || 0 }
                   }))}
                   data-testid="input-rule-amount"
                 />
@@ -284,8 +287,8 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
                 type="number"
                 min="1"
                 max="100"
-                value={localRule.priority}
-                onChange={(e) => setLocalRule(prev => ({ ...prev, priority: parseInt(e.target.value) || 10 }))}
+                value={currentRule.priority}
+                onChange={(e) => setLocalEditRule(prev => ({ ...(prev || rule), priority: parseInt(e.target.value) || 10 }))}
                 data-testid="input-rule-priority"
               />
             </div>
@@ -301,10 +304,10 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
               <Input
                 type="number"
                 step="0.01"
-                value={localRule.conditions.salesVolumeMin || ''}
-                onChange={(e) => setLocalRule(prev => ({
-                  ...prev,
-                  conditions: { ...prev.conditions, salesVolumeMin: parseFloat(e.target.value) || undefined }
+                value={currentRule.conditions.salesVolumeMin || ''}
+                onChange={(e) => setLocalEditRule(prev => ({
+                  ...(prev || rule),
+                  conditions: { ...(prev || rule).conditions, salesVolumeMin: parseFloat(e.target.value) || undefined }
                 }))}
                 placeholder="Optional minimum"
                 data-testid="input-rule-min-volume"
@@ -315,10 +318,10 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
               <Input
                 type="number"
                 step="0.01"
-                value={localRule.conditions.salesVolumeMax || ''}
-                onChange={(e) => setLocalRule(prev => ({
-                  ...prev,
-                  conditions: { ...prev.conditions, salesVolumeMax: parseFloat(e.target.value) || undefined }
+                value={currentRule.conditions.salesVolumeMax || ''}
+                onChange={(e) => setLocalEditRule(prev => ({
+                  ...(prev || rule),
+                  conditions: { ...(prev || rule).conditions, salesVolumeMax: parseFloat(e.target.value) || undefined }
                 }))}
                 placeholder="Optional maximum"
                 data-testid="input-rule-max-volume"
@@ -328,9 +331,9 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
         </div>
 
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => setEditingRule(null)}>Cancel</Button>
+          <Button variant="outline" onClick={() => { setEditingRule(null); setLocalEditRule(null); }}>Cancel</Button>
           <Button
-            onClick={() => onSave(localRule)}
+            onClick={() => onSave(currentRule)}
             disabled={updateRuleMutation.isPending}
             data-testid="button-save-rule"
           >
@@ -400,7 +403,10 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
           <Button
             size="sm"
             variant="outline"
-            onClick={() => setEditingRule({ ruleSetId, ruleIndex, rule })}
+            onClick={() => { 
+              setEditingRule({ ruleSetId, ruleIndex, rule });
+              setLocalEditRule(rule);
+            }}
             data-testid={`button-edit-rule-${ruleIndex}`}
           >
             <Edit className="h-3 w-3 mr-1" />
@@ -688,7 +694,7 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
 
       {/* Rule Edit Dialog */}
       {editingRule && (
-        <Dialog open={!!editingRule} onOpenChange={() => setEditingRule(null)}>
+        <Dialog open={!!editingRule} onOpenChange={() => { setEditingRule(null); setLocalEditRule(null); }}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Edit Royalty Rule</DialogTitle>
@@ -706,7 +712,7 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
 
       {/* Add Rule Dialog */}
       {isAddingRule && (
-        <Dialog open={!!isAddingRule} onOpenChange={() => setIsAddingRule(null)}>
+        <Dialog open={!!isAddingRule} onOpenChange={() => { setIsAddingRule(null); setLocalEditRule(null); }}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Add New Royalty Rule</DialogTitle>
