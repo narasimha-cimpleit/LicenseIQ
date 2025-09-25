@@ -246,19 +246,21 @@ async function processLicenseRules(contractId: string, extractionResult: any) {
     const ruleSet = await storage.createLicenseRuleSet({
       contractId,
       name: extractionResult.licenseType || 'Extracted License Rules',
-      description: `Automatically extracted from contract analysis - ${extractionResult.rules.length} rules found`,
-      licensorName: extractionResult.parties.licensor,
-      licenseeName: extractionResult.parties.licensee,
+      version: 1,
+      rulesDsl: {
+        licensorName: extractionResult.parties.licensor,
+        licenseeName: extractionResult.parties.licensee,
+        currency: extractionResult.currency,
+        paymentTerms: extractionResult.paymentTerms,
+        rules: extractionResult.rules
+      },
       effectiveDate: extractionResult.effectiveDate,
       expirationDate: extractionResult.expirationDate,
-      currency: extractionResult.currency,
-      paymentTerms: extractionResult.paymentTerms,
-      metadata: {
+      extractionMetadata: {
         documentType: extractionResult.documentType,
         extractionMetadata: extractionResult.extractionMetadata,
         reportingRequirements: extractionResult.reportingRequirements
-      },
-      isActive: true
+      }
     });
 
     // Create individual license rules
@@ -267,13 +269,11 @@ async function processLicenseRules(contractId: string, extractionResult: any) {
         ruleSetId: ruleSet.id,
         ruleName: rule.ruleName,
         ruleType: rule.ruleType,
-        description: rule.description,
         conditions: rule.conditions,
         calculation: rule.calculation,
         priority: rule.priority,
         sourceSpan: rule.sourceSpan,
-        confidence: rule.confidence,
-        isActive: true
+        confidence: rule.confidence.toString() // Convert to string for decimal field
       });
     }
 
