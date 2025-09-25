@@ -6,10 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Calculator, Edit, Plus, Trash2, Play, DollarSign, Percent, TrendingUp, RefreshCw, Sparkles } from "lucide-react";
+import { Calculator, Edit, Plus, Trash2, Play, DollarSign, Percent, TrendingUp, RefreshCw, Sparkles, ChevronDown, ChevronUp, Save, X } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -90,7 +90,7 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  const [editingRule, setEditingRule] = useState<{ ruleSetId: string; ruleIndex: number; rule: RoyaltyRule } | null>(null);
+  const [editingRuleId, setEditingRuleId] = useState<string | null>(null);
   const [isAddingRule, setIsAddingRule] = useState<string | null>(null);
   const [localEditRule, setLocalEditRule] = useState<RoyaltyRule | null>(null);
   const [calculationInput, setCalculationInput] = useState<RoyaltyCalculationInput>({
@@ -117,7 +117,7 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/contracts', contractId, 'rules'] });
       onRulesUpdate();
-      setEditingRule(null);
+      setEditingRuleId(null);
       setLocalEditRule(null);
       toast({ description: "Rule updated successfully" });
     },
@@ -357,7 +357,7 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t">
-          <Button variant="outline" onClick={() => { setEditingRule(null); setLocalEditRule(null); }} data-testid="button-cancel-edit">Cancel</Button>
+          <Button variant="outline" onClick={() => { setEditingRuleId(null); setLocalEditRule(null); }} data-testid="button-cancel-edit">Cancel</Button>
           <Button
             onClick={() => onSave(currentRule)}
             disabled={updateRuleMutation.isPending}
@@ -373,85 +373,123 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
 
   const renderRule = (rule: RoyaltyRule, ruleIndex: number, ruleSetId: string) => {
     const RuleIcon = RULE_TYPE_ICONS[rule.ruleType];
+    const isEditing = editingRuleId === `${ruleSetId}-${ruleIndex}`;
     
     return (
-      <div key={rule.id || ruleIndex} className="bg-white dark:bg-gray-800 border rounded p-4">
-        <div className="flex justify-between items-start mb-3">
-          <div className="flex items-center gap-2">
-            <RuleIcon className="h-4 w-4 text-purple-600" />
-            <span className="font-medium text-sm" data-testid={`rule-name-${ruleIndex}`}>
-              {rule.ruleName || rule.description || 'Unnamed Rule'}
-            </span>
-            <Badge variant="outline" className="text-xs">
-              {RULE_TYPE_LABELS[rule.ruleType]}
-            </Badge>
-          </div>
-          <div className="flex items-center gap-1">
-            <Badge variant="secondary" className="text-xs">
-              Priority {rule.priority}
-            </Badge>
-            <Badge variant={rule.confidence > 0.8 ? "default" : "secondary"} className="text-xs">
-              {Math.round(rule.confidence * 100)}%
-            </Badge>
-          </div>
-        </div>
-
-        <p className="text-sm text-muted-foreground mb-3" data-testid={`rule-description-${ruleIndex}`}>
-          {rule.description || 'No description provided'}
-        </p>
-
-        {/* Rule Details */}
-        <div className="space-y-2 text-xs">
-          {rule.ruleType === 'percentage' && rule.calculation.rate && (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Rate:</span>
-              <span className="font-medium">{rule.calculation.rate}% of {rule.calculation.baseField || 'net revenue'}</span>
-            </div>
-          )}
-          
-          {(rule.ruleType === 'fixed_fee' || rule.ruleType === 'minimum_guarantee' || rule.ruleType === 'cap') && rule.calculation.amount && (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Amount:</span>
-              <span className="font-medium">${rule.calculation.amount.toLocaleString()}</span>
-            </div>
-          )}
-
-          {(rule.conditions.salesVolumeMin || rule.conditions.salesVolumeMax) && (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Volume Range:</span>
-              <span className="font-medium">
-                {rule.conditions.salesVolumeMin ? `$${rule.conditions.salesVolumeMin.toLocaleString()}` : '0'} - {rule.conditions.salesVolumeMax ? `$${rule.conditions.salesVolumeMax.toLocaleString()}` : '∞'}
+      <Collapsible key={rule.id || ruleIndex} open={isEditing} onOpenChange={(open) => {
+        if (open) {
+          setEditingRuleId(`${ruleSetId}-${ruleIndex}`);
+          setLocalEditRule(rule);
+        } else {
+          setEditingRuleId(null);
+          setLocalEditRule(null);
+        }
+      }}>
+        <div className="bg-white dark:bg-gray-800 border rounded-lg p-4">
+          <div className="flex justify-between items-start mb-3">
+            <div className="flex items-center gap-2">
+              <RuleIcon className="h-4 w-4 text-purple-600" />
+              <span className="font-medium text-sm" data-testid={`rule-name-${ruleIndex}`}>
+                {rule.ruleName || rule.description || 'Unnamed Rule'}
               </span>
+              <Badge variant="outline" className="text-xs">
+                {RULE_TYPE_LABELS[rule.ruleType]}
+              </Badge>
             </div>
-          )}
-        </div>
+            <div className="flex items-center gap-1">
+              <Badge variant="secondary" className="text-xs">
+                Priority {rule.priority}
+              </Badge>
+              <Badge variant={rule.confidence > 0.8 ? "default" : "secondary"} className="text-xs">
+                {Math.round(rule.confidence * 100)}%
+              </Badge>
+            </div>
+          </div>
 
-        <div className="flex justify-end gap-2 mt-4">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => { 
-              setEditingRule({ ruleSetId, ruleIndex, rule });
-              setLocalEditRule(rule);
-            }}
-            data-testid={`button-edit-rule-${ruleIndex}`}
-          >
-            <Edit className="h-3 w-3 mr-1" />
-            Edit
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => deleteRuleMutation.mutate({ ruleSetId, ruleIndex })}
-            disabled={deleteRuleMutation.isPending}
-            className="text-red-600 hover:text-red-700"
-            data-testid={`button-delete-rule-${ruleIndex}`}
-          >
-            <Trash2 className="h-3 w-3 mr-1" />
-            Delete
-          </Button>
+          {!isEditing && (
+            <>
+              <p className="text-sm text-muted-foreground mb-3" data-testid={`rule-description-${ruleIndex}`}>
+                {rule.description || 'No description provided'}
+              </p>
+
+              {/* Rule Details */}
+              <div className="space-y-2 text-xs">
+                {rule.ruleType === 'percentage' && rule.calculation.rate && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Rate:</span>
+                    <span className="font-medium">{rule.calculation.rate}% of {rule.calculation.baseField || 'net revenue'}</span>
+                  </div>
+                )}
+                
+                {(rule.ruleType === 'fixed_fee' || rule.ruleType === 'minimum_guarantee' || rule.ruleType === 'cap') && rule.calculation.amount && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Amount:</span>
+                    <span className="font-medium">${rule.calculation.amount.toLocaleString()}</span>
+                  </div>
+                )}
+
+                {(rule.conditions.salesVolumeMin || rule.conditions.salesVolumeMax) && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Volume Range:</span>
+                    <span className="font-medium">
+                      {rule.conditions.salesVolumeMin ? `$${rule.conditions.salesVolumeMin.toLocaleString()}` : '0'} - {rule.conditions.salesVolumeMax ? `$${rule.conditions.salesVolumeMax.toLocaleString()}` : '∞'}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2 mt-4">
+                <CollapsibleTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    data-testid={`button-edit-rule-${ruleIndex}`}
+                  >
+                    <Edit className="h-3 w-3 mr-1" />
+                    Edit
+                  </Button>
+                </CollapsibleTrigger>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => deleteRuleMutation.mutate({ ruleSetId, ruleIndex })}
+                  disabled={deleteRuleMutation.isPending}
+                  className="text-red-600 hover:text-red-700"
+                  data-testid={`button-delete-rule-${ruleIndex}`}
+                >
+                  <Trash2 className="h-3 w-3 mr-1" />
+                  Delete
+                </Button>
+              </div>
+            </>
+          )}
+
+          {/* Inline Editor - NO MORE FRUSTRATING DIALOGS! */}
+          <CollapsibleContent>
+            <div className="pt-4 border-t mt-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="font-medium text-sm flex items-center gap-2">
+                  <Edit className="h-4 w-4 text-blue-600" />
+                  Editing Rule - {rule.ruleName || 'Unnamed Rule'}
+                </h4>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    <ChevronUp className="h-4 w-4" />
+                  </Button>
+                </CollapsibleTrigger>
+              </div>
+              
+              {renderRuleEditor(rule, (updatedRule) => 
+                updateRuleMutation.mutate({
+                  ruleSetId,
+                  ruleIndex,
+                  updatedRule
+                })
+              )}
+            </div>
+          </CollapsibleContent>
         </div>
-      </div>
+      </Collapsible>
     );
   };
 
@@ -719,72 +757,7 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
         </Card>
       )}
 
-      {/* Rule Edit Dialog */}
-      {editingRule && (
-        <Dialog open={!!editingRule} onOpenChange={(open) => { if (!open) { setEditingRule(null); setLocalEditRule(null); } }}>
-          <DialogContent 
-            className="max-w-4xl max-h-[90vh] overflow-y-auto" 
-            onPointerDownOutside={(e) => {
-              // Only close if clicking truly outside the dialog content
-              if (!(e.target as HTMLElement).closest('[role="dialog"]')) {
-                setEditingRule(null);
-                setLocalEditRule(null);
-              }
-            }}
-            onInteractOutside={(e) => e.preventDefault()}
-          >
-            <DialogHeader className="pb-4">
-              <DialogTitle className="text-xl font-semibold">Edit Royalty Rule</DialogTitle>
-            </DialogHeader>
-            <div className="pr-2">
-              {renderRuleEditor(editingRule.rule, (updatedRule) => 
-                updateRuleMutation.mutate({
-                  ruleSetId: editingRule.ruleSetId,
-                  ruleIndex: editingRule.ruleIndex,
-                  updatedRule
-                })
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {/* Add Rule Dialog */}
-      {isAddingRule && (
-        <Dialog open={!!isAddingRule} onOpenChange={(open) => { if (!open) { setIsAddingRule(null); setLocalEditRule(null); } }}>
-          <DialogContent 
-            className="max-w-4xl max-h-[90vh] overflow-y-auto"
-            onPointerDownOutside={(e) => {
-              // Only close if clicking truly outside the dialog content  
-              if (!(e.target as HTMLElement).closest('[role="dialog"]')) {
-                setIsAddingRule(null);
-                setLocalEditRule(null);
-              }
-            }}
-            onInteractOutside={(e) => e.preventDefault()}
-          >
-            <DialogHeader className="pb-4">
-              <DialogTitle className="text-xl font-semibold">Add New Royalty Rule</DialogTitle>
-            </DialogHeader>
-            <div className="pr-2">
-              {renderRuleEditor(
-                {
-                  id: '',
-                  ruleName: '',
-                  ruleType: 'percentage',
-                  description: '',
-                  conditions: {},
-                  calculation: { baseField: 'netRevenue' },
-                  priority: 10,
-                  isActive: true,
-                  confidence: 1.0
-                },
-                (newRule) => addRuleMutation.mutate({ ruleSetId: isAddingRule, newRule })
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
+      {/* No more frustrating dialogs! Inline editing now happens within rule cards */}
     </div>
   );
 }
