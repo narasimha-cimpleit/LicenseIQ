@@ -638,7 +638,7 @@ export default function ContractAnalysis() {
               {/* Enhanced Royalty Rules Editor */}
               <RoyaltyRulesEditor 
                 contractId={id || ''}
-                ruleSets={royaltyRules || []}
+                ruleSets={royaltyRules?.ruleSets || []}
                 onRulesUpdate={() => {
                   // Refetch rules when they're updated
                   queryClient.invalidateQueries({ queryKey: ['/api/contracts', id, 'rules'] });

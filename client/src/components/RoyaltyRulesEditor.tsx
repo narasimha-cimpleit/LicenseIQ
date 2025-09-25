@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Calculator, Edit, Plus, Trash2, Play, DollarSign, Percent, TrendingUp } from "lucide-react";
+import { Calculator, Edit, Plus, Trash2, Play, DollarSign, Percent, TrendingUp, RefreshCw, Sparkles } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -424,27 +424,45 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
 
   return (
     <div className="space-y-6">
-      {/* Header with Calculator Button */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="text-lg font-medium flex items-center gap-2">
-            <Calculator className="h-5 w-5 text-purple-600" />
-            Extracted Royalty Rules
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            AI-extracted calculation rules from your contract. Edit or add rules as needed.
-          </p>
-        </div>
-        <Button
-          onClick={() => setShowCalculation(!showCalculation)}
-          variant="outline"
-          className="flex items-center gap-2"
-          data-testid="button-toggle-calculator"
-        >
-          <Calculator className="h-4 w-4" />
-          {showCalculation ? 'Hide Calculator' : 'Show Calculator'}
-        </Button>
-      </div>
+      {/* Enhanced Header */}
+      <Card className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20 border-purple-200 dark:border-purple-800">
+        <CardHeader className="pb-4">
+          <div className="flex justify-between items-start">
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-gradient-to-br from-purple-500 to-blue-600 rounded-lg shadow-md">
+                  <Sparkles className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-foreground">Extracted Royalty Rules</h3>
+                  <p className="text-sm text-muted-foreground">
+                    AI-powered calculation rules from your contract
+                  </p>
+                </div>
+              </div>
+              {ruleSets.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                    {ruleSets.reduce((acc, set) => acc + (set.rules?.length || 0), 0)} Rules Found
+                  </Badge>
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                    {ruleSets.length} Rule Set{ruleSets.length !== 1 ? 's' : ''}
+                  </Badge>
+                </div>
+              )}
+            </div>
+            <Button
+              onClick={() => setShowCalculation(!showCalculation)}
+              variant="outline"
+              className="flex items-center gap-2 border-purple-200 hover:border-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/20"
+              data-testid="button-toggle-calculator"
+            >
+              <Calculator className="h-4 w-4" />
+              {showCalculation ? 'Hide Calculator' : 'Show Calculator'}
+            </Button>
+          </div>
+        </CardHeader>
+      </Card>
 
       {/* Royalty Calculator */}
       {showCalculation && (
@@ -634,14 +652,36 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
           ))}
         </div>
       ) : (
-        <Card className="text-center py-12">
-          <CardContent>
-            <Calculator className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-            <p className="font-medium mb-1">No Royalty Rules Extracted Yet</p>
-            <p className="text-sm text-muted-foreground">
-              Royalty calculation rules could not be extracted from this contract.
-              Try reprocessing the contract if it contains licensing terms.
-            </p>
+        <Card className="text-center py-16 border-2 border-dashed border-muted bg-gradient-to-br from-background to-muted/20">
+          <CardContent className="space-y-6">
+            <div className="mx-auto w-20 h-20 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg">
+              <Calculator className="h-10 w-10 text-white" />
+            </div>
+            <div className="space-y-3">
+              <h3 className="text-xl font-semibold text-foreground">No Royalty Rules Found</h3>
+              <p className="text-muted-foreground max-w-lg mx-auto leading-relaxed">
+                Our AI couldn't extract royalty calculation rules from this contract. The document may not contain 
+                licensing terms, or the rules might be in a complex format that requires manual review.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center pt-4">
+              <Button 
+                variant="outline" 
+                className="flex items-center gap-2 border-purple-200 hover:border-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/20"
+                data-testid="button-reprocess-contract"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Reprocess Contract
+              </Button>
+              <Button 
+                className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                onClick={() => setIsAddingRule(Object.keys(ruleSets).length > 0 ? Object.keys(ruleSets)[0] : 'manual')}
+                data-testid="button-add-first-rule"
+              >
+                <Plus className="h-4 w-4" />
+                Add First Rule
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
