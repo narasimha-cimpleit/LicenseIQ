@@ -1,3 +1,4 @@
+import { useRef, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
@@ -127,7 +128,19 @@ export default function ContractAnalysis() {
     queryKey: ["/api/contracts", id, "rules"],
     enabled: !!id && !!contract,
     retry: false,
+    refetchInterval: contract?.status === 'processing' ? 3000 : false, // Auto-refresh during processing
+    refetchIntervalInBackground: false,
   });
+
+  // Auto-invalidate rules cache when contract status changes to analyzed
+  const prevStatusRef = useRef(contract?.status);
+  useEffect(() => {
+    if (prevStatusRef.current === 'processing' && contract?.status === 'analyzed') {
+      // Contract just finished processing, refresh rules immediately
+      queryClient.invalidateQueries({ queryKey: ["/api/contracts", id, "rules"] });
+    }
+    prevStatusRef.current = contract?.status;
+  }, [contract?.status, id, queryClient]);
 
   // Handle unauthorized errors
   if (error && isUnauthorizedError(error as Error)) {
