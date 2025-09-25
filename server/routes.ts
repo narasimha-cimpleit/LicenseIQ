@@ -7,7 +7,7 @@ import crypto, { randomUUID } from "crypto";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, hashPassword } from "./auth";
 import { fileService } from "./services/fileService";
-import { groqService } from "./services/groqService";
+import { AIProviderService } from "./services/aiProviderService";
 import { registerRulesRoutes } from "./rulesRoutes";
 import { 
   insertContractSchema, 
@@ -205,15 +205,22 @@ async function processContractAnalysis(contractId: string, filePath: string) {
     const mimeType = contract?.fileType || 'application/pdf';
     const extractedText = await fileService.extractTextFromFile(filePath, mimeType);
     
-    // Analyze with Groq AI - both general contract analysis and detailed rules extraction
-    const aiAnalysis = await groqService.analyzeContract(extractedText);
-    const detailedRules = await groqService.extractDetailedRoyaltyRules(extractedText);
+    // Analyze with AI (Groq primary, OpenAI fallback) - both general contract analysis and detailed rules extraction
+    const aiProviderService = new AIProviderService();
+    const aiAnalysis = await aiProviderService.analyzeContract(extractedText);
+    const detailedRules = await aiProviderService.extractDetailedRoyaltyRules(extractedText);
     
     // Log extracted rules for debugging
     console.log(`📋 Extracted ${detailedRules.rules.length} detailed royalty rules from contract ${contractId}`);
     
-    // Store detailed rules in the license rules system
-    await processLicenseRules(contractId, detailedRules);
+    // Store detailed rules in the license rules system (only if we have rules)
+    if (detailedRules.rules.length > 0) {
+      await processLicenseRules(contractId, detailedRules);
+      console.log(`✅ Successfully stored ${detailedRules.rules.length} royalty rules`);
+    } else {
+      console.log(`⚠️ No rules extracted - marking for manual review instead of storing empty set`);
+      // Don't store empty rule sets - this indicates extraction failure
+    }
     
     // Save analysis
     const analysisData = insertContractAnalysisSchema.parse({
@@ -227,8 +234,9 @@ async function processContractAnalysis(contractId: string, filePath: string) {
 
     await storage.createContractAnalysis(analysisData);
 
-    // Update contract status
-    await storage.updateContractStatus(contractId, 'analyzed');
+    // Update contract status - mark as needing review if no rules extracted
+    const finalStatus = detailedRules.rules.length > 0 ? 'analyzed' : 'reviewed_needed';
+    await storage.updateContractStatus(contractId, finalStatus);
 
     console.log(`Analysis completed for contract ${contractId}`);
 
