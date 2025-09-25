@@ -204,8 +204,15 @@ async function processContractAnalysis(contractId: string, filePath: string) {
     const mimeType = contract?.fileType || 'application/pdf';
     const extractedText = await fileService.extractTextFromFile(filePath, mimeType);
     
-    // Analyze with Groq AI
+    // Analyze with Groq AI - both general contract analysis and detailed rules extraction
     const aiAnalysis = await groqService.analyzeContract(extractedText);
+    const detailedRules = await groqService.extractDetailedRoyaltyRules(extractedText);
+    
+    // Log extracted rules for debugging
+    console.log(`📋 Extracted ${detailedRules.rules.length} detailed royalty rules from contract ${contractId}`);
+    
+    // Store detailed rules in the license rules system
+    await processLicenseRules(contractId, detailedRules);
     
     // Save analysis
     const analysisData = insertContractAnalysisSchema.parse({
@@ -227,6 +234,54 @@ async function processContractAnalysis(contractId: string, filePath: string) {
   } catch (error) {
     console.error(`Analysis failed for contract ${contractId}:`, error);
     await storage.updateContractStatus(contractId, 'failed');
+  }
+}
+
+// Process and save detailed license rules
+async function processLicenseRules(contractId: string, extractionResult: any) {
+  try {
+    console.log(`🔧 Processing license rules for contract ${contractId}`);
+
+    // Create license rule set
+    const ruleSet = await storage.createLicenseRuleSet({
+      contractId,
+      name: extractionResult.licenseType || 'Extracted License Rules',
+      description: `Automatically extracted from contract analysis - ${extractionResult.rules.length} rules found`,
+      licensorName: extractionResult.parties.licensor,
+      licenseeName: extractionResult.parties.licensee,
+      effectiveDate: extractionResult.effectiveDate,
+      expirationDate: extractionResult.expirationDate,
+      currency: extractionResult.currency,
+      paymentTerms: extractionResult.paymentTerms,
+      metadata: {
+        documentType: extractionResult.documentType,
+        extractionMetadata: extractionResult.extractionMetadata,
+        reportingRequirements: extractionResult.reportingRequirements
+      },
+      isActive: true
+    });
+
+    // Create individual license rules
+    for (const rule of extractionResult.rules) {
+      await storage.createLicenseRule({
+        ruleSetId: ruleSet.id,
+        ruleName: rule.ruleName,
+        ruleType: rule.ruleType,
+        description: rule.description,
+        conditions: rule.conditions,
+        calculation: rule.calculation,
+        priority: rule.priority,
+        sourceSpan: rule.sourceSpan,
+        confidence: rule.confidence,
+        isActive: true
+      });
+    }
+
+    console.log(`✅ Successfully processed ${extractionResult.rules.length} license rules for contract ${contractId}`);
+
+  } catch (error) {
+    console.error(`❌ Failed to process license rules for contract ${contractId}:`, error);
+    // Don't throw error - allow contract processing to continue even if rules processing fails
   }
 }
 

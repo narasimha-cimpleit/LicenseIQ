@@ -98,6 +98,184 @@ export class GroqService {
     }
   }
 
+  // =====================================================
+  // ENHANCED ROYALTY RULES EXTRACTION 
+  // =====================================================
+  
+  async extractDetailedRoyaltyRules(contractText: string): Promise<LicenseRuleExtractionResult> {
+    const prompt = `
+    You are a specialized contract analyst expert in extracting detailed royalty calculation rules from licensing agreements. 
+
+    Your task is to extract COMPREHENSIVE ROYALTY RULES with specific formulas, rates, and calculation methods from this contract text.
+
+    CONTRACT TEXT:
+    ${contractText}
+
+    Extract detailed royalty rules in the following categories:
+
+    🏷️ **TIER-BASED RULES** (if present):
+    - Tier 1, 2, 3, etc. with specific product categories
+    - Per-unit rates, thresholds, volume discounts
+    - Container sizes, multipliers, seasonal adjustments
+
+    💰 **CALCULATION FORMULAS**:
+    - Base rates × multipliers × adjustments
+    - Sliding scales based on volume bands
+    - Minimum payments for each tier/band
+
+    📊 **ADJUSTMENTS & PREMIUMS**:
+    - Seasonal adjustments (Spring, Fall, Holiday, Off-season)
+    - Territory premiums (Primary vs Secondary)
+    - Product type premiums (Organic, Specialty, etc.)
+    - Volume discounts and thresholds
+
+    🔒 **MINIMUM GUARANTEES**:
+    - Annual minimum payments
+    - Quarterly payment requirements
+    - Shortfall calculations
+
+    🎯 **EXTRACTION PRIORITIES:**
+    1. Look for TIERED systems (Tier 1, Tier 2, Tier 3)
+    2. Extract SPECIFIC RATES and AMOUNTS ($1.25, $1.10, +25%, etc.)
+    3. Identify CALCULATION FORMULAS (base × multiplier × adjustment)
+    4. Find VOLUME THRESHOLDS (5,000+ units, sales bands)
+    5. Extract SEASONAL/TERRITORY ADJUSTMENTS (+10%, -5%, +20%)
+    6. Locate MINIMUM GUARANTEES ($85,000 annual)
+    7. Document PRODUCT CATEGORIES and CONDITIONS
+
+    🔍 **IMPORTANT REQUIREMENTS:**
+    - Extract ACTUAL numbers, percentages, and dollar amounts from the document
+    - Create separate rule objects for each distinct calculation method
+    - Include detailed formulas showing how royalties are calculated
+    - Specify exact conditions when each rule applies
+    - Reference the source section/page where each rule was found
+    - If information is unclear, note assumptions made and mark with lower confidence
+
+    Return a JSON object with the following structure (extract real data from the document):
+    {
+      "documentType": "license",
+      "licenseType": "extracted license type",
+      "parties": {
+        "licensor": "extracted licensor name",
+        "licensee": "extracted licensee name"
+      },
+      "effectiveDate": null,
+      "expirationDate": null,
+      "rules": [
+        {
+          "ruleType": "tiered",
+          "ruleName": "Tier 1 — Category Name",
+          "description": "Detailed description with specific rates and conditions",
+          "conditions": {
+            "productCategories": ["category1", "category2"],
+            "territories": ["Primary Territory"],
+            "salesVolumeMin": 5000,
+            "timeperiod": "annually",
+            "currency": "USD"
+          },
+          "calculation": {
+            "tiers": [
+              {"min": 0, "max": 4999, "rate": 1.25},
+              {"min": 5000, "max": null, "rate": 1.10}
+            ],
+            "formula": "actual formula from document"
+          },
+          "priority": 1,
+          "sourceSpan": {
+            "section": "Section reference",
+            "text": "extracted text from document"
+          },
+          "confidence": 0.95
+        }
+      ],
+      "currency": "USD",
+      "paymentTerms": "extracted payment terms",
+      "reportingRequirements": [],
+      "extractionMetadata": {
+        "totalRulesFound": 0,
+        "avgConfidence": 0.8,
+        "processingTime": 5,
+        "ruleComplexity": "moderate"
+      }
+    }
+
+    Return ONLY the JSON object, no additional text.
+    `;
+
+    const messages = [
+      {
+        role: 'system',
+        content: 'You are a specialized royalty calculation expert. Extract detailed tier-based royalty rules with specific formulas, rates, and conditions. Return only valid JSON.'
+      },
+      {
+        role: 'user', 
+        content: prompt
+      }
+    ];
+
+    try {
+      const response = await this.makeRequest(messages, 0.1);
+      
+      // Clean and parse JSON response
+      const cleanedResponse = response.trim();
+      const jsonMatch = cleanedResponse.match(/\\{[\\s\\S]*\\}/);
+      
+      if (!jsonMatch) {
+        throw new Error('No valid JSON found in rules extraction response');
+      }
+
+      const extractionResult = JSON.parse(jsonMatch[0]);
+      
+      // Validate structure
+      if (!extractionResult.rules || !Array.isArray(extractionResult.rules)) {
+        throw new Error('Invalid rules structure returned');
+      }
+
+      // Set defaults for missing fields
+      return {
+        documentType: extractionResult.documentType || 'license',
+        licenseType: extractionResult.licenseType || 'License Agreement',
+        parties: extractionResult.parties || { licensor: 'Not specified', licensee: 'Not specified' },
+        effectiveDate: extractionResult.effectiveDate || undefined,
+        expirationDate: extractionResult.expirationDate || undefined,
+        rules: extractionResult.rules || [],
+        currency: extractionResult.currency || 'USD',
+        paymentTerms: extractionResult.paymentTerms || 'Not specified',
+        reportingRequirements: extractionResult.reportingRequirements || [],
+        extractionMetadata: {
+          totalRulesFound: extractionResult.rules?.length || 0,
+          avgConfidence: extractionResult.rules?.length > 0 
+            ? extractionResult.rules.reduce((sum: number, rule: any) => sum + (rule.confidence || 0.8), 0) / extractionResult.rules.length
+            : 0.8,
+          processingTime: extractionResult.extractionMetadata?.processingTime || 5,
+          ruleComplexity: (extractionResult.extractionMetadata?.ruleComplexity as 'simple' | 'moderate' | 'complex') || 'moderate'
+        }
+      };
+
+    } catch (error) {
+      console.error('Error extracting detailed royalty rules:', error);
+      
+      // Return basic fallback structure
+      return {
+        documentType: 'license' as const,
+        licenseType: 'License Agreement',
+        parties: { licensor: 'Not specified', licensee: 'Not specified' },
+        effectiveDate: undefined,
+        expirationDate: undefined,
+        rules: [],
+        currency: 'USD',
+        paymentTerms: 'Rules extraction failed - manual review required',
+        reportingRequirements: [],
+        extractionMetadata: {
+          totalRulesFound: 0,
+          avgConfidence: 0.5,
+          processingTime: 0,
+          ruleComplexity: 'moderate' as const
+        }
+      };
+    }
+  }
+
   private async makeRequest(messages: Array<{ role: string; content: string }>, temperature = 0.1): Promise<string> {
     const response = await fetch(`${this.baseUrl}/chat/completions`, {
       method: 'POST',
