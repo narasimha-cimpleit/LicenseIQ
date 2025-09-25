@@ -8,6 +8,8 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated, hashPassword } from "./auth";
 import { fileService } from "./services/fileService";
 import { groqService } from "./services/groqService";
+import { RulesEngine } from "./services/rulesEngine";
+import type { RoyaltyCalculationInput } from "./services/rulesEngine";
 import { 
   insertContractSchema, 
   insertContractAnalysisSchema, 
@@ -2156,5 +2158,300 @@ IMPORTANT: Add these routes inside the registerRoutes function before the return
   });
 
 */
+
+  // =====================================================
+  // RULES ENGINE API ENDPOINTS
+  // =====================================================
+
+  // Get royalty rules for a contract
+  app.get('/api/contracts/:id/rules', isAuthenticated, async (req: any, res) => {
+    try {
+      const contractId = req.params.id;
+      const userId = req.user.id;
+
+      // Get contract to check permissions
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ message: 'Contract not found' });
+      }
+
+      const userRole = (await storage.getUser(userId))?.role;
+      const canViewAny = userRole === 'admin' || userRole === 'owner';
+      
+      if (!canViewAny && contract.uploadedBy !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      // Get rule sets for this contract
+      const ruleSets = await storage.getLicenseRuleSetsByContract(contractId);
+      
+      // Transform rule sets to include extracted rules and metadata
+      const transformedRules = ruleSets.map(ruleSet => ({
+        id: ruleSet.id,
+        licenseType: ruleSet.rulesDsl?.licenseType || 'License',
+        licensor: ruleSet.extractionMetadata?.licensor || 'Unknown',
+        licensee: ruleSet.extractionMetadata?.licensee || 'Unknown',
+        rules: ruleSet.rulesDsl?.rules || [],
+        currency: ruleSet.rulesDsl?.currency || 'USD',
+        effectiveDate: ruleSet.effectiveDate,
+        expirationDate: ruleSet.expirationDate,
+        status: ruleSet.status,
+        confidence: ruleSet.extractionMetadata?.confidence || 0,
+        rulesCount: (ruleSet.rulesDsl?.rules || []).length
+      }));
+
+      res.json(transformedRules);
+    } catch (error) {
+      console.error('Error fetching contract rules:', error);
+      res.status(500).json({ message: 'Failed to fetch royalty rules' });
+    }
+  });
+
+  // Update a specific rule in a rule set
+  app.put('/api/contracts/:contractId/rules/:ruleSetId/rule/:ruleIndex', isAuthenticated, async (req: any, res) => {
+    try {
+      const { contractId, ruleSetId, ruleIndex } = req.params;
+      const userId = req.user.id;
+      const updatedRule = req.body;
+
+      // Check permissions
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ message: 'Contract not found' });
+      }
+
+      const userRole = (await storage.getUser(userId))?.role;
+      const canEditAny = userRole === 'admin' || userRole === 'owner';
+      
+      if (!canEditAny && contract.uploadedBy !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      // Get and update rule set
+      const ruleSet = await storage.getLicenseRuleSet(ruleSetId);
+      if (!ruleSet) {
+        return res.status(404).json({ message: 'Rule set not found' });
+      }
+
+      const rules = ruleSet.rulesDsl?.rules || [];
+      const index = parseInt(ruleIndex);
+      
+      if (index < 0 || index >= rules.length) {
+        return res.status(400).json({ message: 'Invalid rule index' });
+      }
+
+      // Validate updated rule
+      const validation = RulesEngine.validateRule(updatedRule);
+      if (!validation.isValid) {
+        return res.status(400).json({ message: 'Invalid rule', errors: validation.errors });
+      }
+
+      // Update the rule
+      rules[index] = updatedRule;
+
+      // Update rule set
+      const updatedRulesDsl = {
+        ...ruleSet.rulesDsl,
+        rules
+      };
+
+      await storage.updateLicenseRuleSet(ruleSetId, {
+        rulesDsl: updatedRulesDsl,
+        status: 'modified'
+      });
+
+      // Log the update
+      await createAuditLog(req, 'rule_updated', 'license_rule', ruleSetId, {
+        ruleIndex: index,
+        ruleName: updatedRule.ruleName
+      });
+
+      res.json({ message: 'Rule updated successfully', rule: updatedRule });
+    } catch (error) {
+      console.error('Error updating rule:', error);
+      res.status(500).json({ message: 'Failed to update rule' });
+    }
+  });
+
+  // Add a new rule to a rule set
+  app.post('/api/contracts/:contractId/rules/:ruleSetId/rule', isAuthenticated, async (req: any, res) => {
+    try {
+      const { contractId, ruleSetId } = req.params;
+      const userId = req.user.id;
+      const newRule = req.body;
+
+      // Check permissions
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ message: 'Contract not found' });
+      }
+
+      const userRole = (await storage.getUser(userId))?.role;
+      const canEditAny = userRole === 'admin' || userRole === 'owner';
+      
+      if (!canEditAny && contract.uploadedBy !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      // Validate new rule
+      const ruleWithDefaults = RulesEngine.createRule(newRule);
+      const validation = RulesEngine.validateRule(ruleWithDefaults);
+      if (!validation.isValid) {
+        return res.status(400).json({ message: 'Invalid rule', errors: validation.errors });
+      }
+
+      // Get and update rule set
+      const ruleSet = await storage.getLicenseRuleSet(ruleSetId);
+      if (!ruleSet) {
+        return res.status(404).json({ message: 'Rule set not found' });
+      }
+
+      const rules = ruleSet.rulesDsl?.rules || [];
+      rules.push(ruleWithDefaults);
+
+      const updatedRulesDsl = {
+        ...ruleSet.rulesDsl,
+        rules
+      };
+
+      await storage.updateLicenseRuleSet(ruleSetId, {
+        rulesDsl: updatedRulesDsl,
+        status: 'modified'
+      });
+
+      // Log the addition
+      await createAuditLog(req, 'rule_added', 'license_rule', ruleSetId, {
+        ruleName: ruleWithDefaults.ruleName
+      });
+
+      res.json({ message: 'Rule added successfully', rule: ruleWithDefaults });
+    } catch (error) {
+      console.error('Error adding rule:', error);
+      res.status(500).json({ message: 'Failed to add rule' });
+    }
+  });
+
+  // Delete a rule from a rule set
+  app.delete('/api/contracts/:contractId/rules/:ruleSetId/rule/:ruleIndex', isAuthenticated, async (req: any, res) => {
+    try {
+      const { contractId, ruleSetId, ruleIndex } = req.params;
+      const userId = req.user.id;
+
+      // Check permissions
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ message: 'Contract not found' });
+      }
+
+      const userRole = (await storage.getUser(userId))?.role;
+      const canEditAny = userRole === 'admin' || userRole === 'owner';
+      
+      if (!canEditAny && contract.uploadedBy !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      // Get and update rule set
+      const ruleSet = await storage.getLicenseRuleSet(ruleSetId);
+      if (!ruleSet) {
+        return res.status(404).json({ message: 'Rule set not found' });
+      }
+
+      const rules = ruleSet.rulesDsl?.rules || [];
+      const index = parseInt(ruleIndex);
+      
+      if (index < 0 || index >= rules.length) {
+        return res.status(400).json({ message: 'Invalid rule index' });
+      }
+
+      // Remove the rule
+      const deletedRule = rules.splice(index, 1)[0];
+
+      const updatedRulesDsl = {
+        ...ruleSet.rulesDsl,
+        rules
+      };
+
+      await storage.updateLicenseRuleSet(ruleSetId, {
+        rulesDsl: updatedRulesDsl,
+        status: 'modified'
+      });
+
+      // Log the deletion
+      await createAuditLog(req, 'rule_deleted', 'license_rule', ruleSetId, {
+        ruleIndex: index,
+        ruleName: deletedRule.ruleName
+      });
+
+      res.json({ message: 'Rule deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting rule:', error);
+      res.status(500).json({ message: 'Failed to delete rule' });
+    }
+  });
+
+  // Calculate royalties using the rules engine
+  app.post('/api/contracts/:contractId/calculate-royalties', isAuthenticated, async (req: any, res) => {
+    try {
+      const contractId = req.params.contractId;
+      const userId = req.user.id;
+      const calculationInput: RoyaltyCalculationInput = req.body;
+
+      // Check permissions
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ message: 'Contract not found' });
+      }
+
+      const userRole = (await storage.getUser(userId))?.role;
+      const canViewAny = userRole === 'admin' || userRole === 'owner';
+      
+      if (!canViewAny && contract.uploadedBy !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      // Get rule sets for this contract
+      const ruleSets = await storage.getLicenseRuleSetsByContract(contractId);
+      
+      if (ruleSets.length === 0) {
+        return res.status(404).json({ message: 'No rules found for this contract' });
+      }
+
+      // Convert rule sets to RoyaltyRule format for the engine
+      const allRules = ruleSets.flatMap(ruleSet => 
+        (ruleSet.rulesDsl?.rules || []).map(rule => ({
+          id: rule.id || crypto.randomUUID(),
+          ruleName: rule.ruleName || rule.description || 'Unnamed Rule',
+          ruleType: rule.ruleType || 'percentage',
+          description: rule.description || '',
+          conditions: rule.conditions || {},
+          calculation: rule.calculation || {},
+          priority: rule.priority || 10,
+          isActive: true,
+          confidence: rule.confidence || 1.0
+        }))
+      );
+
+      // Calculate royalties using the rules engine
+      const result = await RulesEngine.calculateRoyalties(allRules, calculationInput);
+
+      // Log the calculation
+      await createAuditLog(req, 'royalty_calculated', 'contract', contractId, {
+        inputData: calculationInput,
+        totalRoyalty: result.totalRoyalty,
+        rulesApplied: result.metadata.rulesApplied
+      });
+
+      res.json(result);
+    } catch (error) {
+      console.error('Error calculating royalties:', error);
+      res.status(500).json({ message: 'Failed to calculate royalties' });
+    }
+  });
+
+  // Start the HTTP server
+  const server = createServer(app);
+  server.listen(5000, '0.0.0.0');
+  return server;
+}
 
 export default registerRoutes;

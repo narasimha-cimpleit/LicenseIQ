@@ -20,6 +20,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
+import { RoyaltyRulesEditor } from "@/components/RoyaltyRulesEditor";
 import { 
   FileText, 
   Download, 
@@ -634,95 +635,15 @@ export default function ContractAnalysis() {
                 </Card>
               )}
 
-              {/* Extracted Royalty Rules Section */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calculator className="h-5 w-5 text-purple-600" />
-                    Extracted Royalty Rules
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {rulesLoading ? (
-                    <div className="text-center py-4">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600 mx-auto mb-2" />
-                      <p className="text-sm text-muted-foreground">Loading royalty rules...</p>
-                    </div>
-                  ) : royaltyRules && royaltyRules.length > 0 ? (
-                    <div className="space-y-4">
-                      {royaltyRules.map((ruleSet, index) => (
-                        <div key={ruleSet.id || index} className="border rounded-lg p-4 bg-purple-50/50 dark:bg-purple-950/20">
-                          <div className="flex justify-between items-start mb-3">
-                            <h4 className="font-medium text-purple-900 dark:text-purple-100" data-testid={`ruleset-name-${index}`}>
-                              {ruleSet.licenseType} License Rules
-                            </h4>
-                            <Badge variant="outline" className="text-purple-700 border-purple-300 dark:text-purple-300">
-                              {ruleSet.rules?.length || 0} Rules
-                            </Badge>
-                          </div>
-                          
-                          <div className="text-xs text-muted-foreground mb-3">
-                            <strong>Licensor:</strong> {ruleSet.licensor} | <strong>Licensee:</strong> {ruleSet.licensee}
-                          </div>
-                          
-                          {ruleSet.rules && ruleSet.rules.length > 0 ? (
-                            <div className="grid gap-3">
-                              {ruleSet.rules.map((rule, ruleIndex) => (
-                                <div key={rule.id || ruleIndex} className="bg-white dark:bg-gray-800 border rounded p-3">
-                                  <div className="flex justify-between items-start mb-2">
-                                    <span className="font-medium text-sm" data-testid={`rule-name-${index}-${ruleIndex}`}>
-                                      {rule.ruleType} Rate
-                                    </span>
-                                    <Badge variant="secondary" className="text-xs">
-                                      {rule.calculationMethod}
-                                    </Badge>
-                                  </div>
-                                  
-                                  <div className="text-sm text-muted-foreground bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                                    {rule.percentage && (
-                                      <div><strong>Rate:</strong> {rule.percentage}%</div>
-                                    )}
-                                    {rule.fixedAmount && (
-                                      <div><strong>Fixed Amount:</strong> ${rule.fixedAmount}</div>
-                                    )}
-                                    {rule.minimumAmount && (
-                                      <div><strong>Minimum:</strong> ${rule.minimumAmount}</div>
-                                    )}
-                                    {rule.description && (
-                                      <div className="mt-1"><strong>Description:</strong> {rule.description}</div>
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-sm text-muted-foreground italic">No calculation rules found in this set.</p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Calculator className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                      <p className="font-medium">No Royalty Rules Extracted Yet</p>
-                      <p className="text-sm mb-4">
-                        Royalty calculation rules could not be extracted from this contract.
-                        Try reprocessing the contract if it contains licensing terms.
-                      </p>
-                      <Button 
-                        variant="outline" 
-                        onClick={() => reprocessMutation.mutate()}
-                        disabled={reprocessMutation.isPending}
-                        className="flex items-center gap-2"
-                        data-testid="button-reprocess-rules"
-                      >
-                        <Calculator className="h-4 w-4" />
-                        {reprocessMutation.isPending ? 'Extracting Rules...' : 'Reprocess for Rules'}
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              {/* Enhanced Royalty Rules Editor */}
+              <RoyaltyRulesEditor 
+                contractId={id || ''}
+                ruleSets={royaltyRules || []}
+                onRulesUpdate={() => {
+                  // Refetch rules when they're updated
+                  queryClient.invalidateQueries({ queryKey: ['/api/contracts', id, 'rules'] });
+                }}
+              />
             </div>
 
             {/* Sidebar Info */}
