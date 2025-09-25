@@ -80,6 +80,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
+  // Emergency fix: Reprocess specific contract
+  app.post('/api/emergency-reprocess', async (req, res) => {
+    try {
+      const contractId = 'af86280e-143e-4865-8f02-f762954fa05a';
+      const filePath = '/home/runner/workspace/uploads/a9384579-61ff-482f-8da0-91db501030dc.pdf';
+      
+      console.log(`🚨 Emergency reprocessing contract ${contractId}`);
+      
+      // Update status to processing
+      await storage.updateContractStatus(contractId, 'processing');
+      
+      res.json({ message: 'Emergency reprocessing started', contractId });
+      
+      // Trigger analysis with fixed code
+      processContractAnalysis(contractId, filePath);
+      
+    } catch (error) {
+      console.error('Emergency reprocess error:', error);
+      res.status(500).json({ error: 'Failed to emergency reprocess' });
+    }
+  });
+
   // Contract upload endpoint
   app.post('/api/contracts/upload', isAuthenticated, upload.single('file'), async (req: any, res: Response) => {
     try {
@@ -206,7 +228,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: 'Access denied' });
       }
 
+      // Clear existing rules first
+      console.log(`🗑️ Clearing existing rules for contract ${contractId}`);
+      await storage.deleteLicenseRuleSetsByContract(contractId);
+
       res.json({ message: 'Reprocessing started', contractId });
+
+      // Update status to processing
+      await storage.updateContractStatus(contractId, 'processing');
 
       // Trigger analysis in background
       processContractAnalysis(contractId, contract.filePath);
