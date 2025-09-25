@@ -255,7 +255,7 @@ export class GroqService {
     } catch (error) {
       console.error('Error extracting detailed royalty rules:', error);
       
-      // Return basic fallback structure
+      // Return basic fallback structure if API fails (handles rate limits)
       return {
         documentType: 'license' as const,
         licenseType: 'License Agreement',

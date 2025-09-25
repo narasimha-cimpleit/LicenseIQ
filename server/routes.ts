@@ -107,7 +107,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       res.json({ 
-        contractId: contract.id,
+        id: contract.id,  // Frontend expects 'id' not 'contractId'
+        contractId: contract.id,  // Keep both for backward compatibility
         status: 'uploaded',
         message: 'Contract uploaded successfully' 
       });
@@ -244,7 +245,6 @@ async function processLicenseRules(contractId: string, extractionResult: any) {
 
     // Create license rule set
     const ruleSet = await storage.createLicenseRuleSet({
-      contractId,
       name: extractionResult.licenseType || 'Extracted License Rules',
       version: 1,
       rulesDsl: {
@@ -273,7 +273,8 @@ async function processLicenseRules(contractId: string, extractionResult: any) {
         calculation: rule.calculation,
         priority: rule.priority,
         sourceSpan: rule.sourceSpan,
-        confidence: rule.confidence.toString() // Convert to string for decimal field
+        confidence: rule.confidence.toString(), // Convert to string for decimal field
+        isActive: true
       });
     }
 
