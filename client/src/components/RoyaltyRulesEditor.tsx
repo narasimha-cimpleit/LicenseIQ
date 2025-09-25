@@ -185,66 +185,79 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
     const currentRule = localEditRule || rule;
 
     return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label>Rule Name</Label>
-            <Input
-              value={currentRule.ruleName}
-              onChange={(e) => setLocalEditRule(prev => ({ ...(prev || rule), ruleName: e.target.value }))}
-              placeholder="Enter rule name"
-              data-testid="input-rule-name"
+      <div className="space-y-6">
+        {/* Basic Info */}
+        <div className="space-y-4">
+          <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Basic Information</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="rule-name" className="text-sm font-medium">Rule Name</Label>
+              <Input
+                id="rule-name"
+                value={currentRule.ruleName}
+                onChange={(e) => setLocalEditRule(prev => ({ ...(prev || rule), ruleName: e.target.value }))}
+                placeholder="Enter rule name"
+                className="h-10"
+                data-testid="input-rule-name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="rule-type" className="text-sm font-medium">Rule Type</Label>
+              <Select
+                value={currentRule.ruleType}
+                onValueChange={(value: any) => setLocalEditRule(prev => ({ ...(prev || rule), ruleType: value }))}
+              >
+                <SelectTrigger id="rule-type" className="h-10" data-testid="select-rule-type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(RULE_TYPE_LABELS).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="description" className="text-sm font-medium">Description</Label>
+            <Textarea
+              id="description"
+              value={currentRule.description}
+              onChange={(e) => setLocalEditRule(prev => ({ ...(prev || rule), description: e.target.value }))}
+              placeholder="Describe when and how this rule applies"
+              className="min-h-[80px] resize-none"
+              data-testid="input-rule-description"
             />
           </div>
-          <div>
-            <Label>Rule Type</Label>
-            <Select
-              value={currentRule.ruleType}
-              onValueChange={(value: any) => setLocalEditRule(prev => ({ ...(prev || rule), ruleType: value }))}
-            >
-              <SelectTrigger data-testid="select-rule-type">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(RULE_TYPE_LABELS).map(([key, label]) => (
-                  <SelectItem key={key} value={key}>{label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div>
-          <Label>Description</Label>
-          <Textarea
-            value={currentRule.description}
-            onChange={(e) => setLocalEditRule(prev => ({ ...(prev || rule), description: e.target.value }))}
-            placeholder="Describe when and how this rule applies"
-            data-testid="input-rule-description"
-          />
         </div>
 
         {/* Calculation Settings */}
-        <div className="space-y-3">
-          <Label className="text-sm font-medium">Calculation Settings</Label>
-          <div className="grid grid-cols-3 gap-3">
+        <div className="space-y-4">
+          <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Calculation Settings</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {currentRule.ruleType === 'percentage' && (
               <>
-                <div>
-                  <Label className="text-xs">Rate (%)</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="rate" className="text-sm font-medium">Rate (%)</Label>
                   <Input
+                    id="rate"
                     type="number"
                     step="0.01"
+                    min="0"
+                    max="100"
                     value={currentRule.calculation.rate || ''}
                     onChange={(e) => setLocalEditRule(prev => ({
                       ...(prev || rule),
                       calculation: { ...(prev || rule).calculation, rate: parseFloat(e.target.value) || 0 }
                     }))}
+                    placeholder="Enter percentage rate"
+                    className="h-10"
                     data-testid="input-rule-rate"
                   />
                 </div>
-                <div>
-                  <Label className="text-xs">Base Field</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="base-field" className="text-sm font-medium">Base Field</Label>
                   <Select
                     value={currentRule.calculation.baseField || 'netRevenue'}
                     onValueChange={(value: any) => setLocalEditRule(prev => ({
@@ -252,7 +265,7 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
                       calculation: { ...(prev || rule).calculation, baseField: value }
                     }))}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id="base-field" className="h-10">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -266,29 +279,36 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
             )}
             
             {(currentRule.ruleType === 'fixed_fee' || currentRule.ruleType === 'minimum_guarantee' || currentRule.ruleType === 'cap') && (
-              <div>
-                <Label className="text-xs">Amount ($)</Label>
+              <div className="space-y-2">
+                <Label htmlFor="amount" className="text-sm font-medium">Amount ($)</Label>
                 <Input
+                  id="amount"
                   type="number"
                   step="0.01"
+                  min="0"
                   value={currentRule.calculation.amount || ''}
                   onChange={(e) => setLocalEditRule(prev => ({
                     ...(prev || rule),
                     calculation: { ...(prev || rule).calculation, amount: parseFloat(e.target.value) || 0 }
                   }))}
+                  placeholder="Enter amount in dollars"
+                  className="h-10"
                   data-testid="input-rule-amount"
                 />
               </div>
             )}
             
-            <div>
-              <Label className="text-xs">Priority (1-100)</Label>
+            <div className="space-y-2">
+              <Label htmlFor="priority" className="text-sm font-medium">Priority (1-100)</Label>
               <Input
+                id="priority"
                 type="number"
                 min="1"
                 max="100"
                 value={currentRule.priority}
                 onChange={(e) => setLocalEditRule(prev => ({ ...(prev || rule), priority: parseInt(e.target.value) || 10 }))}
+                placeholder="Enter priority level"
+                className="h-10"
                 data-testid="input-rule-priority"
               />
             </div>
@@ -296,45 +316,52 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
         </div>
 
         {/* Conditions */}
-        <div className="space-y-3">
-          <Label className="text-sm font-medium">Conditions (When Rule Applies)</Label>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs">Min Volume</Label>
+        <div className="space-y-4">
+          <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Conditions (When Rule Applies)</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="min-volume" className="text-sm font-medium">Min Volume</Label>
               <Input
+                id="min-volume"
                 type="number"
                 step="0.01"
+                min="0"
                 value={currentRule.conditions.salesVolumeMin || ''}
                 onChange={(e) => setLocalEditRule(prev => ({
                   ...(prev || rule),
                   conditions: { ...(prev || rule).conditions, salesVolumeMin: parseFloat(e.target.value) || undefined }
                 }))}
-                placeholder="Optional minimum"
+                placeholder="Optional minimum (leave empty for no minimum)"
+                className="h-10"
                 data-testid="input-rule-min-volume"
               />
             </div>
-            <div>
-              <Label className="text-xs">Max Volume</Label>
+            <div className="space-y-2">
+              <Label htmlFor="max-volume" className="text-sm font-medium">Max Volume</Label>
               <Input
+                id="max-volume"
                 type="number"
                 step="0.01"
+                min="0"
                 value={currentRule.conditions.salesVolumeMax || ''}
                 onChange={(e) => setLocalEditRule(prev => ({
                   ...(prev || rule),
                   conditions: { ...(prev || rule).conditions, salesVolumeMax: parseFloat(e.target.value) || undefined }
                 }))}
-                placeholder="Optional maximum"
+                placeholder="Optional maximum (leave empty for no maximum)"
+                className="h-10"
                 data-testid="input-rule-max-volume"
               />
             </div>
           </div>
         </div>
 
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-end gap-3 pt-4 border-t">
           <Button variant="outline" onClick={() => { setEditingRule(null); setLocalEditRule(null); }}>Cancel</Button>
           <Button
             onClick={() => onSave(currentRule)}
             disabled={updateRuleMutation.isPending}
+            className="bg-primary hover:bg-primary/90"
             data-testid="button-save-rule"
           >
             {updateRuleMutation.isPending ? 'Saving...' : 'Save Rule'}
@@ -694,43 +721,47 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
 
       {/* Rule Edit Dialog */}
       {editingRule && (
-        <Dialog open={!!editingRule} onOpenChange={() => { setEditingRule(null); setLocalEditRule(null); }}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Edit Royalty Rule</DialogTitle>
+        <Dialog open={!!editingRule} onOpenChange={(open) => { if (!open) { setEditingRule(null); setLocalEditRule(null); } }}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader className="pb-4">
+              <DialogTitle className="text-xl font-semibold">Edit Royalty Rule</DialogTitle>
             </DialogHeader>
-            {renderRuleEditor(editingRule.rule, (updatedRule) => 
-              updateRuleMutation.mutate({
-                ruleSetId: editingRule.ruleSetId,
-                ruleIndex: editingRule.ruleIndex,
-                updatedRule
-              })
-            )}
+            <div className="pr-2">
+              {renderRuleEditor(editingRule.rule, (updatedRule) => 
+                updateRuleMutation.mutate({
+                  ruleSetId: editingRule.ruleSetId,
+                  ruleIndex: editingRule.ruleIndex,
+                  updatedRule
+                })
+              )}
+            </div>
           </DialogContent>
         </Dialog>
       )}
 
       {/* Add Rule Dialog */}
       {isAddingRule && (
-        <Dialog open={!!isAddingRule} onOpenChange={() => { setIsAddingRule(null); setLocalEditRule(null); }}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Add New Royalty Rule</DialogTitle>
+        <Dialog open={!!isAddingRule} onOpenChange={(open) => { if (!open) { setIsAddingRule(null); setLocalEditRule(null); } }}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader className="pb-4">
+              <DialogTitle className="text-xl font-semibold">Add New Royalty Rule</DialogTitle>
             </DialogHeader>
-            {renderRuleEditor(
-              {
-                id: '',
-                ruleName: '',
-                ruleType: 'percentage',
-                description: '',
-                conditions: {},
-                calculation: { baseField: 'netRevenue' },
-                priority: 10,
-                isActive: true,
-                confidence: 1.0
-              },
-              (newRule) => addRuleMutation.mutate({ ruleSetId: isAddingRule, newRule })
-            )}
+            <div className="pr-2">
+              {renderRuleEditor(
+                {
+                  id: '',
+                  ruleName: '',
+                  ruleType: 'percentage',
+                  description: '',
+                  conditions: {},
+                  calculation: { baseField: 'netRevenue' },
+                  priority: 10,
+                  isActive: true,
+                  confidence: 1.0
+                },
+                (newRule) => addRuleMutation.mutate({ ruleSetId: isAddingRule, newRule })
+              )}
+            </div>
           </DialogContent>
         </Dialog>
       )}
