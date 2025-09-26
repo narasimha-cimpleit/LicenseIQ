@@ -277,7 +277,7 @@ export default function ContractAnalysis() {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${contract?.originalName || 'contract'}_analysis_report.pdf`;
+        a.download = `${contract?.originalName || 'contract'}_analysis_report.txt`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
@@ -338,6 +338,14 @@ export default function ContractAnalysis() {
 
   const handleExport = () => {
     handleDownloadReport();
+  };
+
+  const handleEditAnalysis = () => {
+    // Navigate to the edit analysis page or show edit modal
+    toast({
+      title: "Edit Analysis",
+      description: "Analysis editing functionality is being developed. For now, you can reprocess the contract to regenerate analysis.",
+    });
   };
 
   const handleReprocess = () => {
@@ -402,7 +410,7 @@ export default function ContractAnalysis() {
               <Download className="h-4 w-4 mr-2 text-blue-400" />
               Export
             </Button>
-            <Button data-testid="button-edit-analysis">
+            <Button onClick={handleEditAnalysis} data-testid="button-edit-analysis">
               <Edit className="h-4 w-4 mr-2 text-green-400" />
               Edit Analysis
             </Button>
