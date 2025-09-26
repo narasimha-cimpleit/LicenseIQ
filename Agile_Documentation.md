@@ -7,9 +7,173 @@ Following the successful completion of Epics 1-3 (Core Platform Development, Adv
 
 ### Team Velocity & Sprint Structure
 - **Team Velocity**: ~19 story points per sprint
-- **Sprint Duration**: 1 week
+- **Sprint Duration**: 1 week (5 working days)
 - **Total Sprints**: 4 sprints (Sprint 4-7)
 - **Total Story Points Planned**: 76 points
+
+## 📊 Story Point Calculation & Task Distribution Methodology
+
+### Story Point Scale & Complexity Mapping
+We use a **modified Fibonacci sequence** for story point estimation:
+
+| Points | Complexity Level | Time Estimate | Team Member Distribution |
+|--------|------------------|---------------|--------------------------|
+| **1 pt** | Trivial | 2-4 hours | 1 developer |
+| **2 pts** | Simple | 4-8 hours | 1 developer |
+| **3 pts** | Moderate | 1-1.5 days | 1-2 developers |
+| **5 pts** | Complex | 2-3 days | 2-3 developers |
+| **8 pts** | Very Complex | 3-5 days | 3-4 developers |
+| **13 pts** | Epic-level | 1+ weeks | Full team |
+
+### Complexity Factors Considered
+
+#### 1. **Technical Complexity** (40% weight)
+- New technology implementation
+- Integration complexity with existing systems
+- Database schema changes
+- API design and implementation
+- Security requirements
+
+#### 2. **Domain Complexity** (30% weight)
+- Business logic complexity
+- Rule engine implementation
+- Compliance requirements
+- User workflow complexity
+
+#### 3. **Effort & Team Distribution** (20% weight)
+- Frontend development effort
+- Backend development effort
+- Testing requirements
+- Documentation needs
+
+#### 4. **Risk & Dependencies** (10% weight)
+- External dependencies
+- Unknown technical challenges
+- Integration risks with third-party services
+
+### Task Distribution Strategy
+
+#### Sprint Team Composition (5 members)
+- **2 Full-Stack Developers**: Core development work
+- **1 Frontend Specialist**: UI/UX implementation
+- **1 Backend Specialist**: API and database work
+- **1 QA Engineer**: Testing and validation
+
+### Example Story Point Breakdown
+
+#### US-501: Security Hardening & Compliance (8 points)
+**Complexity Analysis:**
+- **Technical Complexity**: High (7/10) - MFA, encryption, audit logging
+- **Domain Complexity**: High (8/10) - GDPR compliance, security standards
+- **Effort**: High (8/10) - Multiple team members required
+- **Risk**: Medium (6/10) - External auth service dependencies
+
+**Task Distribution:**
+```
+Day 1-2: Backend Developer + Security Specialist
+├── MFA implementation (3 pts)
+├── Password policies (1 pt)
+└── Session management (1 pt)
+
+Day 3-4: Full-Stack Developer + Backend Developer  
+├── Audit logging system (2 pts)
+├── Data encryption (1 pt)
+└── GDPR compliance features (1 pt) 
+
+Day 5: QA Engineer + Team
+└── Security testing & validation
+```
+
+#### US-602: Advanced Rule Management System (6 points)
+**Complexity Analysis:**
+- **Technical Complexity**: Medium (6/10) - Visual builder, rule engine
+- **Domain Complexity**: High (8/10) - Complex business logic
+- **Effort**: Medium (6/10) - Primarily frontend with backend support
+- **Risk**: Low (3/10) - Well-understood requirements
+
+**Task Distribution:**
+```
+Day 1-2: Frontend Specialist + Full-Stack Developer
+├── Visual rule builder UI (3 pts)
+├── Drag-and-drop interface (2 pts)
+
+Day 3-4: Backend Developer + Full-Stack Developer
+├── Rule validation engine (1 pt)
+├── Import/export functionality (1 pt)
+
+Day 5: QA Engineer
+└── Rule testing scenarios
+```
+
+### Daily Capacity Planning
+
+#### Individual Developer Capacity
+- **Junior Developer**: 4-6 points per sprint
+- **Mid-level Developer**: 6-8 points per sprint  
+- **Senior Developer**: 8-10 points per sprint
+- **QA Engineer**: 4-6 points per sprint (testing focus)
+
+#### Team Velocity Calculation
+```
+Team Capacity = (2 × 8 pts) + (1 × 6 pts) + (1 × 8 pts) + (1 × 5 pts)
+Total Capacity = 16 + 6 + 8 + 5 = 35 points theoretical maximum
+
+Applied Velocity Factor = 0.65 (accounting for meetings, blockers, etc.)
+Realistic Sprint Capacity = 35 × 0.65 = ~23 points
+
+Conservative Target = 19 points per sprint (buffer for unknowns)
+```
+
+### Quality Gates & Acceptance Criteria
+
+#### Definition of Ready (Story Level)
+- [ ] Story points estimated by whole team
+- [ ] Acceptance criteria defined with complexity scoring
+- [ ] Technical approach documented
+- [ ] Dependencies identified
+- [ ] Team member assignments proposed
+
+#### Definition of Done (Task Level)
+- [ ] Code implemented and reviewed
+- [ ] Unit tests passing (minimum 80% coverage)
+- [ ] Integration tests completed
+- [ ] Security review completed (for 5+ point stories)
+- [ ] Performance impact assessed
+- [ ] Documentation updated
+
+### Sprint Planning Process
+
+#### 1. **Estimation Session** (30 minutes)
+- Team reviews all stories for the sprint
+- Planning poker for complex stories (5+ points)
+- Consensus on final point values
+- Risk assessment for high-point stories
+
+#### 2. **Task Breakdown** (45 minutes)
+- Large stories (5+ points) broken into daily tasks
+- Team member assignments based on expertise
+- Dependencies identified and sequenced
+- Buffer time allocated for unknowns
+
+#### 3. **Capacity Planning** (15 minutes)
+- Team availability confirmed
+- Point distribution validated against capacity
+- Stretch goals identified for early completion
+
+### Monitoring & Adjustment
+
+#### Daily Tracking
+- Burndown chart with story point progress
+- Impediment identification and resolution
+- Capacity adjustment based on actual progress
+
+#### Sprint Retrospective Focus
+- Estimation accuracy review
+- Complexity factor adjustment
+- Team capacity refinement
+- Process improvement identification
+
+This methodology ensures **realistic sprint planning**, **balanced workload distribution**, and **predictable delivery** while maintaining high quality standards.
 
 ## 📅 Sprint Calendar & Timeline
 
@@ -56,88 +220,12 @@ Following the successful completion of Epics 1-3 (Core Platform Development, Adv
 
 ---
 
-## Epic 4: Production Readiness & Security Enhancement
+## Epic 4: Advanced Royalty Processing Foundation
 **Priority**: Critical | **Story Points**: 21 | **Duration**: Sprint 4-5
 
 ### User Stories
 
-#### US-401: Security Hardening & Compliance
-**Story Points**: 8 | **Sprint**: 4
-**As a** security administrator  
-**I want** enhanced security features and compliance controls  
-**So that** the platform meets enterprise security standards
-
-**Acceptance Criteria:**
-- [ ] Implement password complexity requirements and rotation policies
-- [ ] Add multi-factor authentication (MFA) support
-- [ ] Enable session timeout and concurrent session limits
-- [ ] Implement IP whitelisting and geo-blocking capabilities
-- [ ] Add data encryption at rest and in transit
-- [ ] Create comprehensive audit logging with tamper protection
-- [ ] Implement GDPR compliance features (data export, deletion, consent)
-
-**Technical Requirements:**
-- Use Replit's authentication integration for MFA
-- Implement rate limiting for API endpoints
-- Add HTTPS enforcement and HSTS headers
-- Create compliance dashboard for audit trails
-
-#### US-402: Performance Optimization & Monitoring
-**Story Points**: 6 | **Sprint**: 4
-**As a** system administrator  
-**I want** optimized performance and monitoring capabilities  
-**So that** the platform can handle enterprise-scale workloads
-
-**Acceptance Criteria:**
-- [ ] Implement database query optimization and indexing
-- [ ] Add Redis caching layer for frequently accessed data
-- [ ] Optimize file upload/processing with streaming and chunking
-- [ ] Implement real-time system monitoring dashboard
-- [ ] Add performance metrics and alerting
-- [ ] Optimize bundle size and implement code splitting
-- [ ] Database connection pooling and query optimization
-
-**Technical Requirements:**
-- Use TanStack Query for advanced caching strategies
-- Implement virtual scrolling for large lists
-- Add performance monitoring with metrics collection
-- Optimize Groq API calls with intelligent batching
-
-#### US-403: Advanced Error Handling & Recovery
-**Story Points**: 4 | **Sprint**: 5
-**As a** platform user  
-**I want** robust error handling and recovery mechanisms  
-**So that** I can gracefully handle system failures and data corruption
-
-**Acceptance Criteria:**
-- [ ] Implement automatic retry mechanisms for failed operations
-- [ ] Create error boundary components with fallback UIs
-- [ ] Add data backup and restore capabilities
-- [ ] Implement transaction rollback for failed operations
-- [ ] Create detailed error logging and debugging tools
-- [ ] Add graceful degradation for AI service failures
-
-#### US-404: Production Deployment & DevOps
-**Story Points**: 3 | **Sprint**: 5
-**As a** DevOps engineer  
-**I want** automated deployment and infrastructure management  
-**So that** the platform can be reliably deployed and maintained
-
-**Acceptance Criteria:**
-- [ ] Configure automated database migrations
-- [ ] Implement health checks and readiness probes
-- [ ] Add environment-specific configuration management
-- [ ] Create deployment rollback procedures
-- [ ] Implement log aggregation and monitoring
-
----
-
-## Epic 5: Advanced Royalty Processing Engine
-**Priority**: High | **Story Points**: 19 | **Duration**: Sprint 4-6
-
-### User Stories
-
-#### US-501: Real-time Royalty Calculation Engine
+#### US-401: Real-time Royalty Calculation Engine
 **Story Points**: 8 | **Sprint**: 4
 **As a** finance manager  
 **I want** a robust royalty calculation engine  
@@ -158,8 +246,8 @@ Following the successful completion of Epics 1-3 (Core Platform Development, Adv
 - Comprehensive rule validation and testing framework
 - Integration with external currency APIs
 
-#### US-502: Advanced Rule Management System
-**Story Points**: 6 | **Sprint**: 5
+#### US-402: Advanced Rule Management System
+**Story Points**: 6 | **Sprint**: 4-5
 **As a** contract administrator  
 **I want** advanced rule management capabilities  
 **So that** I can create complex royalty structures efficiently
@@ -173,29 +261,7 @@ Following the successful completion of Epics 1-3 (Core Platform Development, Adv
 - [ ] Rule conflict detection and resolution
 - [ ] A/B testing for rule modifications
 
-#### US-503: Royalty Reporting & Analytics
-**Story Points**: 5 | **Sprint**: 6
-**As a** business analyst  
-**I want** comprehensive royalty reporting and analytics  
-**So that** I can track performance and identify trends
-
-**Acceptance Criteria:**
-- [ ] Interactive royalty dashboards with drill-down capabilities
-- [ ] Scheduled report generation and distribution
-- [ ] Customizable report templates
-- [ ] Variance analysis and trend detection
-- [ ] Forecast modeling and projection tools
-- [ ] Export capabilities (PDF, Excel, CSV)
-- [ ] Real-time notifications for significant variances
-
----
-
-## Epic 6: ERP Integration & Data Management
-**Priority**: High | **Story Points**: 18 | **Duration**: Sprint 5-7
-
-### User Stories
-
-#### US-601: Universal Data Import Engine
+#### US-403: Universal Data Import Engine
 **Story Points**: 7 | **Sprint**: 5
 **As a** data administrator  
 **I want** flexible data import capabilities  
@@ -216,8 +282,57 @@ Following the successful completion of Epics 1-3 (Core Platform Development, Adv
 - Create flexible schema mapping system
 - Add data quality scoring and reporting
 
-#### US-602: API Gateway & Third-party Integrations
+---
+
+## Epic 5: Security & Performance Enhancement
+**Priority**: Critical | **Story Points**: 19 | **Duration**: Sprint 6
+
+### User Stories
+
+#### US-501: Security Hardening & Compliance
+**Story Points**: 8 | **Sprint**: 6
+**As a** security administrator  
+**I want** enhanced security features and compliance controls  
+**So that** the platform meets enterprise security standards
+
+**Acceptance Criteria:**
+- [ ] Implement password complexity requirements and rotation policies
+- [ ] Add multi-factor authentication (MFA) support
+- [ ] Enable session timeout and concurrent session limits
+- [ ] Implement IP whitelisting and geo-blocking capabilities
+- [ ] Add data encryption at rest and in transit
+- [ ] Create comprehensive audit logging with tamper protection
+- [ ] Implement GDPR compliance features (data export, deletion, consent)
+
+**Technical Requirements:**
+- Use Replit's authentication integration for MFA
+- Implement rate limiting for API endpoints
+- Add HTTPS enforcement and HSTS headers
+- Create compliance dashboard for audit trails
+
+#### US-502: Performance Optimization & Monitoring
 **Story Points**: 6 | **Sprint**: 6
+**As a** system administrator  
+**I want** optimized performance and monitoring capabilities  
+**So that** the platform can handle enterprise-scale workloads
+
+**Acceptance Criteria:**
+- [ ] Implement database query optimization and indexing
+- [ ] Add Redis caching layer for frequently accessed data
+- [ ] Optimize file upload/processing with streaming and chunking
+- [ ] Implement real-time system monitoring dashboard
+- [ ] Add performance metrics and alerting
+- [ ] Optimize bundle size and implement code splitting
+- [ ] Database connection pooling and query optimization
+
+**Technical Requirements:**
+- Use TanStack Query for advanced caching strategies
+- Implement virtual scrolling for large lists
+- Add performance monitoring with metrics collection
+- Optimize Groq API calls with intelligent batching
+
+#### US-503: API Gateway & Third-party Integrations
+**Story Points**: 5 | **Sprint**: 6
 **As a** system integrator  
 **I want** comprehensive API management  
 **So that** external systems can integrate seamlessly
@@ -231,7 +346,29 @@ Following the successful completion of Epics 1-3 (Core Platform Development, Adv
 - [ ] SDK generation for popular languages
 - [ ] API versioning and backward compatibility
 
-#### US-603: Data Warehouse & Business Intelligence
+---
+
+## Epic 6: Analytics, Reporting & Business Intelligence
+**Priority**: High | **Story Points**: 18 | **Duration**: Sprint 7
+
+### User Stories
+
+#### US-601: Royalty Reporting & Analytics
+**Story Points**: 5 | **Sprint**: 7
+**As a** business analyst  
+**I want** comprehensive royalty reporting and analytics  
+**So that** I can track performance and identify trends
+
+**Acceptance Criteria:**
+- [ ] Interactive royalty dashboards with drill-down capabilities
+- [ ] Scheduled report generation and distribution
+- [ ] Customizable report templates
+- [ ] Variance analysis and trend detection
+- [ ] Forecast modeling and projection tools
+- [ ] Export capabilities (PDF, Excel, CSV)
+- [ ] Real-time notifications for significant variances
+
+#### US-602: Data Warehouse & Business Intelligence
 **Story Points**: 5 | **Sprint**: 7
 **As a** business intelligence analyst  
 **I want** data warehouse capabilities  
@@ -245,15 +382,30 @@ Following the successful completion of Epics 1-3 (Core Platform Development, Adv
 - [ ] Data lineage tracking and metadata management
 - [ ] Automated data quality checks
 
+#### US-603: Advanced Error Handling & DevOps
+**Story Points**: 8 | **Sprint**: 5-7
+**As a** DevOps engineer & platform user  
+**I want** robust error handling and automated deployment  
+**So that** the platform is reliable and maintainable
+
+**Acceptance Criteria:**
+- [ ] Implement automatic retry mechanisms for failed operations
+- [ ] Create error boundary components with fallback UIs
+- [ ] Add data backup and restore capabilities
+- [ ] Configure automated database migrations
+- [ ] Implement health checks and readiness probes
+- [ ] Create deployment rollback procedures
+- [ ] Implement log aggregation and monitoring
+
 ---
 
 ## Epic 7: Workflow Management & Collaboration
-**Priority**: Medium | **Story Points**: 18 | **Duration**: Sprint 6-7
+**Priority**: Medium | **Story Points**: 18 | **Duration**: Sprint 7
 
 ### User Stories
 
 #### US-701: Contract Approval Workflows
-**Story Points**: 8 | **Sprint**: 6
+**Story Points**: 6 | **Sprint**: 7
 **As a** contract manager  
 **I want** configurable approval workflows  
 **So that** contracts follow proper review and approval processes
@@ -274,7 +426,7 @@ Following the successful completion of Epics 1-3 (Core Platform Development, Adv
 - Comprehensive audit logging
 
 #### US-702: Real-time Notification System
-**Story Points**: 5 | **Sprint**: 6
+**Story Points**: 4 | **Sprint**: 7
 **As a** platform user  
 **I want** real-time notifications  
 **So that** I stay informed about important events and deadlines
@@ -288,7 +440,7 @@ Following the successful completion of Epics 1-3 (Core Platform Development, Adv
 - [ ] Notification analytics and delivery tracking
 
 #### US-703: Collaborative Features & Comments
-**Story Points**: 5 | **Sprint**: 7
+**Story Points**: 4 | **Sprint**: 7
 **As a** team member  
 **I want** collaboration tools  
 **So that** I can work effectively with colleagues on contracts
@@ -300,6 +452,20 @@ Following the successful completion of Epics 1-3 (Core Platform Development, Adv
 - [ ] File sharing and version control
 - [ ] Real-time collaborative editing
 - [ ] Discussion threads and resolution tracking
+
+#### US-704: Integration Testing & Bug Fixes
+**Story Points**: 4 | **Sprint**: 7
+**As a** quality assurance engineer  
+**I want** comprehensive integration testing  
+**So that** all platform components work together seamlessly
+
+**Acceptance Criteria:**
+- [ ] End-to-end testing for all user workflows
+- [ ] Performance testing under load
+- [ ] Security penetration testing
+- [ ] Cross-browser compatibility testing
+- [ ] Bug identification and resolution
+- [ ] Final system validation and acceptance testing
 
 ---
 
