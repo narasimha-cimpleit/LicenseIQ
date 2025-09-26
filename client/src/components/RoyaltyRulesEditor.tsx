@@ -346,10 +346,6 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
 
     setRoyaltyDemoResult(demoResult);
     setDialogOpen(true);
-    
-    toast({ 
-      description: `Demo calculation complete! Final payable: $${finalPayable.toLocaleString()}` 
-    });
   };
 
   const renderRuleEditor = (rule: RoyaltyRule, onSave: (updatedRule: RoyaltyRule) => void) => {
