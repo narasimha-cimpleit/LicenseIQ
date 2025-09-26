@@ -121,7 +121,7 @@ export default function ContractAnalysis() {
     retry: false,
     refetchInterval: 2000, // Refresh every 2s
     refetchIntervalInBackground: false,
-  });
+  }) as { data: any; isLoading: boolean; error: any };
 
   // Fetch royalty rules for this contract (NEW)
   const { data: royaltyRules, isLoading: rulesLoading } = useQuery({
@@ -130,7 +130,7 @@ export default function ContractAnalysis() {
     retry: false,
     refetchInterval: contract?.status === 'processing' ? 3000 : false, // Auto-refresh during processing
     refetchIntervalInBackground: false,
-  });
+  }) as { data: any; isLoading: boolean };
 
   // Auto-invalidate rules cache when contract status changes to analyzed
   const prevStatusRef = useRef(contract?.status);
