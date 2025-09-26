@@ -165,6 +165,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get audit logs
+  app.get('/api/audit', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const userRole = (await storage.getUser(userId))?.role;
+      
+      // Check if user has audit access
+      if (userRole !== 'admin' && userRole !== 'owner' && userRole !== 'auditor') {
+        return res.status(403).json({ error: 'Insufficient permissions' });
+      }
+
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = parseInt(req.query.offset as string) || 0;
+      
+      const result = await storage.getAuditLogs(undefined, limit, offset);
+      res.json(result);
+    } catch (error) {
+      console.error('Error fetching audit logs:', error);
+      res.status(500).json({ message: 'Failed to fetch audit logs' });
+    }
+  });
+
   // Get contracts list
   app.get('/api/contracts', isAuthenticated, async (req: any, res: Response) => {
     try {
