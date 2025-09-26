@@ -1,5 +1,5 @@
 # LicenseIQ Agile Project Plan
-**September 29 - November 12, 2025 | Development Phase 2 (45 Days)**
+**September 29 - November 29, 2025 | Development Phase 2 (60 Days)**
 
 ## Project Overview
 
@@ -8,9 +8,23 @@ Following the successful completion of Epics 1-3 (Core Platform Development, Adv
 ### Team Velocity & Sprint Structure
 - **Team Velocity**: ~19 story points per sprint
 - **Sprint Duration**: 1 week (5 working days)
-- **Total Sprints**: 5 sprints (Sprint 4-8)
-- **Total Story Points Planned**: 95 points
-- **Total Duration**: 45 calendar days
+- **Total Sprints**: 12 sprints (Sprint 4-15)
+- **Total Story Points Planned**: 228 points
+- **Total Duration**: 60 calendar days (2 months)
+
+### Monthly Structure
+**Month 1 (September 29 - October 29, 2025)**: 6 sprints - Foundation & Security Focus
+- Epic 4: Advanced Royalty Processing Foundation
+- Epic 5: Security & Performance Enhancement  
+- Epic 6: Data Integration & ERP Connectivity
+- Epic 7: Advanced Analytics Foundation
+
+**Month 2 (October 30 - November 29, 2025)**: 6 sprints - Integration & Production Focus
+- Epic 8: API Gateway & Third-party Integration
+- Epic 9: Workflow Management & Collaboration
+- Epic 10: Business Intelligence & Reporting
+- Epic 11: Production Optimization & Monitoring
+- Epic 12: Final Testing & Deployment
 
 ## 📊 Story Point Calculation & Task Distribution Methodology
 
@@ -179,20 +193,43 @@ This methodology ensures **realistic sprint planning**, **balanced workload dist
 ## 📅 Sprint Calendar & Timeline
 
 ### Sprint Schedule Overview
+
+#### Month 1: Foundation & Security (September 29 - October 29, 2025)
 | Sprint | Start Date | End Date | Duration | Story Points | Focus Area |
 |--------|------------|----------|----------|--------------|-------------|
 | **Sprint 4** | Monday, Sep 29, 2025 | Friday, Oct 3, 2025 | 5 days | 19 pts | Royalty Engine Foundation |
-| **Sprint 5** | Monday, Oct 6, 2025 | Friday, Oct 10, 2025 | 5 days | 19 pts | Advanced Processing & Data |
+| **Sprint 5** | Monday, Oct 6, 2025 | Friday, Oct 10, 2025 | 5 days | 19 pts | Advanced Rule Management |
 | **Sprint 6** | Monday, Oct 13, 2025 | Friday, Oct 17, 2025 | 5 days | 19 pts | Security & Performance |
-| **Sprint 7** | Monday, Oct 20, 2025 | Friday, Oct 24, 2025 | 5 days | 19 pts | Integration & Workflows |
-| **Sprint 8** | Monday, Oct 27, 2025 | Friday, Oct 31, 2025 | 5 days | 19 pts | Analytics & Collaboration |
+| **Sprint 7** | Monday, Oct 20, 2025 | Friday, Oct 24, 2025 | 5 days | 19 pts | Data Integration & ERP |
+| **Sprint 8** | Monday, Oct 27, 2025 | Friday, Oct 31, 2025 | 5 days | 19 pts | Analytics Foundation |
+| **Sprint 9** | Monday, Nov 3, 2025 | Friday, Nov 7, 2025 | 5 days | 19 pts | Advanced Analytics |
+
+#### Month 2: Integration & Production (November 3 - November 29, 2025)
+| Sprint | Start Date | End Date | Duration | Story Points | Focus Area |
+|--------|------------|----------|----------|--------------|-------------|
+| **Sprint 10** | Monday, Nov 10, 2025 | Friday, Nov 14, 2025 | 5 days | 19 pts | API Gateway & Integration |
+| **Sprint 11** | Monday, Nov 17, 2025 | Friday, Nov 21, 2025 | 5 days | 19 pts | Workflow Management |
+| **Sprint 12** | Monday, Nov 24, 2025 | Friday, Nov 28, 2025 | 5 days | 19 pts | Business Intelligence |
+| **Sprint 13** | Monday, Dec 1, 2025 | Friday, Dec 5, 2025 | 5 days | 19 pts | Production Optimization |
+| **Sprint 14** | Monday, Dec 8, 2025 | Friday, Dec 12, 2025 | 5 days | 19 pts | Collaboration & Monitoring |
+| **Sprint 15** | Monday, Dec 15, 2025 | Friday, Dec 19, 2025 | 5 days | 19 pts | Final Testing & Deployment |
 
 ### Key Milestone Dates
-- **October 10, 2025**: Royalty Engine & Data Import Ready
+
+#### Month 1 Milestones
+- **October 10, 2025**: Royalty Engine & Advanced Rules Complete
 - **October 17, 2025**: Security & Performance Features Complete
-- **October 24, 2025**: API Gateway & Workflows Functional
-- **October 31, 2025**: Analytics & Collaboration Complete
-- **November 12, 2025**: Final Testing & Production Deployment
+- **October 24, 2025**: Data Integration & ERP Connectivity Ready
+- **October 31, 2025**: Analytics Foundation Complete
+- **November 7, 2025**: Advanced Analytics & Data Pipeline Ready
+
+#### Month 2 Milestones  
+- **November 14, 2025**: API Gateway & Third-party Integration Complete
+- **November 21, 2025**: Workflow Management System Complete
+- **November 28, 2025**: Business Intelligence Platform Complete
+- **December 5, 2025**: Production Optimization Complete
+- **December 12, 2025**: Collaboration & Monitoring Complete
+- **December 19, 2025**: Final Testing & Production Deployment
 
 ### Sprint Ceremonies Schedule
 #### Sprint 4 (September 29 - October 3, 2025)
