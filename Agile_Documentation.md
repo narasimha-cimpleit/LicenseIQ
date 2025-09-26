@@ -1648,7 +1648,41 @@ Stories are complete when they have:
 
 ---
 
-*This comprehensive 45-day agile plan builds upon the successfully completed Epics 1-3 and positions LicenseIQ for enterprise-scale deployment with advanced features for contract management, royalty processing, and business intelligence. The 5-sprint structure (Sprint 4-8) delivers 95 story points across September 29 - November 12, 2025, ensuring production-ready deployment within the planned timeline.*
+## ⚠️ Potential Timeline Extension Risks
+
+While the current plan is ambitious but achievable, certain sprints carry inherent complexity risks that may require timeline extensions:
+
+### Sprint 6 (Security & Performance)
+**Risk**: Too many heavy stories crammed into 5 days.
+**Likely Delay**: +3–5 working days (1 extra week).
+
+**Reasoning**: Multi-factor authentication, Redis implementation, performance monitoring, and API gateway foundation all require deep technical integration work that often encounters unexpected complexity during implementation.
+
+### Sprint 9–10 (Analytics & BI) 
+**Risk**: ML, BI, and advanced visualization usually need more iteration than planned.
+**Likely Delay**: +5–7 working days (1 extra week).
+
+**Reasoning**: Business intelligence dashboards, data warehousing, and analytics features typically require multiple feedback cycles with stakeholders and complex data modeling that can't be fully anticipated during planning.
+
+### Sprint 15 (Final Testing & Deployment)
+**Risk**: UAT, load testing, onboarding, and launch prep all in 1 week is unrealistic.
+**Likely Delay**: +3–5 working days (1 extra week or a hypercare sprint).
+
+**Reasoning**: Production deployments rarely go smoothly on the first attempt, and comprehensive testing under real-world conditions often uncovers issues requiring additional development cycles.
+
+### 📊 Total Expected Extension
+**Minimum**: ~10 working days (~2 weeks)
+**Maximum** (if external integrations or analytics hit issues): ~15–20 working days (~3–4 weeks)
+
+**Mitigation Strategies**:
+- Build buffer sprints into stakeholder expectations
+- Prioritize MVP features over nice-to-have enhancements
+- Parallel development where possible (frontend + backend teams working simultaneously)
+- Early stakeholder feedback on analytics requirements to reduce iteration cycles
+
+---
+
+*This comprehensive 60-day agile plan builds upon the successfully completed Epics 1-3 and positions LicenseIQ for enterprise-scale deployment with advanced features for contract management, royalty processing, and business intelligence. The 12-sprint structure delivers 228 story points across September 29 - December 19, 2025, ensuring production-ready deployment within the planned timeline, with identified extension risks properly documented for stakeholder awareness.*
 
 ## 📊 Final Sprint Summary & Validation
 
