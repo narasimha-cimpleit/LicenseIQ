@@ -1250,13 +1250,18 @@ Day 3-4: Customer Success + Marketing Team
 ## Sprint Breakdown
 
 ### Sprint 1 (September 29 - October 2, 2025)
-**Focus**: Royalty Engine Foundation
+**Focus**: Epic 4 - Advanced Royalty Processing Foundation
 **Story Points**: 19
 
 **Sprint Goals:**
-- Build foundation for real-time royalty processing
-- Implement initial data processing capabilities
-- Set up basic system architecture
+- Build comprehensive royalty calculation engine
+- Implement dynamic rule management system
+- Set up advanced validation framework
+
+**Stories Included:**
+- US-401: Dynamic Royalty Calculation Engine (8 pts)
+- US-402: Advanced Rule Management System (6 pts)
+- US-403: Validation & Testing Framework (5 pts)
 
 **Stories Included:**
 - US-501: Real-time Royalty Calculation Engine (8 pts)
