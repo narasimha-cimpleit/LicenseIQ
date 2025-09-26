@@ -333,7 +333,7 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
     const finalPayable = Math.max(totalRoyalties, minimumGuarantee);
     const shortfall = minimumGuarantee > totalRoyalties ? minimumGuarantee - totalRoyalties : 0;
 
-    setRoyaltyDemoResult({
+    const demoResult = {
       calculations: results,
       summary: {
         totalCalculated: parseFloat(totalRoyalties.toFixed(2)),
@@ -341,11 +341,15 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
         shortfall: parseFloat(shortfall.toFixed(2)),
         finalPayable: parseFloat(finalPayable.toFixed(2))
       }
-    });
-    
+    };
+
+    console.log('Setting demo result:', demoResult);
+    setRoyaltyDemoResult(demoResult);
     setShowRoyaltyDemo(true);
+    console.log('Demo display should now be visible');
+    
     toast({ 
-      description: `Royalty calculation complete! Total: $${finalPayable.toLocaleString()}` 
+      description: `Royalty calculation complete! Scroll down to see detailed results. Total: $${finalPayable.toLocaleString()}` 
     });
   };
 
