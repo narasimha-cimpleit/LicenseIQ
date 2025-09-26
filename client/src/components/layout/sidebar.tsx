@@ -68,12 +68,6 @@ export default function Sidebar({ className }: SidebarProps) {
       icon: Building2,
       current: location === "/vendors" || location.startsWith("/vendors/"),
     },
-    {
-      name: "Royalty Calculations",
-      href: "/royalty-runs",
-      icon: Calculator,
-      current: location === "/royalty-runs" || location.startsWith("/royalty-runs/"),
-    },
   ];
 
   // Add admin-only navigation items
