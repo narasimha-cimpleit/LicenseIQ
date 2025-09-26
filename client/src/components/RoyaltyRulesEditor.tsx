@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Calculator, Edit, Plus, Trash2, Play, DollarSign, Percent, TrendingUp, RefreshCw, Sparkles, ChevronDown, ChevronUp, Save, X } from "lucide-react";
+import { Calculator, Edit, Plus, Trash2, Play, DollarSign, Percent, TrendingUp, RefreshCw, Sparkles, ChevronDown, ChevronUp, Save, X, Info } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -101,6 +101,8 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
   });
   const [calculationResult, setCalculationResult] = useState<any>(null);
   const [showCalculation, setShowCalculation] = useState(false);
+  const [royaltyDemoResult, setRoyaltyDemoResult] = useState<any>(null);
+  const [showRoyaltyDemo, setShowRoyaltyDemo] = useState(false);
 
   // Mutation for updating a rule
   const updateRuleMutation = useMutation({
@@ -109,10 +111,7 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
       ruleIndex: number; 
       updatedRule: RoyaltyRule;
     }) => {
-      return apiRequest(`/api/contracts/${contractId}/rules/${ruleSetId}/rule/${ruleIndex}`, {
-        method: 'PUT',
-        body: JSON.stringify(updatedRule),
-      });
+      return apiRequest('PUT', `/api/contracts/${contractId}/rules/${ruleSetId}/rule/${ruleIndex}`, updatedRule);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/contracts', contractId, 'rules'] });
@@ -129,10 +128,7 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
   // Mutation for adding a new rule
   const addRuleMutation = useMutation({
     mutationFn: async ({ ruleSetId, newRule }: { ruleSetId: string; newRule: Partial<RoyaltyRule> }) => {
-      return apiRequest(`/api/contracts/${contractId}/rules/${ruleSetId}/rule`, {
-        method: 'POST',
-        body: JSON.stringify(newRule),
-      });
+      return apiRequest('POST', `/api/contracts/${contractId}/rules/${ruleSetId}/rule`, newRule);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/contracts', contractId, 'rules'] });
@@ -148,9 +144,7 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
   // Mutation for deleting a rule
   const deleteRuleMutation = useMutation({
     mutationFn: async ({ ruleSetId, ruleIndex }: { ruleSetId: string; ruleIndex: number }) => {
-      return apiRequest(`/api/contracts/${contractId}/rules/${ruleSetId}/rule/${ruleIndex}`, {
-        method: 'DELETE',
-      });
+      return apiRequest('DELETE', `/api/contracts/${contractId}/rules/${ruleSetId}/rule/${ruleIndex}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/contracts', contractId, 'rules'] });
@@ -165,10 +159,7 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
   // Mutation for calculating royalties
   const calculateRoyaltiesMutation = useMutation({
     mutationFn: async (input: RoyaltyCalculationInput) => {
-      return apiRequest(`/api/contracts/${contractId}/calculate-royalties`, {
-        method: 'POST',
-        body: JSON.stringify(input),
-      });
+      return apiRequest('POST', `/api/contracts/${contractId}/calculate-royalties`, input);
     },
     onSuccess: (result) => {
       setCalculationResult(result);
@@ -179,6 +170,184 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
       toast({ variant: "destructive", description: error.message || "Failed to calculate royalties" });
     }
   });
+
+  // Sample Sales Data for Demo
+  const sampleSalesData = [
+    {
+      variety: "Aurora Flame Maple",
+      size: "1-gallon",
+      units: 6200,
+      unitPrice: 24.99,
+      season: "Spring",
+      territory: "Primary",
+      organic: false,
+      tier: 1,
+      baseRate: 1.25,
+      discountThreshold: 5000,
+      discountRate: 1.10
+    },
+    {
+      variety: "Aurora Flame Maple", 
+      size: "5-gallon",
+      units: 1100,
+      unitPrice: 89.99,
+      season: "Off-Season",
+      territory: "Primary",
+      organic: false,
+      tier: 1,
+      baseRate: 4.50,
+      discountThreshold: 1000,
+      discountRate: 3.95
+    },
+    {
+      variety: "Golden Spire Juniper",
+      size: "3-gallon",
+      units: 1800,
+      unitPrice: 54.99,
+      season: "Fall",
+      territory: "Secondary",
+      organic: false,
+      tier: 1,
+      baseRate: 2.85,
+      discountThreshold: 2000,
+      territoryPremium: 0.10
+    },
+    {
+      variety: "Pacific Sunset Rose",
+      size: "6-inch",
+      units: 3000,
+      unitPrice: 18.99,
+      season: "Spring",
+      territory: "Primary",
+      organic: false,
+      tier: 2,
+      baseRate: 1.15,
+      multiplier: 1.2,
+      springAdjustment: 0.10
+    },
+    {
+      variety: "Emerald Crown Hosta",
+      size: "2-gallon+",
+      units: 900,
+      unitPrice: 39.99,
+      season: "Fall",
+      territory: "Primary",
+      organic: true,
+      tier: 2,
+      baseRate: 3.25,
+      multiplier: 1.5,
+      fallAdjustment: -0.05,
+      organicPremium: 0.25
+    },
+    {
+      variety: "Cascade Blue Hydrangea",
+      size: "Mixed",
+      units: 20000,
+      unitPrice: 32.99,
+      season: "Spring + Off-Season",
+      territory: "Primary",
+      organic: false,
+      tier: 3,
+      slidingRate: 1.45,
+      minimumAnnual: 25000
+    },
+    {
+      variety: "Pacific Sunset Rose",
+      size: "1-gallon", 
+      units: 250,
+      unitPrice: 24.99,
+      season: "Holiday",
+      territory: "Primary",
+      organic: false,
+      tier: 2,
+      baseRate: 1.85,
+      multiplier: 1.3,
+      holidayAdjustment: 0.20
+    }
+  ];
+
+  const calculateSampleRoyalties = () => {
+    const results = sampleSalesData.map(item => {
+      let royaltyPerUnit = 0;
+      let appliedRules = [];
+
+      if (item.tier === 1) {
+        // Tier 1: Ornamental Trees & Shrubs
+        if (item.units >= (item.discountThreshold || 0) && item.discountRate !== undefined) {
+          royaltyPerUnit = item.discountRate;
+          appliedRules.push(`Volume discount: ${item.units} units ≥ ${item.discountThreshold} threshold`);
+        } else {
+          royaltyPerUnit = item.baseRate || 0;
+          appliedRules.push(`Base rate: ${item.baseRate}/unit`);
+        }
+
+        // Territory premium
+        if (item.territoryPremium && item.territory === "Secondary") {
+          royaltyPerUnit *= (1 + item.territoryPremium);
+          appliedRules.push(`Secondary territory: +${(item.territoryPremium * 100)}% premium`);
+        }
+      } 
+      else if (item.tier === 2) {
+        // Tier 2: Perennials & Roses
+        royaltyPerUnit = (item.baseRate || 0) * (item.multiplier || 1);
+        appliedRules.push(`Base: $${item.baseRate} × ${item.multiplier} multiplier`);
+
+        // Seasonal adjustments
+        if (item.springAdjustment && item.season === "Spring") {
+          royaltyPerUnit *= (1 + item.springAdjustment);
+          appliedRules.push(`Spring: +${(item.springAdjustment * 100)}% adjustment`);
+        }
+        if (item.fallAdjustment && item.season === "Fall") {
+          royaltyPerUnit *= (1 + item.fallAdjustment);
+          appliedRules.push(`Fall: ${(item.fallAdjustment * 100)}% adjustment`);
+        }
+        if (item.holidayAdjustment && item.season === "Holiday") {
+          royaltyPerUnit *= (1 + item.holidayAdjustment);
+          appliedRules.push(`Holiday: +${(item.holidayAdjustment * 100)}% adjustment`);
+        }
+
+        // Organic premium
+        if (item.organic && item.organicPremium) {
+          royaltyPerUnit *= (1 + item.organicPremium);
+          appliedRules.push(`Organic: +${(item.organicPremium * 100)}% premium`);
+        }
+      }
+      else if (item.tier === 3) {
+        // Tier 3: Sliding scale
+        royaltyPerUnit = item.slidingRate || 0;
+        appliedRules.push(`Sliding scale: ${item.units} units → $${item.slidingRate}/unit`);
+      }
+
+      const royaltyTotal = item.units * royaltyPerUnit;
+
+      return {
+        ...item,
+        royaltyPerUnit: parseFloat(royaltyPerUnit.toFixed(3)),
+        royaltyTotal: parseFloat(royaltyTotal.toFixed(2)),
+        appliedRules
+      };
+    });
+
+    const totalRoyalties = results.reduce((sum, item) => sum + item.royaltyTotal, 0);
+    const minimumGuarantee = 85000;
+    const finalPayable = Math.max(totalRoyalties, minimumGuarantee);
+    const shortfall = minimumGuarantee > totalRoyalties ? minimumGuarantee - totalRoyalties : 0;
+
+    setRoyaltyDemoResult({
+      calculations: results,
+      summary: {
+        totalCalculated: parseFloat(totalRoyalties.toFixed(2)),
+        minimumGuarantee,
+        shortfall: parseFloat(shortfall.toFixed(2)),
+        finalPayable: parseFloat(finalPayable.toFixed(2))
+      }
+    });
+    
+    setShowRoyaltyDemo(true);
+    toast({ 
+      description: `Royalty calculation complete! Total: $${finalPayable.toLocaleString()}` 
+    });
+  };
 
   const renderRuleEditor = (rule: RoyaltyRule, onSave: (updatedRule: RoyaltyRule) => void) => {
     // Use parent component's state instead of local useState
@@ -522,15 +691,26 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
                 </div>
               )}
             </div>
-            <Button
-              onClick={() => setShowCalculation(!showCalculation)}
-              variant="outline"
-              className="flex items-center gap-2 border-purple-200 hover:border-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/20"
-              data-testid="button-toggle-calculator"
-            >
-              <Calculator className="h-4 w-4" />
-              {showCalculation ? 'Hide Calculator' : 'Show Calculator'}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => setShowCalculation(!showCalculation)}
+                variant="outline"
+                className="flex items-center gap-2 border-purple-200 hover:border-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/20"
+                data-testid="button-toggle-calculator"
+              >
+                <Calculator className="h-4 w-4" />
+                {showCalculation ? 'Hide Calculator' : 'Show Calculator'}
+              </Button>
+              
+              <Button
+                onClick={() => calculateSampleRoyalties()}
+                className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white"
+                data-testid="button-calculate-royalty"
+              >
+                <DollarSign className="h-4 w-4" />
+                Calculate Royalty Demo
+              </Button>
+            </div>
           </div>
         </CardHeader>
       </Card>
@@ -663,6 +843,103 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
                 )}
               </div>
             )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Royalty Demo Results */}
+      {showRoyaltyDemo && royaltyDemoResult && (
+        <Card className="border-green-200 bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-950/20 dark:to-blue-950/20">
+          <CardHeader>
+            <div className="flex justify-between items-start">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-gradient-to-br from-green-500 to-blue-600 rounded-lg shadow-md">
+                  <DollarSign className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg font-semibold text-green-800 dark:text-green-200">
+                    Royalty Calculation Demo Results
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Sample calculation based on plant nursery contract terms
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowRoyaltyDemo(false)}
+                data-testid="button-close-demo"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Summary */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-white dark:bg-gray-800 rounded-lg border">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-green-600">${royaltyDemoResult.summary.totalCalculated.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Calculated Royalties</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-blue-600">${royaltyDemoResult.summary.minimumGuarantee.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Minimum Guarantee</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-red-600">${royaltyDemoResult.summary.shortfall.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Shortfall</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-purple-600">${royaltyDemoResult.summary.finalPayable.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Final Payable</p>
+              </div>
+            </div>
+
+            {/* Detailed Calculations */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-sm text-gray-700 dark:text-gray-300">Detailed Calculations by Variety</h4>
+              <div className="grid gap-3">
+                {royaltyDemoResult.calculations.map((calc: any, index: number) => (
+                  <div key={index} className="bg-white dark:bg-gray-800 rounded-lg border p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <p className="font-medium text-sm">{calc.variety} ({calc.size})</p>
+                        <p className="text-xs text-muted-foreground">
+                          {calc.units.toLocaleString()} units • {calc.season} • {calc.territory}
+                          {calc.organic && <span className="text-green-600 ml-1">• Organic</span>}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-green-600">${calc.royaltyTotal.toLocaleString()}</p>
+                        <p className="text-xs text-muted-foreground">${calc.royaltyPerUnit}/unit</p>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-1">
+                      {calc.appliedRules.map((rule: string, ruleIndex: number) => (
+                        <p key={ruleIndex} className="text-xs text-muted-foreground">• {rule}</p>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Summary Note */}
+            <div className="p-4 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+              <div className="flex items-start gap-2">
+                <Info className="h-4 w-4 text-yellow-600 mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-medium text-yellow-800 dark:text-yellow-200">Minimum Guarantee Applied</p>
+                  <p className="text-yellow-700 dark:text-yellow-300 mt-1">
+                    Even though calculated royalties total ${royaltyDemoResult.summary.totalCalculated.toLocaleString()}, 
+                    the licensee must pay the minimum guarantee of ${royaltyDemoResult.summary.minimumGuarantee.toLocaleString()} 
+                    as specified in the contract terms.
+                  </p>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}
