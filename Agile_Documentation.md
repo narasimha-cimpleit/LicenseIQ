@@ -11,6 +11,49 @@ Following the successful completion of Epics 1-3 (Core Platform Development, Adv
 - **Total Sprints**: 4 sprints (Sprint 4-7)
 - **Total Story Points Planned**: 76 points
 
+## 📅 Sprint Calendar & Timeline
+
+### Sprint Schedule Overview
+| Sprint | Start Date | End Date | Duration | Story Points | Focus Area |
+|--------|------------|----------|----------|--------------|-------------|
+| **Sprint 4** | Monday, Sep 29, 2025 | Friday, Oct 3, 2025 | 5 days | 19 pts | Security & Infrastructure |
+| **Sprint 5** | Monday, Oct 6, 2025 | Friday, Oct 10, 2025 | 5 days | 19 pts | Advanced Processing & Data |
+| **Sprint 6** | Monday, Oct 13, 2025 | Friday, Oct 17, 2025 | 5 days | 19 pts | Integration & Workflows |
+| **Sprint 7** | Monday, Oct 20, 2025 | Friday, Oct 25, 2025 | 5 days | 19 pts | Business Intelligence & Collaboration |
+
+### Key Milestone Dates
+- **October 3, 2025**: Security & Performance Features Complete
+- **October 10, 2025**: Royalty Engine & Data Import Ready
+- **October 17, 2025**: API Gateway & Workflows Functional
+- **October 25, 2025**: Full Platform Integration Complete
+- **October 27, 2025**: Final Testing & Documentation
+
+### Sprint Ceremonies Schedule
+#### Sprint 4 (September 29 - October 3, 2025)
+- **Sprint Planning**: Monday, Sep 29, 10:00 AM EST
+- **Daily Standups**: Sep 30, Oct 1, Oct 2, Oct 3 at 9:00 AM EST
+- **Sprint Review**: Friday, Oct 3, 2:00 PM EST
+- **Sprint Retrospective**: Friday, Oct 3, 3:00 PM EST
+
+#### Sprint 5 (October 6 - October 10, 2025)
+- **Sprint Planning**: Monday, Oct 6, 10:00 AM EST
+- **Daily Standups**: Oct 7, Oct 8, Oct 9, Oct 10 at 9:00 AM EST
+- **Sprint Review**: Friday, Oct 10, 2:00 PM EST
+- **Sprint Retrospective**: Friday, Oct 10, 3:00 PM EST
+
+#### Sprint 6 (October 13 - October 17, 2025)
+- **Sprint Planning**: Monday, Oct 13, 10:00 AM EST
+- **Daily Standups**: Oct 14, Oct 15, Oct 16, Oct 17 at 9:00 AM EST
+- **Sprint Review**: Friday, Oct 17, 2:00 PM EST
+- **Sprint Retrospective**: Friday, Oct 17, 3:00 PM EST
+
+#### Sprint 7 (October 20 - October 25, 2025)
+- **Sprint Planning**: Monday, Oct 20, 10:00 AM EST
+- **Daily Standups**: Oct 21, Oct 22, Oct 23, Oct 24 at 9:00 AM EST
+- **Sprint Review**: Friday, Oct 25, 2:00 PM EST
+- **Sprint Retrospective**: Friday, Oct 25, 3:00 PM EST
+- **Final Demo**: Sunday, Oct 27, 2:00 PM EST
+
 ---
 
 ## Epic 4: Production Readiness & Security Enhancement
@@ -262,7 +305,7 @@ Following the successful completion of Epics 1-3 (Core Platform Development, Adv
 
 ## Sprint Breakdown
 
-### Sprint 4 (September 29 - October 5, 2025)
+### Sprint 4 (September 29 - October 3, 2025)
 **Focus**: Security & Core Infrastructure
 **Story Points**: 19
 
@@ -276,13 +319,20 @@ Following the successful completion of Epics 1-3 (Core Platform Development, Adv
 - US-402: Performance Optimization & Monitoring (6 pts)
 - US-501: Real-time Royalty Calculation Engine (8 pts) - Start
 
-**Key Deliverables:**
-- MFA authentication system
-- Performance monitoring dashboard
-- Redis caching implementation
-- Royalty calculation API foundation
+**Daily Planning:**
+- **Monday, Sep 29**: Sprint planning, security architecture design
+- **Tuesday, Sep 30**: MFA implementation, Redis setup
+- **Wednesday, Oct 1**: Performance monitoring, database optimization
+- **Thursday, Oct 2**: Royalty engine foundation, caching implementation
+- **Friday, Oct 3**: Sprint review, testing, and retrospective
 
-### Sprint 5 (October 6 - October 12, 2025)
+**Key Deliverables:**
+- MFA authentication system (Due: Oct 1)
+- Performance monitoring dashboard (Due: Oct 2)
+- Redis caching implementation (Due: Oct 2)
+- Royalty calculation API foundation (Due: Oct 3)
+
+### Sprint 5 (October 6 - October 10, 2025)
 **Focus**: Advanced Processing & Data Integration
 **Story Points**: 19
 
@@ -297,13 +347,20 @@ Following the successful completion of Epics 1-3 (Core Platform Development, Adv
 - US-502: Advanced Rule Management System (6 pts)
 - US-601: Universal Data Import Engine (7 pts) - Start
 
-**Key Deliverables:**
-- Production-ready error handling
-- Advanced rule management UI
-- Data import engine with validation
-- Automated deployment pipeline
+**Daily Planning:**
+- **Monday, Oct 6**: Sprint planning, error handling architecture
+- **Tuesday, Oct 7**: Advanced error recovery, deployment automation
+- **Wednesday, Oct 8**: Rule management system UI development
+- **Thursday, Oct 9**: Data import engine implementation
+- **Friday, Oct 10**: Sprint review, validation testing, retrospective
 
-### Sprint 6 (October 13 - October 19, 2025)
+**Key Deliverables:**
+- Production-ready error handling (Due: Oct 7)
+- Advanced rule management UI (Due: Oct 8)
+- Data import engine with validation (Due: Oct 9)
+- Automated deployment pipeline (Due: Oct 10)
+
+### Sprint 6 (October 13 - October 17, 2025)
 **Focus**: Integration & Workflow Management
 **Story Points**: 19
 
@@ -317,13 +374,20 @@ Following the successful completion of Epics 1-3 (Core Platform Development, Adv
 - US-602: API Gateway & Third-party Integrations (6 pts)
 - US-701: Contract Approval Workflows (8 pts)
 
-**Key Deliverables:**
-- Comprehensive royalty analytics
-- RESTful API with documentation
-- Visual workflow designer
-- Real-time notification system
+**Daily Planning:**
+- **Monday, Oct 13**: Sprint planning, analytics dashboard design
+- **Tuesday, Oct 14**: Royalty reporting implementation, API gateway setup
+- **Wednesday, Oct 15**: Third-party integrations, workflow designer
+- **Thursday, Oct 16**: Contract approval workflows, notification system
+- **Friday, Oct 17**: Sprint review, integration testing, retrospective
 
-### Sprint 7 (October 20 - October 27, 2025)
+**Key Deliverables:**
+- Comprehensive royalty analytics (Due: Oct 14)
+- RESTful API with documentation (Due: Oct 15)
+- Visual workflow designer (Due: Oct 16)
+- Contract approval system (Due: Oct 17)
+
+### Sprint 7 (October 20 - October 25, 2025)
 **Focus**: Business Intelligence & Collaboration
 **Story Points**: 19
 
@@ -338,11 +402,20 @@ Following the successful completion of Epics 1-3 (Core Platform Development, Adv
 - US-603: Data Warehouse & Business Intelligence (5 pts)
 - Integration Testing & Bug Fixes (4 pts)
 
+**Daily Planning:**
+- **Monday, Oct 20**: Sprint planning, notification system architecture
+- **Tuesday, Oct 21**: Real-time notifications, collaboration features
+- **Wednesday, Oct 22**: Commenting system, data warehouse implementation
+- **Thursday, Oct 23**: Business intelligence dashboard, integration testing
+- **Friday, Oct 24**: Sprint review, final testing, retrospective
+- **Sunday, Oct 27**: Final demo and project presentation
+
 **Key Deliverables:**
-- Complete notification system
-- Collaboration tools and commenting
-- Business intelligence capabilities
-- Full platform integration testing
+- Complete notification system (Due: Oct 21)
+- Collaboration tools and commenting (Due: Oct 22)
+- Business intelligence capabilities (Due: Oct 23)
+- Full platform integration testing (Due: Oct 24)
+- Final project demo (Due: Oct 27)
 
 ---
 
@@ -480,6 +553,43 @@ Stories are complete when they have:
 - Time: Last Friday of sprint, 3:00 PM EST
 - Duration: 1 hour
 - Focus: Process improvement and team feedback
+
+---
+
+## 🗓️ Quick Reference Calendar
+
+### October 2025 Development Calendar
+
+| Date | Day | Activity | Sprint | Deliverables |
+|------|-----|----------|---------|--------------|
+| **Sep 29** | Monday | Sprint 4 Planning | Sprint 4 | Security architecture design |
+| **Sep 30** | Tuesday | Development | Sprint 4 | MFA implementation start |
+| **Oct 1** | Wednesday | Development | Sprint 4 | **MFA system complete** |
+| **Oct 2** | Thursday | Development | Sprint 4 | **Performance dashboard, Redis cache** |
+| **Oct 3** | Friday | Sprint 4 Review | Sprint 4 | **Royalty API foundation complete** |
+| **Oct 6** | Monday | Sprint 5 Planning | Sprint 5 | Error handling architecture |
+| **Oct 7** | Tuesday | Development | Sprint 5 | **Advanced error recovery complete** |
+| **Oct 8** | Wednesday | Development | Sprint 5 | **Rule management UI complete** |
+| **Oct 9** | Thursday | Development | Sprint 5 | **Data import engine complete** |
+| **Oct 10** | Friday | Sprint 5 Review | Sprint 5 | **Deployment pipeline complete** |
+| **Oct 13** | Monday | Sprint 6 Planning | Sprint 6 | Analytics dashboard design |
+| **Oct 14** | Tuesday | Development | Sprint 6 | **Royalty analytics complete** |
+| **Oct 15** | Wednesday | Development | Sprint 6 | **API gateway complete** |
+| **Oct 16** | Thursday | Development | Sprint 6 | **Workflow designer complete** |
+| **Oct 17** | Friday | Sprint 6 Review | Sprint 6 | **Contract approval system complete** |
+| **Oct 20** | Monday | Sprint 7 Planning | Sprint 7 | Notification system architecture |
+| **Oct 21** | Tuesday | Development | Sprint 7 | **Notification system complete** |
+| **Oct 22** | Wednesday | Development | Sprint 7 | **Collaboration tools complete** |
+| **Oct 23** | Thursday | Development | Sprint 7 | **Business intelligence complete** |
+| **Oct 24** | Friday | Sprint 7 Review | Sprint 7 | **Integration testing complete** |
+| **Oct 27** | Monday | Final Demo | Project | **🎉 Project delivery & presentation** |
+
+### Major Milestone Tracker
+- **🔐 Security Milestone**: October 3, 2025
+- **⚡ Processing Milestone**: October 10, 2025  
+- **🔗 Integration Milestone**: October 17, 2025
+- **📊 Intelligence Milestone**: October 24, 2025
+- **🚀 Launch Ready**: October 27, 2025
 
 ---
 
