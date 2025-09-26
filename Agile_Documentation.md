@@ -28,166 +28,76 @@ Following the successful completion of Epics 1-3 (Core Platform Development, Adv
 
 ## 👥 TEAM STRUCTURE & REQUIRED ROLES
 
-### Core Team Composition (12-15 Members)
+### Core Team Composition (6 Members)
 
-#### **Development Team (8 members)**
+#### **Development Team (5 members)**
 
 **1. Technical Lead (1)**
 - Overall technical architecture ownership
 - Code review and quality standards
 - Technology decisions and technical risk management
 - Cross-team coordination and mentoring
+- DevOps and deployment responsibilities
+- Security architecture and compliance oversight
 
 **2. Full-Stack Developers (2)**
 - End-to-end feature development
 - Frontend and backend integration
 - API development and UI implementation
 - General problem-solving across the stack
+- Frontend specialization and UI/UX development
+- Performance optimization responsibilities
 
-**3. Frontend Specialists (2)**
-- React/TypeScript UI development
-- Advanced UX implementation and animations
-- Performance optimization for client-side
-- Component library development and maintenance
-
-**4. Backend Specialists (2)**
+**3. Backend Specialists (2)**
 - API design and database architecture
 - Server-side business logic implementation
 - Database optimization and query performance
 - Integration with external services
+- Data engineering and ETL pipeline development
+- Third-party integrations and webhook management
 
-**5. DevOps Engineer (1)**
-- CI/CD pipeline management
-- Infrastructure automation and deployment
-- Monitoring and alerting setup
-- Cloud resource management and scaling
+#### **Quality Assurance (1 member)**
 
-#### **Specialized Roles (4 members)**
-
-**6. Security Engineer (1)**
-- Security architecture and compliance
-- Penetration testing and vulnerability assessment
-- GDPR and regulatory compliance implementation
-- Multi-factor authentication and access control
-
-**7. Data Engineer (1)**
-- ETL pipeline development
-- Data warehouse design and optimization
-- ERP system integration and data mapping
-- Real-time data streaming implementation
-
-**8. Performance Engineer (1)**
-- System performance optimization
-- Load testing and capacity planning
-- Database tuning and caching strategies
-- Monitoring and alerting systems
-
-**9. Integration Specialist (1)**
-- Third-party API integrations
-- Webhook and event management
-- SDK development and documentation
-- External system connectivity
-
-#### **Quality & Operations (3 members)**
-
-**10. QA Engineer (1)**
+**4. QA Engineer (1)**
 - Test automation and validation
 - Integration testing and bug tracking
 - User acceptance testing coordination
 - Quality assurance processes
-
-**11. QA Automation Engineer (1)**
 - Automated testing framework development
-- CI/CD testing integration
 - Performance and load testing
-- Test data management
-
-**12. Site Reliability Engineer (1)**
-- Production system monitoring
-- Incident response and troubleshooting
-- System reliability and uptime optimization
-- Disaster recovery planning
-
-### **Extended Team (5-7 members)**
-
-#### **Specialized Domain Experts (4 members)**
-
-**13. Analytics Engineer (1)**
-- Business intelligence and reporting
-- Advanced analytics and machine learning
-- Dashboard development and visualization
-- Data science and predictive modeling
-
-**14. API Developer (1)**
-- GraphQL and RESTful API development
-- API gateway and documentation
-- Rate limiting and security implementation
-- API versioning and backward compatibility
-
-**15. Security Architect (1)**
-- Zero-trust security model design
-- Advanced threat detection implementation
-- Security compliance and certification
-- Enterprise security policy development
-
-**16. Database Administrator (1)**
-- Database clustering and replication
-- Performance tuning and optimization
-- Backup and disaster recovery
-- Data integrity and maintenance
-
-#### **Management & Coordination (3 members)**
-
-**17. Project Manager (1)**
-- Sprint planning and coordination
-- Stakeholder communication
-- Risk management and timeline tracking
-- Resource allocation and team coordination
-
-**18. Product Owner (1)**
-- Requirements gathering and prioritization
-- User story definition and acceptance criteria
-- Stakeholder liaison and feedback coordination
-- Feature roadmap and business value alignment
-
-**19. Scrum Master (1)**
-- Agile process facilitation
-- Sprint ceremonies coordination
-- Team impediment removal
-- Continuous improvement facilitation
 
 ### **Role Distribution by Sprint Focus**
 
 #### **Month 1 Sprints (Foundation & Security)**
-- **Heavy involvement**: Backend Specialists, Security Engineer, Data Engineer
-- **Moderate involvement**: Full-Stack Developers, DevOps Engineer
-- **Support roles**: Frontend Specialists, QA Engineers
+- **Heavy involvement**: Backend Specialists, Technical Lead
+- **Moderate involvement**: Full-Stack Developers
+- **Support roles**: QA Engineer
 
 #### **Month 2 Sprints (Integration & Production)**
-- **Heavy involvement**: Integration Specialist, DevOps Engineer, Site Reliability Engineer
-- **Moderate involvement**: API Developer, Performance Engineer
-- **Support roles**: All development team members for final integration
+- **Heavy involvement**: Technical Lead, Backend Specialists
+- **Moderate involvement**: Full-Stack Developers
+- **Support roles**: QA Engineer for final integration testing
 
 ### **Team Scaling Strategy**
 
-#### **Sprint 1-4 (Foundation Phase)**: 10-12 active members
+#### **Sprint 1-4 (Foundation Phase)**: 6 active members
 - Focus on core development and security implementation
-- Gradual team ramp-up as complexity increases
+- Technical Lead handles architecture decisions and security oversight
 
-#### **Sprint 5-8 (Integration Phase)**: 12-15 active members
+#### **Sprint 5-8 (Integration Phase)**: 6 active members
 - Full team engagement for complex integrations
-- Specialized roles become critical
+- Backend Specialists lead integration efforts
 
-#### **Sprint 9-12 (Production Phase)**: 8-10 active members
+#### **Sprint 9-12 (Production Phase)**: 6 active members
 - Focus on deployment, testing, and optimization
-- Reduced development, increased operations focus
+- Technical Lead oversees production deployment
 
 ### **Communication Structure**
 
-#### **Daily Standups**: All core team members (12-15 people)
-#### **Technical Architecture Meetings**: Technical Lead + Specialists (6-8 people)
-#### **Sprint Planning**: Core team + Product Owner + Scrum Master (13-16 people)
-#### **Sprint Review**: All team members + stakeholders (15-20 people)
+#### **Daily Standups**: All team members (6 people)
+#### **Technical Architecture Meetings**: Technical Lead + Backend Specialists (3 people)
+#### **Sprint Planning**: All team members (6 people)
+#### **Sprint Review**: All team members (6 people)
 
 ## 📊 Story Point Calculation & Task Distribution Methodology
 
@@ -231,10 +141,10 @@ We use a **modified Fibonacci sequence** for story point estimation:
 
 ### Task Distribution Strategy
 
-#### Sprint Team Composition (5 members)
-- **2 Full-Stack Developers**: Core development work
-- **1 Frontend Specialist**: UI/UX implementation
-- **1 Backend Specialist**: API and database work
+#### Sprint Team Composition (6 members)
+- **1 Technical Lead**: Architecture and security oversight
+- **2 Full-Stack Developers**: Core development work with frontend specialization
+- **2 Backend Specialists**: API, database, and integration work
 - **1 QA Engineer**: Testing and validation
 
 ### Example Story Point Breakdown
@@ -458,17 +368,17 @@ This methodology ensures **realistic sprint planning**, **balanced workload dist
 
 **Task Breakdown (8 points):**
 ```
-Day 1-2: Backend Specialist + Full-Stack Developer
+Day 1-2: Backend Specialist + Technical Lead
 ├── Royalty calculation core engine (3 pts)
 ├── Multi-currency support implementation (2 pts)
 └── Database schema optimization (1 pt)
 
-Day 3-4: Full-Stack Developer + QA Engineer
+Day 3-4: Full-Stack Developer + Backend Specialist
 ├── Batch processing framework (2 pts)
 ├── API endpoint development (1 pt)
 └── Performance testing setup (1 pt)
 
-Day 5: Team validation and testing
+Day 5: QA Engineer + Team validation
 └── Integration testing and optimization
 ```
 
@@ -489,12 +399,12 @@ Day 5: Team validation and testing
 
 **Task Breakdown (8 points):**
 ```
-Day 1-2: Frontend Specialist + Full-Stack Developer
+Day 1-2: Full-Stack Developer + Technical Lead
 ├── Visual rule builder UI (3 pts)
 ├── Drag-and-drop interface (2 pts)
 └── Rule template system (1 pt)
 
-Day 3-4: Backend Developer + Full-Stack Developer
+Day 3-4: Backend Specialist + Full-Stack Developer
 ├── Rule validation engine (2 pts)
 ├── Version management system (1 pt)
 └── Import/export functionality (1 pt)
@@ -761,12 +671,12 @@ Day 3-4: Backend Developer + QA Engineer
 
 **Task Breakdown (8 points):**
 ```
-Day 1-2: Backend Specialist + Data Engineer
+Day 1-2: Backend Specialist + Technical Lead
 ├── Multi-format data parser (3 pts)
 ├── SFTP/FTP integration (2 pts)
 └── Field mapping system (1 pt)
 
-Day 3-4: Full-Stack Developer + Backend Developer
+Day 3-4: Full-Stack Developer + Backend Specialist
 ├── Validation framework (2 pts)
 ├── Sync mechanisms (1 pt)
 └── Monitoring dashboard (1 pt)
@@ -791,12 +701,12 @@ Day 5: Integration testing and validation
 
 **Task Breakdown (8 points):**
 ```
-Day 1-2: Integration Specialist + Backend Developer
+Day 1-2: Backend Specialist + Technical Lead
 ├── ERP connector framework (3 pts)
 ├── Real-time sync engine (2 pts)
 └── Conflict resolution (1 pt)
 
-Day 3-4: API Developer + Data Engineer
+Day 3-4: Full-Stack Developer + Backend Specialist
 ├── Custom adapters (2 pts)
 ├── Audit trail system (1 pt)
 └── Performance optimization (1 pt)
@@ -821,12 +731,12 @@ Day 5: ERP integration testing
 
 **Task Breakdown (8 points):**
 ```
-Day 1-2: Data Engineer + Backend Specialist
+Day 1-2: Backend Specialist + Technical Lead
 ├── ETL pipeline architecture (3 pts)
 ├── Dimensional modeling (2 pts)
 └── Query optimization (1 pt)
 
-Day 3-4: Data Analyst + Full-Stack Developer
+Day 3-4: Full-Stack Developer + Backend Specialist
 ├── Data mart creation (2 pts)
 ├── Quality monitoring (1 pt)
 └── Historical archiving (1 pt)
@@ -916,12 +826,12 @@ Day 3-4: Analytics Engineer + DevOps Engineer
 
 **Task Breakdown (8 points):**
 ```
-Day 1-2: Data Scientist + Backend Developer
+Day 1-2: Backend Specialist + Technical Lead
 ├── ML trend analysis engine (3 pts)
 ├── Predictive modeling framework (2 pts)
 └── Statistical analysis tools (1 pt)
 
-Day 3-4: Analytics Engineer + Frontend Developer
+Day 3-4: Full-Stack Developer + Backend Specialist
 ├── Custom KPI builder (2 pts)
 ├── Anomaly detection system (1 pt)
 └── Advanced visualizations (1 pt)
@@ -946,12 +856,12 @@ Day 5: Analytics testing and validation
 
 **Task Breakdown (8 points):**
 ```
-Day 1-2: Frontend Specialist + UX Designer
+Day 1-2: Full-Stack Developer + Technical Lead
 ├── Report builder interface (3 pts)
 ├── Dynamic filtering system (2 pts)
 └── Mobile responsiveness (1 pt)
 
-Day 3-4: Backend Developer + Report Engineer
+Day 3-4: Backend Specialist + Full-Stack Developer
 ├── Report generation engine (2 pts)
 ├── Export functionality (1 pt)
 └── Collaboration features (1 pt)
@@ -1069,12 +979,12 @@ Day 3-4: Security Engineer + Performance Engineer
 
 **Task Breakdown (8 points):**
 ```
-Day 1-2: API Architect + Backend Developer
+Day 1-2: Backend Specialist + Technical Lead
 ├── API gateway infrastructure (3 pts)
 ├── GraphQL implementation (2 pts)
 └── Authentication system (1 pt)
 
-Day 3-4: API Developer + Frontend Developer
+Day 3-4: Full-Stack Developer + Backend Specialist
 ├── Documentation interface (2 pts)
 ├── Rate limiting (1 pt)
 └── Versioning system (1 pt)
@@ -1222,12 +1132,12 @@ Day 3-4: DevOps Engineer + Alert Engineer
 
 **Task Breakdown (8 points):**
 ```
-Day 1-2: Infrastructure Engineer + DevOps Specialist
+Day 1-2: Backend Specialist + Technical Lead
 ├── Multi-zone deployment (3 pts)
 ├── Auto-scaling setup (2 pts)
 └── Database clustering (1 pt)
 
-Day 3-4: Security Engineer + Site Reliability Engineer
+Day 3-4: Full-Stack Developer + Backend Specialist
 ├── CDN configuration (2 pts)
 ├── Monitoring setup (1 pt)
 └── Security hardening (1 pt)
@@ -1252,12 +1162,12 @@ Day 5: Production readiness validation
 
 **Task Breakdown (8 points):**
 ```
-Day 1-2: DevOps Engineer + QA Automation Engineer
+Day 1-2: Technical Lead + Backend Specialist
 ├── Multi-environment pipeline (3 pts)
 ├── Quality gates (2 pts)
 └── Blue-green deployment (1 pt)
 
-Day 3-4: Release Manager + Security Engineer
+Day 3-4: Full-Stack Developer + QA Engineer
 ├── Approval workflows (2 pts)
 ├── Performance testing (1 pt)
 └── Security scanning (1 pt)
@@ -1341,12 +1251,12 @@ Day 5: Compliance validation and certification
 
 **Task Breakdown (6 points):**
 ```
-Day 1-2: QA Manager + Product Owner
+Day 1-2: QA Engineer + Technical Lead
 ├── Final testing validation (2 pts)
 ├── UAT completion (2 pts)
 └── Performance testing (1 pt)
 
-Day 3-4: Customer Success + Marketing Team
+Day 3-4: Full-Stack Developer + Backend Specialist
 ├── Onboarding procedures (1 pt)
 └── Launch preparation
 ```
