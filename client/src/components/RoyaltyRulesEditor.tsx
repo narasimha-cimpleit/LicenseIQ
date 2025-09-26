@@ -701,18 +701,21 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
                 {showCalculation ? 'Hide Calculator' : 'Show Calculator'}
               </Button>
               
+              <Button
+                onClick={() => calculateSampleRoyalties()}
+                className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white"
+                data-testid="button-calculate-royalty"
+              >
+                <DollarSign className="h-4 w-4" />
+                Calculate Royalty Demo
+              </Button>
+
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button
-                    onClick={() => calculateSampleRoyalties()}
-                    className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white"
-                    data-testid="button-calculate-royalty"
-                  >
-                    <DollarSign className="h-4 w-4" />
-                    Calculate Royalty Demo
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+                <DialogContent 
+                  className="max-w-6xl max-h-[90vh] overflow-y-auto"
+                  onClick={(e) => e.stopPropagation()}
+                  onPointerDownOutside={(e) => e.preventDefault()}
+                >
                   <DialogHeader>
                     <DialogTitle className="text-xl flex items-center gap-2">
                       <Sparkles className="h-5 w-5 text-green-600" />
