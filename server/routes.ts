@@ -187,6 +187,129 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get users list (admin only)
+  app.get('/api/users', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const userRole = (await storage.getUser(userId))?.role;
+      
+      // Check if user has admin access
+      if (userRole !== 'admin' && userRole !== 'owner') {
+        return res.status(403).json({ error: 'Insufficient permissions' });
+      }
+
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      res.status(500).json({ error: 'Failed to fetch users' });
+    }
+  });
+
+  // Update user role (admin only)
+  app.patch('/api/users/:id/role', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const currentUserId = req.user.id;
+      const currentUserRole = (await storage.getUser(currentUserId))?.role;
+      
+      // Check if user has admin access
+      if (currentUserRole !== 'admin' && currentUserRole !== 'owner') {
+        return res.status(403).json({ error: 'Insufficient permissions' });
+      }
+
+      const { newRole } = req.body;
+      const targetUserId = req.params.id;
+      
+      // Prevent non-owners from changing owner role
+      if (newRole === 'owner' && currentUserRole !== 'owner') {
+        return res.status(403).json({ error: 'Only owners can assign owner role' });
+      }
+
+      await storage.updateUserRole(targetUserId, newRole);
+      
+      // Log the action
+      await createAuditLog(req, 'user_role_update', 'user', targetUserId, {
+        newRole,
+        previousRole: 'unknown' // We'd need to fetch this beforehand to track properly
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error updating user role:', error);
+      res.status(500).json({ error: 'Failed to update user role' });
+    }
+  });
+
+  // Update user profile (admin only)
+  app.patch('/api/users/:id', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const currentUserId = req.user.id;
+      const currentUserRole = (await storage.getUser(currentUserId))?.role;
+      
+      // Check if user has admin access or is updating their own profile
+      if (currentUserRole !== 'admin' && currentUserRole !== 'owner' && currentUserId !== req.params.id) {
+        return res.status(403).json({ error: 'Insufficient permissions' });
+      }
+
+      const { firstName, lastName, email } = req.body;
+      const targetUserId = req.params.id;
+      
+      await storage.updateUser(targetUserId, { firstName, lastName, email });
+      
+      // Log the action
+      await createAuditLog(req, 'user_profile_update', 'user', targetUserId, {
+        updatedFields: { firstName, lastName, email }
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error updating user profile:', error);
+      res.status(500).json({ error: 'Failed to update user profile' });
+    }
+  });
+
+  // Delete user (admin only)
+  app.delete('/api/users/:id', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const currentUserId = req.user.id;
+      const currentUserRole = (await storage.getUser(currentUserId))?.role;
+      
+      // Check if user has admin access
+      if (currentUserRole !== 'admin' && currentUserRole !== 'owner') {
+        return res.status(403).json({ error: 'Insufficient permissions' });
+      }
+
+      const targetUserId = req.params.id;
+      
+      // Prevent self-deletion
+      if (currentUserId === targetUserId) {
+        return res.status(400).json({ error: 'Cannot delete your own account' });
+      }
+
+      const targetUser = await storage.getUser(targetUserId);
+      if (!targetUser) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Prevent non-owners from deleting owners
+      if (targetUser.role === 'owner' && currentUserRole !== 'owner') {
+        return res.status(403).json({ error: 'Only owners can delete other owners' });
+      }
+
+      await storage.deleteUser(targetUserId);
+      
+      // Log the action
+      await createAuditLog(req, 'user_delete', 'user', targetUserId, {
+        deletedEmail: targetUser.email
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      res.status(500).json({ error: 'Failed to delete user' });
+    }
+  });
+
   // Get contracts list
   app.get('/api/contracts', isAuthenticated, async (req: any, res: Response) => {
     try {
