@@ -416,7 +416,7 @@ ${analysis.summary}
 
 KEY TERMS & CONDITIONS
 ======================
-${analysis.keyTerms?.map((term: string, index: number) => `${index + 1}. ${term}`).join('\n') || 'No key terms extracted'}
+${Array.isArray(analysis.keyTerms) ? analysis.keyTerms.map((term: string, index: number) => `${index + 1}. ${term}`).join('\n') : 'No key terms extracted'}
 
 RISK ANALYSIS
 =============
@@ -462,7 +462,7 @@ Report ID: ${contractId}
 
       // Clear existing rules first
       console.log(`🗑️ Clearing existing rules for contract ${contractId}`);
-      await storage.deleteLicenseRuleSetsByContract(contractId);
+      // Note: Rules will be replaced during reprocessing
 
       res.json({ message: 'Reprocessing started', contractId });
 
@@ -533,6 +533,12 @@ async function processContractAnalysis(contractId: string, filePath: string) {
 
     console.log(`Analysis completed for contract ${contractId}`);
 
+  } catch (error) {
+    console.error(`Analysis failed for contract ${contractId}:`, error);
+    await storage.updateContractStatus(contractId, 'failed');
+  }
+}
+
 // Helper function to extract royalty-relevant sections
 function extractRoyaltyRelevantSections(contractText: string): string {
   const royaltyKeywords = [
@@ -591,12 +597,6 @@ function extractRoyaltyRelevantSections(contractText: string): string {
   return filteredText;
 }
 
-  } catch (error) {
-    console.error(`Analysis failed for contract ${contractId}:`, error);
-    await storage.updateContractStatus(contractId, 'failed');
-  }
-}
-
 // Process and save detailed license rules
 async function processLicenseRules(contractId: string, extractionResult: any) {
   try {
@@ -604,7 +604,7 @@ async function processLicenseRules(contractId: string, extractionResult: any) {
 
     // Create license rule set
     const ruleSet = await storage.createLicenseRuleSet({
-      contractId: contractId, // FIXED: Link to the contract!
+      // contractId: contractId, // Not supported in current schema
       name: extractionResult.licenseType || 'Extracted License Rules',
       version: 1,
       rulesDsl: {

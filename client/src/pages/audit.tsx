@@ -54,7 +54,7 @@ export default function Audit() {
     }, 500);
   }
 
-  const auditLogs = auditData?.logs || [];
+  const auditLogs = (auditData && Array.isArray((auditData as any).logs)) ? (auditData as any).logs : [];
 
   // Filter logs based on search and filters
   const filteredLogs = auditLogs.filter((log: any) => {
