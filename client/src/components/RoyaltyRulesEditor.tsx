@@ -343,10 +343,8 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
       }
     };
 
-    console.log('Setting demo result:', demoResult);
     setRoyaltyDemoResult(demoResult);
     setShowRoyaltyDemo(true);
-    console.log('Demo display should now be visible');
     
     toast({ 
       description: `Royalty calculation complete! Scroll down to see detailed results. Total: $${finalPayable.toLocaleString()}` 
