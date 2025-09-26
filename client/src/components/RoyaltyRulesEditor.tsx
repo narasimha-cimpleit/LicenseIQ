@@ -847,101 +847,259 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
         </Card>
       )}
 
-      {/* Royalty Demo Results */}
+      {/* Enhanced Royalty Demo Results Display */}
       {showRoyaltyDemo && royaltyDemoResult && (
-        <Card className="border-green-200 bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-950/20 dark:to-blue-950/20">
-          <CardHeader>
-            <div className="flex justify-between items-start">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-br from-green-500 to-blue-600 rounded-lg shadow-md">
-                  <DollarSign className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <CardTitle className="text-lg font-semibold text-green-800 dark:text-green-200">
-                    Royalty Calculation Demo Results
-                  </CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Sample calculation based on plant nursery contract terms
-                  </p>
-                </div>
+        <div className="space-y-6 p-6 bg-gradient-to-br from-emerald-50 via-blue-50 to-purple-50 dark:from-emerald-950/30 dark:via-blue-950/30 dark:to-purple-950/30 rounded-xl border-2 border-emerald-200 shadow-xl">
+          
+          {/* Header */}
+          <div className="flex justify-between items-start">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-gradient-to-br from-emerald-500 to-blue-600 rounded-xl shadow-lg">
+                <Sparkles className="h-6 w-6 text-white" />
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowRoyaltyDemo(false)}
-                data-testid="button-close-demo"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Summary */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-white dark:bg-gray-800 rounded-lg border">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-green-600">${royaltyDemoResult.summary.totalCalculated.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Calculated Royalties</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-blue-600">${royaltyDemoResult.summary.minimumGuarantee.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Minimum Guarantee</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-red-600">${royaltyDemoResult.summary.shortfall.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Shortfall</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-purple-600">${royaltyDemoResult.summary.finalPayable.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Final Payable</p>
+              <div>
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">
+                  🌟 Calculate Royalty Demo Results
+                </h2>
+                <p className="text-muted-foreground">
+                  Advanced AI-powered calculation engine with realistic plant nursery contract data
+                </p>
               </div>
             </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowRoyaltyDemo(false)}
+              className="hover:bg-red-100 dark:hover:bg-red-950"
+              data-testid="button-close-demo"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
 
-            {/* Detailed Calculations */}
-            <div className="space-y-4">
-              <h4 className="font-medium text-sm text-gray-700 dark:text-gray-300">Detailed Calculations by Variety</h4>
-              <div className="grid gap-3">
+          {/* Sample Data Overview */}
+          <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2 text-purple-700 dark:text-purple-300">
+                <TrendingUp className="h-5 w-5" />
+                🌱 Realistic Sample Data (7 Plant Varieties)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <h4 className="font-medium text-sm text-gray-700 dark:text-gray-300">Premium Varieties:</h4>
+                  <ul className="text-sm space-y-1 text-muted-foreground">
+                    <li>🍁 <strong>Aurora Flame Maple</strong> (1-gal & 5-gal) - Volume discounts</li>
+                    <li>🌲 <strong>Golden Spire Juniper</strong> - Territory premiums</li>
+                    <li>🌹 <strong>Pacific Sunset Rose</strong> (6-inch & 1-gal) - Seasonal adjustments</li>
+                    <li>🌿 <strong>Emerald Crown Hosta</strong> - Organic premiums (+25%)</li>
+                  </ul>
+                </div>
+                <div className="space-y-2">
+                  <h4 className="font-medium text-sm text-gray-700 dark:text-gray-300">Special Collections:</h4>
+                  <ul className="text-sm space-y-1 text-muted-foreground">
+                    <li>🌸 <strong>Cascade Blue Hydrangea</strong> - Sliding scale pricing</li>
+                    <li>🌺 <strong>Royal Purple Clematis</strong> - High-value specialty</li>
+                    <li>🌱 <strong>Heritage Oak Collection</strong> - Premium licensing</li>
+                  </ul>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Calculation Engine Overview */}
+          <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2 text-blue-700 dark:text-blue-300">
+                <Calculator className="h-5 w-5" />
+                ⚡ Advanced Calculation Engine (3-Tier System)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="p-3 bg-white dark:bg-gray-800 rounded-lg border">
+                  <h4 className="font-medium text-sm text-green-700 dark:text-green-300 mb-2">🎯 Tier 1: Base Rules</h4>
+                  <ul className="text-xs space-y-1 text-muted-foreground">
+                    <li>• Volume discounts</li>
+                    <li>• Territory premiums (+10%)</li>
+                    <li>• Base royalty rates</li>
+                  </ul>
+                </div>
+                <div className="p-3 bg-white dark:bg-gray-800 rounded-lg border">
+                  <h4 className="font-medium text-sm text-blue-700 dark:text-blue-300 mb-2">📅 Tier 2: Seasonal</h4>
+                  <ul className="text-xs space-y-1 text-muted-foreground">
+                    <li>• Spring: +10% bonus</li>
+                    <li>• Fall: -5% adjustment</li>
+                    <li>• Holiday: +20% premium</li>
+                  </ul>
+                </div>
+                <div className="p-3 bg-white dark:bg-gray-800 rounded-lg border">
+                  <h4 className="font-medium text-sm text-purple-700 dark:text-purple-300 mb-2">🌿 Tier 3: Premium</h4>
+                  <ul className="text-xs space-y-1 text-muted-foreground">
+                    <li>• Organic: +25% bonus</li>
+                    <li>• Sliding scale rates</li>
+                    <li>• High-volume tiers</li>
+                  </ul>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Executive Summary - Large Numbers */}
+          <Card className="border-emerald-300 bg-gradient-to-br from-emerald-100 to-green-100 dark:from-emerald-950/30 dark:to-green-950/30 shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-xl flex items-center gap-2 text-emerald-800 dark:text-emerald-200">
+                <DollarSign className="h-6 w-6" />
+                💰 Executive Summary
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div className="text-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+                  <div className="text-3xl font-bold text-emerald-600 mb-1">
+                    ${royaltyDemoResult.summary.totalCalculated.toLocaleString()}
+                  </div>
+                  <div className="text-sm font-medium text-gray-600 dark:text-gray-300">Calculated Royalties</div>
+                  <div className="text-xs text-muted-foreground mt-1">Based on actual sales</div>
+                </div>
+                <div className="text-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+                  <div className="text-3xl font-bold text-blue-600 mb-1">
+                    ${royaltyDemoResult.summary.minimumGuarantee.toLocaleString()}
+                  </div>
+                  <div className="text-sm font-medium text-gray-600 dark:text-gray-300">Minimum Guarantee</div>
+                  <div className="text-xs text-muted-foreground mt-1">Contract requirement</div>
+                </div>
+                <div className="text-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+                  <div className="text-3xl font-bold text-red-600 mb-1">
+                    ${royaltyDemoResult.summary.shortfall.toLocaleString()}
+                  </div>
+                  <div className="text-sm font-medium text-gray-600 dark:text-gray-300">Shortfall</div>
+                  <div className="text-xs text-muted-foreground mt-1">Must be covered</div>
+                </div>
+                <div className="text-center p-4 bg-gradient-to-br from-purple-500 to-pink-500 text-white rounded-lg shadow-lg">
+                  <div className="text-3xl font-bold mb-1">
+                    ${royaltyDemoResult.summary.finalPayable.toLocaleString()}
+                  </div>
+                  <div className="text-sm font-medium">Final Payable</div>
+                  <div className="text-xs opacity-90 mt-1">Total due to licensor</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Detailed Calculations with Rich Formatting */}
+          <Card className="border-gray-200 bg-white dark:bg-gray-900">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                📊 Detailed Calculations by Plant Variety
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Each calculation shows applied rules, seasonal adjustments, and final royalty amounts
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4">
                 {royaltyDemoResult.calculations.map((calc: any, index: number) => (
-                  <div key={index} className="bg-white dark:bg-gray-800 rounded-lg border p-4">
-                    <div className="flex justify-between items-start mb-2">
+                  <div key={index} className="relative p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 hover:shadow-md transition-all">
+                    
+                    {/* Variety Header */}
+                    <div className="flex justify-between items-start mb-3">
                       <div>
-                        <p className="font-medium text-sm">{calc.variety} ({calc.size})</p>
-                        <p className="text-xs text-muted-foreground">
-                          {calc.units.toLocaleString()} units • {calc.season} • {calc.territory}
-                          {calc.organic && <span className="text-green-600 ml-1">• Organic</span>}
-                        </p>
+                        <h4 className="font-bold text-lg text-gray-800 dark:text-gray-200">
+                          {calc.variety}
+                          {calc.organic && <span className="ml-2 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">🌱 Organic</span>}
+                        </h4>
+                        <div className="flex items-center gap-4 mt-1">
+                          <span className="text-sm text-muted-foreground">
+                            📏 <strong>{calc.size}</strong>
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            📦 <strong>{calc.units.toLocaleString()} units</strong>
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            📅 <strong>{calc.season}</strong>
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            🌍 <strong>{calc.territory}</strong>
+                          </span>
+                        </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-green-600">${calc.royaltyTotal.toLocaleString()}</p>
-                        <p className="text-xs text-muted-foreground">${calc.royaltyPerUnit}/unit</p>
+                        <div className="text-2xl font-bold text-emerald-600">
+                          ${calc.royaltyTotal.toLocaleString()}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          ${calc.royaltyPerUnit.toFixed(2)}/unit
+                        </div>
                       </div>
                     </div>
                     
-                    <div className="space-y-1">
-                      {calc.appliedRules.map((rule: string, ruleIndex: number) => (
-                        <p key={ruleIndex} className="text-xs text-muted-foreground">• {rule}</p>
-                      ))}
+                    {/* Applied Rules */}
+                    <div className="space-y-2">
+                      <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300">Applied Rules:</h5>
+                      <div className="grid gap-1">
+                        {calc.appliedRules.map((rule: string, ruleIndex: number) => (
+                          <div key={ruleIndex} className="flex items-center gap-2 text-sm">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            <span className="text-muted-foreground">{rule}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            {/* Summary Note */}
-            <div className="p-4 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-              <div className="flex items-start gap-2">
-                <Info className="h-4 w-4 text-yellow-600 mt-0.5" />
-                <div className="text-sm">
-                  <p className="font-medium text-yellow-800 dark:text-yellow-200">Minimum Guarantee Applied</p>
-                  <p className="text-yellow-700 dark:text-yellow-300 mt-1">
-                    Even though calculated royalties total ${royaltyDemoResult.summary.totalCalculated.toLocaleString()}, 
-                    the licensee must pay the minimum guarantee of ${royaltyDemoResult.summary.minimumGuarantee.toLocaleString()} 
-                    as specified in the contract terms.
+          {/* Minimum Guarantee Explanation */}
+          <Card className="border-yellow-300 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-950/20 dark:to-orange-950/20 shadow-lg">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-yellow-500 rounded-lg">
+                  <Info className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg text-yellow-800 dark:text-yellow-200">
+                    🛡️ Contract Protection: Minimum Guarantee Logic
+                  </CardTitle>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border">
+                  <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-2">How the Minimum Guarantee Works:</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">Total Calculated Royalties:</span>
+                      <span className="font-medium">${royaltyDemoResult.summary.totalCalculated.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">Contract Minimum Guarantee:</span>
+                      <span className="font-medium text-blue-600">${royaltyDemoResult.summary.minimumGuarantee.toLocaleString()}</span>
+                    </div>
+                    <div className="border-t pt-2 flex justify-between items-center">
+                      <span className="font-medium text-gray-800 dark:text-gray-200">Final Amount Due:</span>
+                      <span className="font-bold text-xl text-purple-600">
+                        ${Math.max(royaltyDemoResult.summary.totalCalculated, royaltyDemoResult.summary.minimumGuarantee).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                    <strong>Contract Enforcement:</strong> Even though actual sales generated ${royaltyDemoResult.summary.totalCalculated.toLocaleString()} in royalties, 
+                    the licensing agreement requires a minimum payment of ${royaltyDemoResult.summary.minimumGuarantee.toLocaleString()}, 
+                    ensuring the licensor receives guaranteed compensation regardless of sales performance.
                   </p>
                 </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+        </div>
       )}
 
       {/* Rules Display */}
