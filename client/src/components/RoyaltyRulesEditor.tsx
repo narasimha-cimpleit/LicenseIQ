@@ -8,7 +8,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Calculator, Edit, Plus, Trash2, Play, DollarSign, Percent, TrendingUp, RefreshCw, Sparkles, ChevronDown, ChevronUp, Save, X, Info } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -103,7 +102,7 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
   const [calculationResult, setCalculationResult] = useState<any>(null);
   const [showCalculation, setShowCalculation] = useState(false);
   const [royaltyDemoResult, setRoyaltyDemoResult] = useState<any>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [showDemoResults, setShowDemoResults] = useState(false);
 
   // Mutation for updating a rule
   const updateRuleMutation = useMutation({
@@ -345,7 +344,7 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
     };
 
     setRoyaltyDemoResult(demoResult);
-    setDialogOpen(true);
+    setShowDemoResults(true);
   };
 
   const renderRuleEditor = (rule: RoyaltyRule, onSave: (updatedRule: RoyaltyRule) => void) => {
@@ -702,156 +701,157 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
               </Button>
               
               <Button
-                onClick={() => calculateSampleRoyalties()}
+                onClick={() => {
+                  calculateSampleRoyalties();
+                  setShowDemoResults(!showDemoResults);
+                }}
                 className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white"
                 data-testid="button-calculate-royalty"
               >
                 <DollarSign className="h-4 w-4" />
-                Calculate Royalty Demo
+                {showDemoResults ? 'Hide Results' : 'Calculate Royalty Demo'}
               </Button>
-
-              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogContent 
-                  className="max-w-6xl p-0 z-[1000] pointer-events-auto"
-                  onInteractOutside={(e) => {
-                    const target = e.target as HTMLElement;
-                    // Allow backdrop clicks to close; block everything else
-                    if (!target.closest('[data-radix-dialog-overlay]')) {
-                      e.preventDefault();
-                    }
-                  }}
-                >
-                  <div className="max-h-[90vh] overflow-y-auto p-6">
-                    <DialogHeader>
-                      <DialogTitle className="text-xl flex items-center gap-2">
-                        <Sparkles className="h-5 w-5 text-green-600" />
-                        🌟 Royalty Calculation Demo Results
-                      </DialogTitle>
-                      <DialogDescription>
-                        Advanced AI-powered calculation engine with realistic plant nursery contract data
-                      </DialogDescription>
-                    </DialogHeader>
-                    
-                    {royaltyDemoResult && (
-                      <div className="space-y-6 pt-4">
-                      {/* Executive Summary */}
-                      <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50">
-                        <CardHeader>
-                          <CardTitle className="text-lg text-emerald-800">💰 Executive Summary</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div className="text-center p-3 bg-white rounded-lg shadow">
-                              <div className="text-2xl font-bold text-emerald-600">
-                                ${royaltyDemoResult.summary.totalCalculated.toLocaleString()}
-                              </div>
-                              <div className="text-sm text-gray-600">Calculated</div>
-                            </div>
-                            <div className="text-center p-3 bg-white rounded-lg shadow">
-                              <div className="text-2xl font-bold text-blue-600">
-                                ${royaltyDemoResult.summary.minimumGuarantee.toLocaleString()}
-                              </div>
-                              <div className="text-sm text-gray-600">Min Guarantee</div>
-                            </div>
-                            <div className="text-center p-3 bg-white rounded-lg shadow">
-                              <div className="text-2xl font-bold text-red-600">
-                                ${royaltyDemoResult.summary.shortfall.toLocaleString()}
-                              </div>
-                              <div className="text-sm text-gray-600">Shortfall</div>
-                            </div>
-                            <div className="text-center p-3 bg-gradient-to-br from-purple-500 to-pink-500 text-white rounded-lg shadow">
-                              <div className="text-2xl font-bold">
-                                ${royaltyDemoResult.summary.finalPayable.toLocaleString()}
-                              </div>
-                              <div className="text-sm opacity-90">Final Payable</div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      {/* Sample Data Overview */}
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="text-lg text-purple-700">🌱 Sample Plant Varieties (7 Examples)</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="grid md:grid-cols-2 gap-4 text-sm">
-                            <div>
-                              <p><strong>🍁 Aurora Flame Maple</strong> - Volume discounts</p>
-                              <p><strong>🌲 Golden Spire Juniper</strong> - Territory premiums</p>
-                              <p><strong>🌹 Pacific Sunset Rose</strong> - Seasonal adjustments</p>
-                              <p><strong>🌿 Emerald Crown Hosta</strong> - Organic premiums</p>
-                            </div>
-                            <div>
-                              <p><strong>🌸 Cascade Blue Hydrangea</strong> - Sliding scale</p>
-                              <p><strong>🌺 Royal Purple Clematis</strong> - Premium specialty</p>
-                              <p><strong>🌱 Heritage Oak Collection</strong> - High-value licensing</p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      {/* Calculation Details */}
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="text-lg">📊 Detailed Calculations</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-3">
-                            {royaltyDemoResult.calculations.map((calc: any, index: number) => (
-                              <div key={index} className="p-3 bg-gray-50 rounded-lg border">
-                                <div className="flex justify-between items-start">
-                                  <div>
-                                    <p className="font-medium">{calc.variety} ({calc.size})</p>
-                                    <p className="text-xs text-gray-600">
-                                      {calc.units.toLocaleString()} units • {calc.season} • {calc.territory}
-                                      {calc.organic && <span className="text-green-600 ml-1">• Organic</span>}
-                                    </p>
-                                    <div className="mt-1 text-xs text-gray-500">
-                                      {calc.appliedRules.map((rule: string, ruleIndex: number) => (
-                                        <div key={ruleIndex}>• {rule}</div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                  <div className="text-right">
-                                    <p className="text-lg font-bold text-green-600">
-                                      ${calc.royaltyTotal.toLocaleString()}
-                                    </p>
-                                    <p className="text-xs text-gray-500">${calc.royaltyPerUnit}/unit</p>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      {/* Contract Logic */}
-                      <Card className="border-yellow-200 bg-yellow-50">
-                        <CardHeader>
-                          <CardTitle className="text-lg text-yellow-800">🛡️ Contract Protection Logic</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="p-3 bg-white rounded-lg border text-sm">
-                            <p><strong>How it works:</strong></p>
-                            <p>• Calculated royalties: ${royaltyDemoResult.summary.totalCalculated.toLocaleString()}</p>
-                            <p>• Minimum guarantee: ${royaltyDemoResult.summary.minimumGuarantee.toLocaleString()}</p>
-                            <p>• <strong>Final payment: ${royaltyDemoResult.summary.finalPayable.toLocaleString()}</strong></p>
-                            <p className="mt-2 text-yellow-800">
-                              The licensing agreement ensures guaranteed compensation regardless of sales performance.
-                            </p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  )}
-                  </div>
-                </DialogContent>
-              </Dialog>
             </div>
           </div>
         </CardHeader>
       </Card>
+
+      {/* Royalty Demo Results - Inline */}
+      {showDemoResults && royaltyDemoResult && (
+        <Card className="border-green-200 bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-950/20 dark:to-blue-950/20">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-xl flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-green-600" />
+                🌟 Royalty Calculation Demo Results
+              </CardTitle>
+              <Button
+                onClick={() => setShowDemoResults(false)}
+                variant="ghost"
+                size="sm"
+                className="text-gray-500 hover:text-gray-700"
+                data-testid="button-close-results"
+              >
+                ✕ Close
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Advanced AI-powered calculation engine with realistic plant nursery contract data
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Executive Summary */}
+            <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50">
+              <CardHeader>
+                <CardTitle className="text-lg text-emerald-800">💰 Executive Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center p-3 bg-white rounded-lg shadow">
+                    <div className="text-2xl font-bold text-emerald-600">
+                      ${royaltyDemoResult.summary.totalCalculated.toLocaleString()}
+                    </div>
+                    <div className="text-sm text-gray-600">Calculated</div>
+                  </div>
+                  <div className="text-center p-3 bg-white rounded-lg shadow">
+                    <div className="text-2xl font-bold text-blue-600">
+                      ${royaltyDemoResult.summary.minimumGuarantee.toLocaleString()}
+                    </div>
+                    <div className="text-sm text-gray-600">Min Guarantee</div>
+                  </div>
+                  <div className="text-center p-3 bg-white rounded-lg shadow">
+                    <div className="text-2xl font-bold text-red-600">
+                      ${royaltyDemoResult.summary.shortfall.toLocaleString()}
+                    </div>
+                    <div className="text-sm text-gray-600">Shortfall</div>
+                  </div>
+                  <div className="text-center p-3 bg-gradient-to-br from-purple-500 to-pink-500 text-white rounded-lg shadow">
+                    <div className="text-2xl font-bold">
+                      ${royaltyDemoResult.summary.finalPayable.toLocaleString()}
+                    </div>
+                    <div className="text-sm opacity-90">Final Payable</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Sample Data Overview */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg text-purple-700">🌱 Sample Plant Varieties (7 Examples)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p><strong>🍁 Aurora Flame Maple</strong> - Volume discounts</p>
+                    <p><strong>🌲 Golden Spire Juniper</strong> - Territory premiums</p>
+                    <p><strong>🌹 Pacific Sunset Rose</strong> - Seasonal adjustments</p>
+                    <p><strong>🌿 Emerald Crown Hosta</strong> - Organic premiums</p>
+                  </div>
+                  <div>
+                    <p><strong>🌸 Cascade Blue Hydrangea</strong> - Sliding scale</p>
+                    <p><strong>🌺 Royal Purple Clematis</strong> - Premium specialty</p>
+                    <p><strong>🌱 Heritage Oak Collection</strong> - High-value licensing</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Calculation Details */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">📊 Detailed Calculations</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {royaltyDemoResult.calculations.map((calc: any, index: number) => (
+                    <div key={index} className="p-3 bg-gray-50 rounded-lg border">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-medium">{calc.variety} ({calc.size})</p>
+                          <p className="text-xs text-gray-600">
+                            {calc.units.toLocaleString()} units • {calc.season} • {calc.territory}
+                            {calc.organic && <span className="text-green-600 ml-1">• Organic</span>}
+                          </p>
+                          <div className="mt-1 text-xs text-gray-500">
+                            {calc.appliedRules.map((rule: string, ruleIndex: number) => (
+                              <div key={ruleIndex}>• {rule}</div>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-green-600">
+                            ${calc.royaltyTotal.toLocaleString()}
+                          </p>
+                          <p className="text-xs text-gray-500">${calc.royaltyPerUnit}/unit</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Contract Logic */}
+            <Card className="border-yellow-200 bg-yellow-50">
+              <CardHeader>
+                <CardTitle className="text-lg text-yellow-800">🛡️ Contract Protection Logic</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="p-3 bg-white rounded-lg border text-sm">
+                  <p><strong>How it works:</strong></p>
+                  <p>• Calculated royalties: ${royaltyDemoResult.summary.totalCalculated.toLocaleString()}</p>
+                  <p>• Minimum guarantee: ${royaltyDemoResult.summary.minimumGuarantee.toLocaleString()}</p>
+                  <p>• <strong>Final payment: ${royaltyDemoResult.summary.finalPayable.toLocaleString()}</strong></p>
+                  <p className="mt-2 text-yellow-800">
+                    The licensing agreement ensures guaranteed compensation regardless of sales performance.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Royalty Calculator */}
       {showCalculation && (
