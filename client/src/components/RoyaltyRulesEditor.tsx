@@ -712,21 +712,28 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
 
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogContent 
-                  className="max-w-6xl max-h-[90vh] overflow-y-auto"
-                  onClick={(e) => e.stopPropagation()}
+                  className="max-w-6xl p-0 z-[1000] pointer-events-auto"
+                  onInteractOutside={(e) => {
+                    const target = e.target as HTMLElement;
+                    // Allow backdrop clicks to close; block everything else
+                    if (!target.closest('[data-radix-dialog-overlay]')) {
+                      e.preventDefault();
+                    }
+                  }}
                 >
-                  <DialogHeader>
-                    <DialogTitle className="text-xl flex items-center gap-2">
-                      <Sparkles className="h-5 w-5 text-green-600" />
-                      🌟 Royalty Calculation Demo Results
-                    </DialogTitle>
-                    <DialogDescription>
-                      Advanced AI-powered calculation engine with realistic plant nursery contract data
-                    </DialogDescription>
-                  </DialogHeader>
-                  
-                  {royaltyDemoResult && (
-                    <div className="space-y-6 pt-4">
+                  <div className="max-h-[90vh] overflow-y-auto p-6">
+                    <DialogHeader>
+                      <DialogTitle className="text-xl flex items-center gap-2">
+                        <Sparkles className="h-5 w-5 text-green-600" />
+                        🌟 Royalty Calculation Demo Results
+                      </DialogTitle>
+                      <DialogDescription>
+                        Advanced AI-powered calculation engine with realistic plant nursery contract data
+                      </DialogDescription>
+                    </DialogHeader>
+                    
+                    {royaltyDemoResult && (
+                      <div className="space-y-6 pt-4">
                       {/* Executive Summary */}
                       <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50">
                         <CardHeader>
@@ -838,6 +845,7 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
                       </Card>
                     </div>
                   )}
+                  </div>
                 </DialogContent>
               </Dialog>
             </div>
