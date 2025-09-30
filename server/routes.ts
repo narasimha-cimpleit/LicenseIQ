@@ -604,7 +604,7 @@ async function processLicenseRules(contractId: string, extractionResult: any) {
 
     // Create license rule set
     const ruleSet = await storage.createLicenseRuleSet({
-      // contractId: contractId, // Not supported in current schema
+      contractId: contractId,
       name: extractionResult.licenseType || 'Extracted License Rules',
       version: 1,
       rulesDsl: {

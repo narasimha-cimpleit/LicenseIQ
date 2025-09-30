@@ -586,6 +586,7 @@ export const insertLicenseDocumentSchema = createInsertSchema(licenseDocuments).
 export const insertLicenseRuleSetSchema = createInsertSchema(licenseRuleSets).pick({
   licenseDocumentId: true,
   vendorId: true,
+  contractId: true,
   version: true,
   name: true,
   effectiveDate: true,
