@@ -66,6 +66,7 @@ interface RoyaltyRulesEditorProps {
   contractId: string;
   ruleSets: RuleSet[];
   onRulesUpdate: () => void;
+  onReprocess?: () => void;
 }
 
 const RULE_TYPE_LABELS = {
@@ -86,7 +87,7 @@ const RULE_TYPE_ICONS = {
   fixed_fee: DollarSign
 };
 
-export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: RoyaltyRulesEditorProps) {
+export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate, onReprocess }: RoyaltyRulesEditorProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -1058,6 +1059,7 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
               <Button 
                 variant="outline" 
                 className="flex items-center gap-2 border-purple-200 hover:border-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/20"
+                onClick={onReprocess}
                 data-testid="button-reprocess-contract"
               >
                 <RefreshCw className="h-4 w-4" />

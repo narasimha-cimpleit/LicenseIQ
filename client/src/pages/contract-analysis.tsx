@@ -687,6 +687,7 @@ export default function ContractAnalysis() {
                   // Refetch rules when they're updated
                   queryClient.invalidateQueries({ queryKey: ['/api/contracts', id, 'rules'] });
                 }}
+                onReprocess={handleReprocess}
               />
             </div>
 
