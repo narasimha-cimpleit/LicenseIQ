@@ -17,7 +17,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { FileText, Shield, Brain, Users, BarChart3, Loader2 } from "lucide-react";
+import { FileText, Shield, Brain, Users, BarChart3, Loader2, Lock, Mail, User, CheckCircle, ArrowRight, Sparkles } from "lucide-react";
 import cimpleitLogo from "@assets/image_1757086402738.png";
 
 export default function AuthPage() {
@@ -64,30 +64,62 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen flex" data-testid="auth-page">
+    <div className="min-h-screen flex bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800" data-testid="auth-page">
       {/* Left side - Auth Forms */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-background">
-        <div className="w-full max-w-md space-y-6">
-          <div className="text-center space-y-2">
-            <div className="flex items-center justify-center space-x-2 mb-4">
-              <img src={cimpleitLogo} alt="Cimpleit Logo" className="w-8 h-8" />
-              <h1 className="text-2xl font-bold">LicenseIQ</h1>
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-8 relative overflow-hidden">
+        {/* Animated background elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -left-40 w-80 h-80 bg-blue-400/10 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute -bottom-40 -right-40 w-80 h-80 bg-indigo-400/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        </div>
+
+        <div className="w-full max-w-md space-y-6 relative z-10">
+          {/* Logo and Title */}
+          <div className="text-center space-y-3 animate-in fade-in slide-in-from-top-4 duration-700">
+            <div className="flex items-center justify-center space-x-3 mb-6">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full blur-lg opacity-50"></div>
+                <img src={cimpleitLogo} alt="Cimpleit Logo" className="w-12 h-12 relative z-10 drop-shadow-lg" />
+              </div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                LicenseIQ
+              </h1>
             </div>
-            <p className="text-muted-foreground">
-              Sign in to access your contract management platform
-            </p>
+            <div className="flex items-center justify-center space-x-2 text-sm">
+              <Sparkles className="h-4 w-4 text-blue-600" />
+              <p className="text-muted-foreground font-medium">
+                AI-Powered Contract Intelligence Platform
+              </p>
+            </div>
           </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login" data-testid="tab-login">Sign In</TabsTrigger>
-              <TabsTrigger value="register" data-testid="tab-register">Create Account</TabsTrigger>
+          {/* Tabs with modern styling */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
+            <TabsList className="grid w-full grid-cols-2 h-12 p-1 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm border border-slate-200 dark:border-slate-700 shadow-lg">
+              <TabsTrigger 
+                value="login" 
+                data-testid="tab-login"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300"
+              >
+                <Lock className="h-4 w-4 mr-2" />
+                Sign In
+              </TabsTrigger>
+              <TabsTrigger 
+                value="register" 
+                data-testid="tab-register"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300"
+              >
+                <User className="h-4 w-4 mr-2" />
+                Create Account
+              </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="login" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Sign In</CardTitle>
+            {/* Login Form */}
+            <TabsContent value="login" className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <Card className="border-slate-200 dark:border-slate-700 shadow-xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
+                <CardHeader className="space-y-1 pb-4">
+                  <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
+                  <p className="text-sm text-muted-foreground">Enter your credentials to access your account</p>
                 </CardHeader>
                 <CardContent>
                   <Form {...loginForm}>
@@ -97,13 +129,17 @@ export default function AuthPage() {
                         name="username"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Username</FormLabel>
+                            <FormLabel className="text-sm font-semibold">Username</FormLabel>
                             <FormControl>
-                              <Input 
-                                placeholder="Enter your username" 
-                                {...field} 
-                                data-testid="input-username"
-                              />
+                              <div className="relative">
+                                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input 
+                                  placeholder="Enter your username" 
+                                  {...field} 
+                                  data-testid="input-username"
+                                  className="pl-10 h-11 border-slate-300 dark:border-slate-600 focus-visible:ring-blue-600"
+                                />
+                              </div>
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -114,14 +150,18 @@ export default function AuthPage() {
                         name="password"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Password</FormLabel>
+                            <FormLabel className="text-sm font-semibold">Password</FormLabel>
                             <FormControl>
-                              <Input 
-                                type="password" 
-                                placeholder="Enter your password" 
-                                {...field} 
-                                data-testid="input-password"
-                              />
+                              <div className="relative">
+                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input 
+                                  type="password" 
+                                  placeholder="Enter your password" 
+                                  {...field} 
+                                  data-testid="input-password"
+                                  className="pl-10 h-11 border-slate-300 dark:border-slate-600 focus-visible:ring-blue-600"
+                                />
+                              </div>
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -129,7 +169,7 @@ export default function AuthPage() {
                       />
                       <Button 
                         type="submit" 
-                        className="w-full" 
+                        className="w-full h-11 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 font-semibold" 
                         disabled={loginMutation.isPending}
                         data-testid="button-login"
                       >
@@ -139,7 +179,10 @@ export default function AuthPage() {
                             Signing In...
                           </>
                         ) : (
-                          "Sign In"
+                          <>
+                            Sign In
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                          </>
                         )}
                       </Button>
                     </form>
@@ -148,10 +191,12 @@ export default function AuthPage() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="register" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Create Account</CardTitle>
+            {/* Register Form */}
+            <TabsContent value="register" className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <Card className="border-slate-200 dark:border-slate-700 shadow-xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
+                <CardHeader className="space-y-1 pb-4">
+                  <CardTitle className="text-2xl font-bold">Create your account</CardTitle>
+                  <p className="text-sm text-muted-foreground">Get started with LicenseIQ today</p>
                 </CardHeader>
                 <CardContent>
                   <Form {...registerForm}>
@@ -162,12 +207,13 @@ export default function AuthPage() {
                           name="firstName"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>First Name</FormLabel>
+                              <FormLabel className="text-sm font-semibold">First Name</FormLabel>
                               <FormControl>
                                 <Input 
                                   placeholder="First name" 
                                   {...field} 
                                   data-testid="input-firstname"
+                                  className="h-11 border-slate-300 dark:border-slate-600 focus-visible:ring-blue-600"
                                 />
                               </FormControl>
                               <FormMessage />
@@ -179,12 +225,13 @@ export default function AuthPage() {
                           name="lastName"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Last Name</FormLabel>
+                              <FormLabel className="text-sm font-semibold">Last Name</FormLabel>
                               <FormControl>
                                 <Input 
                                   placeholder="Last name" 
                                   {...field} 
                                   data-testid="input-lastname"
+                                  className="h-11 border-slate-300 dark:border-slate-600 focus-visible:ring-blue-600"
                                 />
                               </FormControl>
                               <FormMessage />
@@ -197,13 +244,17 @@ export default function AuthPage() {
                         name="username"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Username</FormLabel>
+                            <FormLabel className="text-sm font-semibold">Username</FormLabel>
                             <FormControl>
-                              <Input 
-                                placeholder="Choose a username" 
-                                {...field} 
-                                data-testid="input-register-username"
-                              />
+                              <div className="relative">
+                                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input 
+                                  placeholder="Choose a username" 
+                                  {...field} 
+                                  data-testid="input-register-username"
+                                  className="pl-10 h-11 border-slate-300 dark:border-slate-600 focus-visible:ring-blue-600"
+                                />
+                              </div>
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -214,14 +265,18 @@ export default function AuthPage() {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Email (Optional)</FormLabel>
+                            <FormLabel className="text-sm font-semibold">Email (Optional)</FormLabel>
                             <FormControl>
-                              <Input 
-                                type="email" 
-                                placeholder="your@email.com" 
-                                {...field} 
-                                data-testid="input-email"
-                              />
+                              <div className="relative">
+                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input 
+                                  type="email" 
+                                  placeholder="your@email.com" 
+                                  {...field} 
+                                  data-testid="input-email"
+                                  className="pl-10 h-11 border-slate-300 dark:border-slate-600 focus-visible:ring-blue-600"
+                                />
+                              </div>
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -232,14 +287,18 @@ export default function AuthPage() {
                         name="password"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Password</FormLabel>
+                            <FormLabel className="text-sm font-semibold">Password</FormLabel>
                             <FormControl>
-                              <Input 
-                                type="password" 
-                                placeholder="Choose a password (min 6 characters)" 
-                                {...field} 
-                                data-testid="input-register-password"
-                              />
+                              <div className="relative">
+                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input 
+                                  type="password" 
+                                  placeholder="Choose a password (min 6 characters)" 
+                                  {...field} 
+                                  data-testid="input-register-password"
+                                  className="pl-10 h-11 border-slate-300 dark:border-slate-600 focus-visible:ring-blue-600"
+                                />
+                              </div>
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -247,7 +306,7 @@ export default function AuthPage() {
                       />
                       <Button 
                         type="submit" 
-                        className="w-full" 
+                        className="w-full h-11 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 font-semibold" 
                         disabled={registerMutation.isPending}
                         data-testid="button-register"
                       >
@@ -257,7 +316,10 @@ export default function AuthPage() {
                             Creating Account...
                           </>
                         ) : (
-                          "Create Account"
+                          <>
+                            Create Account
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                          </>
                         )}
                       </Button>
                     </form>
@@ -268,68 +330,100 @@ export default function AuthPage() {
           </Tabs>
 
           {/* Footer */}
-          <div className="text-center text-xs text-muted-foreground mt-8 pt-4 border-t">
-            <div className="flex items-center justify-center space-x-2 mb-2">
-              <span className="font-semibold text-primary text-sm">CIMPLEIT</span>
+          <div className="text-center space-y-3 pt-6 border-t border-slate-200 dark:border-slate-700">
+            <div className="flex items-center justify-center space-x-2">
+              <span className="text-xs font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent tracking-wider">
+                CIMPLEIT
+              </span>
             </div>
-            <p>Powered by <a href="https://cimpleit.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Cimpleit</a></p>
-            <p>&copy; 2024 Cimpleit. All rights reserved.</p>
-            <p className="mt-1">Innovative AI and Data Analytics Solutions</p>
+            <p className="text-xs text-muted-foreground">
+              Powered by{" "}
+              <a 
+                href="https://cimpleit.com" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
+              >
+                Cimpleit
+              </a>
+            </p>
+            <p className="text-xs text-muted-foreground">&copy; 2024 Cimpleit. All rights reserved.</p>
+            <p className="text-xs text-muted-foreground">Innovative AI and Data Analytics Solutions</p>
           </div>
         </div>
       </div>
 
       {/* Right side - Hero Section */}
-      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-primary/20 via-primary/10 to-background p-8 items-center justify-center">
-        <div className="max-w-lg text-center space-y-8">
-          <div className="space-y-4">
-            <h2 className="text-3xl font-bold">
-              AI-Powered Contract Intelligence
+      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 p-8 lg:p-12 items-center justify-center relative overflow-hidden">
+        {/* Decorative elements */}
+        <div className="absolute inset-0 bg-grid-white/5"></div>
+        <div className="absolute top-20 right-20 w-72 h-72 bg-white/5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 left-20 w-96 h-96 bg-indigo-400/10 rounded-full blur-3xl"></div>
+
+        <div className="max-w-xl text-white relative z-10 space-y-10">
+          <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-700">
+            <div className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
+              <Sparkles className="h-4 w-4" />
+              <span className="text-sm font-medium">Next-Gen Contract Management</span>
+            </div>
+            <h2 className="text-4xl lg:text-5xl font-bold leading-tight">
+              Transform Your Contract Management
             </h2>
-            <p className="text-lg text-muted-foreground">
-              Transform your contract management with advanced AI analysis, risk assessment, and intelligent insights.
+            <p className="text-lg text-blue-100 leading-relaxed">
+              Harness the power of AI to automate contract analysis, assess risks, and gain intelligent insights that drive better business decisions.
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mx-auto">
-                <Brain className="h-6 w-6 text-primary" />
+          <div className="grid grid-cols-1 gap-6 animate-in fade-in slide-in-from-right-8 duration-700 delay-300">
+            <div className="flex items-start space-x-4 bg-white/5 backdrop-blur-sm p-5 rounded-2xl border border-white/10 hover:bg-white/10 transition-all duration-300">
+              <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
+                <Brain className="h-6 w-6 text-white" />
               </div>
-              <h3 className="font-semibold">AI Analysis</h3>
-              <p className="text-sm text-muted-foreground">
-                Extract key terms and assess risks automatically
-              </p>
+              <div>
+                <h3 className="font-semibold text-lg mb-1">AI-Powered Analysis</h3>
+                <p className="text-sm text-blue-100">
+                  Automatically extract key terms, clauses, and obligations from any contract
+                </p>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mx-auto">
-                <Shield className="h-6 w-6 text-primary" />
+            <div className="flex items-start space-x-4 bg-white/5 backdrop-blur-sm p-5 rounded-2xl border border-white/10 hover:bg-white/10 transition-all duration-300">
+              <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
+                <Shield className="h-6 w-6 text-white" />
               </div>
-              <h3 className="font-semibold">Risk Assessment</h3>
-              <p className="text-sm text-muted-foreground">
-                Identify potential issues before they become problems
-              </p>
+              <div>
+                <h3 className="font-semibold text-lg mb-1">Risk Assessment</h3>
+                <p className="text-sm text-blue-100">
+                  Identify potential issues and compliance risks before they become problems
+                </p>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mx-auto">
-                <Users className="h-6 w-6 text-primary" />
+            <div className="flex items-start space-x-4 bg-white/5 backdrop-blur-sm p-5 rounded-2xl border border-white/10 hover:bg-white/10 transition-all duration-300">
+              <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
+                <BarChart3 className="h-6 w-6 text-white" />
               </div>
-              <h3 className="font-semibold">Team Collaboration</h3>
-              <p className="text-sm text-muted-foreground">
-                Role-based access and audit trails for compliance
-              </p>
+              <div>
+                <h3 className="font-semibold text-lg mb-1">Advanced Analytics</h3>
+                <p className="text-sm text-blue-100">
+                  Real-time insights and comprehensive reporting for data-driven decisions
+                </p>
+              </div>
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mx-auto">
-                <BarChart3 className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="font-semibold">Analytics</h3>
-              <p className="text-sm text-muted-foreground">
-                Comprehensive reporting and insights dashboard
-              </p>
+          <div className="flex items-center space-x-8 pt-6 animate-in fade-in slide-in-from-right-8 duration-700 delay-500">
+            <div className="flex items-center space-x-2">
+              <CheckCircle className="h-5 w-5 text-green-400" />
+              <span className="text-sm font-medium">Enterprise Security</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <CheckCircle className="h-5 w-5 text-green-400" />
+              <span className="text-sm font-medium">99.9% Uptime</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <CheckCircle className="h-5 w-5 text-green-400" />
+              <span className="text-sm font-medium">24/7 Support</span>
             </div>
           </div>
         </div>
