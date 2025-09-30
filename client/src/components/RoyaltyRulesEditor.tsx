@@ -713,8 +713,6 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate }: Roya
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogContent 
                   className="max-w-6xl max-h-[90vh] overflow-y-auto"
-                  onClick={(e) => e.stopPropagation()}
-                  onPointerDownOutside={(e) => e.preventDefault()}
                 >
                   <DialogHeader>
                     <DialogTitle className="text-xl flex items-center gap-2">
