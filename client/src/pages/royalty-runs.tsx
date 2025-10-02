@@ -139,7 +139,7 @@ export default function RoyaltyRunsPage() {
 
   if (isLoading) {
     return (
-      <MainLayout>
+      <MainLayout title="Royalty Runs">
         <div className="container mx-auto p-6 space-y-6">
           <h1 className="text-3xl font-bold">Royalty Runs</h1>
           <div className="h-48 bg-muted animate-pulse rounded-lg" />
@@ -149,7 +149,7 @@ export default function RoyaltyRunsPage() {
   }
 
   return (
-    <MainLayout>
+    <MainLayout title="Royalty Runs">
       <div className="container mx-auto p-6 space-y-6">
         <div>
           <h1 className="text-3xl font-bold">Royalty Runs</h1>
