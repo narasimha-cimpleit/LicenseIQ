@@ -45,7 +45,7 @@ export default function Upload() {
 
       const formData = new FormData();
       formData.append("file", selectedFile);
-      formData.append("vendorId", vendorId === "none" ? "" : vendorId);
+      formData.append("vendorId", vendorId);
       formData.append("contractType", contractType);
       formData.append("priority", priority);
       formData.append("notes", notes);
@@ -89,6 +89,15 @@ export default function Upload() {
       toast({
         title: "No File Selected",
         description: "Please select a file to upload.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!vendorId || vendorId === "none") {
+      toast({
+        title: "Vendor Required",
+        description: "Please select a vendor before uploading.",
         variant: "destructive",
       });
       return;
@@ -183,13 +192,12 @@ export default function Upload() {
               <h4 className="font-medium text-foreground">Contract Details</h4>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="vendor">Vendor (Optional - for Royalty Contracts)</Label>
+                  <Label htmlFor="vendor">Vendor <span className="text-red-500">*</span></Label>
                   <Select value={vendorId} onValueChange={setVendorId}>
                     <SelectTrigger data-testid="select-vendor">
-                      <SelectValue placeholder="Select vendor (optional)" />
+                      <SelectValue placeholder="Select a vendor (required)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">None</SelectItem>
                       {vendors.map((vendor: any) => (
                         <SelectItem key={vendor.id} value={vendor.id}>
                           {vendor.name}
@@ -198,7 +206,7 @@ export default function Upload() {
                     </SelectContent>
                   </Select>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Link this contract to a vendor for royalty calculation
+                    Required: Link this contract to a vendor for royalty calculation
                   </p>
                 </div>
 
