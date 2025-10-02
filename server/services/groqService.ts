@@ -549,7 +549,7 @@ Return only JSON array.`;
           // Rate limit - wait and retry
           const waitTime = Math.pow(2, attempt) * 1000; // Exponential backoff
           console.log(`🔄 Groq rate limit hit (attempt ${attempt}/3), waiting ${waitTime}ms...`);
-          await new Promise(resolve => setTimeout(resolve, waitTime));
+          await new Promise(resolve => setTmimeout(resolve, waitTime));
           continue;
         }
 
