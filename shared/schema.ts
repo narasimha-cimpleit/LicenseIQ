@@ -502,12 +502,15 @@ export const royaltyRuns = pgTable("royalty_runs", {
   ruleSetId: varchar("rule_set_id").references(() => licenseRuleSets.id),
   periodStart: timestamp("period_start").notNull(),
   periodEnd: timestamp("period_end").notNull(),
-  status: varchar("status").default("pending"), // pending, running, completed, failed
+  status: varchar("status").default("pending"), // pending, calculating, awaiting_approval, approved, rejected, completed, failed
   totalSalesAmount: decimal("total_sales_amount", { precision: 15, scale: 2 }),
   totalRoyalty: decimal("total_royalty", { precision: 15, scale: 2 }),
   recordsProcessed: integer("records_processed"),
   executionLog: jsonb("execution_log"), // Detailed calculation log
   runBy: varchar("run_by").references(() => users.id),
+  approvedBy: varchar("approved_by").references(() => users.id),
+  approvedAt: timestamp("approved_at"),
+  rejectionReason: text("rejection_reason"),
   startedAt: timestamp("started_at"),
   completedAt: timestamp("completed_at"),
   createdAt: timestamp("created_at").defaultNow(),
