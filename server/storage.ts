@@ -89,6 +89,7 @@ export interface IStorage {
   updateContractStatus(id: string, status: string, processingTime?: number): Promise<Contract>;
   searchContracts(query: string, userId?: string): Promise<ContractWithAnalysis[]>;
   getContractsByUser(userId: string): Promise<Contract[]>;
+  getContractsByVendor(vendorId: string): Promise<Contract[]>;
   deleteContract(id: string): Promise<void>;
 
   // ==========================================
@@ -462,6 +463,14 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(contracts)
       .where(eq(contracts.uploadedBy, userId))
+      .orderBy(desc(contracts.createdAt));
+  }
+
+  async getContractsByVendor(vendorId: string): Promise<Contract[]> {
+    return await db
+      .select()
+      .from(contracts)
+      .where(eq(contracts.vendorId, vendorId))
       .orderBy(desc(contracts.createdAt));
   }
 

@@ -45,7 +45,7 @@ export default function VendorsPage() {
   });
 
   // Fetch vendors
-  const { data: vendorsData, isLoading } = useQuery({
+  const { data: vendorsData, isLoading } = useQuery<{ vendors: any[] }>({
     queryKey: ["/api/vendors", searchQuery],
   });
 

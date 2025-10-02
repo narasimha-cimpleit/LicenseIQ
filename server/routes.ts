@@ -135,6 +135,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Vendor routes
+  app.get('/api/vendors', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const search = req.query.search as string;
+      const vendors = await storage.getVendors(search);
+      
+      // Fetch contracts for each vendor
+      const vendorsWithContracts = await Promise.all(
+        vendors.map(async (vendor) => {
+          const contracts = await storage.getContractsByVendor(vendor.id);
+          return {
+            ...vendor,
+            licenses: contracts.map(contract => ({
+              id: contract.id,
+              name: contract.originalName,
+              status: contract.status
+            }))
+          };
+        })
+      );
+      
+      res.json({ vendors: vendorsWithContracts });
+    } catch (error: any) {
+      console.error('Get vendors error:', error);
+      res.status(500).json({ error: error.message || 'Failed to fetch vendors' });
+    }
+  });
+
+  app.post('/api/vendors', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const vendor = await storage.createVendor(req.body);
+      
+      await createAuditLog(req, 'vendor_create', 'vendor', vendor.id, {
+        name: vendor.name
+      });
+      
+      res.json(vendor);
+    } catch (error: any) {
+      console.error('Create vendor error:', error);
+      res.status(500).json({ error: error.message || 'Failed to create vendor' });
+    }
+  });
+
   // Contract upload endpoint
   app.post('/api/contracts/upload', isAuthenticated, upload.single('file'), async (req: any, res: Response) => {
     try {
