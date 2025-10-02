@@ -578,6 +578,7 @@ Report ID: ${contractId}
         status: 'processing',
         createdBy: req.user.id,
         connectionId: null,
+        vendorId: vendorId,
         startedAt: new Date()
       });
 

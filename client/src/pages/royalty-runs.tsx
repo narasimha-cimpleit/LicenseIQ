@@ -6,19 +6,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { Play, CheckCircle2, XCircle, AlertCircle, Calculator, DollarSign } from "lucide-react";
+import { Play, CheckCircle2, XCircle, AlertCircle, Calculator } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import MainLayout from "@/components/layout/main-layout";
 
 export default function RoyaltyRunsPage() {
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [viewingRunId, setViewingRunId] = useState<string | null>(null);
-  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
+  const [showRejectionForm, setShowRejectionForm] = useState(false);
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -59,7 +57,6 @@ export default function RoyaltyRunsPage() {
         description: "Royalty run created and calculation started",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/royalty-runs"] });
-      setIsCreateDialogOpen(false);
       setFormData({ name: "", vendorId: "", ruleSetId: "", periodStart: "", periodEnd: "" });
     },
     onError: (error: any) => {
@@ -107,7 +104,7 @@ export default function RoyaltyRunsPage() {
       });
       queryClient.invalidateQueries({ queryKey: ["/api/royalty-runs"] });
       setViewingRunId(null);
-      setRejectDialogOpen(false);
+      setShowRejectionForm(false);
       setRejectionReason("");
     },
     onError: (error: any) => {
@@ -154,119 +151,119 @@ export default function RoyaltyRunsPage() {
   return (
     <MainLayout>
       <div className="container mx-auto p-6 space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold">Royalty Runs</h1>
-            <p className="text-muted-foreground mt-1">
-              Calculate and manage royalty payments with human-in-the-loop approval
-            </p>
-          </div>
-
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button data-testid="button-create-run" className="gap-2">
-                <Play className="h-4 w-4" />
-                New Royalty Run
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle>Create Royalty Run</DialogTitle>
-                <DialogDescription>
-                  Calculate royalties based on sales data and license rules
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Run Name *</Label>
-                  <Input
-                    id="name"
-                    data-testid="input-run-name"
-                    placeholder="Q4 2024 Royalties"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="vendor">Vendor *</Label>
-                  <Select value={formData.vendorId} onValueChange={(value) => setFormData({ ...formData, vendorId: value, ruleSetId: "" })}>
-                    <SelectTrigger data-testid="select-vendor">
-                      <SelectValue placeholder="Select vendor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {vendors.map((vendor: any) => (
-                        <SelectItem key={vendor.id} value={vendor.id}>
-                          {vendor.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="ruleSet">License Rules *</Label>
-                  <Select value={formData.ruleSetId} onValueChange={(value) => setFormData({ ...formData, ruleSetId: value })} disabled={!formData.vendorId}>
-                    <SelectTrigger data-testid="select-rule-set">
-                      <SelectValue placeholder="Select rule set" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ruleSets.map((ruleSet: any) => (
-                        <SelectItem key={ruleSet.id} value={ruleSet.id}>
-                          {ruleSet.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="periodStart">Period Start *</Label>
-                    <Input
-                      id="periodStart"
-                      type="date"
-                      data-testid="input-period-start"
-                      value={formData.periodStart}
-                      onChange={(e) => setFormData({ ...formData, periodStart: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="periodEnd">Period End *</Label>
-                    <Input
-                      id="periodEnd"
-                      type="date"
-                      data-testid="input-period-end"
-                      value={formData.periodEnd}
-                      onChange={(e) => setFormData({ ...formData, periodEnd: e.target.value })}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsCreateDialogOpen(false)}
-                  data-testid="button-cancel-run"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={() => createRunMutation.mutate()}
-                  disabled={!formData.name || !formData.vendorId || !formData.ruleSetId || !formData.periodStart || !formData.periodEnd || createRunMutation.isPending}
-                  data-testid="button-confirm-run"
-                >
-                  {createRunMutation.isPending ? "Creating..." : "Create & Calculate"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+        <div>
+          <h1 className="text-3xl font-bold">Royalty Runs</h1>
+          <p className="text-muted-foreground mt-1">
+            Calculate and manage royalty payments with human-in-the-loop approval
+          </p>
         </div>
 
+        {/* Inline Create Royalty Run Form */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Play className="h-5 w-5" />
+              Create New Royalty Run
+            </CardTitle>
+            <CardDescription>
+              Calculate royalties based on sales data and license rules
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="name">Run Name <span className="text-red-500">*</span></Label>
+                <Input
+                  id="name"
+                  data-testid="input-run-name"
+                  placeholder="Q4 2024 Royalties"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="vendor">Vendor <span className="text-red-500">*</span></Label>
+                <Select value={formData.vendorId} onValueChange={(value) => setFormData({ ...formData, vendorId: value, ruleSetId: "" })}>
+                  <SelectTrigger data-testid="select-vendor">
+                    <SelectValue placeholder="Select vendor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vendors.map((vendor: any) => (
+                      <SelectItem key={vendor.id} value={vendor.id}>
+                        {vendor.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="ruleSet">License Rules <span className="text-red-500">*</span></Label>
+                <Select value={formData.ruleSetId} onValueChange={(value) => setFormData({ ...formData, ruleSetId: value })} disabled={!formData.vendorId}>
+                  <SelectTrigger data-testid="select-rule-set">
+                    <SelectValue placeholder="Select rule set" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ruleSets.map((ruleSet: any) => (
+                      <SelectItem key={ruleSet.id} value={ruleSet.id}>
+                        {ruleSet.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="periodStart">Period Start <span className="text-red-500">*</span></Label>
+                <Input
+                  id="periodStart"
+                  type="date"
+                  data-testid="input-period-start"
+                  value={formData.periodStart}
+                  onChange={(e) => setFormData({ ...formData, periodStart: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="periodEnd">Period End <span className="text-red-500">*</span></Label>
+                <Input
+                  id="periodEnd"
+                  type="date"
+                  data-testid="input-period-end"
+                  value={formData.periodEnd}
+                  onChange={(e) => setFormData({ ...formData, periodEnd: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 mt-4">
+              <Button
+                variant="outline"
+                onClick={() => setFormData({ name: "", vendorId: "", ruleSetId: "", periodStart: "", periodEnd: "" })}
+                disabled={!formData.name && !formData.vendorId}
+                data-testid="button-clear-form"
+              >
+                Clear
+              </Button>
+              <Button
+                onClick={() => createRunMutation.mutate()}
+                disabled={!formData.name || !formData.vendorId || !formData.ruleSetId || !formData.periodStart || !formData.periodEnd || createRunMutation.isPending}
+                data-testid="button-confirm-run"
+                className="gap-2"
+              >
+                {createRunMutation.isPending ? "Creating..." : (
+                  <>
+                    <Calculator className="h-4 w-4" />
+                    Create & Calculate
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Royalty Runs List */}
         <Card>
           <CardHeader>
             <CardTitle>Royalty Runs</CardTitle>
@@ -329,52 +326,68 @@ export default function RoyaltyRunsPage() {
           </CardContent>
         </Card>
 
+        {/* Run Details Inline View */}
         {viewingRunId && runDetails && (
-          <Dialog open={!!viewingRunId} onOpenChange={() => setViewingRunId(null)}>
-            <DialogContent className="max-w-5xl max-h-[80vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Royalty Run Details</DialogTitle>
-                <DialogDescription>
-                  Review calculation results and approve or reject
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-4">
-                <div className="grid grid-cols-3 gap-4">
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-sm">Total Sales</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-2xl font-bold">
-                        ${Number(runDetails.run.metadata?.totalSalesAmount || 0).toFixed(2)}
-                      </p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-sm">Total Royalty</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-2xl font-bold text-green-600">
-                        ${Number(runDetails.run.totalRoyalty || 0).toFixed(2)}
-                      </p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-sm">Records</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-2xl font-bold">
-                        {runDetails.run.metadata?.recordsProcessed || 0}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
-
+          <Card className="border-blue-200 bg-blue-50/50 dark:bg-blue-950/20">
+            <CardHeader>
+              <div className="flex justify-between items-start">
                 <div>
-                  <h3 className="font-semibold mb-2">Calculation Results</h3>
+                  <CardTitle>Royalty Run Details</CardTitle>
+                  <CardDescription>
+                    Review calculation results and approve or reject
+                  </CardDescription>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setViewingRunId(null);
+                    setShowRejectionForm(false);
+                    setRejectionReason("");
+                  }}
+                  data-testid="button-close-details"
+                >
+                  Close
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-3 gap-4">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm">Total Sales</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-2xl font-bold">
+                      ${Number(runDetails.run.metadata?.totalSalesAmount || 0).toFixed(2)}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm">Total Royalty</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-2xl font-bold text-green-600">
+                      ${Number(runDetails.run.totalRoyalty || 0).toFixed(2)}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm">Records</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-2xl font-bold">
+                      {runDetails.run.metadata?.recordsProcessed || 0}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div>
+                <h3 className="font-semibold mb-2">Calculation Results</h3>
+                <div className="max-h-96 overflow-auto border rounded-lg">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -405,20 +418,66 @@ export default function RoyaltyRunsPage() {
                       ))}
                     </TableBody>
                   </Table>
-                  {runDetails.results?.length > 50 && (
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Showing first 50 of {runDetails.results.length} results
-                    </p>
-                  )}
                 </div>
+                {runDetails.results?.length > 50 && (
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Showing first 50 of {runDetails.results.length} results
+                  </p>
+                )}
               </div>
 
-              <DialogFooter className="gap-2">
-                {runDetails.run.status === 'awaiting_approval' && (
+              {/* Rejection Form */}
+              {showRejectionForm && (
+                <Card className="border-red-200 bg-red-50/50 dark:bg-red-950/20">
+                  <CardHeader>
+                    <CardTitle className="text-base">Reject Royalty Run</CardTitle>
+                    <CardDescription>
+                      Please provide a reason for rejecting this royalty run
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="reason">Rejection Reason <span className="text-red-500">*</span></Label>
+                      <Textarea
+                        id="reason"
+                        data-testid="input-rejection-reason"
+                        placeholder="Explain why this run is being rejected..."
+                        value={rejectionReason}
+                        onChange={(e) => setRejectionReason(e.target.value)}
+                        rows={4}
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setShowRejectionForm(false);
+                          setRejectionReason("");
+                        }}
+                        data-testid="button-cancel-reject"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        onClick={() => viewingRunId && rejectMutation.mutate(viewingRunId)}
+                        disabled={!rejectionReason || rejectMutation.isPending}
+                        data-testid="button-confirm-reject"
+                      >
+                        {rejectMutation.isPending ? "Rejecting..." : "Reject Run"}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-2">
+                {runDetails.run.status === 'awaiting_approval' && !showRejectionForm && (
                   <>
                     <Button
                       variant="destructive"
-                      onClick={() => setRejectDialogOpen(true)}
+                      onClick={() => setShowRejectionForm(true)}
                       data-testid="button-reject-run"
                     >
                       Reject
@@ -443,55 +502,9 @@ export default function RoyaltyRunsPage() {
                     Close
                   </Button>
                 )}
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        )}
-
-        {rejectDialogOpen && (
-          <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Reject Royalty Run</DialogTitle>
-                <DialogDescription>
-                  Please provide a reason for rejecting this royalty run
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-2">
-                <Label htmlFor="reason">Rejection Reason *</Label>
-                <Textarea
-                  id="reason"
-                  data-testid="input-rejection-reason"
-                  placeholder="Explain why this run is being rejected..."
-                  value={rejectionReason}
-                  onChange={(e) => setRejectionReason(e.target.value)}
-                  rows={4}
-                />
               </div>
-
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setRejectDialogOpen(false);
-                    setRejectionReason("");
-                  }}
-                  data-testid="button-cancel-reject"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={() => viewingRunId && rejectMutation.mutate(viewingRunId)}
-                  disabled={!rejectionReason || rejectMutation.isPending}
-                  data-testid="button-confirm-reject"
-                >
-                  {rejectMutation.isPending ? "Rejecting..." : "Reject Run"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+            </CardContent>
+          </Card>
         )}
       </div>
     </MainLayout>
