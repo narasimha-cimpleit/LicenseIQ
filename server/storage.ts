@@ -135,12 +135,26 @@ export interface IStorage {
   getRoyaltyRun(id: string): Promise<RoyaltyRunWithDetails | undefined>;
   getRoyaltyRuns(vendorId?: string, status?: string): Promise<RoyaltyRunWithDetails[]>;
   updateRoyaltyRunStatus(id: string, status: string, totals?: {totalSalesAmount?: number, totalRoyalty?: number, recordsProcessed?: number}): Promise<RoyaltyRun>;
+  approveRoyaltyRun(id: string, approvedBy: string): Promise<RoyaltyRun>;
+  rejectRoyaltyRun(id: string, rejectionReason: string): Promise<RoyaltyRun>;
   deleteRoyaltyRun(id: string): Promise<void>;
   
   // Royalty Result operations
   createRoyaltyResults(results: Omit<RoyaltyResult, 'id' | 'createdAt'>[]): Promise<RoyaltyResult[]>;
   getRoyaltyResults(runId: string): Promise<RoyaltyResult[]>;
   deleteRoyaltyResults(runId: string): Promise<void>;
+  
+  // ERP Import Job operations
+  createErpImportJob(job: Omit<ErpImportJob, 'id' | 'createdAt'>): Promise<ErpImportJob>;
+  getErpImportJob(id: string): Promise<ErpImportJob | undefined>;
+  getErpImportJobs(createdBy?: string, status?: string): Promise<ErpImportJob[]>;
+  updateErpImportJobStatus(id: string, status: string, counts?: {recordsImported?: number, recordsFailed?: number}): Promise<ErpImportJob>;
+  
+  // Sales Staging operations
+  createSalesStaging(staging: Omit<SalesStaging, 'id' | 'createdAt'>): Promise<SalesStaging>;
+  getSalesStaging(importJobId: string): Promise<SalesStaging[]>;
+  updateStagingValidation(id: string, status: string, errors?: any): Promise<SalesStaging>;
+  promoteStagingToSales(importJobId: string): Promise<number>;
   
   // Contract analysis operations
   createContractAnalysis(analysis: InsertContractAnalysis): Promise<ContractAnalysis>;
@@ -1456,6 +1470,31 @@ export class DatabaseStorage implements IStorage {
     await db.delete(royaltyRuns).where(eq(royaltyRuns.id, id));
   }
   
+  async approveRoyaltyRun(id: string, approvedBy: string): Promise<RoyaltyRun> {
+    const [updated] = await db.update(royaltyRuns)
+      .set({ 
+        status: 'approved', 
+        approvedBy, 
+        approvedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(royaltyRuns.id, id))
+      .returning();
+    return updated;
+  }
+  
+  async rejectRoyaltyRun(id: string, rejectionReason: string): Promise<RoyaltyRun> {
+    const [updated] = await db.update(royaltyRuns)
+      .set({ 
+        status: 'rejected', 
+        rejectionReason,
+        updatedAt: new Date()
+      })
+      .where(eq(royaltyRuns.id, id))
+      .returning();
+    return updated;
+  }
+  
   // Royalty Result operations
   async createRoyaltyResults(results: Omit<RoyaltyResult, 'id' | 'createdAt'>[]): Promise<RoyaltyResult[]> {
     const created = await db.insert(royaltyResults).values(results).returning();
@@ -1468,6 +1507,87 @@ export class DatabaseStorage implements IStorage {
   
   async deleteRoyaltyResults(runId: string): Promise<void> {
     await db.delete(royaltyResults).where(eq(royaltyResults.runId, runId));
+  }
+  
+  // ERP Import Job operations
+  async createErpImportJob(job: Omit<ErpImportJob, 'id' | 'createdAt'>): Promise<ErpImportJob> {
+    const [created] = await db.insert(erpImportJobs).values(job).returning();
+    return created;
+  }
+  
+  async getErpImportJob(id: string): Promise<ErpImportJob | undefined> {
+    const [job] = await db.select().from(erpImportJobs).where(eq(erpImportJobs.id, id));
+    return job;
+  }
+  
+  async getErpImportJobs(createdBy?: string, status?: string): Promise<ErpImportJob[]> {
+    let query = db.select().from(erpImportJobs);
+    const conditions = [];
+    if (createdBy) conditions.push(eq(erpImportJobs.createdBy, createdBy));
+    if (status) conditions.push(eq(erpImportJobs.status, status));
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)) as any;
+    }
+    return await query.orderBy(desc(erpImportJobs.createdAt));
+  }
+  
+  async updateErpImportJobStatus(id: string, status: string, counts?: {recordsImported?: number, recordsFailed?: number}): Promise<ErpImportJob> {
+    const updateData: any = { status };
+    if (counts?.recordsImported !== undefined) updateData.recordsImported = counts.recordsImported;
+    if (counts?.recordsFailed !== undefined) updateData.recordsFailed = counts.recordsFailed;
+    if (status === 'completed' || status === 'failed') updateData.completedAt = new Date();
+    
+    const [updated] = await db.update(erpImportJobs).set(updateData).where(eq(erpImportJobs.id, id)).returning();
+    return updated;
+  }
+  
+  // Sales Staging operations
+  async createSalesStaging(staging: Omit<SalesStaging, 'id' | 'createdAt'>): Promise<SalesStaging> {
+    const [created] = await db.insert(salesStaging).values(staging).returning();
+    return created;
+  }
+  
+  async getSalesStaging(importJobId: string): Promise<SalesStaging[]> {
+    return await db.select().from(salesStaging).where(eq(salesStaging.importJobId, importJobId));
+  }
+  
+  async updateStagingValidation(id: string, status: string, errors?: any): Promise<SalesStaging> {
+    const updateData: any = { validationStatus: status };
+    if (errors) updateData.validationErrors = errors;
+    if (status === 'valid' || status === 'invalid') updateData.processedAt = new Date();
+    
+    const [updated] = await db.update(salesStaging).set(updateData).where(eq(salesStaging.id, id)).returning();
+    return updated;
+  }
+  
+  async promoteStagingToSales(importJobId: string): Promise<number> {
+    const stagingRows = await db.select().from(salesStaging)
+      .where(and(
+        eq(salesStaging.importJobId, importJobId),
+        eq(salesStaging.validationStatus, 'valid')
+      ));
+    
+    if (stagingRows.length === 0) return 0;
+    
+    const salesRows = stagingRows.map((row: any) => ({
+      vendorId: row.rowData.vendorId,
+      transactionDate: new Date(row.rowData.transactionDate),
+      transactionId: row.rowData.transactionId || row.externalId,
+      productCode: row.rowData.productCode,
+      productName: row.rowData.productName,
+      category: row.rowData.category,
+      territory: row.rowData.territory,
+      currency: row.rowData.currency || 'USD',
+      grossAmount: row.rowData.grossAmount,
+      netAmount: row.rowData.netAmount,
+      quantity: row.rowData.quantity,
+      unitPrice: row.rowData.unitPrice,
+      customFields: row.rowData.customFields || {},
+      importJobId: importJobId
+    }));
+    
+    await db.insert(salesData).values(salesRows);
+    return salesRows.length;
   }
 }
 

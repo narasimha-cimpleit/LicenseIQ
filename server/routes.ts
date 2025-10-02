@@ -9,6 +9,7 @@ import { setupAuth, isAuthenticated, hashPassword } from "./auth";
 import { fileService } from "./services/fileService";
 import { groqService } from "./services/groqService";
 import { registerRulesRoutes } from "./rulesRoutes";
+import { SalesDataParser } from "./services/salesDataParser";
 import { 
   insertContractSchema, 
   insertContractAnalysisSchema, 
@@ -48,6 +49,38 @@ const upload = multer({
       cb(null, true);
     } else {
       cb(new Error('Invalid file type. Only PDF, DOC, DOCX, and TXT files are allowed.'));
+    }
+  },
+});
+
+// Configure multer for CSV/Excel uploads
+const dataUpload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+      const fileExtension = path.extname(file.originalname);
+      const fileName = `${randomUUID()}${fileExtension}`;
+      cb(null, fileName);
+    },
+  }),
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB limit for data files
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = [
+      'text/csv',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    ];
+    const allowedExts = ['.csv', '.xlsx', '.xls'];
+    const fileExt = path.extname(file.originalname).toLowerCase();
+    
+    if (allowedTypes.includes(file.mimetype) || allowedExts.includes(fileExt)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only CSV and Excel files are allowed.'));
     }
   },
 });
@@ -643,6 +676,307 @@ async function processLicenseRules(contractId: string, extractionResult: any) {
   } catch (error) {
     console.error(`❌ Failed to process license rules for contract ${contractId}:`, error);
     // Don't throw error - allow contract processing to continue even if rules processing fails
+  }
+}
+
+  // ==========================================
+  // ERP IMPORT ROUTES
+  // ==========================================
+  
+  // Upload and import sales data from CSV/Excel
+  app.post('/api/erp-imports', isAuthenticated, dataUpload.single('file'), async (req: any, res: Response) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const { vendorId } = req.body;
+      if (!vendorId) {
+        return res.status(400).json({ error: 'Vendor ID is required' });
+      }
+
+      // Create import job
+      const importJob = await storage.createErpImportJob({
+        jobType: 'manual_upload',
+        fileName: req.file.originalname,
+        status: 'processing',
+        createdBy: req.user.id,
+        connectionId: null,
+        startedAt: new Date()
+      });
+
+      // Parse file
+      const fileBuffer = fs.readFileSync(req.file.path);
+      const parseResult = await SalesDataParser.parseFile(fileBuffer, req.file.originalname);
+
+      // Store parsed rows in staging
+      for (const row of parseResult.rows) {
+        await storage.createSalesStaging({
+          importJobId: importJob.id,
+          externalId: row.externalId,
+          rowData: { ...row.rowData, vendorId }, // Add vendorId to row data
+          validationStatus: row.validationStatus,
+          validationErrors: row.validationErrors || null
+        });
+      }
+
+      // Update import job status
+      await storage.updateErpImportJobStatus(importJob.id, 'completed', {
+        recordsImported: parseResult.validRows,
+        recordsFailed: parseResult.invalidRows
+      });
+
+      // Log the import
+      await createAuditLog(req, 'import_sales_data', 'erp_import_job', importJob.id, {
+        fileName: req.file.originalname,
+        totalRows: parseResult.totalRows,
+        validRows: parseResult.validRows,
+        invalidRows: parseResult.invalidRows
+      });
+
+      res.json({
+        importJob,
+        summary: {
+          totalRows: parseResult.totalRows,
+          validRows: parseResult.validRows,
+          invalidRows: parseResult.invalidRows
+        }
+      });
+    } catch (error) {
+      console.error('ERP import error:', error);
+      res.status(500).json({ error: 'Failed to import sales data' });
+    }
+  });
+
+  // Get all import jobs
+  app.get('/api/erp-imports', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { status } = req.query;
+      const jobs = await storage.getErpImportJobs(req.user.id, status as string);
+      res.json({ jobs });
+    } catch (error) {
+      console.error('Get import jobs error:', error);
+      res.status(500).json({ error: 'Failed to fetch import jobs' });
+    }
+  });
+
+  // Get specific import job with staging data
+  app.get('/api/erp-imports/:id', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const importJob = await storage.getErpImportJob(req.params.id);
+      if (!importJob) {
+        return res.status(404).json({ error: 'Import job not found' });
+      }
+
+      const stagingData = await storage.getSalesStaging(req.params.id);
+      res.json({ importJob, stagingData });
+    } catch (error) {
+      console.error('Get import job error:', error);
+      res.status(500).json({ error: 'Failed to fetch import job' });
+    }
+  });
+
+  // Promote staging data to sales data
+  app.post('/api/erp-imports/:id/promote', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const importJob = await storage.getErpImportJob(req.params.id);
+      if (!importJob) {
+        return res.status(404).json({ error: 'Import job not found' });
+      }
+
+      const promotedCount = await storage.promoteStagingToSales(req.params.id);
+
+      // Log the promotion
+      await createAuditLog(req, 'promote_sales_data', 'erp_import_job', req.params.id, {
+        promotedCount
+      });
+
+      res.json({ message: 'Sales data promoted successfully', promotedCount });
+    } catch (error) {
+      console.error('Promote sales data error:', error);
+      res.status(500).json({ error: 'Failed to promote sales data' });
+    }
+  });
+
+  // ==========================================
+  // ROYALTY RUN ROUTES
+  // ==========================================
+  
+  // Create royalty run and calculate
+  app.post('/api/royalty-runs', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { name, vendorId, ruleSetId, periodStart, periodEnd } = req.body;
+
+      // Create royalty run
+      const run = await storage.createRoyaltyRun({
+        name,
+        vendorId,
+        ruleSetId,
+        periodStart: new Date(periodStart),
+        periodEnd: new Date(periodEnd),
+        runBy: req.user.id
+      });
+
+      // Update status to calculating
+      await storage.updateRoyaltyRunStatus(run.id, 'calculating');
+
+      res.json({ run });
+
+      // Trigger async calculation (don't await)
+      calculateRoyalties(run.id, vendorId, ruleSetId, periodStart, periodEnd);
+    } catch (error) {
+      console.error('Create royalty run error:', error);
+      res.status(500).json({ error: 'Failed to create royalty run' });
+    }
+  });
+
+  // Get all royalty runs
+  app.get('/api/royalty-runs', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { vendorId, status } = req.query;
+      const runs = await storage.getRoyaltyRuns(vendorId as string, status as string);
+      res.json({ runs });
+    } catch (error) {
+      console.error('Get royalty runs error:', error);
+      res.status(500).json({ error: 'Failed to fetch royalty runs' });
+    }
+  });
+
+  // Get specific royalty run
+  app.get('/api/royalty-runs/:id', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const run = await storage.getRoyaltyRun(req.params.id);
+      if (!run) {
+        return res.status(404).json({ error: 'Royalty run not found' });
+      }
+
+      const results = await storage.getRoyaltyResults(req.params.id);
+      res.json({ run, results });
+    } catch (error) {
+      console.error('Get royalty run error:', error);
+      res.status(500).json({ error: 'Failed to fetch royalty run' });
+    }
+  });
+
+  // Approve royalty run
+  app.post('/api/royalty-runs/:id/approve', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const run = await storage.approveRoyaltyRun(req.params.id, req.user.id);
+
+      await createAuditLog(req, 'approve_royalty_run', 'royalty_run', req.params.id, {
+        totalRoyalty: run.totalRoyalty
+      });
+
+      res.json({ run });
+    } catch (error) {
+      console.error('Approve royalty run error:', error);
+      res.status(500).json({ error: 'Failed to approve royalty run' });
+    }
+  });
+
+  // Reject royalty run
+  app.post('/api/royalty-runs/:id/reject', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { reason } = req.body;
+      const run = await storage.rejectRoyaltyRun(req.params.id, reason);
+
+      await createAuditLog(req, 'reject_royalty_run', 'royalty_run', req.params.id, {
+        reason
+      });
+
+      res.json({ run });
+    } catch (error) {
+      console.error('Reject royalty run error:', error);
+      res.status(500).json({ error: 'Failed to reject royalty run' });
+    }
+  });
+
+  // Register rules engine routes
+  registerRulesRoutes(app);
+
+  // Start the HTTP server
+  const server = createServer(app);
+  server.listen(5000, '0.0.0.0');
+  return server;
+}
+
+// Helper function to calculate royalties asynchronously
+async function calculateRoyalties(runId: string, vendorId: string, ruleSetId: string, periodStart: string, periodEnd: string) {
+  try {
+    // Get sales data for the period
+    const salesData = await storage.getSalesData(vendorId, new Date(periodStart), new Date(periodEnd));
+    
+    // Get rule set
+    const ruleSet = await storage.getLicenseRuleSet(ruleSetId);
+    if (!ruleSet) {
+      throw new Error('Rule set not found');
+    }
+
+    // Extract rules from rulesDsl
+    const rulesDsl = ruleSet.rulesDsl as any;
+    const rules = (rulesDsl?.rules || []).map((rule: any) => ({
+      id: rule.id || crypto.randomUUID(),
+      ruleName: rule.ruleName || 'Unnamed Rule',
+      ruleType: rule.ruleType || 'percentage',
+      description: rule.description || '',
+      conditions: rule.conditions || {},
+      calculation: rule.calculation || {},
+      priority: rule.priority || 10,
+      isActive: true,
+      confidence: rule.confidence || 1.0
+    }));
+
+    // Import RulesEngine dynamically
+    const { RulesEngine } = await import('./services/rulesEngine.js');
+    
+    let totalRoyalty = 0;
+    let totalSalesAmount = 0;
+    const results = [];
+
+    // Calculate royalty for each sales record
+    for (const sale of salesData) {
+      const calculationInput = {
+        grossRevenue: Number(sale.grossAmount),
+        netRevenue: Number(sale.netAmount || sale.grossAmount),
+        units: Number(sale.quantity || 1),
+        territory: sale.territory,
+        productCategory: sale.category,
+        timeframe: 'monthly' as const
+      };
+
+      const calculation = await RulesEngine.calculateRoyalties(rules, calculationInput);
+      
+      totalRoyalty += calculation.totalRoyalty;
+      totalSalesAmount += Number(sale.grossAmount);
+
+      // Store result
+      results.push({
+        runId,
+        salesDataId: sale.id,
+        ruleId: calculation.breakdown[0]?.ruleName || null,
+        salesAmount: sale.grossAmount,
+        royaltyAmount: calculation.totalRoyalty.toString(),
+        royaltyRate: calculation.breakdown[0]?.rate || null,
+        calculationDetails: calculation
+      });
+    }
+
+    // Save results
+    if (results.length > 0) {
+      await storage.createRoyaltyResults(results);
+    }
+
+    // Update run status to awaiting approval
+    await storage.updateRoyaltyRunStatus(runId, 'awaiting_approval', {
+      totalSalesAmount,
+      totalRoyalty,
+      recordsProcessed: salesData.length
+    });
+
+    console.log(`✅ Royalty calculation completed for run ${runId}: ${results.length} records, $${totalRoyalty.toFixed(2)} total royalty`);
+  } catch (error) {
+    console.error(`❌ Royalty calculation failed for run ${runId}:`, error);
+    await storage.updateRoyaltyRunStatus(runId, 'failed');
   }
 }
 
