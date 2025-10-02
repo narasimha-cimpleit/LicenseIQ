@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import MainLayout from "@/components/layout/main-layout";
 import FileUpload from "@/components/upload/file-upload";
@@ -18,8 +18,15 @@ export default function Upload() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
+
+  // Fetch vendors for selection
+  const { data: vendorsData } = useQuery({
+    queryKey: ["/api/vendors"],
+  });
+  const vendors = vendorsData?.vendors || [];
   
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [vendorId, setVendorId] = useState("");
   const [contractType, setContractType] = useState("license");
   const [priority, setPriority] = useState("normal");
   const [notes, setNotes] = useState("");
@@ -38,6 +45,7 @@ export default function Upload() {
 
       const formData = new FormData();
       formData.append("file", selectedFile);
+      formData.append("vendorId", vendorId);
       formData.append("contractType", contractType);
       formData.append("priority", priority);
       formData.append("notes", notes);
@@ -174,6 +182,26 @@ export default function Upload() {
             <CardContent className="p-6 space-y-4">
               <h4 className="font-medium text-foreground">Contract Details</h4>
               <div className="space-y-4">
+                <div>
+                  <Label htmlFor="vendor">Vendor (Optional - for Royalty Contracts)</Label>
+                  <Select value={vendorId} onValueChange={setVendorId}>
+                    <SelectTrigger data-testid="select-vendor">
+                      <SelectValue placeholder="Select vendor (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">None</SelectItem>
+                      {vendors.map((vendor: any) => (
+                        <SelectItem key={vendor.id} value={vendor.id}>
+                          {vendor.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Link this contract to a vendor for royalty calculation
+                  </p>
+                </div>
+
                 <div>
                   <Label htmlFor="contract-type">Contract Type</Label>
                   <Select value={contractType} onValueChange={setContractType}>

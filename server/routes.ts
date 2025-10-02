@@ -144,6 +144,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create contract record
       const contractData = insertContractSchema.parse({
+        vendorId: req.body.vendorId || null, // Optional vendor link for royalty contracts
         originalName: req.file.originalname,
         fileName: req.file.filename,
         fileSize: req.file.size,

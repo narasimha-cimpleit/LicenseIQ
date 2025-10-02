@@ -1,0 +1,11 @@
+transactionDate,transactionId,productCode,productName,category,territory,currency,grossAmount,netAmount,quantity,unitPrice
+2024-01-15,TXN-2024-001,PROD-123,Software License Premium,Software,US,USD,10000,9500,10,1000
+2024-01-20,TXN-2024-002,PROD-456,Enterprise Support,Services,EU,USD,5000,4800,1,5000
+2024-02-05,TXN-2024-003,PROD-123,Software License Premium,Software,APAC,USD,12000,11500,12,1000
+2024-02-12,TXN-2024-004,PROD-789,Cloud Storage,Infrastructure,US,USD,3000,2900,50,60
+2024-03-01,TXN-2024-005,PROD-123,Software License Premium,Software,US,USD,15000,14500,15,1000
+2024-03-15,TXN-2024-006,PROD-456,Enterprise Support,Services,EU,USD,6000,5800,1,6000
+2024-04-10,TXN-2024-007,PROD-123,Software License Premium,Software,LATAM,USD,8000,7700,8,1000
+2024-04-22,TXN-2024-008,PROD-789,Cloud Storage,Infrastructure,APAC,USD,4500,4300,75,60
+2024-05-05,TXN-2024-009,PROD-123,Software License Premium,Software,US,USD,20000,19500,20,1000
+2024-05-18,TXN-2024-010,PROD-456,Enterprise Support,Services,US,USD,7500,7200,1,7500

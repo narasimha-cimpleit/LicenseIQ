@@ -42,6 +42,7 @@ export const users = pgTable("users", {
 // Contracts table
 export const contracts = pgTable("contracts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  vendorId: varchar("vendor_id").references(() => vendors.id), // Link to vendor for royalty calculation
   fileName: varchar("file_name").notNull(),
   originalName: varchar("original_name").notNull(),
   fileSize: integer("file_size").notNull(),
