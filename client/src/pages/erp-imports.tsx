@@ -6,15 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Upload, FileSpreadsheet, CheckCircle2, XCircle, AlertCircle, FileUp } from "lucide-react";
+import { Upload, FileSpreadsheet, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import MainLayout from "@/components/layout/main-layout";
 
 export default function ErpImportsPage() {
-  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedVendorId, setSelectedVendorId] = useState("");
   const [viewingImportId, setViewingImportId] = useState<string | null>(null);
@@ -65,7 +63,6 @@ export default function ErpImportsPage() {
         description: `Imported ${data.summary.validRows} rows successfully`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/erp-imports"] });
-      setIsUploadDialogOpen(false);
       setSelectedFile(null);
       setSelectedVendorId("");
     },
@@ -132,129 +129,136 @@ export default function ErpImportsPage() {
   return (
     <MainLayout>
       <div className="container mx-auto p-6 space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold">ERP Data Imports</h1>
-            <p className="text-muted-foreground mt-1">
-              Import sales data from CSV/Excel files for royalty calculations
-            </p>
-          </div>
-
-          <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
-            <DialogTrigger asChild>
-              <Button data-testid="button-upload-sales-data" className="gap-2">
-                <Upload className="h-4 w-4" />
-                Upload Sales Data
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle>Upload Sales Data</DialogTitle>
-                <DialogDescription>
-                  Upload a CSV or Excel file containing sales data from your ERP system
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="vendor">Vendor *</Label>
-                  <Select value={selectedVendorId} onValueChange={setSelectedVendorId}>
-                    <SelectTrigger data-testid="select-vendor">
-                      <SelectValue placeholder="Select vendor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {vendors.map((vendor: any) => (
-                        <SelectItem key={vendor.id} value={vendor.id}>
-                          {vendor.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="file">File *</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      id="file"
-                      type="file"
-                      accept=".csv,.xlsx,.xls"
-                      data-testid="input-sales-file"
-                      onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                    />
-                    {selectedFile && (
-                      <FileSpreadsheet className="h-5 w-5 text-green-500" />
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Accepts CSV and Excel files (max 50MB)
-                  </p>
-                </div>
-              </div>
-
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsUploadDialogOpen(false)}
-                  data-testid="button-cancel-upload"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={() => uploadMutation.mutate()}
-                  disabled={!selectedFile || !selectedVendorId || uploadMutation.isPending}
-                  data-testid="button-confirm-upload"
-                >
-                  {uploadMutation.isPending ? "Uploading..." : "Upload"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+        <div>
+          <h1 className="text-3xl font-bold">ERP Data Imports</h1>
+          <p className="text-muted-foreground mt-1">
+            Import sales data from CSV/Excel files for royalty calculations
+          </p>
         </div>
 
+        {/* Inline Upload Form */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Upload className="h-5 w-5" />
+              Upload Sales Data
+            </CardTitle>
+            <CardDescription>
+              Upload a CSV or Excel file containing sales data from your ERP system
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="vendor">Vendor <span className="text-red-500">*</span></Label>
+                <Select value={selectedVendorId} onValueChange={setSelectedVendorId}>
+                  <SelectTrigger data-testid="select-vendor">
+                    <SelectValue placeholder="Select vendor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vendors.map((vendor: any) => (
+                      <SelectItem key={vendor.id} value={vendor.id}>
+                        {vendor.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="file">File <span className="text-red-500">*</span></Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="file"
+                    type="file"
+                    accept=".csv,.xlsx,.xls"
+                    data-testid="input-sales-file"
+                    onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                  />
+                  {selectedFile && (
+                    <FileSpreadsheet className="h-5 w-5 text-green-500" />
+                  )}
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Accepts CSV and Excel files (max 50MB)
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 mt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSelectedFile(null);
+                  setSelectedVendorId("");
+                }}
+                disabled={!selectedFile && !selectedVendorId}
+                data-testid="button-clear-form"
+              >
+                Clear
+              </Button>
+              <Button
+                onClick={() => uploadMutation.mutate()}
+                disabled={!selectedFile || !selectedVendorId || uploadMutation.isPending}
+                data-testid="button-confirm-upload"
+                className="gap-2"
+              >
+                {uploadMutation.isPending ? (
+                  "Uploading..."
+                ) : (
+                  <>
+                    <Upload className="h-4 w-4" />
+                    Upload
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Import Jobs List */}
         <Card>
           <CardHeader>
             <CardTitle>Import History</CardTitle>
-            <CardDescription>View and manage your sales data imports</CardDescription>
+            <CardDescription>
+              View and manage your ERP data imports
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {imports.length === 0 ? (
-              <div className="text-center py-12">
-                <FileUp className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No imports yet</h3>
-                <p className="text-muted-foreground">
-                  Upload your first sales data file to get started
-                </p>
+              <div className="text-center py-8 text-muted-foreground">
+                <FileSpreadsheet className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                <p>No imports yet. Upload sales data to get started.</p>
               </div>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Vendor</TableHead>
                     <TableHead>File Name</TableHead>
-                    <TableHead>Job Type</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Records</TableHead>
+                    <TableHead>Valid Rows</TableHead>
+                    <TableHead>Invalid Rows</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {imports.map((job: any) => (
-                    <TableRow key={job.id} data-testid={`row-import-${job.id}`}>
-                      <TableCell className="font-medium">{job.fileName}</TableCell>
-                      <TableCell>{job.jobType}</TableCell>
+                    <TableRow key={job.id}>
+                      <TableCell className="font-medium">
+                        {vendors.find((v: any) => v.id === job.vendorId)?.name || "Unknown"}
+                      </TableCell>
+                      <TableCell>{job.fileName}</TableCell>
                       <TableCell>{getStatusBadge(job.status)}</TableCell>
-                      <TableCell>
-                        {job.metadata?.recordsImported || 0} imported
-                        {job.metadata?.recordsFailed > 0 && (
-                          <span className="text-red-500 ml-2">
-                            ({job.metadata.recordsFailed} failed)
-                          </span>
-                        )}
+                      <TableCell className="text-green-600">
+                        {job.summary?.validRows || 0}
+                      </TableCell>
+                      <TableCell className="text-red-600">
+                        {job.summary?.invalidRows || 0}
                       </TableCell>
                       <TableCell>
-                        {new Date(job.startedAt).toLocaleDateString()}
+                        {new Date(job.createdAt).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
                         <Button
@@ -274,38 +278,50 @@ export default function ErpImportsPage() {
           </CardContent>
         </Card>
 
+        {/* Import Details Inline View */}
         {viewingImportId && stagingData && (
-          <Dialog open={!!viewingImportId} onOpenChange={() => setViewingImportId(null)}>
-            <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Import Details</DialogTitle>
-                <DialogDescription>
-                  Review staging data and validation results
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-sm">Total Records</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-2xl font-bold">{stagingData.stagingData?.length || 0}</p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-sm">Valid Records</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-2xl font-bold text-green-600">
-                        {stagingData.stagingData?.filter((r: any) => r.validationStatus === 'valid').length || 0}
-                      </p>
-                    </CardContent>
-                  </Card>
+          <Card className="border-blue-200 bg-blue-50/50 dark:bg-blue-950/20">
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle>Import Details</CardTitle>
+                  <CardDescription>
+                    Review staging data and validation results
+                  </CardDescription>
                 </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setViewingImportId(null)}
+                  data-testid="button-close-details"
+                >
+                  Close
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm">Total Records</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-2xl font-bold">{stagingData.stagingData?.length || 0}</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm">Valid Records</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-2xl font-bold text-green-600">
+                      {stagingData.stagingData?.filter((r: any) => r.validationStatus === 'valid').length || 0}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
 
+              <div className="max-h-96 overflow-auto border rounded-lg">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -328,9 +344,9 @@ export default function ErpImportsPage() {
                         </TableCell>
                         <TableCell>{row.rowData.transactionDate}</TableCell>
                         <TableCell>${Number(row.rowData.grossAmount).toFixed(2)}</TableCell>
-                        <TableCell>{row.rowData.productName || '-'}</TableCell>
-                        <TableCell className="text-red-500 text-sm">
-                          {row.validationErrors || '-'}
+                        <TableCell>{row.rowData.productName}</TableCell>
+                        <TableCell className="text-sm text-red-600">
+                          {row.validationErrors?.join(", ")}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -338,11 +354,11 @@ export default function ErpImportsPage() {
                 </Table>
               </div>
 
-              <DialogFooter>
+              <div className="flex justify-end gap-2">
                 <Button
                   variant="outline"
                   onClick={() => setViewingImportId(null)}
-                  data-testid="button-close-details"
+                  data-testid="button-cancel-details"
                 >
                   Close
                 </Button>
@@ -350,12 +366,13 @@ export default function ErpImportsPage() {
                   onClick={() => promoteMutation.mutate(viewingImportId)}
                   disabled={promoteMutation.isPending || stagingData.stagingData?.filter((r: any) => r.validationStatus === 'valid').length === 0}
                   data-testid="button-promote-data"
+                  className="gap-2"
                 >
                   {promoteMutation.isPending ? "Promoting..." : "Promote to Sales Data"}
                 </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+              </div>
+            </CardContent>
+          </Card>
         )}
       </div>
     </MainLayout>
