@@ -45,7 +45,7 @@ export default function Upload() {
 
       const formData = new FormData();
       formData.append("file", selectedFile);
-      formData.append("vendorId", vendorId);
+      formData.append("vendorId", vendorId === "none" ? "" : vendorId);
       formData.append("contractType", contractType);
       formData.append("priority", priority);
       formData.append("notes", notes);
@@ -189,7 +189,7 @@ export default function Upload() {
                       <SelectValue placeholder="Select vendor (optional)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="none">None</SelectItem>
                       {vendors.map((vendor: any) => (
                         <SelectItem key={vendor.id} value={vendor.id}>
                           {vendor.name}
