@@ -511,174 +511,6 @@ Report ID: ${contractId}
     }
   });
 
-  // Register rules engine routes
-  registerRulesRoutes(app);
-
-  // Return the configured app - server will be started in index.ts
-  return createServer(app);
-}
-
-// Background contract processing
-async function processContractAnalysis(contractId: string, filePath: string) {
-  try {
-    console.log(`Starting analysis for contract ${contractId}`);
-
-    // Extract text from file based on file type
-    const contract = await storage.getContract(contractId);
-    const mimeType = contract?.fileType || 'application/pdf';
-    const extractedText = await fileService.extractTextFromFile(filePath, mimeType);
-    
-    // Pre-filter text to royalty-relevant sections to reduce Groq API load
-    const royaltyRelevantText = extractRoyaltyRelevantSections(extractedText);
-    console.log(`📝 Filtered text: ${royaltyRelevantText.length} chars (from ${extractedText.length})`);
-    
-    // Analyze with Groq AI with smart rate limiting
-    const aiAnalysis = await groqService.analyzeContract(royaltyRelevantText);
-    const detailedRules = await groqService.extractDetailedRoyaltyRules(royaltyRelevantText);
-    
-    // Log extracted rules for debugging
-    console.log(`📋 Extracted ${detailedRules.rules.length} detailed royalty rules from contract ${contractId}`);
-    
-    // Store detailed rules in the license rules system (only if we have rules)
-    if (detailedRules.rules.length > 0) {
-      await processLicenseRules(contractId, detailedRules);
-      console.log(`✅ Successfully stored ${detailedRules.rules.length} royalty rules`);
-    } else {
-      console.log(`⚠️ No rules extracted - marking for manual review instead of storing empty set`);
-      // Don't store empty rule sets - this indicates extraction failure
-    }
-    
-    // Save analysis
-    const analysisData = insertContractAnalysisSchema.parse({
-      contractId,
-      summary: aiAnalysis.summary,
-      keyTerms: aiAnalysis.keyTerms,
-      riskAnalysis: aiAnalysis.riskAnalysis,
-      insights: aiAnalysis.insights,
-      confidence: aiAnalysis.confidence.toString() // Convert to string for decimal field
-    });
-
-    await storage.createContractAnalysis(analysisData);
-
-    // Update contract status - mark as needing review if no rules extracted
-    const finalStatus = detailedRules.rules.length > 0 ? 'analyzed' : 'reviewed_needed';
-    await storage.updateContractStatus(contractId, finalStatus);
-
-    console.log(`Analysis completed for contract ${contractId}`);
-
-  } catch (error) {
-    console.error(`Analysis failed for contract ${contractId}:`, error);
-    await storage.updateContractStatus(contractId, 'failed');
-  }
-}
-
-// Helper function to extract royalty-relevant sections
-function extractRoyaltyRelevantSections(contractText: string): string {
-  const royaltyKeywords = [
-    'royalty', 'royalties', 'tier', 'tier 1', 'tier 2', 'tier 3', 
-    'per unit', 'per-unit', 'minimum', 'guarantee', 'payment', 'payments',
-    'seasonal', 'spring', 'fall', 'holiday', 'premium', 'organic',
-    'container', 'multiplier', 'schedule', 'exhibit', 'calculation',
-    'territory', 'primary', 'secondary', 'volume', 'threshold',
-    'ornamental', 'perennials', 'shrubs', 'roses', 'hydrangea',
-    'licensee shall pay', 'per plant', 'quarterly payment'
-  ];
-
-  const lines = contractText.split('\n');
-  const relevantLines: string[] = [];
-  const contextWindow = 3; // Include 3 lines before and after relevant content
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].toLowerCase();
-    
-    if (royaltyKeywords.some(keyword => line.includes(keyword))) {
-      // Add context lines before
-      for (let j = Math.max(0, i - contextWindow); j < i; j++) {
-        if (!relevantLines.includes(lines[j])) {
-          relevantLines.push(lines[j]);
-        }
-      }
-      
-      // Add the relevant line
-      if (!relevantLines.includes(lines[i])) {
-        relevantLines.push(lines[i]);
-      }
-      
-      // Add context lines after
-      for (let j = i + 1; j <= Math.min(lines.length - 1, i + contextWindow); j++) {
-        if (!relevantLines.includes(lines[j])) {
-          relevantLines.push(lines[j]);
-        }
-      }
-    }
-  }
-
-  const filteredText = relevantLines.join('\n');
-  
-  // If filtered text is too short, use first part of original (but truncated)
-  if (filteredText.length < 1000) {
-    console.log(`📝 Filtered text too short (${filteredText.length}), using truncated original`);
-    return contractText.substring(0, 6000); // Smaller truncation for Groq
-  }
-  
-  // If filtered text is too long, truncate it
-  if (filteredText.length > 8000) {
-    console.log(`📝 Filtered text too long (${filteredText.length}), truncating`);
-    return filteredText.substring(0, 8000);
-  }
-  
-  return filteredText;
-}
-
-// Process and save detailed license rules
-async function processLicenseRules(contractId: string, extractionResult: any) {
-  try {
-    console.log(`🔧 Processing license rules for contract ${contractId}`);
-
-    // Create license rule set
-    const ruleSet = await storage.createLicenseRuleSet({
-      contractId: contractId,
-      name: extractionResult.licenseType || 'Extracted License Rules',
-      version: 1,
-      rulesDsl: {
-        licensorName: extractionResult.parties.licensor,
-        licenseeName: extractionResult.parties.licensee,
-        currency: extractionResult.currency,
-        paymentTerms: extractionResult.paymentTerms,
-        rules: extractionResult.rules
-      },
-      effectiveDate: extractionResult.effectiveDate ? new Date(extractionResult.effectiveDate) : null,
-      expirationDate: extractionResult.expirationDate ? new Date(extractionResult.expirationDate) : null,
-      extractionMetadata: {
-        documentType: extractionResult.documentType,
-        extractionMetadata: extractionResult.extractionMetadata,
-        reportingRequirements: extractionResult.reportingRequirements
-      }
-    });
-
-    // Create individual license rules
-    for (const rule of extractionResult.rules) {
-      await storage.createLicenseRule({
-        ruleSetId: ruleSet.id,
-        ruleName: rule.ruleName,
-        ruleType: rule.ruleType,
-        conditions: rule.conditions,
-        calculation: rule.calculation,
-        priority: rule.priority,
-        sourceSpan: rule.sourceSpan,
-        confidence: rule.confidence.toString(), // Convert to string for decimal field
-        isActive: true
-      });
-    }
-
-    console.log(`✅ Successfully processed ${extractionResult.rules.length} license rules for contract ${contractId}`);
-
-  } catch (error) {
-    console.error(`❌ Failed to process license rules for contract ${contractId}:`, error);
-    // Don't throw error - allow contract processing to continue even if rules processing fails
-  }
-}
-
   // ==========================================
   // ERP IMPORT ROUTES
   // ==========================================
@@ -894,10 +726,169 @@ async function processLicenseRules(contractId: string, extractionResult: any) {
   // Register rules engine routes
   registerRulesRoutes(app);
 
-  // Start the HTTP server
-  const server = createServer(app);
-  server.listen(5000, '0.0.0.0');
-  return server;
+  // Return the configured app - server will be started in index.ts
+  return createServer(app);
+}
+
+// Background contract processing
+async function processContractAnalysis(contractId: string, filePath: string) {
+  try {
+    console.log(`Starting analysis for contract ${contractId}`);
+
+    // Extract text from file based on file type
+    const contract = await storage.getContract(contractId);
+    const mimeType = contract?.fileType || 'application/pdf';
+    const extractedText = await fileService.extractTextFromFile(filePath, mimeType);
+    
+    // Pre-filter text to royalty-relevant sections to reduce Groq API load
+    const royaltyRelevantText = extractRoyaltyRelevantSections(extractedText);
+    console.log(`📝 Filtered text: ${royaltyRelevantText.length} chars (from ${extractedText.length})`);
+    
+    // Analyze with Groq AI with smart rate limiting
+    const aiAnalysis = await groqService.analyzeContract(royaltyRelevantText);
+    const detailedRules = await groqService.extractDetailedRoyaltyRules(royaltyRelevantText);
+    
+    // Log extracted rules for debugging
+    console.log(`📋 Extracted ${detailedRules.rules.length} detailed royalty rules from contract ${contractId}`);
+    
+    // Store detailed rules in the license rules system (only if we have rules)
+    if (detailedRules.rules.length > 0) {
+      await processLicenseRules(contractId, detailedRules);
+      console.log(`✅ Successfully stored ${detailedRules.rules.length} royalty rules`);
+    } else {
+      console.log(`⚠️ No rules extracted - marking for manual review instead of storing empty set`);
+      // Don't store empty rule sets - this indicates extraction failure
+    }
+    
+    // Save analysis
+    const analysisData = insertContractAnalysisSchema.parse({
+      contractId,
+      summary: aiAnalysis.summary,
+      keyTerms: aiAnalysis.keyTerms,
+      riskAnalysis: aiAnalysis.riskAnalysis,
+      insights: aiAnalysis.insights,
+      confidence: aiAnalysis.confidence.toString() // Convert to string for decimal field
+    });
+
+    await storage.createContractAnalysis(analysisData);
+
+    // Update contract status - mark as needing review if no rules extracted
+    const finalStatus = detailedRules.rules.length > 0 ? 'analyzed' : 'reviewed_needed';
+    await storage.updateContractStatus(contractId, finalStatus);
+
+    console.log(`Analysis completed for contract ${contractId}`);
+
+  } catch (error) {
+    console.error(`Analysis failed for contract ${contractId}:`, error);
+    await storage.updateContractStatus(contractId, 'failed');
+  }
+}
+
+// Helper function to extract royalty-relevant sections
+function extractRoyaltyRelevantSections(contractText: string): string {
+  const royaltyKeywords = [
+    'royalty', 'royalties', 'tier', 'tier 1', 'tier 2', 'tier 3', 
+    'per unit', 'per-unit', 'minimum', 'guarantee', 'payment', 'payments',
+    'seasonal', 'spring', 'fall', 'holiday', 'premium', 'organic',
+    'container', 'multiplier', 'schedule', 'exhibit', 'calculation',
+    'territory', 'primary', 'secondary', 'volume', 'threshold',
+    'ornamental', 'perennials', 'shrubs', 'roses', 'hydrangea',
+    'licensee shall pay', 'per plant', 'quarterly payment'
+  ];
+
+  const lines = contractText.split('\n');
+  const relevantLines: string[] = [];
+  const contextWindow = 3; // Include 3 lines before and after relevant content
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].toLowerCase();
+    
+    if (royaltyKeywords.some(keyword => line.includes(keyword))) {
+      // Add context lines before
+      for (let j = Math.max(0, i - contextWindow); j < i; j++) {
+        if (!relevantLines.includes(lines[j])) {
+          relevantLines.push(lines[j]);
+        }
+      }
+      
+      // Add the relevant line
+      if (!relevantLines.includes(lines[i])) {
+        relevantLines.push(lines[i]);
+      }
+      
+      // Add context lines after
+      for (let j = i + 1; j <= Math.min(lines.length - 1, i + contextWindow); j++) {
+        if (!relevantLines.includes(lines[j])) {
+          relevantLines.push(lines[j]);
+        }
+      }
+    }
+  }
+
+  const filteredText = relevantLines.join('\n');
+  
+  // If filtered text is too short, use first part of original (but truncated)
+  if (filteredText.length < 1000) {
+    console.log(`📝 Filtered text too short (${filteredText.length}), using truncated original`);
+    return contractText.substring(0, 6000); // Smaller truncation for Groq
+  }
+  
+  // If filtered text is too long, truncate it
+  if (filteredText.length > 8000) {
+    console.log(`📝 Filtered text too long (${filteredText.length}), truncating`);
+    return filteredText.substring(0, 8000);
+  }
+  
+  return filteredText;
+}
+
+// Process and save detailed license rules
+async function processLicenseRules(contractId: string, extractionResult: any) {
+  try {
+    console.log(`🔧 Processing license rules for contract ${contractId}`);
+
+    // Create license rule set
+    const ruleSet = await storage.createLicenseRuleSet({
+      contractId: contractId,
+      name: extractionResult.licenseType || 'Extracted License Rules',
+      version: 1,
+      rulesDsl: {
+        licensorName: extractionResult.parties.licensor,
+        licenseeName: extractionResult.parties.licensee,
+        currency: extractionResult.currency,
+        paymentTerms: extractionResult.paymentTerms,
+        rules: extractionResult.rules
+      },
+      effectiveDate: extractionResult.effectiveDate ? new Date(extractionResult.effectiveDate) : null,
+      expirationDate: extractionResult.expirationDate ? new Date(extractionResult.expirationDate) : null,
+      extractionMetadata: {
+        documentType: extractionResult.documentType,
+        extractionMetadata: extractionResult.extractionMetadata,
+        reportingRequirements: extractionResult.reportingRequirements
+      }
+    });
+
+    // Create individual license rules
+    for (const rule of extractionResult.rules) {
+      await storage.createLicenseRule({
+        ruleSetId: ruleSet.id,
+        ruleName: rule.ruleName,
+        ruleType: rule.ruleType,
+        conditions: rule.conditions,
+        calculation: rule.calculation,
+        priority: rule.priority,
+        sourceSpan: rule.sourceSpan,
+        confidence: rule.confidence.toString(), // Convert to string for decimal field
+        isActive: true
+      });
+    }
+
+    console.log(`✅ Successfully processed ${extractionResult.rules.length} license rules for contract ${contractId}`);
+
+  } catch (error) {
+    console.error(`❌ Failed to process license rules for contract ${contractId}:`, error);
+    // Don't throw error - allow contract processing to continue even if rules processing fails
+  }
 }
 
 // Helper function to calculate royalties asynchronously

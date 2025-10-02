@@ -14,7 +14,9 @@ import {
   Building2,
   Receipt,
   Calculator,
-  Brain
+  Brain,
+  Database,
+  PlayCircle
 } from "lucide-react";
 import cimpleitLogo from "@assets/image_1757086402738.png";
 
@@ -67,6 +69,18 @@ export default function Sidebar({ className }: SidebarProps) {
       href: "/vendors",
       icon: Building2,
       current: location === "/vendors" || location.startsWith("/vendors/"),
+    },
+    {
+      name: "ERP Imports",
+      href: "/erp-imports",
+      icon: Database,
+      current: location === "/erp-imports" || location.startsWith("/erp-imports/"),
+    },
+    {
+      name: "Royalty Runs",
+      href: "/royalty-runs",
+      icon: PlayCircle,
+      current: location === "/royalty-runs" || location.startsWith("/royalty-runs/"),
     },
   ];
 
