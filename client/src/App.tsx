@@ -17,8 +17,6 @@ import CreateUser from "@/pages/create-user";
 import Audit from "@/pages/audit";
 import ContractAnalysis from "@/pages/contract-analysis";
 import NotFound from "@/pages/not-found";
-import VendorsPage from "@/pages/vendors";
-import ErpImportsPage from "@/pages/erp-imports";
 import RoyaltyDashboard from "@/pages/royalty-dashboard";
 
 function Router() {
@@ -44,9 +42,7 @@ function Router() {
           <ProtectedRoute path="/users/new" component={CreateUser} />
           <ProtectedRoute path="/audit" component={Audit} />
           <ProtectedRoute path="/contracts/:id" component={() => <ContractAnalysis />} />
-          {/* Royalty System Routes */}
-          <ProtectedRoute path="/vendors" component={VendorsPage} />
-          <ProtectedRoute path="/erp-imports" component={ErpImportsPage} />
+          {/* Royalty Calculations */}
           <ProtectedRoute path="/royalty-calculations/:id" component={() => <RoyaltyDashboard />} />
         </>
       )}

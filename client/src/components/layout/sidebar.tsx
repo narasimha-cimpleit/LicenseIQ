@@ -63,19 +63,6 @@ export default function Sidebar({ className }: SidebarProps) {
       icon: FileText,
       current: location === "/reports",
     },
-    // Royalty System Navigation
-    {
-      name: "Vendors",
-      href: "/vendors",
-      icon: Building2,
-      current: location === "/vendors" || location.startsWith("/vendors/"),
-    },
-    {
-      name: "ERP Imports",
-      href: "/erp-imports",
-      icon: Database,
-      current: location === "/erp-imports" || location.startsWith("/erp-imports/"),
-    },
   ];
 
   // Add admin-only navigation items
