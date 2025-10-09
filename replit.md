@@ -24,6 +24,8 @@ Preferred communication style: Simple, everyday language.
 
 ## Database Layer
 - **PostgreSQL with Drizzle ORM**: Type-safe database operations using schema-first approach with automatic TypeScript generation
+- **pgvector Extension**: Vector similarity search support for semantic contract matching using cosine distance
+- **Contract Embeddings Storage**: Dedicated table for storing 1536-dimensional OpenAI embeddings with HNSW indexing for fast retrieval
 - **Neon Database**: Serverless PostgreSQL deployment providing scalable cloud database hosting
 - **Connection Pooling**: Efficient database connection management using @neondatabase/serverless driver
 - **Migration System**: Version-controlled database schema changes with Drizzle migrations for reliable deployments
@@ -36,8 +38,12 @@ Preferred communication style: Simple, everyday language.
 
 ## AI Integration Services
 - **Groq API Integration**: LLaMA 3.1 8B Instant model for contract analysis, summarization, and natural language processing
+- **OpenAI Embeddings**: text-embedding-3-small model (1536 dimensions) for semantic contract matching and similarity search
 - **Contract Analysis Pipeline**: Automated extraction of key terms, risk assessment, compliance checking, and insight generation
+- **Semantic Matching System**: AI-driven contract matching using vector embeddings and cosine similarity for automatic sales-to-contract matching
+- **LLM Reasoning Engine**: GPT-4o validation of contract matches with confidence scoring and reasoning explanations
 - **Confidence Scoring**: AI model confidence levels and reliability metrics for extracted information validation
+- **Human Review Workflow**: Low-confidence matches (<60%) automatically flagged for human review and correction
 - **Asynchronous Processing**: Background job processing for large document analysis without blocking user interface
 
 ## Security & Access Control
@@ -48,6 +54,16 @@ Preferred communication style: Simple, everyday language.
 
 ## Data Models & Schema
 The system uses a relational data model with core entities including Users (with role hierarchy), Contracts (with metadata and processing status), Contract Analysis (AI-generated insights and risk assessments), and Audit Trails (complete activity logging). All entities are fully typed through Drizzle ORM schemas ensuring type safety from database to frontend.
+
+## AI-Driven Sales Matching Workflow
+1. **Contract Upload & Analysis**: Contracts are uploaded and analyzed by LLaMA to extract key terms, products, territories, and royalty rules
+2. **Embedding Generation**: OpenAI embeddings are automatically generated from contract summaries, product descriptions, territories, and rules
+3. **Vector Storage**: Embeddings are stored in PostgreSQL with pgvector extension for fast similarity search
+4. **Sales Data Import**: Users upload sales CSV/Excel files without requiring manual vendor selection
+5. **Semantic Search**: Each sales row is converted to an embedding and matched against contract embeddings using cosine similarity
+6. **LLM Validation**: Top contract candidates are validated by GPT-4o with confidence scoring and reasoning
+7. **Automatic Matching**: High-confidence matches (>60%) are automatically assigned; low-confidence matches are flagged for human review
+8. **Human Review**: Users can review and correct low-confidence matches through the UI
 
 # External Dependencies
 
