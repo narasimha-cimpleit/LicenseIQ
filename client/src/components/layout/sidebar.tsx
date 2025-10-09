@@ -76,12 +76,6 @@ export default function Sidebar({ className }: SidebarProps) {
       icon: Database,
       current: location === "/erp-imports" || location.startsWith("/erp-imports/"),
     },
-    {
-      name: "Royalty Runs",
-      href: "/royalty-runs",
-      icon: PlayCircle,
-      current: location === "/royalty-runs" || location.startsWith("/royalty-runs/"),
-    },
   ];
 
   // Add admin-only navigation items

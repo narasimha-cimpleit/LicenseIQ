@@ -19,7 +19,7 @@ import ContractAnalysis from "@/pages/contract-analysis";
 import NotFound from "@/pages/not-found";
 import VendorsPage from "@/pages/vendors";
 import ErpImportsPage from "@/pages/erp-imports";
-import RoyaltyRunsPage from "@/pages/royalty-runs";
+import RoyaltyDashboard from "@/pages/royalty-dashboard";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -47,7 +47,7 @@ function Router() {
           {/* Royalty System Routes */}
           <ProtectedRoute path="/vendors" component={VendorsPage} />
           <ProtectedRoute path="/erp-imports" component={ErpImportsPage} />
-          <ProtectedRoute path="/royalty-runs" component={RoyaltyRunsPage} />
+          <ProtectedRoute path="/royalty-calculations/:id" component={() => <RoyaltyDashboard />} />
         </>
       )}
       
