@@ -25,6 +25,9 @@ export class HuggingFaceEmbeddingService {
         throw new Error('HUGGINGFACE_API_KEY is not set');
       }
 
+      console.log(`🔧 [HF-EMBED] Generating embedding for text (${text.length} chars)`);
+      console.log(`🔧 [HF-EMBED] API URL: ${this.API_URL}`);
+
       const response = await fetch(this.API_URL, {
         method: 'POST',
         headers: {
@@ -39,8 +42,11 @@ export class HuggingFaceEmbeddingService {
         }),
       });
 
+      console.log(`🔧 [HF-EMBED] Response status: ${response.status}`);
+
       if (!response.ok) {
         const error = await response.text();
+        console.log(`❌ [HF-EMBED] Error response: ${error}`);
         throw new Error(`HuggingFace API error: ${response.status} - ${error}`);
       }
 
