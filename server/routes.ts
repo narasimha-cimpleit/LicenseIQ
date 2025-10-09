@@ -10,6 +10,9 @@ import { fileService } from "./services/fileService";
 import { groqService } from "./services/groqService";
 import { registerRulesRoutes } from "./rulesRoutes";
 import { SalesDataParser } from "./services/salesDataParser";
+import { EmbeddingService } from "./services/embeddingService";
+import { db } from "./db";
+import { contractEmbeddings } from "@shared/schema";
 import { 
   insertContractSchema, 
   insertContractAnalysisSchema, 
@@ -817,6 +820,15 @@ async function processContractAnalysis(contractId: string, filePath: string) {
 
     await storage.createContractAnalysis(analysisData);
 
+    // Generate and store embeddings for semantic search
+    try {
+      await generateContractEmbeddings(contractId, aiAnalysis, detailedRules);
+      console.log(`✅ Generated embeddings for contract ${contractId}`);
+    } catch (embeddingError) {
+      console.error(`⚠️ Embedding generation failed for contract ${contractId}:`, embeddingError);
+      // Don't fail the whole analysis if embeddings fail
+    }
+
     // Update contract status - mark as needing review if no rules extracted
     const finalStatus = detailedRules.rules.length > 0 ? 'analyzed' : 'reviewed_needed';
     await storage.updateContractStatus(contractId, finalStatus);
@@ -827,6 +839,105 @@ async function processContractAnalysis(contractId: string, filePath: string) {
     console.error(`Analysis failed for contract ${contractId}:`, error);
     await storage.updateContractStatus(contractId, 'failed');
   }
+}
+
+// Helper function to generate and store contract embeddings for semantic search
+async function generateContractEmbeddings(
+  contractId: string, 
+  aiAnalysis: any, 
+  detailedRules: any
+) {
+  const embeddingsToGenerate: Array<{
+    type: string;
+    text: string;
+    metadata: any;
+  }> = [];
+
+  // 1. Full contract summary embedding
+  if (aiAnalysis.summary) {
+    embeddingsToGenerate.push({
+      type: 'full_contract',
+      text: aiAnalysis.summary,
+      metadata: { confidence: aiAnalysis.confidence }
+    });
+  }
+
+  // 2. Product/category embeddings from rules
+  const productCategories = new Set<string>();
+  const territories = new Set<string>();
+  
+  if (detailedRules.rules) {
+    for (const rule of detailedRules.rules) {
+      // Collect product categories
+      if (rule.conditions?.productCategories) {
+        rule.conditions.productCategories.forEach((cat: string) => productCategories.add(cat));
+      }
+      
+      // Collect territories
+      if (rule.conditions?.territories) {
+        rule.conditions.territories.forEach((terr: string) => territories.add(terr));
+      }
+      
+      // Individual rule description embedding
+      if (rule.description) {
+        embeddingsToGenerate.push({
+          type: 'rule_description',
+          text: rule.description,
+          metadata: {
+            ruleType: rule.ruleType,
+            ruleName: rule.ruleName,
+            confidence: rule.confidence
+          }
+        });
+      }
+    }
+  }
+
+  // 3. Product categories combined embedding
+  if (productCategories.size > 0) {
+    const productText = EmbeddingService.createContractSearchText({
+      productCategories: Array.from(productCategories),
+      territories: Array.from(territories)
+    });
+    
+    embeddingsToGenerate.push({
+      type: 'product',
+      text: productText,
+      metadata: {
+        productCategories: Array.from(productCategories),
+        territories: Array.from(territories)
+      }
+    });
+  }
+
+  // 4. Territory-specific embedding
+  if (territories.size > 0) {
+    embeddingsToGenerate.push({
+      type: 'territory',
+      text: `Territories: ${Array.from(territories).join(', ')}`,
+      metadata: { territories: Array.from(territories) }
+    });
+  }
+
+  // Generate embeddings in batch
+  const texts = embeddingsToGenerate.map(item => EmbeddingService.prepareText(item.text));
+  const embeddings = await EmbeddingService.generateBatchEmbeddings(texts);
+
+  // Store embeddings in database
+  for (let i = 0; i < embeddingsToGenerate.length; i++) {
+    const item = embeddingsToGenerate[i];
+    const embeddingData = embeddings[i];
+    
+    await db.insert(contractEmbeddings).values({
+      contractId,
+      embeddingType: item.type,
+      sourceText: item.text,
+      embedding: embeddingData.embedding,
+      metadata: item.metadata
+    });
+  }
+
+  console.log(`📊 Stored ${embeddingsToGenerate.length} embeddings for contract ${contractId}`);
 }
 
 // Helper function to extract royalty-relevant sections
