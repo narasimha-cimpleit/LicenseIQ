@@ -19,10 +19,12 @@ export default function ErpImportsPage() {
   const { toast } = useToast();
 
   const downloadSampleCSV = () => {
-    const sampleData = `transactionDate,transactionId,productName,category,territory,grossAmount,netAmount,quantity,unitPrice
-2024-01-15,TXN-001,Software License,Technology,North America,5000.00,4500.00,1,5000.00
-2024-01-16,TXN-002,Music Streaming Rights,Entertainment,Europe,3200.00,2880.00,1,3200.00
-2024-01-17,TXN-003,Patent License,Intellectual Property,Asia,8500.00,7650.00,1,8500.00`;
+    const sampleData = `transactionDate,transactionId,productName,category,territory,grossAmount,quantity,unitPrice,notes
+2024-03-15,TXN-001,Aurora Flame Maple 5-gallon container,Ornamental Trees,Oregon,4500.00,1000,4.50,Spring season premium
+2024-03-20,TXN-002,Pacific Sunset Rose 6-inch pot,Premium Roses,Washington,1380.00,1200,1.15,Spring season
+2024-04-10,TXN-003,Cascade Blue Hydrangea standard,Flowering Shrubs,Northern California,4500.00,2000,2.25,Primary territory
+2024-04-15,TXN-004,Software Enterprise License,Technology,North America,50000.00,1,50000.00,Annual subscription
+2024-05-01,TXN-005,Music Streaming Rights,Entertainment,Europe,3200.00,1,3200.00,Q1 revenue`;
     
     const blob = new Blob([sampleData], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -36,7 +38,7 @@ export default function ErpImportsPage() {
     
     toast({
       title: "Sample CSV Downloaded",
-      description: "Use this template to format your sales data",
+      description: "Use this template to format your sales data for any industry",
     });
   };
 
