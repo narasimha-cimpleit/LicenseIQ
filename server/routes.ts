@@ -1061,8 +1061,77 @@ Report ID: ${contractId}
     }
   });
 
+  // Download sample sales data
+  app.get('/api/sales/sample-data', isAuthenticated, (req: any, res: Response) => {
+    // Sample data based on Plant Variety License & Royalty Agreement
+    const sampleData = [
+      { transactionDate: '2024-01-15', transactionId: 'TXN-2024-001', productCode: 'ROSE-001', productName: 'Rosa \'Crimson Glory\'', category: 'Roses', territory: 'Europe', currency: 'EUR', grossAmount: 15000, netAmount: 13500, quantity: 500, unitPrice: 30 },
+      { transactionDate: '2024-01-20', transactionId: 'TXN-2024-002', productCode: 'ROSE-002', productName: 'Rosa \'Golden Dream\'', category: 'Roses', territory: 'North America', currency: 'USD', grossAmount: 22000, netAmount: 19800, quantity: 800, unitPrice: 27.5 },
+      { transactionDate: '2024-02-05', transactionId: 'TXN-2024-003', productCode: 'TULIP-001', productName: 'Tulipa \'Spring Beauty\'', category: 'Tulips', territory: 'Netherlands', currency: 'EUR', grossAmount: 18000, netAmount: 16200, quantity: 1200, unitPrice: 15 },
+      { transactionDate: '2024-02-12', transactionId: 'TXN-2024-004', productCode: 'ROSE-003', productName: 'Rosa \'White Pearl\'', category: 'Roses', territory: 'Asia Pacific', currency: 'USD', grossAmount: 12500, netAmount: 11250, quantity: 450, unitPrice: 27.78 },
+      { transactionDate: '2024-02-18', transactionId: 'TXN-2024-005', productCode: 'LILY-001', productName: 'Lilium \'Stargazer Plus\'', category: 'Lilies', territory: 'Europe', currency: 'EUR', grossAmount: 25000, netAmount: 22500, quantity: 600, unitPrice: 41.67 },
+      { transactionDate: '2024-03-03', transactionId: 'TXN-2024-006', productCode: 'ROSE-001', productName: 'Rosa \'Crimson Glory\'', category: 'Roses', territory: 'North America', currency: 'USD', grossAmount: 16500, netAmount: 14850, quantity: 550, unitPrice: 30 },
+      { transactionDate: '2024-03-10', transactionId: 'TXN-2024-007', productCode: 'TULIP-002', productName: 'Tulipa \'Royal Purple\'', category: 'Tulips', territory: 'Europe', currency: 'EUR', grossAmount: 14000, netAmount: 12600, quantity: 1000, unitPrice: 14 },
+      { transactionDate: '2024-03-15', transactionId: 'TXN-2024-008', productCode: 'DAISY-001', productName: 'Gerbera \'Sunshine Mix\'', category: 'Gerberas', territory: 'South America', currency: 'USD', grossAmount: 9500, netAmount: 8550, quantity: 750, unitPrice: 12.67 },
+      { transactionDate: '2024-03-22', transactionId: 'TXN-2024-009', productCode: 'ROSE-002', productName: 'Rosa \'Golden Dream\'', category: 'Roses', territory: 'Europe', currency: 'EUR', grossAmount: 19000, netAmount: 17100, quantity: 700, unitPrice: 27.14 },
+      { transactionDate: '2024-04-01', transactionId: 'TXN-2024-010', productCode: 'LILY-002', productName: 'Lilium \'Oriental Elegance\'', category: 'Lilies', territory: 'Asia Pacific', currency: 'USD', grossAmount: 28000, netAmount: 25200, quantity: 650, unitPrice: 43.08 },
+      { transactionDate: '2024-04-08', transactionId: 'TXN-2024-011', productCode: 'ROSE-003', productName: 'Rosa \'White Pearl\'', category: 'Roses', territory: 'Europe', currency: 'EUR', grossAmount: 13500, netAmount: 12150, quantity: 500, unitPrice: 27 },
+      { transactionDate: '2024-04-15', transactionId: 'TXN-2024-012', productCode: 'TULIP-001', productName: 'Tulipa \'Spring Beauty\'', category: 'Tulips', territory: 'North America', currency: 'USD', grossAmount: 17500, netAmount: 15750, quantity: 1150, unitPrice: 15.22 },
+      { transactionDate: '2024-04-20', transactionId: 'TXN-2024-013', productCode: 'ORCHID-001', productName: 'Phalaenopsis \'Royal Blue\'', category: 'Orchids', territory: 'Europe', currency: 'EUR', grossAmount: 32000, netAmount: 28800, quantity: 400, unitPrice: 80 },
+      { transactionDate: '2024-04-25', transactionId: 'TXN-2024-014', productCode: 'ROSE-001', productName: 'Rosa \'Crimson Glory\'', category: 'Roses', territory: 'Asia Pacific', currency: 'USD', grossAmount: 14500, netAmount: 13050, quantity: 480, unitPrice: 30.21 },
+      { transactionDate: '2024-04-28', transactionId: 'TXN-2024-015', productCode: 'CARNATION-001', productName: 'Dianthus \'Vibrant Mix\'', category: 'Carnations', territory: 'South America', currency: 'USD', grossAmount: 11000, netAmount: 9900, quantity: 900, unitPrice: 12.22 }
+    ];
+
+    // Convert to CSV
+    const headers = 'transactionDate,transactionId,productCode,productName,category,territory,currency,grossAmount,netAmount,quantity,unitPrice\n';
+    const csv = headers + sampleData.map(row => 
+      `${row.transactionDate},${row.transactionId},${row.productCode},"${row.productName}",${row.category},${row.territory},${row.currency},${row.grossAmount},${row.netAmount},${row.quantity},${row.unitPrice}`
+    ).join('\n');
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="sample_sales_data.csv"');
+    res.send(csv);
+  });
+
   // Return the configured app - server will be started in index.ts
   return createServer(app);
+}
+
+// Background contract processing
+async function processContractAnalysis(contractId: string, filePath: string) {
+  try {
+    console.log(`Starting analysis for contract ${contractId}`);
+    
+    // Get contract details
+    const contract = await storage.getContract(contractId);
+    if (!contract) {
+      console.error(`Contract ${contractId} not found`);
+      return;
+    }
+
+    // Extract text from file
+    const mimeType = contract.fileType || 'application/pdf';
+    const extractedText = await fileService.extractTextFromFile(filePath, mimeType);
+    
+    // Analyze with Groq AI
+    const aiAnalysis = await groqService.analyzeContract(extractedText);
+    
+    // Update contract with analysis
+    await storage.updateContractAnalysis(contractId, {
+      summary: aiAnalysis.summary,
+      keyTerms: aiAnalysis.keyTerms,
+      riskFactors: aiAnalysis.riskFactors,
+      aiConfidence: aiAnalysis.confidence,
+    });
+
+    // Update status to completed
+    await storage.updateContractStatus(contractId, 'completed');
+    
+    console.log(`✅ Analysis completed for contract ${contractId}`);
+  } catch (error) {
+    console.error(`❌ Analysis failed for contract ${contractId}:`, error);
+    await storage.updateContractStatus(contractId, 'failed');
+  }
 }
 
 export default registerRoutes;

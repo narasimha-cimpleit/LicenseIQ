@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, FileSpreadsheet, AlertCircle, CheckCircle } from "lucide-react";
+import { Upload, FileSpreadsheet, AlertCircle, CheckCircle, Download } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
 export default function SalesUpload() {
@@ -77,6 +77,39 @@ export default function SalesUpload() {
     uploadMutation.mutate();
   };
 
+  const handleDownloadSample = async () => {
+    try {
+      const response = await fetch('/api/sales/sample-data', {
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to download sample data');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'sample_sales_data.csv';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: "Sample Data Downloaded",
+        description: "You can now upload this file to test the system.",
+      });
+    } catch (error) {
+      toast({
+        title: "Download Failed",
+        description: "Failed to download sample data",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <MainLayout
       title="Import Sales Data"
@@ -117,6 +150,29 @@ export default function SalesUpload() {
                 <li>• <strong>quantity</strong> - Units sold</li>
                 <li>• <strong>unitPrice</strong> - Price per unit</li>
               </ul>
+            </div>
+
+            {/* Sample Data Download */}
+            <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950 dark:to-pink-950 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <h4 className="font-semibold text-purple-900 dark:text-purple-100 mb-1">
+                    Need Sample Data?
+                  </h4>
+                  <p className="text-sm text-purple-800 dark:text-purple-200">
+                    Download our sample CSV file with 15 plant variety sales transactions. Perfect for testing!
+                  </p>
+                </div>
+                <Button
+                  onClick={handleDownloadSample}
+                  variant="outline"
+                  className="ml-4 border-purple-300 dark:border-purple-700 hover:bg-purple-100 dark:hover:bg-purple-900"
+                  data-testid="button-download-sample"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Sample
+                </Button>
+              </div>
             </div>
 
             {/* File Upload */}
