@@ -38,10 +38,13 @@ export class SemanticSearchService {
       // Generate embedding for the query using Hugging Face (FREE)
       const { embedding: queryEmbedding } = await HuggingFaceEmbeddingService.generateEmbedding(queryText);
 
+      // Convert array to PostgreSQL vector format: '[1,2,3,...]'::vector
+      const vectorString = `[${queryEmbedding.join(',')}]`;
+      
       // Use <=> operator for HNSW index optimization
       // Distance metric (lower is better), convert to similarity (higher is better)
-      const distance = sql<number>`${contractEmbeddings.embedding} <=> ${queryEmbedding}`;
-      const similarity = sql<number>`1 - (${contractEmbeddings.embedding} <=> ${queryEmbedding})`;
+      const distance = sql<number>`${contractEmbeddings.embedding} <=> ${vectorString}::vector`;
+      const similarity = sql<number>`1 - (${contractEmbeddings.embedding} <=> ${vectorString}::vector)`;
 
       // Convert minSimilarity to maxDistance for filtering
       const maxDistance = 1 - minSimilarity;

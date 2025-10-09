@@ -560,7 +560,7 @@ export const productMappings = pgTable("product_mappings", {
 export const erpImportJobs = pgTable("erp_import_jobs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   connectionId: varchar("connection_id").references(() => erpConnections.id),
-  vendorId: varchar("vendor_id").references(() => vendors.id), // Link to vendor for manual uploads
+  // vendorId removed - using semantic matching instead of manual vendor selection
   jobType: varchar("job_type").notNull(), // manual_upload, scheduled_import, api_sync
   fileName: varchar("file_name"),
   status: varchar("status").default("pending"), // pending, processing, completed, failed

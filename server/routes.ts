@@ -569,17 +569,16 @@ Report ID: ${contractId}
         return res.status(400).json({ error: 'No file uploaded' });
       }
 
-      // vendorId is now optional - AI will match contracts automatically
-      const { vendorId } = req.body;
+      // No vendor selection needed - AI will match contracts automatically using semantic search
+      const { vendorId } = req.body; // Legacy support, but not used anymore
 
-      // Create import job
+      // Create import job (vendor matching happens via AI semantic search)
       const importJob = await storage.createErpImportJob({
         jobType: 'manual_upload',
         fileName: req.file.originalname,
         status: 'processing',
         createdBy: req.user.id,
         connectionId: null,
-        vendorId: vendorId || null,
         startedAt: new Date()
       });
 
