@@ -1,6 +1,6 @@
 # Overview
 
-Licence IQ Research Platform is a SaaS web application built for intelligent contract management and analysis. The platform enables users to upload, process, and analyze legal contracts using AI-powered document analysis with Groq's LLaMA models. It features role-based access control, real-time contract processing, risk assessment, and comprehensive analytics for legal document management.
+License IQ Research Platform is a SaaS web application built for intelligent contract management and analysis. The platform enables users to upload, process, and analyze legal contracts using AI-powered document analysis with Groq's LLaMA models. It features role-based access control, real-time contract processing, risk assessment, comprehensive analytics, and an automated royalty calculation system with beautiful visualizations.
 
 # User Preferences
 
@@ -54,7 +54,15 @@ Preferred communication style: Simple, everyday language.
 - **Input Validation**: Zod schema validation across all API endpoints and form inputs for data integrity
 
 ## Data Models & Schema
-The system uses a relational data model with core entities including Users (with role hierarchy), Contracts (with metadata and processing status), Contract Analysis (AI-generated insights and risk assessments), and Audit Trails (complete activity logging). All entities are fully typed through Drizzle ORM schemas ensuring type safety from database to frontend.
+The system uses a relational data model with core entities including Users (with role hierarchy), Contracts (with metadata and processing status), Contract Analysis (AI-generated insights and risk assessments), Sales Data (transaction records matched to contracts), Royalty Calculations (calculation results with breakdown details), and Audit Trails (complete activity logging). All entities are fully typed through Drizzle ORM schemas ensuring type safety from database to frontend.
+
+## Royalty Calculation Dashboard
+- **Beautiful Visualizations**: Gradient metric cards showing sales transactions, total sales, total royalty, and calculation history
+- **Interactive Charts**: Bar charts for sales & royalty breakdown, pie charts for revenue distribution using Recharts library
+- **Calculation Workflow**: Users can trigger calculations with custom date ranges and calculation names
+- **Calculation History**: Track all royalty calculation runs with status indicators (pending, approved, rejected)
+- **Contract-Based Workflow**: Each contract has its own sales data and calculation history, accessible from the contract analysis page
+- **Responsive Design**: Mobile-friendly dashboard with gradient backgrounds and modern UI design
 
 ## AI-Driven Sales Matching Workflow (100% FREE APIs)
 1. **Contract Upload & Analysis**: Contracts are uploaded and analyzed by Groq LLaMA to extract key terms, products, territories, and royalty rules
