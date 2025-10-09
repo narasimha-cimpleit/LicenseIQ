@@ -9,6 +9,7 @@ import {
   integer,
   decimal,
   boolean,
+  vector,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -72,6 +73,20 @@ export const contractAnalysis = pgTable("contract_analysis", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// Contract embeddings for semantic search (AI-driven matching)
+export const contractEmbeddings = pgTable("contract_embeddings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  contractId: varchar("contract_id").notNull().references(() => contracts.id),
+  embeddingType: varchar("embedding_type").notNull(), // 'product', 'territory', 'full_contract', 'rule_description'
+  sourceText: text("source_text").notNull(), // Original text that was embedded
+  embedding: vector("embedding", { dimensions: 1536 }), // OpenAI text-embedding-3-small produces 1536 dimensions
+  metadata: jsonb("metadata"), // Additional context (product categories, territories, date ranges, etc.)
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("contract_embeddings_contract_idx").on(table.contractId),
+  index("contract_embeddings_type_idx").on(table.embeddingType),
+]);
 
 // Audit trail
 export const auditTrail = pgTable("audit_trail", {
