@@ -562,17 +562,15 @@ Report ID: ${contractId}
   // ERP IMPORT ROUTES
   // ==========================================
   
-  // Upload and import sales data from CSV/Excel
+  // Upload and import sales data from CSV/Excel (with AI-driven contract matching)
   app.post('/api/erp-imports', isAuthenticated, dataUpload.single('file'), async (req: any, res: Response) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
       }
 
+      // vendorId is now optional - AI will match contracts automatically
       const { vendorId } = req.body;
-      if (!vendorId) {
-        return res.status(400).json({ error: 'Vendor ID is required' });
-      }
 
       // Create import job
       const importJob = await storage.createErpImportJob({
@@ -581,7 +579,7 @@ Report ID: ${contractId}
         status: 'processing',
         createdBy: req.user.id,
         connectionId: null,
-        vendorId: vendorId,
+        vendorId: vendorId || null,
         startedAt: new Date()
       });
 
@@ -589,21 +587,95 @@ Report ID: ${contractId}
       const fileBuffer = fs.readFileSync(req.file.path);
       const parseResult = await SalesDataParser.parseFile(fileBuffer, req.file.originalname);
 
-      // Store parsed rows in staging
+      // Import SemanticSearchService dynamically
+      const { SemanticSearchService } = await import('./services/semanticSearchService.js');
+      const { ContractReasoningService } = await import('./services/contractReasoningService.js');
+
+      let lowConfidenceCount = 0;
+      let highConfidenceCount = 0;
+      let noMatchCount = 0;
+
+      // Store parsed rows in staging with AI contract matching
       for (const row of parseResult.rows) {
+        let matchedVendorId = vendorId; // Use manual vendor if provided
+        let matchConfidence = 1.0;
+        let matchReasoning = vendorId ? 'Manual vendor selection' : null;
+        let needsReview = false;
+
+        // AI-driven matching if no vendor specified
+        if (!vendorId && row.validationStatus === 'valid') {
+          try {
+            const salesData = row.rowData as any;
+            const match = await SemanticSearchService.findBestContractForSales({
+              productCode: salesData.productCode,
+              productName: salesData.productName,
+              category: salesData.category,
+              territory: salesData.territory,
+              transactionDate: salesData.transactionDate ? new Date(salesData.transactionDate) : undefined
+            });
+
+            if (match) {
+              // Use LLM to validate the match
+              const contract = await storage.getContract(match.contractId);
+              const validation = await ContractReasoningService.validateContractMatch(
+                salesData,
+                {
+                  summary: contract?.analysis?.summary,
+                  keyTerms: contract?.analysis?.keyTerms,
+                },
+                match.confidence
+              );
+
+              matchedVendorId = match.vendorId;
+              matchConfidence = validation.confidence;
+              matchReasoning = `${match.reasoning}; AI validation: ${validation.reasoning}`;
+              needsReview = validation.confidence < 0.6 || !validation.isValid;
+
+              if (needsReview) {
+                lowConfidenceCount++;
+              } else {
+                highConfidenceCount++;
+              }
+            } else {
+              noMatchCount++;
+              needsReview = true;
+              matchReasoning = 'No matching contract found';
+            }
+          } catch (matchError) {
+            console.error(`❌ Matching error for row ${row.externalId}:`, matchError);
+            needsReview = true;
+            matchConfidence = 0;
+            matchReasoning = `Matching failed: ${matchError.message}`;
+            noMatchCount++;
+          }
+        }
+
         await storage.createSalesStaging({
           importJobId: importJob.id,
           externalId: row.externalId,
-          rowData: { ...row.rowData, vendorId }, // Add vendorId to row data
-          validationStatus: row.validationStatus,
+          rowData: { 
+            ...row.rowData, 
+            vendorId: matchedVendorId,
+            _aiMatch: {
+              confidence: matchConfidence,
+              reasoning: matchReasoning,
+              needsReview
+            }
+          },
+          validationStatus: needsReview ? 'needs_review' : row.validationStatus,
           validationErrors: row.validationErrors || null
         });
       }
 
-      // Update import job status
+      // Update import job status with AI matching summary
       await storage.updateErpImportJobStatus(importJob.id, 'completed', {
         recordsImported: parseResult.validRows,
-        recordsFailed: parseResult.invalidRows
+        recordsFailed: parseResult.invalidRows,
+        aiMatchingSummary: vendorId ? null : {
+          highConfidence: highConfidenceCount,
+          lowConfidence: lowConfidenceCount,
+          noMatch: noMatchCount
+        }
       });
 
       // Log the import
@@ -611,7 +683,8 @@ Report ID: ${contractId}
         fileName: req.file.originalname,
         totalRows: parseResult.totalRows,
         validRows: parseResult.validRows,
-        invalidRows: parseResult.invalidRows
+        invalidRows: parseResult.invalidRows,
+        aiMatchingEnabled: !vendorId
       });
 
       res.json({
@@ -619,7 +692,12 @@ Report ID: ${contractId}
         summary: {
           totalRows: parseResult.totalRows,
           validRows: parseResult.validRows,
-          invalidRows: parseResult.invalidRows
+          invalidRows: parseResult.invalidRows,
+          aiMatching: vendorId ? null : {
+            highConfidence: highConfidenceCount,
+            lowConfidence: lowConfidenceCount,
+            noMatch: noMatchCount
+          }
         }
       });
     } catch (error) {

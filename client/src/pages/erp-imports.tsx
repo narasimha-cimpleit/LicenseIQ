@@ -36,13 +36,15 @@ export default function ErpImportsPage() {
 
   const uploadMutation = useMutation({
     mutationFn: async () => {
-      if (!selectedFile || !selectedVendorId) {
-        throw new Error("Please select a file and vendor");
+      if (!selectedFile) {
+        throw new Error("Please select a file");
       }
 
       const formData = new FormData();
       formData.append("file", selectedFile);
-      formData.append("vendorId", selectedVendorId);
+      if (selectedVendorId) {
+        formData.append("vendorId", selectedVendorId);
+      }
 
       const response = await fetch("/api/erp-imports", {
         method: "POST",
@@ -58,9 +60,14 @@ export default function ErpImportsPage() {
       return response.json();
     },
     onSuccess: (data) => {
+      const aiMatching = data.summary?.aiMatching;
+      const description = aiMatching 
+        ? `Imported ${data.summary.validRows} rows. AI Matching: ${aiMatching.highConfidence} high confidence, ${aiMatching.lowConfidence} need review, ${aiMatching.noMatch} no match.`
+        : `Imported ${data.summary.validRows} rows successfully`;
+        
       toast({
         title: "Success",
-        description: `Imported ${data.summary.validRows} rows successfully`,
+        description,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/erp-imports"] });
       setSelectedFile(null);
@@ -150,10 +157,10 @@ export default function ErpImportsPage() {
           <CardContent>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="vendor">Vendor <span className="text-red-500">*</span></Label>
+                <Label htmlFor="vendor">Vendor (Optional)</Label>
                 <Select value={selectedVendorId} onValueChange={setSelectedVendorId}>
                   <SelectTrigger data-testid="select-vendor">
-                    <SelectValue placeholder="Select vendor" />
+                    <SelectValue placeholder="Auto-match using AI" />
                   </SelectTrigger>
                   <SelectContent>
                     {vendors.map((vendor: any) => (
@@ -163,6 +170,9 @@ export default function ErpImportsPage() {
                     ))}
                   </SelectContent>
                 </Select>
+                <p className="text-sm text-muted-foreground">
+                  Leave blank for AI-powered contract matching
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -199,7 +209,7 @@ export default function ErpImportsPage() {
               </Button>
               <Button
                 onClick={() => uploadMutation.mutate()}
-                disabled={!selectedFile || !selectedVendorId || uploadMutation.isPending}
+                disabled={!selectedFile || uploadMutation.isPending}
                 data-testid="button-confirm-upload"
                 className="gap-2"
               >
@@ -208,7 +218,7 @@ export default function ErpImportsPage() {
                 ) : (
                   <>
                     <Upload className="h-4 w-4" />
-                    Upload
+                    {selectedVendorId ? "Upload" : "Upload & AI Match"}
                   </>
                 )}
               </Button>
