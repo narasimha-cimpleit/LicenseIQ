@@ -139,47 +139,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Vendor routes
-  app.get('/api/vendors', isAuthenticated, async (req: any, res: Response) => {
-    try {
-      const search = req.query.search as string;
-      const vendors = await storage.getVendors(search);
-      
-      // Fetch contracts for each vendor
-      const vendorsWithContracts = await Promise.all(
-        vendors.map(async (vendor) => {
-          const contracts = await storage.getContractsByVendor(vendor.id);
-          return {
-            ...vendor,
-            licenses: contracts.map(contract => ({
-              id: contract.id,
-              name: contract.originalName,
-              status: contract.status
-            }))
-          };
-        })
-      );
-      
-      res.json({ vendors: vendorsWithContracts });
-    } catch (error: any) {
-      console.error('Get vendors error:', error);
-      res.status(500).json({ error: error.message || 'Failed to fetch vendors' });
-    }
-  });
+//   app.get('/api/vendors', isAuthenticated, async (req: any, res: Response) => {
+//     try {
+//       const search = req.query.search as string;
+//       const vendors = await storage.getVendors(search);
+//       
+//       // Fetch contracts for each vendor
+//       const vendorsWithContracts = await Promise.all(
+//         vendors.map(async (vendor) => {
+//           const contracts = await storage.getContractsByVendor(vendor.id);
+//           return {
+//             ...vendor,
+//             licenses: contracts.map(contract => ({
+//               id: contract.id,
+//               name: contract.originalName,
+//               status: contract.status
+//             }))
+//           };
+//         })
+//       );
+//       
+//       res.json({ vendors: vendorsWithContracts });
+//     } catch (error: any) {
+//       console.error('Get vendors error:', error);
+//       res.status(500).json({ error: error.message || 'Failed to fetch vendors' });
+//     }
+//   });
 
-  app.post('/api/vendors', isAuthenticated, async (req: any, res: Response) => {
-    try {
-      const vendor = await storage.createVendor(req.body);
-      
-      await createAuditLog(req, 'vendor_create', 'vendor', vendor.id, {
-        name: vendor.name
-      });
-      
-      res.json(vendor);
-    } catch (error: any) {
-      console.error('Create vendor error:', error);
-      res.status(500).json({ error: error.message || 'Failed to create vendor' });
-    }
-  });
+//   app.post('/api/vendors', isAuthenticated, async (req: any, res: Response) => {
+//     try {
+//       const vendor = await storage.createVendor(req.body);
+//       
+//       await createAuditLog(req, 'vendor_create', 'vendor', vendor.id, {
+//         name: vendor.name
+//       });
+//       
+//       res.json(vendor);
+//     } catch (error: any) {
+//       console.error('Create vendor error:', error);
+//       res.status(500).json({ error: error.message || 'Failed to create vendor' });
+//     }
+//   });
 
   // Contract upload endpoint
   app.post('/api/contracts/upload', isAuthenticated, upload.single('file'), async (req: any, res: Response) => {
@@ -678,290 +678,290 @@ Report ID: ${contractId}
   // ==========================================
   
   // Upload and import sales data from CSV/Excel (with AI-driven contract matching)
-  app.post('/api/erp-imports', isAuthenticated, dataUpload.single('file'), async (req: any, res: Response) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded' });
-      }
-
-      // No vendor selection needed - AI will match contracts automatically using semantic search
-      const { vendorId } = req.body; // Legacy support, but not used anymore
-
-      // Create import job (vendor matching happens via AI semantic search)
-      const importJob = await storage.createErpImportJob({
-        jobType: 'manual_upload',
-        fileName: req.file.originalname,
-        status: 'processing',
-        createdBy: req.user.id,
-        connectionId: null,
-        startedAt: new Date()
-      });
-
-      // Parse file
-      const fileBuffer = fs.readFileSync(req.file.path);
-      const parseResult = await SalesDataParser.parseFile(fileBuffer, req.file.originalname);
-
-      // Import SemanticSearchService and GroqValidationService dynamically
-      const { SemanticSearchService } = await import('./services/semanticSearchService.js');
-      const { GroqValidationService } = await import('./services/groqValidationService.js');
-
-      let lowConfidenceCount = 0;
-      let highConfidenceCount = 0;
-      let noMatchCount = 0;
-
-      // Store parsed rows in staging with AI contract matching
-      for (const row of parseResult.rows) {
-        let matchedVendorId = vendorId; // Use manual vendor if provided
-        let matchConfidence = 1.0;
-        let matchReasoning = vendorId ? 'Manual vendor selection' : null;
-        let needsReview = false;
-
-        // AI-driven matching if no vendor specified
-        if (!vendorId && row.validationStatus === 'valid') {
-          try {
-            const salesData = row.rowData as any;
-            const match = await SemanticSearchService.findBestContractForSales({
-              productCode: salesData.productCode,
-              productName: salesData.productName,
-              category: salesData.category,
-              territory: salesData.territory,
-              transactionDate: salesData.transactionDate ? new Date(salesData.transactionDate) : undefined
-            });
-
-            if (match) {
-              // Use Groq LLaMA to validate the match (FREE)
-              const contract = await storage.getContract(match.contractId);
-              const validation = await GroqValidationService.validateContractMatch(
-                salesData,
-                {
-                  summary: contract?.analysis?.summary,
-                  keyTerms: contract?.analysis?.keyTerms,
-                },
-                match.confidence
-              );
-
-              matchedVendorId = match.vendorId;
-              matchConfidence = validation.confidence;
-              matchReasoning = `${match.reasoning}; AI validation: ${validation.reasoning}`;
-              needsReview = validation.confidence < 0.6 || !validation.isValid;
-
-              if (needsReview) {
-                lowConfidenceCount++;
-              } else {
-                highConfidenceCount++;
-              }
-            } else {
-              noMatchCount++;
-              needsReview = true;
-              matchReasoning = 'No matching contract found';
-            }
-          } catch (matchError) {
-            console.error(`❌ Matching error for row ${row.externalId}:`, matchError);
-            needsReview = true;
-            matchConfidence = 0;
-            matchReasoning = `Matching failed: ${matchError.message}`;
-            noMatchCount++;
-          }
-        }
-
-        await storage.createSalesStaging({
-          importJobId: importJob.id,
-          externalId: row.externalId,
-          rowData: { 
-            ...row.rowData, 
-            vendorId: matchedVendorId,
-            _aiMatch: {
-              confidence: matchConfidence,
-              reasoning: matchReasoning,
-              needsReview
-            }
-          },
-          validationStatus: needsReview ? 'needs_review' : row.validationStatus,
-          validationErrors: row.validationErrors || null
-        });
-      }
-
-      // Update import job status with AI matching summary
-      await storage.updateErpImportJobStatus(importJob.id, 'completed', {
-        recordsImported: parseResult.validRows,
-        recordsFailed: parseResult.invalidRows,
-        aiMatchingSummary: vendorId ? null : {
-          highConfidence: highConfidenceCount,
-          lowConfidence: lowConfidenceCount,
-          noMatch: noMatchCount
-        }
-      });
-
-      // Log the import
-      await createAuditLog(req, 'import_sales_data', 'erp_import_job', importJob.id, {
-        fileName: req.file.originalname,
-        totalRows: parseResult.totalRows,
-        validRows: parseResult.validRows,
-        invalidRows: parseResult.invalidRows,
-        aiMatchingEnabled: !vendorId
-      });
-
-      res.json({
-        importJob,
-        summary: {
-          totalRows: parseResult.totalRows,
-          validRows: parseResult.validRows,
-          invalidRows: parseResult.invalidRows,
-          aiMatching: vendorId ? null : {
-            highConfidence: highConfidenceCount,
-            lowConfidence: lowConfidenceCount,
-            noMatch: noMatchCount
-          }
-        }
-      });
-    } catch (error) {
-      console.error('ERP import error:', error);
-      res.status(500).json({ error: 'Failed to import sales data' });
-    }
-  });
+//   app.post('/api/erp-imports', isAuthenticated, dataUpload.single('file'), async (req: any, res: Response) => {
+//     try {
+//       if (!req.file) {
+//         return res.status(400).json({ error: 'No file uploaded' });
+//       }
+// 
+//       // No vendor selection needed - AI will match contracts automatically using semantic search
+//       const { vendorId } = req.body; // Legacy support, but not used anymore
+// 
+//       // Create import job (vendor matching happens via AI semantic search)
+//       const importJob = await storage.createErpImportJob({
+//         jobType: 'manual_upload',
+//         fileName: req.file.originalname,
+//         status: 'processing',
+//         createdBy: req.user.id,
+//         connectionId: null,
+//         startedAt: new Date()
+//       });
+// 
+//       // Parse file
+//       const fileBuffer = fs.readFileSync(req.file.path);
+//       const parseResult = await SalesDataParser.parseFile(fileBuffer, req.file.originalname);
+// 
+//       // Import SemanticSearchService and GroqValidationService dynamically
+//       const { SemanticSearchService } = await import('./services/semanticSearchService.js');
+//       const { GroqValidationService } = await import('./services/groqValidationService.js');
+// 
+//       let lowConfidenceCount = 0;
+//       let highConfidenceCount = 0;
+//       let noMatchCount = 0;
+// 
+//       // Store parsed rows in staging with AI contract matching
+//       for (const row of parseResult.rows) {
+//         let matchedVendorId = vendorId; // Use manual vendor if provided
+//         let matchConfidence = 1.0;
+//         let matchReasoning = vendorId ? 'Manual vendor selection' : null;
+//         let needsReview = false;
+// 
+//         // AI-driven matching if no vendor specified
+//         if (!vendorId && row.validationStatus === 'valid') {
+//           try {
+//             const salesData = row.rowData as any;
+//             const match = await SemanticSearchService.findBestContractForSales({
+//               productCode: salesData.productCode,
+//               productName: salesData.productName,
+//               category: salesData.category,
+//               territory: salesData.territory,
+//               transactionDate: salesData.transactionDate ? new Date(salesData.transactionDate) : undefined
+//             });
+// 
+//             if (match) {
+//               // Use Groq LLaMA to validate the match (FREE)
+//               const contract = await storage.getContract(match.contractId);
+//               const validation = await GroqValidationService.validateContractMatch(
+//                 salesData,
+//                 {
+//                   summary: contract?.analysis?.summary,
+//                   keyTerms: contract?.analysis?.keyTerms,
+//                 },
+//                 match.confidence
+//               );
+// 
+//               matchedVendorId = match.vendorId;
+//               matchConfidence = validation.confidence;
+//               matchReasoning = `${match.reasoning}; AI validation: ${validation.reasoning}`;
+//               needsReview = validation.confidence < 0.6 || !validation.isValid;
+// 
+//               if (needsReview) {
+//                 lowConfidenceCount++;
+//               } else {
+//                 highConfidenceCount++;
+//               }
+//             } else {
+//               noMatchCount++;
+//               needsReview = true;
+//               matchReasoning = 'No matching contract found';
+//             }
+//           } catch (matchError) {
+//             console.error(`❌ Matching error for row ${row.externalId}:`, matchError);
+//             needsReview = true;
+//             matchConfidence = 0;
+//             matchReasoning = `Matching failed: ${matchError.message}`;
+//             noMatchCount++;
+//           }
+//         }
+// 
+//         await storage.createSalesStaging({
+//           importJobId: importJob.id,
+//           externalId: row.externalId,
+//           rowData: { 
+//             ...row.rowData, 
+//             vendorId: matchedVendorId,
+//             _aiMatch: {
+//               confidence: matchConfidence,
+//               reasoning: matchReasoning,
+//               needsReview
+//             }
+//           },
+//           validationStatus: needsReview ? 'needs_review' : row.validationStatus,
+//           validationErrors: row.validationErrors || null
+//         });
+//       }
+// 
+//       // Update import job status with AI matching summary
+//       await storage.updateErpImportJobStatus(importJob.id, 'completed', {
+//         recordsImported: parseResult.validRows,
+//         recordsFailed: parseResult.invalidRows,
+//         aiMatchingSummary: vendorId ? null : {
+//           highConfidence: highConfidenceCount,
+//           lowConfidence: lowConfidenceCount,
+//           noMatch: noMatchCount
+//         }
+//       });
+// 
+//       // Log the import
+//       await createAuditLog(req, 'import_sales_data', 'erp_import_job', importJob.id, {
+//         fileName: req.file.originalname,
+//         totalRows: parseResult.totalRows,
+//         validRows: parseResult.validRows,
+//         invalidRows: parseResult.invalidRows,
+//         aiMatchingEnabled: !vendorId
+//       });
+// 
+//       res.json({
+//         importJob,
+//         summary: {
+//           totalRows: parseResult.totalRows,
+//           validRows: parseResult.validRows,
+//           invalidRows: parseResult.invalidRows,
+//           aiMatching: vendorId ? null : {
+//             highConfidence: highConfidenceCount,
+//             lowConfidence: lowConfidenceCount,
+//             noMatch: noMatchCount
+//           }
+//         }
+//       });
+//     } catch (error) {
+//       console.error('ERP import error:', error);
+//       res.status(500).json({ error: 'Failed to import sales data' });
+//     }
+//   });
 
   // Get all import jobs
-  app.get('/api/erp-imports', isAuthenticated, async (req: any, res: Response) => {
-    try {
-      const { status } = req.query;
-      const jobs = await storage.getErpImportJobs(req.user.id, status as string);
-      res.json({ jobs });
-    } catch (error) {
-      console.error('Get import jobs error:', error);
-      res.status(500).json({ error: 'Failed to fetch import jobs' });
-    }
-  });
+//   app.get('/api/erp-imports', isAuthenticated, async (req: any, res: Response) => {
+//     try {
+//       const { status } = req.query;
+//       const jobs = await storage.getErpImportJobs(req.user.id, status as string);
+//       res.json({ jobs });
+//     } catch (error) {
+//       console.error('Get import jobs error:', error);
+//       res.status(500).json({ error: 'Failed to fetch import jobs' });
+//     }
+//   });
 
   // Get specific import job with staging data
-  app.get('/api/erp-imports/:id', isAuthenticated, async (req: any, res: Response) => {
-    try {
-      const importJob = await storage.getErpImportJob(req.params.id);
-      if (!importJob) {
-        return res.status(404).json({ error: 'Import job not found' });
-      }
-
-      const stagingData = await storage.getSalesStaging(req.params.id);
-      res.json({ importJob, stagingData });
-    } catch (error) {
-      console.error('Get import job error:', error);
-      res.status(500).json({ error: 'Failed to fetch import job' });
-    }
-  });
+//   app.get('/api/erp-imports/:id', isAuthenticated, async (req: any, res: Response) => {
+//     try {
+//       const importJob = await storage.getErpImportJob(req.params.id);
+//       if (!importJob) {
+//         return res.status(404).json({ error: 'Import job not found' });
+//       }
+// 
+//       const stagingData = await storage.getSalesStaging(req.params.id);
+//       res.json({ importJob, stagingData });
+//     } catch (error) {
+//       console.error('Get import job error:', error);
+//       res.status(500).json({ error: 'Failed to fetch import job' });
+//     }
+//   });
 
   // Promote staging data to sales data
-  app.post('/api/erp-imports/:id/promote', isAuthenticated, async (req: any, res: Response) => {
-    try {
-      const importJob = await storage.getErpImportJob(req.params.id);
-      if (!importJob) {
-        return res.status(404).json({ error: 'Import job not found' });
-      }
-
-      const promotedCount = await storage.promoteStagingToSales(req.params.id);
-
-      // Log the promotion
-      await createAuditLog(req, 'promote_sales_data', 'erp_import_job', req.params.id, {
-        promotedCount
-      });
-
-      res.json({ message: 'Sales data promoted successfully', promotedCount });
-    } catch (error) {
-      console.error('Promote sales data error:', error);
-      res.status(500).json({ error: 'Failed to promote sales data' });
-    }
-  });
+//   app.post('/api/erp-imports/:id/promote', isAuthenticated, async (req: any, res: Response) => {
+//     try {
+//       const importJob = await storage.getErpImportJob(req.params.id);
+//       if (!importJob) {
+//         return res.status(404).json({ error: 'Import job not found' });
+//       }
+// 
+//       const promotedCount = await storage.promoteStagingToSales(req.params.id);
+// 
+//       // Log the promotion
+//       await createAuditLog(req, 'promote_sales_data', 'erp_import_job', req.params.id, {
+//         promotedCount
+//       });
+// 
+//       res.json({ message: 'Sales data promoted successfully', promotedCount });
+//     } catch (error) {
+//       console.error('Promote sales data error:', error);
+//       res.status(500).json({ error: 'Failed to promote sales data' });
+//     }
+//   });
 
   // ==========================================
   // ROYALTY RUN ROUTES
   // ==========================================
   
   // Create royalty run and calculate
-  app.post('/api/royalty-runs', isAuthenticated, async (req: any, res: Response) => {
-    try {
-      const { name, vendorId, ruleSetId, periodStart, periodEnd } = req.body;
-
-      // Create royalty run
-      const run = await storage.createRoyaltyRun({
-        name,
-        vendorId,
-        ruleSetId,
-        periodStart: new Date(periodStart),
-        periodEnd: new Date(periodEnd),
-        runBy: req.user.id
-      });
-
-      // Update status to calculating
-      await storage.updateRoyaltyRunStatus(run.id, 'calculating');
-
-      res.json({ run });
-
-      // Trigger async calculation (don't await)
-      calculateRoyalties(run.id, vendorId, ruleSetId, periodStart, periodEnd);
-    } catch (error) {
-      console.error('Create royalty run error:', error);
-      res.status(500).json({ error: 'Failed to create royalty run' });
-    }
-  });
+//   app.post('/api/royalty-runs', isAuthenticated, async (req: any, res: Response) => {
+//     try {
+//       const { name, vendorId, ruleSetId, periodStart, periodEnd } = req.body;
+// 
+//       // Create royalty run
+//       const run = await storage.createRoyaltyRun({
+//         name,
+//         vendorId,
+//         ruleSetId,
+//         periodStart: new Date(periodStart),
+//         periodEnd: new Date(periodEnd),
+//         runBy: req.user.id
+//       });
+// 
+//       // Update status to calculating
+//       await storage.updateRoyaltyRunStatus(run.id, 'calculating');
+// 
+//       res.json({ run });
+// 
+//       // Trigger async calculation (don't await)
+//       calculateRoyalties(run.id, vendorId, ruleSetId, periodStart, periodEnd);
+//     } catch (error) {
+//       console.error('Create royalty run error:', error);
+//       res.status(500).json({ error: 'Failed to create royalty run' });
+//     }
+//   });
 
   // Get all royalty runs
-  app.get('/api/royalty-runs', isAuthenticated, async (req: any, res: Response) => {
-    try {
-      const { vendorId, status } = req.query;
-      const runs = await storage.getRoyaltyRuns(vendorId as string, status as string);
-      res.json({ runs });
-    } catch (error) {
-      console.error('Get royalty runs error:', error);
-      res.status(500).json({ error: 'Failed to fetch royalty runs' });
-    }
-  });
+//   app.get('/api/royalty-runs', isAuthenticated, async (req: any, res: Response) => {
+//     try {
+//       const { vendorId, status } = req.query;
+//       const runs = await storage.getRoyaltyRuns(vendorId as string, status as string);
+//       res.json({ runs });
+//     } catch (error) {
+//       console.error('Get royalty runs error:', error);
+//       res.status(500).json({ error: 'Failed to fetch royalty runs' });
+//     }
+//   });
 
   // Get specific royalty run
-  app.get('/api/royalty-runs/:id', isAuthenticated, async (req: any, res: Response) => {
-    try {
-      const run = await storage.getRoyaltyRun(req.params.id);
-      if (!run) {
-        return res.status(404).json({ error: 'Royalty run not found' });
-      }
-
-      const results = await storage.getRoyaltyResults(req.params.id);
-      res.json({ run, results });
-    } catch (error) {
-      console.error('Get royalty run error:', error);
-      res.status(500).json({ error: 'Failed to fetch royalty run' });
-    }
-  });
+//   app.get('/api/royalty-runs/:id', isAuthenticated, async (req: any, res: Response) => {
+//     try {
+//       const run = await storage.getRoyaltyRun(req.params.id);
+//       if (!run) {
+//         return res.status(404).json({ error: 'Royalty run not found' });
+//       }
+// 
+//       const results = await storage.getRoyaltyResults(req.params.id);
+//       res.json({ run, results });
+//     } catch (error) {
+//       console.error('Get royalty run error:', error);
+//       res.status(500).json({ error: 'Failed to fetch royalty run' });
+//     }
+//   });
 
   // Approve royalty run
-  app.post('/api/royalty-runs/:id/approve', isAuthenticated, async (req: any, res: Response) => {
-    try {
-      const run = await storage.approveRoyaltyRun(req.params.id, req.user.id);
-
-      await createAuditLog(req, 'approve_royalty_run', 'royalty_run', req.params.id, {
-        totalRoyalty: run.totalRoyalty
-      });
-
-      res.json({ run });
-    } catch (error) {
-      console.error('Approve royalty run error:', error);
-      res.status(500).json({ error: 'Failed to approve royalty run' });
-    }
-  });
+//   app.post('/api/royalty-runs/:id/approve', isAuthenticated, async (req: any, res: Response) => {
+//     try {
+//       const run = await storage.approveRoyaltyRun(req.params.id, req.user.id);
+// 
+//       await createAuditLog(req, 'approve_royalty_run', 'royalty_run', req.params.id, {
+//         totalRoyalty: run.totalRoyalty
+//       });
+// 
+//       res.json({ run });
+//     } catch (error) {
+//       console.error('Approve royalty run error:', error);
+//       res.status(500).json({ error: 'Failed to approve royalty run' });
+//     }
+//   });
 
   // Reject royalty run
-  app.post('/api/royalty-runs/:id/reject', isAuthenticated, async (req: any, res: Response) => {
-    try {
-      const { reason } = req.body;
-      const run = await storage.rejectRoyaltyRun(req.params.id, reason);
-
-      await createAuditLog(req, 'reject_royalty_run', 'royalty_run', req.params.id, {
-        reason
-      });
-
-      res.json({ run });
-    } catch (error) {
-      console.error('Reject royalty run error:', error);
-      res.status(500).json({ error: 'Failed to reject royalty run' });
-    }
-  });
+//   app.post('/api/royalty-runs/:id/reject', isAuthenticated, async (req: any, res: Response) => {
+//     try {
+//       const { reason } = req.body;
+//       const run = await storage.rejectRoyaltyRun(req.params.id, reason);
+// 
+//       await createAuditLog(req, 'reject_royalty_run', 'royalty_run', req.params.id, {
+//         reason
+//       });
+// 
+//       res.json({ run });
+//     } catch (error) {
+//       console.error('Reject royalty run error:', error);
+//       res.status(500).json({ error: 'Failed to reject royalty run' });
+//     }
+//   });
 
   // Register rules engine routes
   registerRulesRoutes(app);
