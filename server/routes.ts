@@ -966,458 +966,6 @@ Report ID: ${contractId}
   // Register rules engine routes
   registerRulesRoutes(app);
 
-  // Return the configured app - server will be started in index.ts
-  return createServer(app);
-}
-
-// Background contract processing
-async function processContractAnalysis(contractId: string, filePath: string) {
-  try {
-    console.log(`Starting analysis for contract ${contractId}`);
-
-    // Extract text from file based on file type
-    const contract = await storage.getContract(contractId);
-    const mimeType = contract?.fileType || 'application/pdf';
-    const extractedText = await fileService.extractTextFromFile(filePath, mimeType);
-    
-    // Pre-filter text to royalty-relevant sections to reduce Groq API load
-    const royaltyRelevantText = extractRoyaltyRelevantSections(extractedText);
-    console.log(`📝 Filtered text: ${royaltyRelevantText.length} chars (from ${extractedText.length})`);
-    
-    // Analyze with Groq AI with smart rate limiting
-    const aiAnalysis = await groqService.analyzeContract(royaltyRelevantText);
-    const detailedRules = await groqService.extractDetailedRoyaltyRules(royaltyRelevantText);
-    
-    // Log extracted rules for debugging
-    console.log(`📋 Extracted ${detailedRules.rules.length} detailed royalty rules from contract ${contractId}`);
-    
-    // Store detailed rules in the license rules system (only if we have rules)
-    if (detailedRules.rules.length > 0) {
-      await processLicenseRules(contractId, detailedRules);
-      console.log(`✅ Successfully stored ${detailedRules.rules.length} royalty rules`);
-    } else {
-      console.log(`⚠️ No rules extracted - marking for manual review instead of storing empty set`);
-      // Don't store empty rule sets - this indicates extraction failure
-    }
-    
-    // Save analysis
-    const analysisData = insertContractAnalysisSchema.parse({
-      contractId,
-      summary: aiAnalysis.summary,
-      keyTerms: aiAnalysis.keyTerms,
-      riskAnalysis: aiAnalysis.riskAnalysis,
-      insights: aiAnalysis.insights,
-      confidence: aiAnalysis.confidence.toString() // Convert to string for decimal field
-    });
-
-    await storage.createContractAnalysis(analysisData);
-
-    // Generate and store embeddings for semantic search
-    try {
-      await generateContractEmbeddings(contractId, aiAnalysis, detailedRules);
-      console.log(`✅ Generated embeddings for contract ${contractId}`);
-    } catch (embeddingError) {
-      console.error(`⚠️ Embedding generation failed for contract ${contractId}:`, embeddingError);
-      // Don't fail the whole analysis if embeddings fail
-    }
-
-    // Update contract status - mark as needing review if no rules extracted
-    const finalStatus = detailedRules.rules.length > 0 ? 'analyzed' : 'reviewed_needed';
-    await storage.updateContractStatus(contractId, finalStatus);
-
-    console.log(`Analysis completed for contract ${contractId}`);
-
-  } catch (error) {
-    console.error(`Analysis failed for contract ${contractId}:`, error);
-    await storage.updateContractStatus(contractId, 'failed');
-  }
-}
-
-// Helper function to generate and store contract embeddings for semantic search
-async function generateContractEmbeddings(
-  contractId: string, 
-  aiAnalysis: any, 
-  detailedRules: any
-) {
-  const embeddingsToGenerate: Array<{
-    type: string;
-    text: string;
-    metadata: any;
-  }> = [];
-
-  // 1. Full contract summary embedding
-  if (aiAnalysis.summary) {
-    embeddingsToGenerate.push({
-      type: 'full_contract',
-      text: aiAnalysis.summary,
-      metadata: { confidence: aiAnalysis.confidence }
-    });
-  }
-
-  // 2. Product/category embeddings from rules
-  const productCategories = new Set<string>();
-  const territories = new Set<string>();
-  
-  if (detailedRules.rules) {
-    for (const rule of detailedRules.rules) {
-      // Collect product categories
-      if (rule.conditions?.productCategories) {
-        rule.conditions.productCategories.forEach((cat: string) => productCategories.add(cat));
-      }
-      
-      // Collect territories
-      if (rule.conditions?.territories) {
-        rule.conditions.territories.forEach((terr: string) => territories.add(terr));
-      }
-      
-      // Individual rule description embedding
-      if (rule.description) {
-        embeddingsToGenerate.push({
-          type: 'rule_description',
-          text: rule.description,
-          metadata: {
-            ruleType: rule.ruleType,
-            ruleName: rule.ruleName,
-            confidence: rule.confidence
-          }
-        });
-      }
-    }
-  }
-
-  // 3. Product categories combined embedding
-  if (productCategories.size > 0) {
-    const productText = HuggingFaceEmbeddingService.createContractSearchText({
-      productCategories: Array.from(productCategories),
-      territories: Array.from(territories)
-    });
-    
-    embeddingsToGenerate.push({
-      type: 'product',
-      text: productText,
-      metadata: {
-        productCategories: Array.from(productCategories),
-        territories: Array.from(territories)
-      }
-    });
-  }
-
-  // 4. Territory-specific embedding
-  if (territories.size > 0) {
-    embeddingsToGenerate.push({
-      type: 'territory',
-      text: `Territories: ${Array.from(territories).join(', ')}`,
-      metadata: { territories: Array.from(territories) }
-    });
-  }
-
-  // Generate embeddings in batch using Hugging Face (FREE)
-  const texts = embeddingsToGenerate.map(item => HuggingFaceEmbeddingService.prepareText(item.text));
-  const embeddings = await HuggingFaceEmbeddingService.generateBatchEmbeddings(texts);
-
-  // Store embeddings in database
-  for (let i = 0; i < embeddingsToGenerate.length; i++) {
-    const item = embeddingsToGenerate[i];
-    const embeddingData = embeddings[i];
-    
-    await db.insert(contractEmbeddings).values({
-      contractId,
-      embeddingType: item.type,
-      sourceText: item.text,
-      embedding: embeddingData.embedding,
-      metadata: item.metadata
-    });
-  }
-
-  console.log(`📊 Stored ${embeddingsToGenerate.length} embeddings for contract ${contractId}`);
-}
-
-// Helper function to extract royalty-relevant sections
-function extractRoyaltyRelevantSections(contractText: string): string {
-  const royaltyKeywords = [
-    'royalty', 'royalties', 'tier', 'tier 1', 'tier 2', 'tier 3', 
-    'per unit', 'per-unit', 'minimum', 'guarantee', 'payment', 'payments',
-    'seasonal', 'spring', 'fall', 'holiday', 'premium', 'organic',
-    'container', 'multiplier', 'schedule', 'exhibit', 'calculation',
-    'territory', 'primary', 'secondary', 'volume', 'threshold',
-    'ornamental', 'perennials', 'shrubs', 'roses', 'hydrangea',
-    'licensee shall pay', 'per plant', 'quarterly payment'
-  ];
-
-  const lines = contractText.split('\n');
-  const relevantLines: string[] = [];
-  const contextWindow = 3; // Include 3 lines before and after relevant content
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].toLowerCase();
-    
-    if (royaltyKeywords.some(keyword => line.includes(keyword))) {
-      // Add context lines before
-      for (let j = Math.max(0, i - contextWindow); j < i; j++) {
-        if (!relevantLines.includes(lines[j])) {
-          relevantLines.push(lines[j]);
-        }
-      }
-      
-      // Add the relevant line
-      if (!relevantLines.includes(lines[i])) {
-        relevantLines.push(lines[i]);
-      }
-      
-      // Add context lines after
-      for (let j = i + 1; j <= Math.min(lines.length - 1, i + contextWindow); j++) {
-        if (!relevantLines.includes(lines[j])) {
-          relevantLines.push(lines[j]);
-        }
-      }
-    }
-  }
-
-  const filteredText = relevantLines.join('\n');
-  
-  // If filtered text is too short, use first part of original (but truncated)
-  if (filteredText.length < 1000) {
-    console.log(`📝 Filtered text too short (${filteredText.length}), using truncated original`);
-    return contractText.substring(0, 6000); // Smaller truncation for Groq
-  }
-  
-  // If filtered text is too long, truncate it
-  if (filteredText.length > 8000) {
-    console.log(`📝 Filtered text too long (${filteredText.length}), truncating`);
-    return filteredText.substring(0, 8000);
-  }
-  
-  return filteredText;
-}
-
-// Process and save detailed license rules
-async function processLicenseRules(contractId: string, extractionResult: any) {
-  try {
-    console.log(`🔧 Processing license rules for contract ${contractId}`);
-
-    // Create license rule set
-    const ruleSet = await storage.createLicenseRuleSet({
-      contractId: contractId,
-      name: extractionResult.licenseType || 'Extracted License Rules',
-      version: 1,
-      rulesDsl: {
-        licensorName: extractionResult.parties.licensor,
-        licenseeName: extractionResult.parties.licensee,
-        currency: extractionResult.currency,
-        paymentTerms: extractionResult.paymentTerms,
-        rules: extractionResult.rules
-      },
-      effectiveDate: extractionResult.effectiveDate ? new Date(extractionResult.effectiveDate) : null,
-      expirationDate: extractionResult.expirationDate ? new Date(extractionResult.expirationDate) : null,
-      extractionMetadata: {
-        documentType: extractionResult.documentType,
-        extractionMetadata: extractionResult.extractionMetadata,
-        reportingRequirements: extractionResult.reportingRequirements
-      }
-    });
-
-    // Create individual license rules
-    for (const rule of extractionResult.rules) {
-      await storage.createLicenseRule({
-        ruleSetId: ruleSet.id,
-        ruleName: rule.ruleName,
-        ruleType: rule.ruleType,
-        conditions: rule.conditions,
-        calculation: rule.calculation,
-        priority: rule.priority,
-        sourceSpan: rule.sourceSpan,
-        confidence: rule.confidence.toString(), // Convert to string for decimal field
-        isActive: true
-      });
-    }
-
-    console.log(`✅ Successfully processed ${extractionResult.rules.length} license rules for contract ${contractId}`);
-
-  } catch (error) {
-    console.error(`❌ Failed to process license rules for contract ${contractId}:`, error);
-    // Don't throw error - allow contract processing to continue even if rules processing fails
-  }
-}
-
-// Helper function to calculate royalties asynchronously
-async function calculateRoyalties(runId: string, vendorId: string, ruleSetId: string, periodStart: string, periodEnd: string) {
-  try {
-    // Get sales data for the period
-    const salesData = await storage.getSalesData(vendorId, new Date(periodStart), new Date(periodEnd));
-    
-    // Get rule set
-    const ruleSet = await storage.getLicenseRuleSet(ruleSetId);
-    if (!ruleSet) {
-      throw new Error('Rule set not found');
-    }
-
-    // Extract rules from rulesDsl
-    const rulesDsl = ruleSet.rulesDsl as any;
-    const rules = (rulesDsl?.rules || []).map((rule: any) => ({
-      id: rule.id || crypto.randomUUID(),
-      ruleName: rule.ruleName || 'Unnamed Rule',
-      ruleType: rule.ruleType || 'percentage',
-      description: rule.description || '',
-      conditions: rule.conditions || {},
-      calculation: rule.calculation || {},
-      priority: rule.priority || 10,
-      isActive: true,
-      confidence: rule.confidence || 1.0
-    }));
-
-    // Import RulesEngine dynamically
-    const { RulesEngine } = await import('./services/rulesEngine.js');
-    
-    let totalRoyalty = 0;
-    let totalSalesAmount = 0;
-    const results = [];
-
-    // Calculate royalty for each sales record
-    for (const sale of salesData) {
-      const calculationInput = {
-        grossRevenue: Number(sale.grossAmount),
-        netRevenue: Number(sale.netAmount || sale.grossAmount),
-        units: Number(sale.quantity || 1),
-        territory: sale.territory,
-        productCategory: sale.category,
-        timeframe: 'monthly' as const
-      };
-
-      const calculation = await RulesEngine.calculateRoyalties(rules, calculationInput);
-      
-      totalRoyalty += calculation.totalRoyalty;
-      totalSalesAmount += Number(sale.grossAmount);
-
-      // Store result
-      results.push({
-        runId,
-        salesDataId: sale.id,
-        ruleId: calculation.breakdown[0]?.ruleName || null,
-        salesAmount: sale.grossAmount,
-        royaltyAmount: calculation.totalRoyalty.toString(),
-        royaltyRate: calculation.breakdown[0]?.rate || null,
-        calculationDetails: calculation
-      });
-    }
-
-    // Save results
-    if (results.length > 0) {
-      await storage.createRoyaltyResults(results);
-    }
-
-    // Update run status to awaiting approval
-    await storage.updateRoyaltyRunStatus(runId, 'awaiting_approval', {
-      totalSalesAmount,
-      totalRoyalty,
-      recordsProcessed: salesData.length
-    });
-
-    console.log(`✅ Royalty calculation completed for run ${runId}: ${results.length} records, $${totalRoyalty.toFixed(2)} total royalty`);
-  } catch (error) {
-    console.error(`❌ Royalty calculation failed for run ${runId}:`, error);
-    await storage.updateRoyaltyRunStatus(runId, 'failed');
-  }
-}
-
-  // Sales data upload endpoint
-  app.post('/api/sales/upload', isAuthenticated, dataUpload.single('file'), async (req: any, res: Response) => {
-    try {
-      const file = req.file;
-      
-      if (!file) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'No file uploaded' 
-        });
-      }
-
-      console.log(`📊 [SALES-UPLOAD] Processing file: ${file.originalname} (${file.size} bytes)`);
-
-      // Read file buffer
-      const fileBuffer = await fs.promises.readFile(file.path);
-      
-      // Parse file
-      const parseResult = await SalesDataParser.parseFile(fileBuffer, file.originalname);
-      
-      console.log(`📊 [SALES-UPLOAD] Parse result: ${parseResult.validRows} valid, ${parseResult.invalidRows} invalid`);
-
-      // Generate import job ID
-      const importJobId = randomUUID();
-
-      // Prepare sales data for insertion
-      const salesDataToInsert = parseResult.rows
-        .filter(row => row.validationStatus === 'valid')
-        .map(row => ({
-          transactionDate: new Date(row.rowData.transactionDate),
-          transactionId: row.rowData.transactionId || row.externalId,
-          productCode: row.rowData.productCode || null,
-          productName: row.rowData.productName || null,
-          category: row.rowData.category || null,
-          territory: row.rowData.territory || null,
-          currency: row.rowData.currency || 'USD',
-          grossAmount: row.rowData.grossAmount.toString(),
-          netAmount: row.rowData.netAmount ? row.rowData.netAmount.toString() : null,
-          quantity: row.rowData.quantity ? row.rowData.quantity.toString() : null,
-          unitPrice: row.rowData.unitPrice ? row.rowData.unitPrice.toString() : null,
-          importJobId: importJobId,
-          matchedContractId: null,
-          matchConfidence: null,
-        }));
-
-      // Insert sales data into database
-      let insertedRecords = [];
-      if (salesDataToInsert.length > 0) {
-        insertedRecords = await storage.createBulkSalesData(salesDataToInsert);
-        console.log(`✅ [SALES-UPLOAD] Inserted ${insertedRecords.length} sales records`);
-      }
-
-      // Clean up uploaded file
-      await fs.promises.unlink(file.path);
-
-      // Create audit log
-      await createAuditLog(
-        req,
-        'upload_sales_data',
-        'sales_data',
-        importJobId,
-        {
-          fileName: file.originalname,
-          totalRows: parseResult.totalRows,
-          validRows: parseResult.validRows,
-          invalidRows: parseResult.invalidRows,
-        }
-      );
-
-      // Return results
-      res.json({
-        success: true,
-        totalRows: parseResult.totalRows,
-        validRows: parseResult.validRows,
-        invalidRows: parseResult.invalidRows,
-        importJobId,
-        errors: parseResult.errors,
-        message: `Successfully imported ${insertedRecords.length} sales transactions`,
-      });
-
-    } catch (error: any) {
-      console.error('❌ [SALES-UPLOAD] Error:', error);
-      
-      // Clean up file if it exists
-      if (req.file?.path) {
-        try {
-          await fs.promises.unlink(req.file.path);
-        } catch (unlinkError) {
-          console.error('Failed to clean up file:', unlinkError);
-        }
-      }
-
-      res.status(500).json({ 
-        success: false,
-        message: error.message || 'Failed to process sales data upload' 
-      });
-    }
-  });
-
   // Get sales data for a contract
   app.get('/api/contracts/:id/sales', isAuthenticated, async (req: any, res: Response) => {
     try {
@@ -1439,89 +987,46 @@ async function calculateRoyalties(runId: string, vendorId: string, ruleSetId: st
     try {
       const contractId = req.params.id;
       const { periodStart, periodEnd, name } = req.body;
-
-      console.log(`💰 [ROYALTY-CALC] Starting calculation for contract ${contractId}`);
-
-      // Get contract with analysis
-      const contract = await storage.getContract(contractId);
-      if (!contract) {
-        return res.status(404).json({ message: 'Contract not found' });
-      }
-
-      // Get sales data for this contract
-      const salesData = await storage.getSalesDataByContract(contractId);
       
-      if (salesData.length === 0) {
-        return res.status(400).json({ 
-          message: 'No sales data found for this contract. Please upload sales data first.' 
-        });
-      }
-
-      console.log(`💰 [ROYALTY-CALC] Found ${salesData.length} sales records for contract`);
-
-      // Filter sales by period if provided
-      let filteredSales = salesData;
-      if (periodStart && periodEnd) {
-        const startDate = new Date(periodStart);
-        const endDate = new Date(periodEnd);
-        filteredSales = salesData.filter(sale => {
+      // Get sales data for this contract
+      const allSales = await storage.getSalesDataByContract(contractId);
+      
+      // Filter by period if provided
+      let filteredSales = allSales;
+      if (periodStart || periodEnd) {
+        filteredSales = allSales.filter(sale => {
           const saleDate = new Date(sale.transactionDate);
-          return saleDate >= startDate && saleDate <= endDate;
+          if (periodStart && saleDate < new Date(periodStart)) return false;
+          if (periodEnd && saleDate > new Date(periodEnd)) return false;
+          return true;
         });
       }
-
+      
       // Calculate totals
-      let totalSalesAmount = 0;
-      let totalRoyalty = 0;
-      const breakdown: any[] = [];
-
-      filteredSales.forEach(sale => {
-        const saleAmount = parseFloat(sale.grossAmount || '0');
-        totalSalesAmount += saleAmount;
-        
-        // Simple royalty calculation (10% for now - can be enhanced with rules)
-        const royaltyRate = 0.10;
-        const royaltyAmount = saleAmount * royaltyRate;
-        totalRoyalty += royaltyAmount;
-
-        breakdown.push({
-          transactionId: sale.transactionId,
-          transactionDate: sale.transactionDate,
-          productName: sale.productName,
-          saleAmount: saleAmount,
-          royaltyRate: royaltyRate,
-          royaltyAmount: royaltyAmount,
-        });
-      });
-
-      // Create royalty calculation record
-      const calculation = await storage.createContractRoyaltyCalculation({
-        contractId: contractId,
-        name: name || `Royalty Calculation - ${new Date().toLocaleDateString()}`,
-        periodStart: periodStart ? new Date(periodStart) : null,
-        periodEnd: periodEnd ? new Date(periodEnd) : null,
-        totalSalesAmount: totalSalesAmount.toString(),
-        totalRoyalty: totalRoyalty.toString(),
-        currency: 'USD',
-        salesCount: filteredSales.length,
-        breakdown: breakdown,
-        chartData: null,
-        calculatedBy: req.user.id,
-        status: 'pending',
-      });
-
-      console.log(`✅ [ROYALTY-CALC] Calculation complete: $${totalRoyalty.toFixed(2)} royalty on $${totalSalesAmount.toFixed(2)} sales`);
-
-      // Create audit log
-      await createAuditLog(
-        req,
-        'calculate_royalties',
-        'contract',
-        contractId,
+      const totalSalesAmount = filteredSales.reduce((sum, sale) => sum + parseFloat(sale.grossAmount), 0);
+      const totalRoyalty = totalSalesAmount * 0.10; // 10% royalty rate for demo
+      
+      // Prepare breakdown
+      const breakdown = filteredSales.map(sale => ({
+        transactionId: sale.transactionId,
+        transactionDate: sale.transactionDate,
+        productName: sale.productName || 'Unknown',
+        saleAmount: sale.grossAmount,
+        royaltyAmount: (parseFloat(sale.grossAmount) * 0.10).toString(),
+      }));
+      
+      // Create calculation record
+      const calculation = await storage.createRoyaltyCalculation(
         {
-          calculationId: calculation.id,
-          totalSalesAmount,
-          totalRoyalty,
+          contractId,
+          name: name || `Calculation ${new Date().toLocaleDateString()}`,
+          periodStart: periodStart ? new Date(periodStart) : null,
+          periodEnd: periodEnd ? new Date(periodEnd) : null,
+          totalSalesAmount: totalSalesAmount.toString(),
+          totalRoyalty: totalRoyalty.toString(),
+          status: 'pending',
+          breakdown: JSON.stringify(breakdown),
+          createdBy: req.user.id,
           salesCount: filteredSales.length,
         }
       );
@@ -1533,7 +1038,7 @@ async function calculateRoyalties(runId: string, vendorId: string, ruleSetId: st
       });
 
     } catch (error: any) {
-      console.error('❌ [ROYALTY-CALC] Error:', error);
+      console.error('Error calculating royalties:', error);
       res.status(500).json({ 
         message: error.message || 'Failed to calculate royalties' 
       });
@@ -1556,5 +1061,8 @@ async function calculateRoyalties(runId: string, vendorId: string, ruleSetId: st
     }
   });
 
+  // Return the configured app - server will be started in index.ts
+  return createServer(app);
+}
 
 export default registerRoutes;

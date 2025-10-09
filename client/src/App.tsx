@@ -45,7 +45,7 @@ function Router() {
           <ProtectedRoute path="/contracts/:id" component={() => <ContractAnalysis />} />
           {/* Royalty Calculations */}
           <ProtectedRoute path="/sales-upload" component={SalesUpload} />
-          <ProtectedRoute path="/royalty-calculations/:id" component={() => <RoyaltyDashboard />} />
+          <ProtectedRoute path="/royalty-dashboard/:id" component={() => <RoyaltyDashboard />} />
         </>
       )}
       
