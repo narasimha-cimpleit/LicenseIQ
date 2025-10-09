@@ -10,7 +10,7 @@ import { fileService } from "./services/fileService";
 import { groqService } from "./services/groqService";
 import { registerRulesRoutes } from "./rulesRoutes";
 import { SalesDataParser } from "./services/salesDataParser";
-import { EmbeddingService } from "./services/embeddingService";
+import { HuggingFaceEmbeddingService } from "./services/huggingFaceEmbedding";
 import { db } from "./db";
 import { contractEmbeddings } from "@shared/schema";
 import { 
@@ -587,9 +587,9 @@ Report ID: ${contractId}
       const fileBuffer = fs.readFileSync(req.file.path);
       const parseResult = await SalesDataParser.parseFile(fileBuffer, req.file.originalname);
 
-      // Import SemanticSearchService dynamically
+      // Import SemanticSearchService and GroqValidationService dynamically
       const { SemanticSearchService } = await import('./services/semanticSearchService.js');
-      const { ContractReasoningService } = await import('./services/contractReasoningService.js');
+      const { GroqValidationService } = await import('./services/groqValidationService.js');
 
       let lowConfidenceCount = 0;
       let highConfidenceCount = 0;
@@ -615,9 +615,9 @@ Report ID: ${contractId}
             });
 
             if (match) {
-              // Use LLM to validate the match
+              // Use Groq LLaMA to validate the match (FREE)
               const contract = await storage.getContract(match.contractId);
-              const validation = await ContractReasoningService.validateContractMatch(
+              const validation = await GroqValidationService.validateContractMatch(
                 salesData,
                 {
                   summary: contract?.analysis?.summary,
@@ -973,7 +973,7 @@ async function generateContractEmbeddings(
 
   // 3. Product categories combined embedding
   if (productCategories.size > 0) {
-    const productText = EmbeddingService.createContractSearchText({
+    const productText = HuggingFaceEmbeddingService.createContractSearchText({
       productCategories: Array.from(productCategories),
       territories: Array.from(territories)
     });
@@ -997,9 +997,9 @@ async function generateContractEmbeddings(
     });
   }
 
-  // Generate embeddings in batch
-  const texts = embeddingsToGenerate.map(item => EmbeddingService.prepareText(item.text));
-  const embeddings = await EmbeddingService.generateBatchEmbeddings(texts);
+  // Generate embeddings in batch using Hugging Face (FREE)
+  const texts = embeddingsToGenerate.map(item => HuggingFaceEmbeddingService.prepareText(item.text));
+  const embeddings = await HuggingFaceEmbeddingService.generateBatchEmbeddings(texts);
 
   // Store embeddings in database
   for (let i = 0; i < embeddingsToGenerate.length; i++) {
