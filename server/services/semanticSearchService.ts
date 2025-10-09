@@ -38,8 +38,13 @@ export class SemanticSearchService {
       // Generate embedding for the query
       const { embedding: queryEmbedding } = await EmbeddingService.generateEmbedding(queryText);
 
-      // Calculate cosine similarity: 1 - cosineDistance = similarity score
-      const similarity = sql<number>`1 - (${cosineDistance(contractEmbeddings.embedding, queryEmbedding)})`;
+      // Use <=> operator for HNSW index optimization
+      // Distance metric (lower is better), convert to similarity (higher is better)
+      const distance = sql<number>`${contractEmbeddings.embedding} <=> ${queryEmbedding}`;
+      const similarity = sql<number>`1 - (${contractEmbeddings.embedding} <=> ${queryEmbedding})`;
+
+      // Convert minSimilarity to maxDistance for filtering
+      const maxDistance = 1 - minSimilarity;
 
       // Build query with optional filters
       let query = db
@@ -49,6 +54,7 @@ export class SemanticSearchService {
           embeddingType: contractEmbeddings.embeddingType,
           sourceText: contractEmbeddings.sourceText,
           metadata: contractEmbeddings.metadata,
+          distance,
           similarity,
           vendorId: contracts.vendorId,
           contractStatus: contracts.status,
@@ -57,14 +63,14 @@ export class SemanticSearchService {
         .innerJoin(contracts, eq(contractEmbeddings.contractId, contracts.id))
         .where(
           and(
-            sql`${similarity} > ${minSimilarity}`,
+            sql`${distance} < ${maxDistance}`, // Filter by distance for index usage
             eq(contracts.status, 'analyzed'), // Only search analyzed contracts
             embeddingTypes && embeddingTypes.length > 0
               ? sql`${contractEmbeddings.embeddingType} = ANY(${embeddingTypes})`
               : undefined
           )
         )
-        .orderBy(desc(similarity))
+        .orderBy(sql`${distance} ASC`) // Order by distance (ASC) to use HNSW index
         .limit(limit);
 
       const results = await query;

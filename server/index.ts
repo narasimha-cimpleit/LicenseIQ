@@ -36,7 +36,34 @@ app.use((req, res, next) => {
   next();
 });
 
+// Database initialization: ensure vector extension and indexes exist
+async function initializeDatabase() {
+  try {
+    const { db } = await import("./db");
+    const { sql } = await import("drizzle-orm");
+    
+    // Enable pgvector extension
+    await db.execute(sql`CREATE EXTENSION IF NOT EXISTS vector;`);
+    log('✓ pgvector extension enabled');
+    
+    // Create HNSW index for fast vector similarity search
+    // Using IF NOT EXISTS to avoid errors on repeated deployments
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS contract_embeddings_embedding_hnsw_idx 
+      ON contract_embeddings 
+      USING hnsw (embedding vector_cosine_ops);
+    `);
+    log('✓ HNSW index created for vector similarity search');
+  } catch (error: any) {
+    log(`⚠ Database initialization warning: ${error.message}`);
+    // Don't fail server startup if index creation fails
+  }
+}
+
 (async () => {
+  // Initialize database before starting server
+  await initializeDatabase();
+  
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
