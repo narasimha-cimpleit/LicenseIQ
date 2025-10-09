@@ -410,6 +410,14 @@ export default function ContractAnalysis() {
               <Download className="h-4 w-4 mr-2 text-blue-400" />
               Export
             </Button>
+            <Button 
+              onClick={() => setLocation(`/royalty-calculations/${id}`)} 
+              data-testid="button-calculate-royalties"
+              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+            >
+              <Calculator className="h-4 w-4 mr-2" />
+              Calculate Royalties
+            </Button>
             <Button onClick={handleEditAnalysis} data-testid="button-edit-analysis">
               <Edit className="h-4 w-4 mr-2 text-green-400" />
               Edit Analysis
@@ -774,6 +782,15 @@ export default function ContractAnalysis() {
                     >
                       <Share className="h-4 w-4 mr-2" />
                       Share Analysis
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+                      onClick={() => setLocation(`/royalty-calculations/${id}`)}
+                      data-testid="button-calculate-royalties-sidebar"
+                    >
+                      <Calculator className="h-4 w-4 mr-2" />
+                      Calculate Royalties
                     </Button>
                     <Button
                       variant={contract?.flaggedForReview ? "default" : "outline"}
