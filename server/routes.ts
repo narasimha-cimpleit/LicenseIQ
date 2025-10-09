@@ -1319,5 +1319,242 @@ async function calculateRoyalties(runId: string, vendorId: string, ruleSetId: st
   }
 }
 
+  // Sales data upload endpoint
+  app.post('/api/sales/upload', isAuthenticated, dataUpload.single('file'), async (req: any, res: Response) => {
+    try {
+      const file = req.file;
+      
+      if (!file) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'No file uploaded' 
+        });
+      }
+
+      console.log(`📊 [SALES-UPLOAD] Processing file: ${file.originalname} (${file.size} bytes)`);
+
+      // Read file buffer
+      const fileBuffer = await fs.promises.readFile(file.path);
+      
+      // Parse file
+      const parseResult = await SalesDataParser.parseFile(fileBuffer, file.originalname);
+      
+      console.log(`📊 [SALES-UPLOAD] Parse result: ${parseResult.validRows} valid, ${parseResult.invalidRows} invalid`);
+
+      // Generate import job ID
+      const importJobId = randomUUID();
+
+      // Prepare sales data for insertion
+      const salesDataToInsert = parseResult.rows
+        .filter(row => row.validationStatus === 'valid')
+        .map(row => ({
+          transactionDate: new Date(row.rowData.transactionDate),
+          transactionId: row.rowData.transactionId || row.externalId,
+          productCode: row.rowData.productCode || null,
+          productName: row.rowData.productName || null,
+          category: row.rowData.category || null,
+          territory: row.rowData.territory || null,
+          currency: row.rowData.currency || 'USD',
+          grossAmount: row.rowData.grossAmount.toString(),
+          netAmount: row.rowData.netAmount ? row.rowData.netAmount.toString() : null,
+          quantity: row.rowData.quantity ? row.rowData.quantity.toString() : null,
+          unitPrice: row.rowData.unitPrice ? row.rowData.unitPrice.toString() : null,
+          importJobId: importJobId,
+          matchedContractId: null,
+          matchConfidence: null,
+        }));
+
+      // Insert sales data into database
+      let insertedRecords = [];
+      if (salesDataToInsert.length > 0) {
+        insertedRecords = await storage.createBulkSalesData(salesDataToInsert);
+        console.log(`✅ [SALES-UPLOAD] Inserted ${insertedRecords.length} sales records`);
+      }
+
+      // Clean up uploaded file
+      await fs.promises.unlink(file.path);
+
+      // Create audit log
+      await createAuditLog(
+        req,
+        'upload_sales_data',
+        'sales_data',
+        importJobId,
+        {
+          fileName: file.originalname,
+          totalRows: parseResult.totalRows,
+          validRows: parseResult.validRows,
+          invalidRows: parseResult.invalidRows,
+        }
+      );
+
+      // Return results
+      res.json({
+        success: true,
+        totalRows: parseResult.totalRows,
+        validRows: parseResult.validRows,
+        invalidRows: parseResult.invalidRows,
+        importJobId,
+        errors: parseResult.errors,
+        message: `Successfully imported ${insertedRecords.length} sales transactions`,
+      });
+
+    } catch (error: any) {
+      console.error('❌ [SALES-UPLOAD] Error:', error);
+      
+      // Clean up file if it exists
+      if (req.file?.path) {
+        try {
+          await fs.promises.unlink(req.file.path);
+        } catch (unlinkError) {
+          console.error('Failed to clean up file:', unlinkError);
+        }
+      }
+
+      res.status(500).json({ 
+        success: false,
+        message: error.message || 'Failed to process sales data upload' 
+      });
+    }
+  });
+
+  // Get sales data for a contract
+  app.get('/api/contracts/:id/sales', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const contractId = req.params.id;
+      const salesData = await storage.getSalesDataByContract(contractId);
+      
+      res.json({
+        salesData,
+        total: salesData.length,
+      });
+    } catch (error: any) {
+      console.error('Error fetching sales data:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Calculate royalties for a contract
+  app.post('/api/contracts/:id/calculate-royalties', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const contractId = req.params.id;
+      const { periodStart, periodEnd, name } = req.body;
+
+      console.log(`💰 [ROYALTY-CALC] Starting calculation for contract ${contractId}`);
+
+      // Get contract with analysis
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ message: 'Contract not found' });
+      }
+
+      // Get sales data for this contract
+      const salesData = await storage.getSalesDataByContract(contractId);
+      
+      if (salesData.length === 0) {
+        return res.status(400).json({ 
+          message: 'No sales data found for this contract. Please upload sales data first.' 
+        });
+      }
+
+      console.log(`💰 [ROYALTY-CALC] Found ${salesData.length} sales records for contract`);
+
+      // Filter sales by period if provided
+      let filteredSales = salesData;
+      if (periodStart && periodEnd) {
+        const startDate = new Date(periodStart);
+        const endDate = new Date(periodEnd);
+        filteredSales = salesData.filter(sale => {
+          const saleDate = new Date(sale.transactionDate);
+          return saleDate >= startDate && saleDate <= endDate;
+        });
+      }
+
+      // Calculate totals
+      let totalSalesAmount = 0;
+      let totalRoyalty = 0;
+      const breakdown: any[] = [];
+
+      filteredSales.forEach(sale => {
+        const saleAmount = parseFloat(sale.grossAmount || '0');
+        totalSalesAmount += saleAmount;
+        
+        // Simple royalty calculation (10% for now - can be enhanced with rules)
+        const royaltyRate = 0.10;
+        const royaltyAmount = saleAmount * royaltyRate;
+        totalRoyalty += royaltyAmount;
+
+        breakdown.push({
+          transactionId: sale.transactionId,
+          transactionDate: sale.transactionDate,
+          productName: sale.productName,
+          saleAmount: saleAmount,
+          royaltyRate: royaltyRate,
+          royaltyAmount: royaltyAmount,
+        });
+      });
+
+      // Create royalty calculation record
+      const calculation = await storage.createContractRoyaltyCalculation({
+        contractId: contractId,
+        name: name || `Royalty Calculation - ${new Date().toLocaleDateString()}`,
+        periodStart: periodStart ? new Date(periodStart) : null,
+        periodEnd: periodEnd ? new Date(periodEnd) : null,
+        totalSalesAmount: totalSalesAmount.toString(),
+        totalRoyalty: totalRoyalty.toString(),
+        currency: 'USD',
+        salesCount: filteredSales.length,
+        breakdown: breakdown,
+        chartData: null,
+        calculatedBy: req.user.id,
+        status: 'pending',
+      });
+
+      console.log(`✅ [ROYALTY-CALC] Calculation complete: $${totalRoyalty.toFixed(2)} royalty on $${totalSalesAmount.toFixed(2)} sales`);
+
+      // Create audit log
+      await createAuditLog(
+        req,
+        'calculate_royalties',
+        'contract',
+        contractId,
+        {
+          calculationId: calculation.id,
+          totalSalesAmount,
+          totalRoyalty,
+          salesCount: filteredSales.length,
+        }
+      );
+
+      res.json({
+        success: true,
+        calculation,
+        message: `Calculated ${filteredSales.length} sales transactions`,
+      });
+
+    } catch (error: any) {
+      console.error('❌ [ROYALTY-CALC] Error:', error);
+      res.status(500).json({ 
+        message: error.message || 'Failed to calculate royalties' 
+      });
+    }
+  });
+
+  // Get royalty calculations for a contract
+  app.get('/api/contracts/:id/royalty-calculations', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const contractId = req.params.id;
+      const calculations = await storage.getContractRoyaltyCalculations(contractId);
+      
+      res.json({
+        calculations,
+        total: calculations.length,
+      });
+    } catch (error: any) {
+      console.error('Error fetching royalty calculations:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
 
 export default registerRoutes;
