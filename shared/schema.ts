@@ -547,6 +547,31 @@ export const royaltyResults = pgTable("royalty_results", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Contract-based Royalty Calculations (AI-Matched Workflow)
+export const contractRoyaltyCalculations = pgTable("contract_royalty_calculations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  contractId: varchar("contract_id").notNull().references(() => contracts.id),
+  name: varchar("name").notNull(), // e.g., "Q1 2024 Royalties"
+  periodStart: timestamp("period_start"),
+  periodEnd: timestamp("period_end"),
+  status: varchar("status").default("pending_approval"), // pending_approval, approved, rejected, paid
+  totalSalesAmount: decimal("total_sales_amount", { precision: 15, scale: 2 }),
+  totalRoyalty: decimal("total_royalty", { precision: 15, scale: 2 }),
+  currency: varchar("currency").default("USD"),
+  salesCount: integer("sales_count"),
+  breakdown: jsonb("breakdown"), // Detailed per-sale breakdown
+  chartData: jsonb("chart_data"), // Pre-computed chart data
+  calculatedBy: varchar("calculated_by").references(() => users.id),
+  approvedBy: varchar("approved_by").references(() => users.id),
+  approvedAt: timestamp("approved_at"),
+  rejectedBy: varchar("rejected_by").references(() => users.id),
+  rejectedAt: timestamp("rejected_at"),
+  rejectionReason: text("rejection_reason"),
+  comments: text("comments"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Product Mappings (for vendor product codes to internal categories)
 export const productMappings = pgTable("product_mappings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -644,6 +669,21 @@ export const insertRoyaltyRunSchema = createInsertSchema(royaltyRuns).pick({
   runBy: true,
 });
 
+export const insertContractRoyaltyCalculationSchema = createInsertSchema(contractRoyaltyCalculations).pick({
+  contractId: true,
+  name: true,
+  periodStart: true,
+  periodEnd: true,
+  totalSalesAmount: true,
+  totalRoyalty: true,
+  currency: true,
+  salesCount: true,
+  breakdown: true,
+  chartData: true,
+  calculatedBy: true,
+  comments: true,
+});
+
 // ======================
 // TYPES FOR NEW TABLES
 // ======================
@@ -664,6 +704,8 @@ export type InsertRoyaltyRun = z.infer<typeof insertRoyaltyRunSchema>;
 export type RoyaltyResult = typeof royaltyResults.$inferSelect;
 export type ProductMapping = typeof productMappings.$inferSelect;
 export type ErpImportJob = typeof erpImportJobs.$inferSelect;
+export type ContractRoyaltyCalculation = typeof contractRoyaltyCalculations.$inferSelect;
+export type InsertContractRoyaltyCalculation = z.infer<typeof insertContractRoyaltyCalculationSchema>;
 
 // Enhanced types with relationships
 export type VendorWithLicenses = Vendor & {
