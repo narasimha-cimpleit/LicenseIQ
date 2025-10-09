@@ -11,6 +11,7 @@ import {
   contractComparisons,
   marketBenchmarks,
   contractRoyaltyCalculations,
+  salesData,
   type User,
   type InsertUser,
   type Contract,
@@ -36,6 +37,8 @@ import {
   type InsertMarketBenchmark,
   type ContractRoyaltyCalculation,
   type InsertContractRoyaltyCalculation,
+  type SalesData,
+  type InsertSalesData,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, ilike, count, gte } from "drizzle-orm";
@@ -174,6 +177,21 @@ export interface IStorage {
     contractsAtRisk: number;
     riskTrends: Array<{ date: string; riskScore: number }>;
   }>;
+
+  // Sales data operations
+  createSalesData(salesData: InsertSalesData): Promise<SalesData>;
+  createBulkSalesData(salesDataArray: InsertSalesData[]): Promise<SalesData[]>;
+  getSalesDataByContract(contractId: string): Promise<SalesData[]>;
+  getAllSalesData(limit?: number, offset?: number): Promise<{ salesData: SalesData[], total: number }>;
+  updateSalesDataMatch(id: string, contractId: string, confidence: number): Promise<SalesData>;
+  deleteSalesData(id: string): Promise<void>;
+  
+  // Contract royalty calculation operations
+  createContractRoyaltyCalculation(calculation: InsertContractRoyaltyCalculation): Promise<ContractRoyaltyCalculation>;
+  getContractRoyaltyCalculations(contractId: string): Promise<ContractRoyaltyCalculation[]>;
+  getContractRoyaltyCalculation(id: string): Promise<ContractRoyaltyCalculation | undefined>;
+  updateCalculationStatus(id: string, status: string, comments?: string): Promise<ContractRoyaltyCalculation>;
+  deleteContractRoyaltyCalculation(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1151,6 +1169,100 @@ export class DatabaseStorage implements IStorage {
       contractsAtRisk,
       riskTrends: aggregatedTrends,
     };
+  }
+
+  // Sales data operations
+  async createSalesData(data: InsertSalesData): Promise<SalesData> {
+    const [salesDataRecord] = await db.insert(salesData).values(data).returning();
+    return salesDataRecord;
+  }
+
+  async createBulkSalesData(salesDataArray: InsertSalesData[]): Promise<SalesData[]> {
+    if (salesDataArray.length === 0) return [];
+    const records = await db.insert(salesData).values(salesDataArray).returning();
+    return records;
+  }
+
+  async getSalesDataByContract(contractId: string): Promise<SalesData[]> {
+    return await db
+      .select()
+      .from(salesData)
+      .where(eq(salesData.matchedContractId, contractId))
+      .orderBy(desc(salesData.transactionDate));
+  }
+
+  async getAllSalesData(limit: number = 100, offset: number = 0): Promise<{ salesData: SalesData[], total: number }> {
+    const [totalResult] = await db.select({ count: count() }).from(salesData);
+    const data = await db
+      .select()
+      .from(salesData)
+      .orderBy(desc(salesData.transactionDate))
+      .limit(limit)
+      .offset(offset);
+    
+    return {
+      salesData: data,
+      total: totalResult?.count || 0,
+    };
+  }
+
+  async updateSalesDataMatch(id: string, contractId: string, confidence: number): Promise<SalesData> {
+    const [updated] = await db
+      .update(salesData)
+      .set({ 
+        matchedContractId: contractId, 
+        matchConfidence: confidence.toString() 
+      })
+      .where(eq(salesData.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteSalesData(id: string): Promise<void> {
+    await db.delete(salesData).where(eq(salesData.id, id));
+  }
+
+  // Contract royalty calculation operations
+  async createContractRoyaltyCalculation(calculation: InsertContractRoyaltyCalculation): Promise<ContractRoyaltyCalculation> {
+    const [created] = await db
+      .insert(contractRoyaltyCalculations)
+      .values(calculation)
+      .returning();
+    return created;
+  }
+
+  async getContractRoyaltyCalculations(contractId: string): Promise<ContractRoyaltyCalculation[]> {
+    return await db
+      .select()
+      .from(contractRoyaltyCalculations)
+      .where(eq(contractRoyaltyCalculations.contractId, contractId))
+      .orderBy(desc(contractRoyaltyCalculations.createdAt));
+  }
+
+  async getContractRoyaltyCalculation(id: string): Promise<ContractRoyaltyCalculation | undefined> {
+    const [calculation] = await db
+      .select()
+      .from(contractRoyaltyCalculations)
+      .where(eq(contractRoyaltyCalculations.id, id));
+    return calculation;
+  }
+
+  async updateCalculationStatus(id: string, status: string, comments?: string): Promise<ContractRoyaltyCalculation> {
+    const updateData: any = { status };
+    if (comments !== undefined) {
+      updateData.comments = comments;
+    }
+    
+    const [updated] = await db
+      .update(contractRoyaltyCalculations)
+      .set(updateData)
+      .where(eq(contractRoyaltyCalculations.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteContractRoyaltyCalculation(id: string): Promise<void> {
+    await db.delete(contractRoyaltyCalculations).where(eq(contractRoyaltyCalculations.id, id));
   }
 
 }
