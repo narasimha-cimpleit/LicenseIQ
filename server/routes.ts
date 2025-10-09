@@ -1061,6 +1061,46 @@ Report ID: ${contractId}
     }
   });
 
+  // Delete a contract
+  app.delete('/api/contracts/:id', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const contractId = req.params.id;
+      const userId = req.user.id;
+
+      // Check if contract exists and user has permission
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ message: 'Contract not found' });
+      }
+
+      // Check permissions: admin, owner, or uploader can delete
+      const user = await storage.getUser(userId);
+      const canDelete = user?.role === 'admin' || user?.role === 'owner' || contract.uploadedBy === userId;
+
+      if (!canDelete) {
+        return res.status(403).json({ message: 'You do not have permission to delete this contract' });
+      }
+
+      // Delete the contract
+      await storage.deleteContract(contractId);
+
+      // Create audit log
+      await createAuditLog(req, 'delete_contract', 'contract', contractId, {
+        fileName: contract.fileName,
+      });
+
+      res.json({ 
+        success: true, 
+        message: 'Contract deleted successfully' 
+      });
+    } catch (error: any) {
+      console.error('Error deleting contract:', error);
+      res.status(500).json({ 
+        message: error.message || 'Failed to delete contract' 
+      });
+    }
+  });
+
   // Download sample sales data
   app.get('/api/sales/sample-data', isAuthenticated, (req: any, res: Response) => {
     // Sample data based on Plant Variety License & Royalty Agreement
