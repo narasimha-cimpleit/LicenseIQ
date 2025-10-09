@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Upload, FileSpreadsheet, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { Upload, FileSpreadsheet, CheckCircle2, XCircle, AlertCircle, Download } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import MainLayout from "@/components/layout/main-layout";
@@ -17,6 +17,28 @@ export default function ErpImportsPage() {
   const [selectedVendorId, setSelectedVendorId] = useState("");
   const [viewingImportId, setViewingImportId] = useState<string | null>(null);
   const { toast } = useToast();
+
+  const downloadSampleCSV = () => {
+    const sampleData = `transactionDate,transactionId,productName,category,territory,grossAmount,netAmount,quantity,unitPrice
+2024-01-15,TXN-001,Software License,Technology,North America,5000.00,4500.00,1,5000.00
+2024-01-16,TXN-002,Music Streaming Rights,Entertainment,Europe,3200.00,2880.00,1,3200.00
+2024-01-17,TXN-003,Patent License,Intellectual Property,Asia,8500.00,7650.00,1,8500.00`;
+    
+    const blob = new Blob([sampleData], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'sample-sales-data.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Sample CSV Downloaded",
+      description: "Use this template to format your sales data",
+    });
+  };
 
   const { data: vendorsData } = useQuery({
     queryKey: ["/api/vendors"],
@@ -155,6 +177,31 @@ export default function ErpImportsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {/* CSV Format Guide */}
+            <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-sm mb-2 text-blue-900 dark:text-blue-100">Required CSV Format</h3>
+                  <div className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                    <p><strong>Required columns:</strong> transactionDate, grossAmount</p>
+                    <p><strong>Optional columns:</strong> transactionId, productCode, productName, category, territory, currency, netAmount, quantity, unitPrice</p>
+                    <p className="text-xs mt-2 italic">Example: transactionDate,productName,category,territory,grossAmount</p>
+                    <p className="text-xs italic">2024-01-15,Software License,Technology,North America,5000.00</p>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={downloadSampleCSV}
+                  className="ml-4 shrink-0"
+                  data-testid="button-download-sample-csv"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Sample
+                </Button>
+              </div>
+            </div>
+
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="vendor">Vendor (Optional)</Label>
