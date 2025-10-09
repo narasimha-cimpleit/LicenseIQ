@@ -393,6 +393,27 @@ export type ContractWithAnalysis = Contract & {
 // AI-DRIVEN ROYALTY CALCULATION SYSTEM
 // ======================
 
+// Sales Data (AI-Matched to Contracts)
+export const salesData = pgTable("sales_data", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  matchedContractId: varchar("matched_contract_id").references(() => contracts.id),
+  matchConfidence: decimal("match_confidence", { precision: 5, scale: 2 }),
+  transactionDate: timestamp("transaction_date").notNull(),
+  transactionId: varchar("transaction_id"),
+  productCode: varchar("product_code"),
+  productName: varchar("product_name"),
+  category: varchar("category"),
+  territory: varchar("territory"),
+  currency: varchar("currency").default("USD"),
+  grossAmount: decimal("gross_amount", { precision: 15, scale: 2 }).notNull(),
+  netAmount: decimal("net_amount", { precision: 15, scale: 2 }),
+  quantity: decimal("quantity", { precision: 12, scale: 4 }),
+  unitPrice: decimal("unit_price", { precision: 15, scale: 2 }),
+  customFields: jsonb("custom_fields"),
+  importJobId: varchar("import_job_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Contract-based Royalty Calculations (AI-Matched Workflow)
 export const contractRoyaltyCalculations = pgTable("contract_royalty_calculations", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -422,6 +443,24 @@ export const contractRoyaltyCalculations = pgTable("contract_royalty_calculation
 // INSERT SCHEMAS
 // ======================
 
+export const insertSalesDataSchema = createInsertSchema(salesData).pick({
+  matchedContractId: true,
+  matchConfidence: true,
+  transactionDate: true,
+  transactionId: true,
+  productCode: true,
+  productName: true,
+  category: true,
+  territory: true,
+  currency: true,
+  grossAmount: true,
+  netAmount: true,
+  quantity: true,
+  unitPrice: true,
+  customFields: true,
+  importJobId: true,
+});
+
 export const insertContractRoyaltyCalculationSchema = createInsertSchema(contractRoyaltyCalculations).pick({
   contractId: true,
   name: true,
@@ -441,5 +480,7 @@ export const insertContractRoyaltyCalculationSchema = createInsertSchema(contrac
 // TYPES
 // ======================
 
+export type SalesData = typeof salesData.$inferSelect;
+export type InsertSalesData = z.infer<typeof insertSalesDataSchema>;
 export type ContractRoyaltyCalculation = typeof contractRoyaltyCalculations.$inferSelect;
 export type InsertContractRoyaltyCalculation = z.infer<typeof insertContractRoyaltyCalculationSchema>;

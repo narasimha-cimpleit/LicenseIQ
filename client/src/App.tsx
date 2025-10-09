@@ -18,6 +18,7 @@ import Audit from "@/pages/audit";
 import ContractAnalysis from "@/pages/contract-analysis";
 import NotFound from "@/pages/not-found";
 import RoyaltyDashboard from "@/pages/royalty-dashboard";
+import SalesUpload from "@/pages/sales-upload";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -43,6 +44,7 @@ function Router() {
           <ProtectedRoute path="/audit" component={Audit} />
           <ProtectedRoute path="/contracts/:id" component={() => <ContractAnalysis />} />
           {/* Royalty Calculations */}
+          <ProtectedRoute path="/sales-upload" component={SalesUpload} />
           <ProtectedRoute path="/royalty-calculations/:id" component={() => <RoyaltyDashboard />} />
         </>
       )}
