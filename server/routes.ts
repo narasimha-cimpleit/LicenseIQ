@@ -558,6 +558,121 @@ Report ID: ${contractId}
     }
   });
 
+  // Calculate royalties for all sales matched to this contract
+  app.post('/api/contracts/:id/calculate-matched-royalties', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const contractId = req.params.id;
+      const { periodStart, periodEnd } = req.body;
+      
+      // Get contract and check permissions
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+
+      const userId = req.user.id;
+      const userRole = (await storage.getUser(userId))?.role;
+      const canView = userRole === 'admin' || userRole === 'owner' || contract.uploadedBy === userId;
+      
+      if (!canView) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      // Get all sales matched to this contract
+      const { RulesEngine } = await import('./services/rulesEngine.js');
+      const allSales = await storage.getSalesDataByContract(contractId);
+      
+      // Filter by date range if provided
+      let salesToCalculate = allSales;
+      if (periodStart || periodEnd) {
+        salesToCalculate = allSales.filter(sale => {
+          const saleDate = new Date(sale.transactionDate);
+          if (periodStart && saleDate < new Date(periodStart)) return false;
+          if (periodEnd && saleDate > new Date(periodEnd)) return false;
+          return true;
+        });
+      }
+
+      if (salesToCalculate.length === 0) {
+        return res.json({ 
+          success: true,
+          totalRoyalty: 0, 
+          salesCount: 0,
+          breakdown: [],
+          message: 'No sales data matched to this contract' 
+        });
+      }
+
+      // Get rule sets for this contract
+      const ruleSets = await storage.getLicenseRuleSetsByContract(contractId);
+      
+      if (ruleSets.length === 0) {
+        return res.status(400).json({ error: 'No royalty rules found for this contract. Upload a contract with royalty terms first.' });
+      }
+
+      // Convert rule sets to RoyaltyRule format
+      const allRules = ruleSets.flatMap(ruleSet => {
+        const rulesDsl = ruleSet.rulesDsl as any;
+        return (rulesDsl?.rules || []).map((rule: any) => ({
+          id: rule.id || crypto.randomUUID(),
+          ruleName: rule.ruleName || rule.description || 'Unnamed Rule',
+          ruleType: rule.ruleType || 'percentage',
+          description: rule.description || '',
+          conditions: rule.conditions || {},
+          calculation: rule.calculation || {},
+          priority: rule.priority || 10,
+          isActive: true,
+          confidence: rule.confidence || 1.0
+        }));
+      });
+
+      // Calculate royalties for each sales transaction
+      let totalRoyalty = 0;
+      const breakdown: any[] = [];
+
+      for (const sale of salesToCalculate) {
+        const calculationInput = {
+          grossRevenue: sale.grossAmount ? parseFloat(sale.grossAmount) : 0,
+          netRevenue: sale.netAmount ? parseFloat(sale.netAmount) : 0,
+          units: sale.quantity || 1,
+          territory: sale.territory || 'Unknown',
+          productCategory: sale.category || sale.productName || 'Unknown',
+          timeframe: 'monthly' as const,
+          customFields: sale.customFields as Record<string, number | string> || {}
+        };
+
+        const result = await RulesEngine.calculateRoyalties(allRules, calculationInput);
+        totalRoyalty += result.totalRoyalty;
+
+        breakdown.push({
+          saleId: sale.id,
+          transactionDate: sale.transactionDate,
+          productName: sale.productName,
+          grossAmount: sale.grossAmount,
+          royaltyAmount: result.totalRoyalty,
+          rulesApplied: result.metadata.rulesApplied,
+          ruleBreakdown: result.breakdown
+        });
+      }
+
+      res.json({
+        success: true,
+        contractId,
+        contractName: contract.originalName,
+        totalRoyalty,
+        salesCount: salesToCalculate.length,
+        periodStart,
+        periodEnd,
+        breakdown,
+        currency: ruleSets[0]?.rulesDsl?.currency || 'USD'
+      });
+
+    } catch (error) {
+      console.error('Royalty calculation error:', error);
+      res.status(500).json({ error: 'Failed to calculate royalties' });
+    }
+  });
+
   // ==========================================
   // ERP IMPORT ROUTES
   // ==========================================

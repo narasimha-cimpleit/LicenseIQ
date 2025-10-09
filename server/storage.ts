@@ -128,6 +128,7 @@ export interface IStorage {
   // Sales Data operations
   createSalesData(salesData: InsertSalesData): Promise<SalesData>;
   getSalesData(vendorId?: string, startDate?: Date, endDate?: Date): Promise<SalesData[]>;
+  getSalesDataByContract(contractId: string): Promise<SalesData[]>;
   importSalesDataBatch(salesDataList: InsertSalesData[]): Promise<SalesData[]>;
   deleteSalesData(vendorId: string, importJobId?: string): Promise<void>;
   
@@ -1416,6 +1417,12 @@ export class DatabaseStorage implements IStorage {
     }
     
     return await query;
+  }
+  
+  async getSalesDataByContract(contractId: string): Promise<SalesData[]> {
+    return await db.select().from(salesData)
+      .where(eq(salesData.matchedContractId, contractId))
+      .orderBy(desc(salesData.transactionDate));
   }
   
   async importSalesDataBatch(salesDataList: InsertSalesData[]): Promise<SalesData[]> {
