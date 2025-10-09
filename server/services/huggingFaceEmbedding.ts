@@ -10,7 +10,8 @@ export interface EmbeddingResult {
 }
 
 export class HuggingFaceEmbeddingService {
-  private static readonly API_URL = 'https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2';
+  // Using BAAI/bge-small-en-v1.5 which is optimized for embedding generation (384 dimensions)
+  private static readonly API_URL = 'https://api-inference.huggingface.co/models/BAAI/bge-small-en-v1.5';
   private static readonly MODEL_DIMENSIONS = 384;
 
   /**
@@ -43,11 +44,13 @@ export class HuggingFaceEmbeddingService {
         throw new Error(`HuggingFace API error: ${response.status} - ${error}`);
       }
 
-      const embedding = await response.json();
+      const result = await response.json();
 
-      // HuggingFace returns the embedding directly as an array
+      // HuggingFace returns array of embeddings for batch, or single array
+      const embedding = Array.isArray(result[0]) ? result[0] : result;
+
       return {
-        embedding: Array.isArray(embedding) ? embedding : embedding[0],
+        embedding,
         tokens: Math.ceil(text.length / 4), // Rough token estimate
       };
     } catch (error: any) {
