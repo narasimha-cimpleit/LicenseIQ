@@ -1579,7 +1579,9 @@ export class DatabaseStorage implements IStorage {
     if (stagingRows.length === 0) return 0;
     
     const salesRows = stagingRows.map((row: any) => ({
-      vendorId: row.rowData.vendorId,
+      vendorId: row.rowData.vendorId || null, // Optional - for manual vendor assignment
+      matchedContractId: row.rowData._aiMatch?.contractId || null, // AI-matched contract
+      matchConfidence: row.rowData._aiMatch?.confidence || null, // AI matching confidence
       transactionDate: new Date(row.rowData.transactionDate),
       transactionId: row.rowData.transactionId || row.externalId,
       productCode: row.rowData.productCode,

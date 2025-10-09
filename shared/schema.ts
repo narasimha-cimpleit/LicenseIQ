@@ -493,7 +493,9 @@ export const salesStaging = pgTable("sales_staging", {
 // Normalized Sales Data table
 export const salesData = pgTable("sales_data", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  vendorId: varchar("vendor_id").references(() => vendors.id),
+  vendorId: varchar("vendor_id").references(() => vendors.id), // Optional - for manual vendor assignment
+  matchedContractId: varchar("matched_contract_id").references(() => contracts.id), // AI-matched contract
+  matchConfidence: decimal("match_confidence", { precision: 5, scale: 2 }), // AI matching confidence score
   transactionDate: timestamp("transaction_date").notNull(),
   transactionId: varchar("transaction_id"), // External transaction ID
   productCode: varchar("product_code"),
