@@ -1,7 +1,7 @@
 import { db } from '../db';
 import { contractEmbeddings, contracts, licenseRuleSets } from '@shared/schema';
 import { cosineDistance, desc, sql, eq, and } from 'drizzle-orm';
-import { EmbeddingService } from './embeddingService';
+import { HuggingFaceEmbeddingService } from './huggingFaceEmbedding';
 
 export interface ContractMatch {
   contractId: string;
@@ -35,8 +35,8 @@ export class SemanticSearchService {
     } = options;
 
     try {
-      // Generate embedding for the query
-      const { embedding: queryEmbedding } = await EmbeddingService.generateEmbedding(queryText);
+      // Generate embedding for the query using Hugging Face (FREE)
+      const { embedding: queryEmbedding } = await HuggingFaceEmbeddingService.generateEmbedding(queryText);
 
       // Use <=> operator for HNSW index optimization
       // Distance metric (lower is better), convert to similarity (higher is better)
@@ -108,7 +108,7 @@ export class SemanticSearchService {
   } | null> {
     try {
       // Create search text from sales data
-      const searchText = EmbeddingService.createSalesSearchText(salesData);
+      const searchText = HuggingFaceEmbeddingService.createSalesSearchText(salesData);
 
       // Find candidate contracts
       const matches = await this.findMatchingContracts(searchText, {

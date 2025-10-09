@@ -80,7 +80,7 @@ export const contractEmbeddings = pgTable("contract_embeddings", {
   contractId: varchar("contract_id").notNull().references(() => contracts.id),
   embeddingType: varchar("embedding_type").notNull(), // 'product', 'territory', 'full_contract', 'rule_description'
   sourceText: text("source_text").notNull(), // Original text that was embedded
-  embedding: vector("embedding", { dimensions: 1536 }), // OpenAI text-embedding-3-small produces 1536 dimensions
+  embedding: vector("embedding", { dimensions: 384 }), // Hugging Face sentence-transformers/all-MiniLM-L6-v2 produces 384 dimensions
   metadata: jsonb("metadata"), // Additional context (product categories, territories, date ranges, etc.)
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
