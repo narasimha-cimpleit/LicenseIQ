@@ -17,11 +17,7 @@ import {
   insertContractSchema, 
   insertContractAnalysisSchema, 
   insertAuditTrailSchema,
-  insertVendorSchema,
-  insertLicenseDocumentSchema,
-  insertLicenseRuleSetSchema,
-  insertSalesDataSchema,
-  insertRoyaltyRunSchema
+  insertSalesDataSchema
 } from "@shared/schema";
 
 // Configure multer for secure file uploads with disk storage
@@ -1016,7 +1012,7 @@ Report ID: ${contractId}
       }));
       
       // Create calculation record
-      const calculation = await storage.createRoyaltyCalculation(
+      const calculation = await storage.createContractRoyaltyCalculation(
         {
           contractId,
           name: name || `Calculation ${new Date().toLocaleDateString()}`,
@@ -1156,12 +1152,15 @@ async function processContractAnalysis(contractId: string, filePath: string) {
     // Analyze with Groq AI
     const aiAnalysis = await groqService.analyzeContract(extractedText);
     
-    // Update contract with analysis
-    await storage.updateContractAnalysis(contractId, {
+    // Create contract analysis (INSERT, not UPDATE)
+    await storage.createContractAnalysis({
+      contractId,
       summary: aiAnalysis.summary,
       keyTerms: aiAnalysis.keyTerms,
-      riskFactors: aiAnalysis.riskFactors,
-      aiConfidence: aiAnalysis.confidence,
+      riskAnalysis: aiAnalysis.riskAnalysis,
+      insights: aiAnalysis.insights,
+      confidence: aiAnalysis.confidence?.toString() || '0',
+      processingTime: 0, // Will be calculated if needed
     });
 
     // Update status to completed
