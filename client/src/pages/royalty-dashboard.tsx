@@ -217,7 +217,7 @@ export default function RoyaltyDashboard() {
                   Run Calculation
                 </Button>
               </DialogTrigger>
-              <DialogContent onInteractOutside={(e) => e.preventDefault()}>
+              <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
                 <DialogHeader>
                   <DialogTitle>Calculate Royalties</DialogTitle>
                   <DialogDescription>
