@@ -104,7 +104,11 @@ export default function RoyaltyDashboard() {
   const deleteSalesMutation = useMutation({
     mutationFn: async () => {
       const response = await apiRequest("DELETE", `/api/contracts/${id}/sales`);
-      return response.json();
+      try {
+        return await response.json();
+      } catch {
+        return { message: "Sales data deleted successfully" };
+      }
     },
     onSuccess: (data) => {
       toast({
@@ -126,12 +130,41 @@ export default function RoyaltyDashboard() {
   const deleteCalculationsMutation = useMutation({
     mutationFn: async () => {
       const response = await apiRequest("DELETE", `/api/contracts/${id}/royalty-calculations`);
-      return response.json();
+      try {
+        return await response.json();
+      } catch {
+        return { message: "All calculations deleted successfully" };
+      }
     },
     onSuccess: (data) => {
       toast({
         title: "Calculations Deleted",
         description: data.message || "All royalty calculations have been deleted",
+      });
+      queryClient.invalidateQueries({ queryKey: [`/api/contracts/${id}/royalty-calculations`] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Delete Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteSingleCalculationMutation = useMutation({
+    mutationFn: async (calculationId: string) => {
+      const response = await apiRequest("DELETE", `/api/royalty-calculations/${calculationId}`);
+      try {
+        return await response.json();
+      } catch {
+        return { message: "Calculation deleted successfully" };
+      }
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Calculation Deleted",
+        description: data.message || "Calculation has been deleted",
       });
       queryClient.invalidateQueries({ queryKey: [`/api/contracts/${id}/royalty-calculations`] });
     },
@@ -562,7 +595,7 @@ export default function RoyaltyDashboard() {
                         <span>{calc.salesCount} transactions</span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-4">
                       <div className="text-right">
                         <p className="text-sm text-muted-foreground">Sales</p>
                         <p className="font-semibold">${parseFloat(calc.totalSalesAmount || "0").toLocaleString()}</p>
@@ -577,6 +610,39 @@ export default function RoyaltyDashboard() {
                         {calc.status === "pending" && <Clock className="h-3 w-3 mr-1" />}
                         {calc.status || "Pending"}
                       </Badge>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+                            disabled={deleteSingleCalculationMutation.isPending}
+                            data-testid={`button-delete-calculation-${calc.id}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete this calculation?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will permanently delete "{calc.name}". This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel data-testid={`button-cancel-delete-calculation-${calc.id}`}>
+                              Cancel
+                            </AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deleteSingleCalculationMutation.mutate(calc.id)}
+                              className="bg-red-600 hover:bg-red-700"
+                              data-testid={`button-confirm-delete-calculation-${calc.id}`}
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
                 ))}

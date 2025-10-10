@@ -1144,6 +1144,49 @@ Report ID: ${contractId}
     }
   });
 
+  // Delete a single royalty calculation
+  app.delete('/api/royalty-calculations/:id', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const calculationId = req.params.id;
+      const userId = req.user?.id;
+      
+      // Get the calculation to find its contract
+      const calculation = await storage.getContractRoyaltyCalculation(calculationId);
+      if (!calculation) {
+        return res.status(404).json({ message: 'Calculation not found' });
+      }
+      
+      // Verify contract exists and check ownership
+      const contract = await storage.getContract(calculation.contractId);
+      if (!contract) {
+        return res.status(404).json({ message: 'Contract not found' });
+      }
+      
+      // Check permissions: admin, owner role, or contract uploader can delete calculations
+      const user = await storage.getUser(userId);
+      const isOwner = contract.uploadedBy === userId;
+      const isAdmin = user?.role === 'admin' || user?.role === 'owner';
+      const canDelete = isOwner || isAdmin;
+      
+      if (!canDelete) {
+        return res.status(403).json({ message: 'You do not have permission to delete this calculation' });
+      }
+      
+      await storage.deleteContractRoyaltyCalculation(calculationId);
+      
+      await createAuditLog(req, 'delete_royalty_calculation', 'calculation', calculationId, {
+        calculationName: calculation.name,
+        contractId: calculation.contractId,
+        contractName: contract.originalName
+      });
+      
+      res.json({ message: 'Calculation deleted successfully' });
+    } catch (error: any) {
+      console.error('Error deleting calculation:', error);
+      res.status(500).json({ message: error.message || 'Failed to delete calculation' });
+    }
+  });
+
   // Delete a contract
   app.delete('/api/contracts/:id', isAuthenticated, async (req: any, res: Response) => {
     try {
