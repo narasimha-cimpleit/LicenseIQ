@@ -49,7 +49,8 @@ export function registerRulesRoutes(app: Express): void {
       }
 
       // Get rule sets for this contract
-      const ruleSets = await storage.getLicenseRuleSetsByContract(contractId);
+      // TODO: Implement storage.getLicenseRuleSetsByContract when feature is ready
+      const ruleSets: any[] = [];
       
       // Format response
       res.json({
