@@ -439,6 +439,31 @@ export const contractRoyaltyCalculations = pgTable("contract_royalty_calculation
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Structured Royalty Rules (Extracted from Contracts)
+export const royaltyRules = pgTable("royalty_rules", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  contractId: varchar("contract_id").notNull().references(() => contracts.id),
+  ruleType: varchar("rule_type").notNull(), // 'percentage', 'tiered', 'minimum_guarantee', 'cap', 'deduction', 'fixed_fee'
+  ruleName: varchar("rule_name").notNull(),
+  description: text("description"),
+  productCategories: text("product_categories").array(), // Array of product categories this rule applies to
+  territories: text("territories").array(), // Array of territories
+  containerSizes: text("container_sizes").array(), // e.g., ["1-gallon", "5-gallon"]
+  seasonalAdjustments: jsonb("seasonal_adjustments"), // e.g., {"Spring": 1.10, "Fall": 0.95, "Holiday": 1.20}
+  territoryPremiums: jsonb("territory_premiums"), // e.g., {"Secondary": 1.10, "Organic": 1.25}
+  volumeTiers: jsonb("volume_tiers"), // [{"min": 0, "max": 4999, "rate": 1.25}, {"min": 5000, "rate": 1.10}]
+  baseRate: decimal("base_rate", { precision: 15, scale: 2 }), // Base royalty rate
+  minimumGuarantee: decimal("minimum_guarantee", { precision: 15, scale: 2 }), // Annual minimum
+  calculationFormula: text("calculation_formula"), // Description of how to calculate
+  priority: integer("priority").default(10), // Lower number = higher priority
+  isActive: boolean("is_active").default(true),
+  confidence: decimal("confidence", { precision: 5, scale: 2 }), // AI extraction confidence
+  sourceSection: varchar("source_section"), // Where in contract this was found
+  sourceText: text("source_text"), // Original contract text
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // ======================
 // INSERT SCHEMAS
 // ======================
@@ -476,6 +501,27 @@ export const insertContractRoyaltyCalculationSchema = createInsertSchema(contrac
   comments: true,
 });
 
+export const insertRoyaltyRuleSchema = createInsertSchema(royaltyRules).pick({
+  contractId: true,
+  ruleType: true,
+  ruleName: true,
+  description: true,
+  productCategories: true,
+  territories: true,
+  containerSizes: true,
+  seasonalAdjustments: true,
+  territoryPremiums: true,
+  volumeTiers: true,
+  baseRate: true,
+  minimumGuarantee: true,
+  calculationFormula: true,
+  priority: true,
+  isActive: true,
+  confidence: true,
+  sourceSection: true,
+  sourceText: true,
+});
+
 // ======================
 // TYPES
 // ======================
@@ -484,3 +530,5 @@ export type SalesData = typeof salesData.$inferSelect;
 export type InsertSalesData = z.infer<typeof insertSalesDataSchema>;
 export type ContractRoyaltyCalculation = typeof contractRoyaltyCalculations.$inferSelect;
 export type InsertContractRoyaltyCalculation = z.infer<typeof insertContractRoyaltyCalculationSchema>;
+export type RoyaltyRule = typeof royaltyRules.$inferSelect;
+export type InsertRoyaltyRule = z.infer<typeof insertRoyaltyRuleSchema>;
