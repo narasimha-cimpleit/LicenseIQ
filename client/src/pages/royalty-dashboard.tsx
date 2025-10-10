@@ -36,6 +36,7 @@ import {
   PieChart as PieChartIcon,
   Calendar,
   Trash2,
+  Settings,
 } from "lucide-react";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { format } from "date-fns";
@@ -215,10 +216,21 @@ export default function RoyaltyDashboard() {
       description={`Calculate royalties for ${(contract as any)?.originalName || 'contract'}`}
     >
       <div className="space-y-6">
-        <Button variant="ghost" onClick={() => setLocation(`/contracts/${id}`)}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Contract
-        </Button>
+        <div className="flex items-center justify-between">
+          <Button variant="ghost" onClick={() => setLocation(`/contracts/${id}`)}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Contract
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => setLocation(`/rules-management/${id}`)}
+            className="bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:from-violet-700 hover:to-purple-700"
+            data-testid="button-manage-rules"
+          >
+            <Settings className="h-4 w-4 mr-2" />
+            Manage Royalty Rules
+          </Button>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">

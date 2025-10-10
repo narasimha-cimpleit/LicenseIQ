@@ -203,6 +203,8 @@ export interface IStorage {
   createRoyaltyRule(rule: InsertRoyaltyRule): Promise<RoyaltyRule>;
   getRoyaltyRulesByContract(contractId: string): Promise<RoyaltyRule[]>;
   getActiveRoyaltyRulesByContract(contractId: string): Promise<RoyaltyRule[]>;
+  deleteRoyaltyRule(ruleId: string): Promise<void>;
+  updateRoyaltyRule(ruleId: string, updates: Partial<InsertRoyaltyRule>): Promise<RoyaltyRule>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1318,6 +1320,19 @@ export class DatabaseStorage implements IStorage {
       .from(royaltyRules)
       .where(and(eq(royaltyRules.contractId, contractId), eq(royaltyRules.isActive, true)))
       .orderBy(royaltyRules.priority);
+  }
+
+  async deleteRoyaltyRule(ruleId: string): Promise<void> {
+    await db.delete(royaltyRules).where(eq(royaltyRules.id, ruleId));
+  }
+
+  async updateRoyaltyRule(ruleId: string, updates: Partial<InsertRoyaltyRule>): Promise<RoyaltyRule> {
+    const [updated] = await db
+      .update(royaltyRules)
+      .set(updates)
+      .where(eq(royaltyRules.id, ruleId))
+      .returning();
+    return updated;
   }
 
 }

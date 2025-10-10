@@ -48,63 +48,87 @@ export function registerRulesRoutes(app: Express): void {
         return res.status(403).json({ message: 'Access denied' });
       }
 
-      // Get contract analysis to extract rules from AI-analyzed data
-      const analysis = await storage.getContractAnalysis(contractId);
-      
-      // Extract rules from analysis data
-      const ruleSets: any[] = [];
-      
-      if (analysis) {
-        // Extract royalty rules from key terms
-        const keyTerms = analysis.keyTerms as any[] || [];
-        const paymentTerms = keyTerms.filter((term: any) => 
-          term.type?.toLowerCase().includes('payment') || 
-          term.type?.toLowerCase().includes('royalty') ||
-          term.type?.toLowerCase().includes('financial')
-        );
-        
-        if (paymentTerms.length > 0) {
-          const rules = paymentTerms.map((term: any, index: number) => ({
-            id: `rule-${index + 1}`,
-            ruleName: term.type || 'Payment Rule',
-            ruleType: 'percentage',
-            description: term.description || term.type,
-            conditions: {
-              productCategories: [],
-              territories: [],
-              currency: 'USD'
-            },
-            calculation: {
-              rate: 0,
-              baseField: 'netRevenue'
-            },
-            priority: index + 1,
-            isActive: true,
-            confidence: term.confidence || 0.85
-          }));
-          
-          ruleSets.push({
-            id: 'extracted-rules-1',
-            licenseType: 'Contract-based',
-            licensor: 'As specified in contract',
-            licensee: 'As specified in contract',
-            rules,
-            currency: 'USD',
-            status: 'active',
-            confidence: 0.85,
-            rulesCount: rules.length
-          });
-        }
-      }
+      // Get royalty rules from database
+      const rules = await storage.getRoyaltyRulesByContract(contractId);
       
       // Format response
       res.json({
-        contractId,
-        ruleSets
+        rules,
+        total: rules.length
       });
     } catch (error) {
       console.error('Error fetching rules:', error);
       res.status(500).json({ message: 'Failed to fetch rules' });
+    }
+  });
+
+  // Delete a royalty rule
+  app.delete('/api/contracts/:contractId/rules/:ruleId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { contractId, ruleId } = req.params;
+      const userId = req.user.id;
+
+      // Check permissions
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ message: 'Contract not found' });
+      }
+
+      const userRole = (await storage.getUser(userId))?.role;
+      const canEditAny = userRole === 'admin' || userRole === 'owner';
+      
+      if (!canEditAny && contract.uploadedBy !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      // Delete the rule
+      await storage.deleteRoyaltyRule(ruleId);
+
+      // Log the deletion
+      await createAuditLog(req, 'rule_deleted', 'royalty_rule', ruleId, {
+        contractId
+      });
+
+      res.json({ message: 'Rule deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting rule:', error);
+      res.status(500).json({ message: 'Failed to delete rule' });
+    }
+  });
+
+  // Update a royalty rule
+  app.patch('/api/contracts/:contractId/rules/:ruleId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { contractId, ruleId } = req.params;
+      const userId = req.user.id;
+      const updates = req.body;
+
+      // Check permissions
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ message: 'Contract not found' });
+      }
+
+      const userRole = (await storage.getUser(userId))?.role;
+      const canEditAny = userRole === 'admin' || userRole === 'owner';
+      
+      if (!canEditAny && contract.uploadedBy !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      // Update the rule
+      await storage.updateRoyaltyRule(ruleId, updates);
+
+      // Log the update
+      await createAuditLog(req, 'rule_updated', 'royalty_rule', ruleId, {
+        contractId,
+        updates
+      });
+
+      res.json({ message: 'Rule updated successfully' });
+    } catch (error) {
+      console.error('Error updating rule:', error);
+      res.status(500).json({ message: 'Failed to update rule' });
     }
   });
 
