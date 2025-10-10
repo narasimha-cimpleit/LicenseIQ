@@ -12,6 +12,17 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   Calculator,
   DollarSign,
   TrendingUp,
@@ -24,6 +35,7 @@ import {
   BarChart3,
   PieChart as PieChartIcon,
   Calendar,
+  Trash2,
 } from "lucide-react";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { format } from "date-fns";
@@ -83,6 +95,49 @@ export default function RoyaltyDashboard() {
       setIsCalculating(false);
       toast({
         title: "Calculation Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteSalesMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("DELETE", `/api/contracts/${id}/sales`);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Sales Data Deleted",
+        description: data.message || "All sales data has been deleted",
+      });
+      queryClient.invalidateQueries({ queryKey: [`/api/contracts/${id}/sales`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/contracts/${id}/royalty-calculations`] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Delete Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteCalculationsMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("DELETE", `/api/contracts/${id}/royalty-calculations`);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Calculations Deleted",
+        description: data.message || "All royalty calculations have been deleted",
+      });
+      queryClient.invalidateQueries({ queryKey: [`/api/contracts/${id}/royalty-calculations`] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Delete Failed",
         description: error.message,
         variant: "destructive",
       });
@@ -309,6 +364,105 @@ export default function RoyaltyDashboard() {
                 </div>
               </CollapsibleContent>
             </Collapsible>
+          </CardContent>
+        </Card>
+
+        <Card className="border-red-200 dark:border-red-900">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-red-700 dark:text-red-400">
+              <Trash2 className="h-5 w-5" />
+              Data Management
+            </CardTitle>
+            <CardDescription>
+              Delete data to start fresh testing with contract PDF rules
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold">Sales Data</h4>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Delete all {salesData.length} sales transactions for this contract
+                </p>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      variant="destructive" 
+                      className="w-full"
+                      disabled={salesData.length === 0 || deleteSalesMutation.isPending}
+                      data-testid="button-delete-sales"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      {deleteSalesMutation.isPending ? "Deleting..." : "Delete All Sales Data"}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete all {salesData.length} sales transactions for this contract. 
+                        This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel data-testid="button-cancel-delete-sales">Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => deleteSalesMutation.mutate()}
+                        className="bg-red-600 hover:bg-red-700"
+                        data-testid="button-confirm-delete-sales"
+                      >
+                        Delete All Sales
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold">Calculation History</h4>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Delete all {calculations.length} royalty calculation runs
+                </p>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      variant="destructive" 
+                      className="w-full"
+                      disabled={calculations.length === 0 || deleteCalculationsMutation.isPending}
+                      data-testid="button-delete-calculations"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      {deleteCalculationsMutation.isPending ? "Deleting..." : "Delete All Calculations"}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete all {calculations.length} royalty calculation runs for this contract. 
+                        This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel data-testid="button-cancel-delete-calculations">Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => deleteCalculationsMutation.mutate()}
+                        className="bg-red-600 hover:bg-red-700"
+                        data-testid="button-confirm-delete-calculations"
+                      >
+                        Delete All Calculations
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            </div>
+            
+            <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mt-4">
+              <p className="text-sm text-amber-800 dark:text-amber-200">
+                💡 <strong>Tip:</strong> Use this to start fresh testing. After deleting data, upload new sales files and ensure calculations are based on your contract PDF's extracted rules.
+              </p>
+            </div>
           </CardContent>
         </Card>
 
