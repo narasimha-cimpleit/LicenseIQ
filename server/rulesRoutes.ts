@@ -66,28 +66,33 @@ export function registerRulesRoutes(app: Express): void {
         if (paymentTerms.length > 0) {
           const rules = paymentTerms.map((term: any, index: number) => ({
             id: `rule-${index + 1}`,
-            type: 'percentage',
+            ruleName: term.type || 'Payment Rule',
+            ruleType: 'percentage',
             description: term.description || term.type,
-            value: term.value || 'As specified in agreement',
-            conditions: term.conditions || {},
-            confidence: term.confidence || 0.85,
-            location: term.location || 'Contract analysis'
+            conditions: {
+              productCategories: [],
+              territories: [],
+              currency: 'USD'
+            },
+            calculation: {
+              rate: 0,
+              baseField: 'netRevenue'
+            },
+            priority: index + 1,
+            isActive: true,
+            confidence: term.confidence || 0.85
           }));
           
           ruleSets.push({
             id: 'extracted-rules-1',
-            name: 'Extracted Royalty Rules',
-            description: 'Rules automatically extracted from contract analysis',
-            version: '1.0',
-            status: 'active',
             licenseType: 'Contract-based',
-            territory: 'As specified',
+            licensor: 'As specified in contract',
+            licensee: 'As specified in contract',
             rules,
-            metadata: {
-              extractedFrom: 'AI Analysis',
-              contractId,
-              extractedAt: new Date().toISOString()
-            }
+            currency: 'USD',
+            status: 'active',
+            confidence: 0.85,
+            rulesCount: rules.length
           });
         }
       }
