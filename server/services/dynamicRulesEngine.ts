@@ -1,6 +1,8 @@
 import { db } from '../db';
 import { royaltyRules, salesData } from '@shared/schema';
 import { eq, and, sql } from 'drizzle-orm';
+import { FormulaInterpreter } from './formulaInterpreter';
+import type { FormulaDefinition } from '@shared/formula-types';
 
 interface VolumeTier {
   min: number;
@@ -138,13 +140,57 @@ export class DynamicRulesEngine {
   }
 
   private calculateSaleRoyalty(sale: SaleItem, rule: any): RoyaltyBreakdownItem {
+    // 🚀 NEW: Use FormulaInterpreter if formulaDefinition exists
+    if (rule.formulaDefinition) {
+      console.log(`🧮 [FORMULA CALC] Using FormulaInterpreter for rule: ${rule.ruleName}`);
+      
+      const season = this.determineSeason(sale.transactionDate);
+      const interpreter = new FormulaInterpreter({ debug: true });
+      
+      // Build context from sale data
+      const context: any = {
+        units: sale.quantity,
+        quantity: sale.quantity,
+        season: season,
+        territory: sale.territory,
+        product: sale.productName,
+        category: sale.category,
+        salesVolume: sale.quantity.toString(), // For range-based lookups
+        grossAmount: sale.grossAmount,
+      };
+      
+      const formulaDef = rule.formulaDefinition as FormulaDefinition;
+      const result = interpreter.evaluateFormula(formulaDef, context);
+      
+      console.log(`   ✅ Formula result: $${result.value.toFixed(2)}`);
+      if (result.debugLog) {
+        result.debugLog.forEach(log => console.log(`      ${log}`));
+      }
+      
+      return {
+        saleId: sale.id,
+        productName: sale.productName,
+        category: sale.category,
+        territory: sale.territory,
+        quantity: sale.quantity,
+        ruleApplied: rule.ruleName,
+        baseRate: 0, // Not applicable for formula-based
+        tierRate: result.value / sale.quantity, // Effective rate per unit
+        seasonalMultiplier: 1, // Already included in formula
+        territoryMultiplier: 1, // Already included in formula
+        calculatedRoyalty: result.value,
+        explanation: `Formula: ${formulaDef.description || rule.ruleName} = $${result.value.toFixed(2)}`
+      };
+    }
+    
+    // 📊 LEGACY: Fall back to old calculation method
     const volumeTiers: VolumeTier[] = rule.volumeTiers || [];
     const seasonalAdj: SeasonalAdjustments = rule.seasonalAdjustments || {};
     const territoryPrem: TerritoryPremiums = rule.territoryPremiums || {};
 
     let tierRate = parseFloat(rule.baseRate || '0');
     
-    console.log(`🔍 [CALC DEBUG] Rule: ${rule.ruleName}`);
+    console.log(`🔍 [LEGACY CALC] Rule: ${rule.ruleName}`);
     console.log(`   - Base Rate: ${rule.baseRate} → ${tierRate}`);
     console.log(`   - Volume Tiers: ${JSON.stringify(volumeTiers)}`);
     console.log(`   - Seasonal Adj: ${JSON.stringify(seasonalAdj)}`);
