@@ -958,6 +958,33 @@ Report ID: ${contractId}
     }
   });
 
+  // Delete all sales data for a contract
+  app.delete('/api/contracts/:id/sales', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const contractId = req.params.id;
+      const userId = req.user?.id;
+      
+      // Check permissions: admin, owner, or editor can delete sales data
+      const user = await storage.getUser(userId);
+      const canDelete = user?.role === 'admin' || user?.role === 'owner' || user?.role === 'editor';
+      
+      if (!canDelete) {
+        return res.status(403).json({ message: 'You do not have permission to delete sales data' });
+      }
+      
+      await storage.deleteAllSalesDataForContract(contractId);
+      
+      await createAuditLog(req, 'delete_sales_data', 'contract', contractId, {
+        action: 'bulk_delete_sales'
+      });
+      
+      res.json({ message: 'All sales data deleted successfully' });
+    } catch (error: any) {
+      console.error('Error deleting sales data:', error);
+      res.status(500).json({ message: error.message || 'Failed to delete sales data' });
+    }
+  });
+
   // Calculate royalties for a contract using dynamic rules engine
   app.post('/api/contracts/:id/calculate-royalties', isAuthenticated, async (req: any, res: Response) => {
     try {
@@ -1069,6 +1096,33 @@ Report ID: ${contractId}
     } catch (error: any) {
       console.error('Error fetching royalty calculations:', error);
       res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Delete all royalty calculations for a contract
+  app.delete('/api/contracts/:id/royalty-calculations', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const contractId = req.params.id;
+      const userId = req.user?.id;
+      
+      // Check permissions: admin, owner, or editor can delete calculations
+      const user = await storage.getUser(userId);
+      const canDelete = user?.role === 'admin' || user?.role === 'owner' || user?.role === 'editor';
+      
+      if (!canDelete) {
+        return res.status(403).json({ message: 'You do not have permission to delete calculations' });
+      }
+      
+      await storage.deleteAllCalculationsForContract(contractId);
+      
+      await createAuditLog(req, 'delete_royalty_calculations', 'contract', contractId, {
+        action: 'bulk_delete_calculations'
+      });
+      
+      res.json({ message: 'All royalty calculations deleted successfully' });
+    } catch (error: any) {
+      console.error('Error deleting royalty calculations:', error);
+      res.status(500).json({ message: error.message || 'Failed to delete calculations' });
     }
   });
 

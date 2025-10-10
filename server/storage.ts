@@ -185,6 +185,7 @@ export interface IStorage {
   getAllSalesData(limit?: number, offset?: number): Promise<{ salesData: SalesData[], total: number }>;
   updateSalesDataMatch(id: string, contractId: string, confidence: number): Promise<SalesData>;
   deleteSalesData(id: string): Promise<void>;
+  deleteAllSalesDataForContract(contractId: string): Promise<void>;
   
   // Contract royalty calculation operations
   createContractRoyaltyCalculation(calculation: InsertContractRoyaltyCalculation): Promise<ContractRoyaltyCalculation>;
@@ -192,6 +193,7 @@ export interface IStorage {
   getContractRoyaltyCalculation(id: string): Promise<ContractRoyaltyCalculation | undefined>;
   updateCalculationStatus(id: string, status: string, comments?: string): Promise<ContractRoyaltyCalculation>;
   deleteContractRoyaltyCalculation(id: string): Promise<void>;
+  deleteAllCalculationsForContract(contractId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1222,6 +1224,10 @@ export class DatabaseStorage implements IStorage {
     await db.delete(salesData).where(eq(salesData.id, id));
   }
 
+  async deleteAllSalesDataForContract(contractId: string): Promise<void> {
+    await db.delete(salesData).where(eq(salesData.matchedContractId, contractId));
+  }
+
   // Contract royalty calculation operations
   async createContractRoyaltyCalculation(calculation: InsertContractRoyaltyCalculation): Promise<ContractRoyaltyCalculation> {
     const [created] = await db
@@ -1263,6 +1269,10 @@ export class DatabaseStorage implements IStorage {
 
   async deleteContractRoyaltyCalculation(id: string): Promise<void> {
     await db.delete(contractRoyaltyCalculations).where(eq(contractRoyaltyCalculations.id, id));
+  }
+
+  async deleteAllCalculationsForContract(contractId: string): Promise<void> {
+    await db.delete(contractRoyaltyCalculations).where(eq(contractRoyaltyCalculations.contractId, contractId));
   }
 
 }
