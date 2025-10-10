@@ -994,6 +994,126 @@ Report ID: ${contractId}
     }
   });
 
+  // Preview formulas that will be applied to sales data
+  app.get('/api/contracts/:id/formula-preview', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const contractId = req.params.id;
+      
+      // Get sales data and rules
+      const allSales = await storage.getSalesDataByContract(contractId);
+      const rules = await db
+        .select()
+        .from(royaltyRules)
+        .where(and(
+          eq(royaltyRules.contractId, contractId),
+          eq(royaltyRules.isActive, true)
+        ))
+        .orderBy(royaltyRules.priority);
+      
+      if (allSales.length === 0) {
+        return res.json({ 
+          samples: [], 
+          totalProducts: 0,
+          totalRules: rules.length,
+          unmatchedSales: 0
+        });
+      }
+
+      // Group sales by product and get sample from each
+      const productGroups = new Map<string, typeof allSales[0]>();
+      allSales.forEach(sale => {
+        const key = `${sale.productName}-${sale.category}`;
+        if (!productGroups.has(key)) {
+          productGroups.set(key, sale);
+        }
+      });
+
+      // Helper to find matching rule (same logic as DynamicRulesEngine)
+      const findMatchingRule = (sale: any) => {
+        const tierRules = rules.filter(r => r.ruleType === 'tiered_pricing' || r.ruleType === 'formula_based');
+        
+        for (const rule of tierRules) {
+          // Check product categories
+          if (rule.productCategories && rule.productCategories.length > 0) {
+            const categoryMatch = rule.productCategories.some((cat: string) => 
+              sale.category?.toLowerCase().includes(cat.toLowerCase()) ||
+              sale.productName?.toLowerCase().includes(cat.toLowerCase())
+            );
+            if (!categoryMatch) continue;
+          }
+
+          // Check territories
+          if (rule.territories && rule.territories.length > 0 && !rule.territories.includes('All')) {
+            const territoryMatch = rule.territories.some((terr: string) =>
+              sale.territory?.toLowerCase().includes(terr.toLowerCase())
+            );
+            if (!territoryMatch) continue;
+          }
+
+          return rule;
+        }
+        return null;
+      };
+
+      // Create preview samples
+      const samples = Array.from(productGroups.values()).map(sale => {
+        const matchingRule = findMatchingRule(sale);
+        
+        if (!matchingRule) {
+          return {
+            productName: sale.productName,
+            category: sale.category,
+            sampleUnits: parseInt(sale.quantity),
+            matched: false,
+            ruleName: null,
+            ruleDescription: null,
+            formulaType: null
+          };
+        }
+
+        // Extract formula type from formula definition or legacy fields
+        let formulaType = 'Standard rate';
+        let ruleDescription = matchingRule.description || '';
+
+        if (matchingRule.formulaDefinition) {
+          const def = matchingRule.formulaDefinition as any;
+          formulaType = def.description || def.name || 'Formula-based';
+        } else if (matchingRule.volumeTiers && matchingRule.volumeTiers.length > 0) {
+          formulaType = 'Volume tiers';
+        } else if (matchingRule.seasonalAdjustments) {
+          formulaType = 'Seasonal adjustments';
+        } else if (matchingRule.territoryPremiums) {
+          formulaType = 'Territory premiums';
+        }
+
+        return {
+          productName: sale.productName,
+          category: sale.category,
+          sampleUnits: parseInt(sale.quantity),
+          matched: true,
+          ruleName: matchingRule.ruleName,
+          ruleDescription,
+          formulaType,
+          priority: matchingRule.priority,
+          confidence: matchingRule.confidence
+        };
+      });
+
+      const unmatchedCount = samples.filter(s => !s.matched).length;
+
+      res.json({
+        samples: samples.slice(0, 10), // Top 10 product samples
+        totalProducts: productGroups.size,
+        totalRules: rules.length,
+        unmatchedSales: unmatchedCount
+      });
+
+    } catch (error: any) {
+      console.error('Error generating formula preview:', error);
+      res.status(500).json({ message: error.message || 'Failed to generate preview' });
+    }
+  });
+
   // Calculate royalties for a contract using dynamic rules engine
   app.post('/api/contracts/:id/calculate-royalties', isAuthenticated, async (req: any, res: Response) => {
     try {
