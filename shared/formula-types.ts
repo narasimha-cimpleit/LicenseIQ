@@ -36,34 +36,49 @@ export interface TierNode extends FormulaNode {
   }>;
 }
 
+// Forward declaration for recursive types
+export type AnyFormulaNode = 
+  | LiteralNode 
+  | ReferenceNode 
+  | TierNode 
+  | MultiplyNode 
+  | AddNode 
+  | SubtractNode
+  | MaxNode 
+  | MinNode 
+  | IfNode 
+  | LookupNode
+  | PremiumNode
+  | RoundNode;
+
 // Multiplication operation
 export interface MultiplyNode extends FormulaNode {
   type: 'multiply';
-  operands: FormulaNode[];
+  operands: AnyFormulaNode[];
 }
 
 // Addition operation
 export interface AddNode extends FormulaNode {
   type: 'add';
-  operands: FormulaNode[];
+  operands: AnyFormulaNode[];
 }
 
 // Subtraction operation
 export interface SubtractNode extends FormulaNode {
   type: 'subtract';
-  operands: [FormulaNode, FormulaNode]; // left - right
+  operands: [AnyFormulaNode, AnyFormulaNode]; // left - right
 }
 
 // Maximum value
 export interface MaxNode extends FormulaNode {
   type: 'max';
-  operands: FormulaNode[];
+  operands: AnyFormulaNode[];
 }
 
 // Minimum value
 export interface MinNode extends FormulaNode {
   type: 'min';
-  operands: FormulaNode[];
+  operands: AnyFormulaNode[];
 }
 
 // Conditional operation
@@ -74,14 +89,14 @@ export interface IfNode extends FormulaNode {
     operator: 'equals' | 'contains' | 'greaterThan' | 'lessThan' | 'in';
     value: any;
   };
-  then: FormulaNode;
-  else?: FormulaNode;
+  then: AnyFormulaNode;
+  else?: AnyFormulaNode;
 }
 
 // Lookup table (for seasonal adjustments, territory premiums, etc.)
 export interface LookupNode extends FormulaNode {
   type: 'lookup';
-  reference: ReferenceNode; // Field to lookup (e.g., season, territory)
+  reference: AnyFormulaNode; // Field to lookup (e.g., season, territory)
   table: Record<string, number>; // { "Spring": 1.10, "Summer": 1.05, ... }
   default?: number; // Default if not found
 }
@@ -102,7 +117,7 @@ export interface LookupNode extends FormulaNode {
  */
 export interface PremiumNode extends FormulaNode {
   type: 'premium';
-  base: FormulaNode; // Base value to apply premium to
+  base: AnyFormulaNode; // Base value to apply premium to
   percentage: number; // e.g., 0.25 for +25%, -0.05 for -5%
   mode: 'additive' | 'multiplicative';
 }
@@ -113,25 +128,10 @@ export interface PremiumNode extends FormulaNode {
  */
 export interface RoundNode extends FormulaNode {
   type: 'round';
-  value: FormulaNode; // Value to round
+  value: AnyFormulaNode; // Value to round
   precision: number; // Decimal places (e.g., 2 for cents, 3 for thousandths)
   mode?: 'round' | 'floor' | 'ceil'; // Rounding mode, defaults to 'round' (standard rounding)
 }
-
-// All possible formula node types
-export type AnyFormulaNode = 
-  | LiteralNode 
-  | ReferenceNode 
-  | TierNode 
-  | MultiplyNode 
-  | AddNode 
-  | SubtractNode
-  | MaxNode 
-  | MinNode 
-  | IfNode 
-  | LookupNode
-  | PremiumNode
-  | RoundNode;
 
 // Complete formula definition with metadata
 export interface FormulaDefinition {
