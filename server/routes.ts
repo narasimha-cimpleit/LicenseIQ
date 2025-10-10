@@ -1097,6 +1097,68 @@ Report ID: ${contractId}
     }
   });
 
+  // Upload sales data (with AI-driven contract matching)
+  app.post('/api/sales/upload', isAuthenticated, dataUpload.single('file'), async (req: any, res: Response) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      // Parse file
+      const fileBuffer = fs.readFileSync(req.file.path);
+      const { SalesDataParser } = await import('./services/salesDataParser.js');
+      const parseResult = await SalesDataParser.parseFile(fileBuffer, req.file.originalname);
+
+      const validRows = parseResult.rows.filter(r => r.validationStatus === 'valid');
+      const contractId = req.body.contractId; // Optional - if not provided, AI will match
+
+      // Store sales data (for now, without AI matching - will be enhanced later)
+      if (contractId) {
+        for (const row of validRows) {
+          const salesData = row.rowData as any;
+          await storage.createSalesData({
+            contractId,
+            transactionId: salesData.transactionId || `TXN-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            transactionDate: salesData.transactionDate ? new Date(salesData.transactionDate) : new Date(),
+            productCode: salesData.productCode,
+            productName: salesData.productName,
+            category: salesData.category,
+            territory: salesData.territory,
+            currency: salesData.currency || 'USD',
+            grossAmount: String(parseFloat(salesData.grossAmount) || 0),
+            netAmount: String(parseFloat(salesData.netAmount) || 0),
+            quantity: String(parseInt(salesData.quantity) || 0),
+            unitPrice: String(parseFloat(salesData.unitPrice) || 0)
+          });
+        }
+      }
+
+      // Clean up uploaded file
+      fs.unlinkSync(req.file.path);
+
+      // Create audit log
+      await createAuditLog(req, 'upload_sales_data', 'sales', undefined, {
+        fileName: req.file.originalname,
+        rowsImported: validRows.length,
+        contractId: contractId || 'AI-matched'
+      });
+
+      res.json({
+        success: true,
+        validRows: validRows.length,
+        totalRows: parseResult.rows.length,
+        errors: parseResult.rows.filter(r => r.validationStatus === 'invalid').length,
+        message: contractId 
+          ? `${validRows.length} sales transactions imported successfully` 
+          : `${validRows.length} sales transactions parsed. AI matching will be available soon.`
+      });
+
+    } catch (error: any) {
+      console.error('Sales upload error:', error);
+      res.status(500).json({ error: error.message || 'Failed to upload sales data' });
+    }
+  });
+
   // Download sample sales data
   app.get('/api/sales/sample-data', isAuthenticated, (req: any, res: Response) => {
     // Sample data based on Plant Variety License & Royalty Agreement
