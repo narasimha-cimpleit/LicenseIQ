@@ -2,6 +2,7 @@ import {
   users,
   contracts,
   contractAnalysis,
+  contractEmbeddings,
   auditTrail,
   financialAnalysis,
   complianceAnalysis,
@@ -12,6 +13,7 @@ import {
   marketBenchmarks,
   contractRoyaltyCalculations,
   salesData,
+  royaltyRules,
   type User,
   type InsertUser,
   type Contract,
@@ -400,10 +402,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteContract(id: string): Promise<void> {
-    // First delete the associated analysis if it exists
+    // Delete all related data in correct order (respecting foreign key constraints)
+    
+    // 1. Delete royalty calculations
+    await db.delete(contractRoyaltyCalculations).where(eq(contractRoyaltyCalculations.contractId, id));
+    
+    // 2. Delete sales data (uses matchedContractId column)
+    await db.delete(salesData).where(eq(salesData.matchedContractId, id));
+    
+    // 3. Delete royalty rules
+    await db.delete(royaltyRules).where(eq(royaltyRules.contractId, id));
+    
+    // 4. Delete contract embeddings
+    await db.delete(contractEmbeddings).where(eq(contractEmbeddings.contractId, id));
+    
+    // 5. Delete contract analysis
     await db.delete(contractAnalysis).where(eq(contractAnalysis.contractId, id));
     
-    // Then delete the contract itself
+    // 6. Finally delete the contract itself
     await db.delete(contracts).where(eq(contracts.id, id));
   }
 
