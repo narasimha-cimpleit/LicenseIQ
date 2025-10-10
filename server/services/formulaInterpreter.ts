@@ -179,8 +179,9 @@ export class FormulaInterpreter {
         (tier.max === null || referenceValue <= tier.max);
       
       if (inRange) {
-        this.log(`Tier match: ${referenceValue} in [${tier.min}, ${tier.max ?? '∞'}] → rate ${tier.rate}${tier.label ? ` (${tier.label})` : ''}`);
-        return tier.rate;
+        const result = tier.rate * referenceValue;
+        this.log(`Tier match: ${referenceValue} in [${tier.min}, ${tier.max ?? '∞'}] → rate ${tier.rate}${tier.label ? ` (${tier.label})` : ''} = ${result}`);
+        return result;
       }
     }
     
