@@ -98,6 +98,45 @@ export function registerRulesRoutes(app: Express): void {
     }
   });
 
+  // Create a new royalty rule
+  app.post('/api/contracts/:contractId/rules', isAuthenticated, async (req: any, res) => {
+    try {
+      const { contractId } = req.params;
+      const userId = req.user.id;
+      const ruleData = req.body;
+
+      // Check permissions
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ message: 'Contract not found' });
+      }
+
+      const userRole = (await storage.getUser(userId))?.role;
+      const canEditAny = userRole === 'admin' || userRole === 'owner';
+      
+      if (!canEditAny && contract.uploadedBy !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      // Create the rule
+      const newRule = await storage.createRoyaltyRule({
+        ...ruleData,
+        contractId
+      });
+
+      // Log the creation
+      await createAuditLog(req, 'rule_created', 'royalty_rule', newRule.id, {
+        contractId,
+        ruleName: ruleData.ruleName
+      });
+
+      res.json({ message: 'Rule created successfully', rule: newRule });
+    } catch (error) {
+      console.error('Error creating rule:', error);
+      res.status(500).json({ message: 'Failed to create rule' });
+    }
+  });
+
   // Update a royalty rule
   app.patch('/api/contracts/:contractId/rules/:ruleId', isAuthenticated, async (req: any, res) => {
     try {
