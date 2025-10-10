@@ -1050,14 +1050,26 @@ Report ID: ${contractId}
           // Check product categories (bidirectional matching)
           if (rule.productCategories && rule.productCategories.length > 0) {
             const categoryMatch = rule.productCategories.some((cat: string) => {
-              const catLower = cat.toLowerCase();
-              const saleCategoryLower = sale.category?.toLowerCase() || '';
-              const saleProductLower = sale.productName?.toLowerCase() || '';
+              const catLower = cat.toLowerCase().trim();
+              const saleCategoryLower = (sale.category?.toLowerCase() || '').trim();
+              const saleProductLower = (sale.productName?.toLowerCase() || '').trim();
               
-              // Bidirectional match: check both directions
-              return saleCategoryLower.includes(catLower) || 
-                     catLower.includes(saleCategoryLower) ||
-                     saleProductLower.includes(catLower);
+              // Guard: require rule category to be non-empty
+              if (!catLower) {
+                return false;
+              }
+              
+              // Primary match: bidirectional category matching (requires non-empty sale category)
+              if (saleCategoryLower) {
+                return saleCategoryLower.includes(catLower) || catLower.includes(saleCategoryLower);
+              }
+              
+              // Fallback: product name matching (only if category is empty, and only exact substring)
+              if (saleProductLower) {
+                return saleProductLower.includes(catLower);
+              }
+              
+              return false;
             });
             if (!categoryMatch) continue;
           }
