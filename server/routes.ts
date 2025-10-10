@@ -999,9 +999,22 @@ Report ID: ${contractId}
   app.get('/api/contracts/:id/formula-preview', isAuthenticated, async (req: any, res: Response) => {
     try {
       const contractId = req.params.id;
+      const { periodStart, periodEnd } = req.query;
       
       // Get sales data and rules
-      const allSales = await storage.getSalesDataByContract(contractId);
+      let allSales = await storage.getSalesDataByContract(contractId);
+      
+      // Filter sales data by date range if provided
+      if (periodStart && periodEnd) {
+        const startDate = new Date(periodStart as string);
+        const endDate = new Date(periodEnd as string);
+        
+        allSales = allSales.filter(sale => {
+          const saleDate = new Date(sale.saleDate);
+          return saleDate >= startDate && saleDate <= endDate;
+        });
+      }
+      
       const rules = await db
         .select()
         .from(royaltyRules)

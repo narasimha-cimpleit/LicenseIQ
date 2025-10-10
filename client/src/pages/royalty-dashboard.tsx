@@ -324,7 +324,13 @@ export default function RoyaltyDashboard() {
           </Card>
         )}
 
-        {salesData.length > 0 && <FormulaPreview contractId={id!} />}
+        {salesData.length > 0 && (
+          <FormulaPreview 
+            contractId={id!} 
+            periodStart={periodStart ? new Date(periodStart) : undefined}
+            periodEnd={periodEnd ? new Date(periodEnd) : undefined}
+          />
+        )}
 
         <Card>
           <CardHeader>

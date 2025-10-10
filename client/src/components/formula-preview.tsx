@@ -5,12 +5,19 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface FormulaPreviewProps {
   contractId: string;
+  periodStart?: Date;
+  periodEnd?: Date;
 }
 
-export function FormulaPreview({ contractId }: FormulaPreviewProps) {
+export function FormulaPreview({ contractId, periodStart, periodEnd }: FormulaPreviewProps) {
+  // Build query URL with date parameters
+  const queryUrl = periodStart && periodEnd
+    ? `/api/contracts/${contractId}/formula-preview?periodStart=${periodStart.toISOString()}&periodEnd=${periodEnd.toISOString()}`
+    : `/api/contracts/${contractId}/formula-preview`;
+
   const { data: preview, isLoading, error } = useQuery({
-    queryKey: [`/api/contracts/${contractId}/formula-preview`],
-    enabled: !!contractId
+    queryKey: [queryUrl, periodStart?.toISOString(), periodEnd?.toISOString()],
+    enabled: !!contractId && !!periodStart && !!periodEnd
   });
 
   if (isLoading) {
