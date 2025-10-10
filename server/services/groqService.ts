@@ -1,3 +1,5 @@
+import type { FormulaDefinition, FormulaNode } from '@shared/formula-types';
+
 interface GroqResponse {
   choices: Array<{
     message: {
@@ -350,6 +352,115 @@ Return only JSON array.`;
     }
   }
 
+  /**
+   * Extract plant varieties (or other products) with FormulaNode JSON for royalty calculations
+   * This generates structured formulas that can be evaluated by the FormulaInterpreter
+   */
+  async extractProductsWithFormulas(contractText: string): Promise<Array<{
+    productName: string;
+    ruleName: string;
+    description: string;
+    formulaDefinition: FormulaDefinition;
+    confidence: number;
+    sourceSection: string;
+    conditions: any;
+  }>> {
+    const prompt = `You are extracting PRODUCT VARIETIES and their ROYALTY FORMULAS from a licensing contract.
+
+CONTRACT TEXT:
+${contractText}
+
+Your task:
+1. Find all product/variety names (e.g., "Aurora Flame Maple", "Pacific Sunset Rose")
+2. For each product, identify the royalty calculation formula
+3. Generate a structured FormulaNode JSON that represents the calculation
+
+FORMULA PATTERNS TO DETECT:
+- **Volume Tiers**: "1-gallon: $1.25, 5000+ units: $1.10" → tier node
+- **Seasonal Adjustments**: "Spring +10%, Fall -5%" → lookup table
+- **Territory Premiums**: "Secondary territory +10%" → lookup table
+- **Multiplier Chains**: "base × seasonal × territory × organic" → multiply node
+- **Container Size Rates**: Different rates by size → tier or lookup node
+
+FORMULANODE TYPES:
+{
+  "type": "literal", "value": 1.25  // Fixed number
+}
+{
+  "type": "reference", "field": "units"  // Get value from sales data
+}
+{
+  "type": "multiply", "operands": [node1, node2]  // Multiplication
+}
+{
+  "type": "tier", "reference": {field node}, "tiers": [{"min": 0, "max": 4999, "rate": 1.25, "label": "< 5000"}]
+}
+{
+  "type": "lookup", "reference": {field node}, "table": {"Spring": 1.10, "Summer": 1.0}, "default": 1.0
+}
+
+RESPONSE FORMAT - Return JSON array:
+[
+  {
+    "productName": "Aurora Flame Maple",
+    "ruleName": "Aurora Flame Maple - 1-gallon with volume tiers",
+    "description": "1-gallon containers: $1.25 per unit, $1.10 for 5000+ units with seasonal adjustments",
+    "conditions": {
+      "containerSize": "1-gallon",
+      "productCategories": ["Ornamental Trees"],
+      "territories": ["Primary", "Secondary"]
+    },
+    "formulaDefinition": {
+      "name": "Aurora Flame Maple Royalty",
+      "description": "Volume-tiered with seasonal adjustment",
+      "filters": {"containerSize": "1-gallon"},
+      "formula": {
+        "type": "multiply",
+        "operands": [
+          {
+            "type": "tier",
+            "reference": {"type": "reference", "field": "units"},
+            "tiers": [
+              {"min": 0, "max": 4999, "rate": 1.25, "label": "< 5000 units"},
+              {"min": 5000, "max": null, "rate": 1.10, "label": "5000+ units"}
+            ]
+          },
+          {
+            "type": "lookup",
+            "reference": {"type": "reference", "field": "season"},
+            "table": {"Spring": 1.10, "Summer": 1.0, "Fall": 0.95, "Holiday": 1.20},
+            "default": 1.0,
+            "description": "Seasonal adjustment"
+          }
+        ]
+      }
+    },
+    "confidence": 0.95,
+    "sourceSection": "Section 3.1 - Royalty Structure - Tier 1"
+  }
+]
+
+CRITICAL: Return ONLY valid JSON array. No explanatory text.`;
+
+    try {
+      console.log(`🌱 Extracting product varieties with formulas...`);
+      const response = await this.makeRequest([
+        { role: 'system', content: 'Extract product varieties with FormulaNode JSON. Return only JSON array.' },
+        { role: 'user', content: prompt }
+      ], 0.2, 3000); // Higher tokens for complex formulas
+      
+      const cleanResponse = response.trim();
+      const jsonMatch = cleanResponse.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      }
+      return [];
+    } catch (error) {
+      console.error('Product formula extraction failed:', error);
+      return [];
+    }
+  }
+
   // Keep the old single-request method as backup
   async extractDetailedRoyaltyRulesSingleRequest(contractText: string): Promise<LicenseRuleExtractionResult> {
     const prompt = `
@@ -549,7 +660,7 @@ Return only JSON array.`;
           // Rate limit - wait and retry
           const waitTime = Math.pow(2, attempt) * 1000; // Exponential backoff
           console.log(`🔄 Groq rate limit hit (attempt ${attempt}/3), waiting ${waitTime}ms...`);
-          await new Promise(resolve => setTmimeout(resolve, waitTime));
+          await new Promise(resolve => setTimeout(resolve, waitTime));
           continue;
         }
 
@@ -563,7 +674,8 @@ Return only JSON array.`;
       } catch (error) {
         lastError = error as Error;
         if (attempt < 3) {
-          console.log(`⚠️ Groq request failed (attempt ${attempt}/3):`, error.message);
+          const errorMsg = error instanceof Error ? error.message : String(error);
+          console.log(`⚠️ Groq request failed (attempt ${attempt}/3):`, errorMsg);
           await new Promise(resolve => setTimeout(resolve, 1000));
         }
       }

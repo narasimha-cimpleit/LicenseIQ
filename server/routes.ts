@@ -1373,12 +1373,42 @@ async function extractAndSaveRoyaltyRules(contractId: string, contractText: stri
   try {
     console.log(`🔍 Extracting royalty rules for contract ${contractId}...`);
     
-    // Use Groq to extract detailed royalty rules
+    // 🌱 NEW: Extract products with FormulaNode JSON
+    console.log(`🌱 Extracting product varieties with formula definitions...`);
+    const productsWithFormulas = await groqService.extractProductsWithFormulas(contractText);
+    console.log(`📋 Found ${productsWithFormulas.length} product formulas from AI analysis`);
+    
+    // Save product formulas with FormulaNode JSON
+    for (const product of productsWithFormulas) {
+      const ruleData: any = {
+        contractId,
+        ruleType: 'formula_based',
+        ruleName: product.ruleName,
+        description: product.description,
+        productCategories: product.conditions?.productCategories || [product.productName],
+        territories: product.conditions?.territories || [],
+        containerSizes: product.conditions?.containerSize ? [product.conditions.containerSize] : [],
+        
+        // 🚀 NEW: Store the complete FormulaDefinition JSON
+        formulaDefinition: product.formulaDefinition,
+        formulaVersion: '1.0',
+        
+        isActive: true,
+        priority: 1,
+        confidence: product.confidence ?? 0.9, // Keep as number for schema validation
+        sourceSection: product.sourceSection || null,
+        sourceText: product.description,
+      };
+
+      await storage.createRoyaltyRule(ruleData);
+      console.log(`✅ Saved formula rule: ${product.ruleName} (product: ${product.productName})`);
+    }
+    
+    // 📊 LEGACY: Also extract using old method for backward compatibility
     const detailedRules = await groqService.extractDetailedRoyaltyRules(contractText);
+    console.log(`📋 Found ${detailedRules.rules.length} legacy royalty rules`);
     
-    console.log(`📋 Found ${detailedRules.rules.length} royalty rules from AI analysis`);
-    
-    // Convert AI-extracted rules to database format
+    // Convert AI-extracted rules to database format (legacy flat structure)
     for (const aiRule of detailedRules.rules) {
       // Extract seasonal adjustments from various possible locations
       const seasonalAdj = aiRule.calculation?.seasonalAdjustments || 
@@ -1415,18 +1445,17 @@ async function extractAndSaveRoyaltyRules(contractId: string, contractText: stri
         baseRate: baseRate,
         minimumGuarantee: aiRule.ruleType === 'minimum_guarantee' ? aiRule.calculation?.amount?.toString() : null,
         isActive: true,
-        priority: aiRule.priority || 1,
+        priority: aiRule.priority || 10, // Lower priority than formula-based rules
         confidence: aiRule.confidence || null,
         sourceSection: aiRule.sourceSpan?.section || null,
         sourceText: aiRule.sourceSpan?.text || null,
       };
 
-      // Save to database
       await storage.createRoyaltyRule(ruleData);
-      console.log(`✅ Saved rule: ${aiRule.ruleName} (baseRate: ${baseRate}, volumeTiers: ${volumeTiers.length}, seasonal: ${Object.keys(seasonalAdj).length}, territory: ${Object.keys(territoryPrem).length})`);
+      console.log(`✅ Saved legacy rule: ${aiRule.ruleName}`);
     }
     
-    console.log(`🎉 Successfully extracted and saved ${detailedRules.rules.length} royalty rules`);
+    console.log(`🎉 Successfully extracted and saved ${productsWithFormulas.length + detailedRules.rules.length} total royalty rules`);
   } catch (error) {
     console.error(`⚠️ Failed to extract royalty rules:`, error);
     // Don't fail the entire analysis if rule extraction fails
