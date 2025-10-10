@@ -56,8 +56,8 @@ export default function RoyaltyDashboard() {
     enabled: !!id,
   });
 
-  const salesData = salesResponse?.salesData || [];
-  const calculations = calculationsResponse?.calculations || [];
+  const salesData = (salesResponse as any)?.salesData || [];
+  const calculations = (calculationsResponse as any)?.calculations || [];
   const latestCalculation = calculations[0];
 
   const calculateMutation = useMutation({
@@ -120,7 +120,7 @@ export default function RoyaltyDashboard() {
   return (
     <MainLayout
       title="Royalty Calculator"
-      description={`Calculate royalties for ${contract?.name || 'contract'}`}
+      description={`Calculate royalties for ${(contract as any)?.originalName || 'contract'}`}
     >
       <div className="space-y-6">
         <Button variant="ghost" onClick={() => setLocation(`/contracts/${id}`)}>
@@ -161,14 +161,18 @@ export default function RoyaltyDashboard() {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
-                Total Royalty
+                Final Royalty
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">
                 ${parseFloat(latestCalculation?.totalRoyalty || "0").toLocaleString()}
               </div>
-              <p className="text-xs text-blue-100 mt-1">Amount owed</p>
+              <p className="text-xs text-blue-100 mt-1">
+                {latestCalculation?.minimumGuarantee && parseFloat(latestCalculation.totalRoyalty) === latestCalculation.minimumGuarantee
+                  ? "Minimum guarantee applied"
+                  : "Calculated amount"}
+              </p>
             </CardContent>
           </Card>
 
@@ -185,6 +189,35 @@ export default function RoyaltyDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {latestCalculation?.minimumGuarantee && latestCalculation?.calculatedRoyalty && (
+          <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950 dark:border-amber-800">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-amber-100 dark:bg-amber-900 rounded-lg">
+                  <TrendingUp className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-amber-900 dark:text-amber-100">
+                    Minimum Guarantee Status
+                  </h3>
+                  <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                    Calculated royalty: <strong>${parseFloat(latestCalculation.calculatedRoyalty).toLocaleString()}</strong>
+                    {" • "}
+                    Minimum guarantee: <strong>${parseFloat(latestCalculation.minimumGuarantee).toLocaleString()}</strong>
+                    {" • "}
+                    Final amount: <strong>${parseFloat(latestCalculation.totalRoyalty).toLocaleString()}</strong>
+                  </p>
+                  {parseFloat(latestCalculation.totalRoyalty) === latestCalculation.minimumGuarantee && (
+                    <p className="text-sm text-amber-600 dark:text-amber-400 mt-2 font-medium">
+                      ⚠️ Minimum guarantee has been applied. The calculated amount was below the contractual minimum.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader>

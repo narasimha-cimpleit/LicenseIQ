@@ -575,7 +575,7 @@ Report ID: ${contractId}
       }
 
       // Get all sales matched to this contract
-      const { RulesEngine } = await import('./services/rulesEngine.js');
+      const { dynamicRulesEngine } = await import('./services/dynamicRulesEngine.js');
       const allSales = await storage.getSalesDataByContract(contractId);
       
       // Filter by date range if provided
@@ -599,68 +599,48 @@ Report ID: ${contractId}
         });
       }
 
-      // Get rule sets for this contract
-      const ruleSets = await storage.getLicenseRuleSetsByContract(contractId);
-      
-      if (ruleSets.length === 0) {
-        return res.status(400).json({ error: 'No royalty rules found for this contract. Upload a contract with royalty terms first.' });
-      }
+      // Convert sales to format expected by dynamic engine
+      const salesItems = salesToCalculate.map(sale => ({
+        id: sale.id,
+        productName: sale.productName || 'Unknown',
+        category: sale.category || '',
+        territory: sale.territory || 'Primary Territory',
+        quantity: parseFloat(sale.quantity || '0'),
+        transactionDate: new Date(sale.transactionDate),
+        grossAmount: parseFloat(sale.grossAmount || '0')
+      }));
 
-      // Convert rule sets to RoyaltyRule format
-      const allRules = ruleSets.flatMap(ruleSet => {
-        const rulesDsl = ruleSet.rulesDsl as any;
-        return (rulesDsl?.rules || []).map((rule: any) => ({
-          id: rule.id || crypto.randomUUID(),
-          ruleName: rule.ruleName || rule.description || 'Unnamed Rule',
-          ruleType: rule.ruleType || 'percentage',
-          description: rule.description || '',
-          conditions: rule.conditions || {},
-          calculation: rule.calculation || {},
-          priority: rule.priority || 10,
-          isActive: true,
-          confidence: rule.confidence || 1.0
-        }));
-      });
+      // Use dynamic rules engine to calculate royalties
+      const result = await dynamicRulesEngine.calculateRoyalty(contractId, salesItems);
 
-      // Calculate royalties for each sales transaction
-      let totalRoyalty = 0;
-      const breakdown: any[] = [];
-
-      for (const sale of salesToCalculate) {
-        const calculationInput = {
-          grossRevenue: sale.grossAmount ? parseFloat(sale.grossAmount) : 0,
-          netRevenue: sale.netAmount ? parseFloat(sale.netAmount) : 0,
-          units: sale.quantity || 1,
-          territory: sale.territory || 'Unknown',
-          productCategory: sale.category || sale.productName || 'Unknown',
-          timeframe: 'monthly' as const,
-          customFields: sale.customFields as Record<string, number | string> || {}
-        };
-
-        const result = await RulesEngine.calculateRoyalties(allRules, calculationInput);
-        totalRoyalty += result.totalRoyalty;
-
-        breakdown.push({
-          saleId: sale.id,
-          transactionDate: sale.transactionDate,
-          productName: sale.productName,
-          grossAmount: sale.grossAmount,
-          royaltyAmount: result.totalRoyalty,
-          rulesApplied: result.metadata.rulesApplied,
-          ruleBreakdown: result.breakdown
-        });
-      }
+      const breakdown = result.breakdown.map(item => ({
+        saleId: item.saleId,
+        productName: item.productName,
+        category: item.category,
+        territory: item.territory,
+        quantity: item.quantity,
+        royaltyAmount: item.calculatedRoyalty,
+        ruleApplied: item.ruleApplied,
+        explanation: item.explanation,
+        tierRate: item.tierRate,
+        seasonalMultiplier: item.seasonalMultiplier,
+        territoryMultiplier: item.territoryMultiplier
+      }));
 
       res.json({
         success: true,
         contractId,
         contractName: contract.originalName,
-        totalRoyalty,
+        calculatedRoyalty: result.totalRoyalty,
+        totalRoyalty: result.finalRoyalty,
+        minimumGuarantee: result.minimumGuarantee,
+        finalRoyalty: result.finalRoyalty,
         salesCount: salesToCalculate.length,
         periodStart,
         periodEnd,
         breakdown,
-        currency: ruleSets[0]?.rulesDsl?.currency || 'USD'
+        rulesApplied: result.rulesApplied,
+        currency: 'USD'
       });
 
     } catch (error) {
@@ -978,13 +958,14 @@ Report ID: ${contractId}
     }
   });
 
-  // Calculate royalties for a contract
+  // Calculate royalties for a contract using dynamic rules engine
   app.post('/api/contracts/:id/calculate-royalties', isAuthenticated, async (req: any, res: Response) => {
     try {
       const contractId = req.params.id;
       const { periodStart, periodEnd, name } = req.body;
       
       // Get sales data for this contract
+      const { dynamicRulesEngine } = await import('./services/dynamicRulesEngine.js');
       const allSales = await storage.getSalesDataByContract(contractId);
       
       // Filter by period if provided
@@ -998,38 +979,72 @@ Report ID: ${contractId}
         });
       }
       
-      // Calculate totals
-      const totalSalesAmount = filteredSales.reduce((sum, sale) => sum + parseFloat(sale.grossAmount), 0);
-      const totalRoyalty = totalSalesAmount * 0.10; // 10% royalty rate for demo
-      
-      // Prepare breakdown
-      const breakdown = filteredSales.map(sale => ({
-        transactionId: sale.transactionId,
-        transactionDate: sale.transactionDate,
+      if (filteredSales.length === 0) {
+        return res.status(400).json({ 
+          message: 'No sales data found for the selected period' 
+        });
+      }
+
+      // Convert sales to format expected by dynamic engine
+      const salesItems = filteredSales.map(sale => ({
+        id: sale.id,
         productName: sale.productName || 'Unknown',
-        saleAmount: sale.grossAmount,
-        royaltyAmount: (parseFloat(sale.grossAmount) * 0.10).toString(),
+        category: sale.category || '',
+        territory: sale.territory || 'Primary Territory',
+        quantity: parseFloat(sale.quantity || '0'),
+        transactionDate: new Date(sale.transactionDate),
+        grossAmount: parseFloat(sale.grossAmount || '0')
+      }));
+
+      // Use dynamic rules engine to calculate royalties
+      const result = await dynamicRulesEngine.calculateRoyalty(contractId, salesItems);
+      
+      // Calculate total sales amount
+      const totalSalesAmount = filteredSales.reduce((sum, sale) => sum + parseFloat(sale.grossAmount), 0);
+      
+      // Prepare enhanced breakdown with rule details
+      const breakdown = result.breakdown.map(item => ({
+        saleId: item.saleId,
+        productName: item.productName,
+        category: item.category,
+        territory: item.territory,
+        quantity: item.quantity,
+        saleAmount: item.calculatedRoyalty / item.tierRate, // Approximate sale amount
+        royaltyAmount: item.calculatedRoyalty.toString(),
+        ruleApplied: item.ruleApplied,
+        explanation: item.explanation,
+        tierRate: item.tierRate,
+        seasonalMultiplier: item.seasonalMultiplier,
+        territoryMultiplier: item.territoryMultiplier
       }));
       
-      // Create calculation record
-      const calculation = await storage.createContractRoyaltyCalculation(
-        {
-          contractId,
-          name: name || `Calculation ${new Date().toLocaleDateString()}`,
-          periodStart: periodStart ? new Date(periodStart) : null,
-          periodEnd: periodEnd ? new Date(periodEnd) : null,
-          totalSalesAmount: totalSalesAmount.toString(),
-          totalRoyalty: totalRoyalty.toString(),
-          status: 'pending',
-          breakdown: JSON.stringify(breakdown),
-          createdBy: req.user.id,
-          salesCount: filteredSales.length,
-        }
-      );
+      // Create calculation record with enhanced data
+      const calculation = await storage.createContractRoyaltyCalculation({
+        contractId,
+        name: name || `Calculation ${new Date().toLocaleDateString()}`,
+        periodStart: periodStart ? new Date(periodStart) : null,
+        periodEnd: periodEnd ? new Date(periodEnd) : null,
+        totalSalesAmount: totalSalesAmount.toString(),
+        totalRoyalty: result.finalRoyalty.toString(),
+        breakdown: JSON.stringify(breakdown),
+        chartData: JSON.stringify({
+          minimumGuarantee: result.minimumGuarantee,
+          calculatedRoyalty: result.totalRoyalty,
+          rulesApplied: result.rulesApplied
+        }),
+        calculatedBy: req.user.id,
+        salesCount: filteredSales.length,
+      });
 
       res.json({
         success: true,
-        calculation,
+        calculation: {
+          ...calculation,
+          minimumGuarantee: result.minimumGuarantee,
+          calculatedRoyalty: result.totalRoyalty,
+          totalRoyalty: result.finalRoyalty.toString(),
+          rulesApplied: result.rulesApplied
+        },
         message: `Calculated ${filteredSales.length} sales transactions`,
       });
 
