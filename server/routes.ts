@@ -12,13 +12,14 @@ import { registerRulesRoutes } from "./rulesRoutes";
 import { SalesDataParser } from "./services/salesDataParser";
 import { HuggingFaceEmbeddingService } from "./services/huggingFaceEmbedding";
 import { db } from "./db";
-import { contractEmbeddings } from "@shared/schema";
+import { contractEmbeddings, royaltyRules } from "@shared/schema";
 import { 
   insertContractSchema, 
   insertContractAnalysisSchema, 
   insertAuditTrailSchema,
   insertSalesDataSchema
 } from "@shared/schema";
+import { and, eq } from "drizzle-orm";
 
 // Configure multer for secure file uploads with disk storage
 const uploadDir = path.join(process.cwd(), 'uploads');
@@ -1063,7 +1064,7 @@ Report ID: ${contractId}
           return {
             productName: sale.productName,
             category: sale.category,
-            sampleUnits: parseInt(sale.quantity),
+            sampleUnits: parseInt(sale.quantity || '0'),
             matched: false,
             ruleName: null,
             ruleDescription: null,
@@ -1089,7 +1090,7 @@ Report ID: ${contractId}
         return {
           productName: sale.productName,
           category: sale.category,
-          sampleUnits: parseInt(sale.quantity),
+          sampleUnits: parseInt(sale.quantity || '0'),
           matched: true,
           ruleName: matchingRule.ruleName,
           ruleDescription,

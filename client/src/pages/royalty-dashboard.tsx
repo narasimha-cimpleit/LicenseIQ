@@ -40,6 +40,7 @@ import {
 } from "lucide-react";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { format } from "date-fns";
+import { FormulaPreview } from "@/components/formula-preview";
 
 export default function RoyaltyDashboard() {
   const { id } = useParams();
@@ -322,6 +323,8 @@ export default function RoyaltyDashboard() {
             </CardContent>
           </Card>
         )}
+
+        {salesData.length > 0 && <FormulaPreview contractId={id!} />}
 
         <Card>
           <CardHeader>
