@@ -1409,7 +1409,18 @@ async function extractAndSaveRoyaltyRules(contractId: string, contractText: stri
     console.log(`📋 Found ${detailedRules.rules.length} legacy royalty rules`);
     
     // Convert AI-extracted rules to database format (legacy flat structure)
-    for (const aiRule of detailedRules.rules) {
+    // FILTER OUT rules with empty product categories - they match everything incorrectly!
+    const validLegacyRules = detailedRules.rules.filter(rule => {
+      const hasCategories = rule.conditions?.productCategories && rule.conditions.productCategories.length > 0;
+      if (!hasCategories) {
+        console.log(`   ⚠️ Skipping rule with empty categories: ${rule.ruleName}`);
+      }
+      return hasCategories;
+    });
+    
+    console.log(`📋 Filtered to ${validLegacyRules.length} valid legacy rules (removed rules with empty categories)`);
+    
+    for (const aiRule of validLegacyRules) {
       // Extract seasonal adjustments from various possible locations
       const seasonalAdj = aiRule.calculation?.seasonalAdjustments || 
                          aiRule.calculation?.seasonalMultipliers || 
