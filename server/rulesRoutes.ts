@@ -288,62 +288,64 @@ export function registerRulesRoutes(app: Express): void {
   });
 
   // Calculate royalties using the rules engine
-  app.post('/api/contracts/:contractId/calculate-royalties', isAuthenticated, async (req: any, res) => {
-    try {
-      const contractId = req.params.contractId;
-      const userId = req.user.id;
-      const calculationInput: RoyaltyCalculationInput = req.body;
+  // NOTE: This route is disabled because it conflicts with the working route in routes.ts
+  // and uses non-existent storage.getLicenseRuleSetsByContract() function
+  // app.post('/api/contracts/:contractId/calculate-royalties', isAuthenticated, async (req: any, res) => {
+  //   try {
+  //     const contractId = req.params.contractId;
+  //     const userId = req.user.id;
+  //     const calculationInput: RoyaltyCalculationInput = req.body;
 
-      // Check permissions
-      const contract = await storage.getContract(contractId);
-      if (!contract) {
-        return res.status(404).json({ message: 'Contract not found' });
-      }
+  //     // Check permissions
+  //     const contract = await storage.getContract(contractId);
+  //     if (!contract) {
+  //       return res.status(404).json({ message: 'Contract not found' });
+  //     }
 
-      const userRole = (await storage.getUser(userId))?.role;
-      const canViewAny = userRole === 'admin' || userRole === 'owner';
+  //     const userRole = (await storage.getUser(userId))?.role;
+  //     const canViewAny = userRole === 'admin' || userRole === 'owner';
       
-      if (!canViewAny && contract.uploadedBy !== userId) {
-        return res.status(403).json({ message: 'Access denied' });
-      }
+  //     if (!canViewAny && contract.uploadedBy !== userId) {
+  //       return res.status(403).json({ message: 'Access denied' });
+  //     }
 
-      // Get rule sets for this contract
-      const ruleSets = await storage.getLicenseRuleSetsByContract(contractId);
+  //     // Get rule sets for this contract
+  //     const ruleSets = await storage.getLicenseRuleSetsByContract(contractId);
       
-      if (ruleSets.length === 0) {
-        return res.status(404).json({ message: 'No rules found for this contract' });
-      }
+  //     if (ruleSets.length === 0) {
+  //       return res.status(404).json({ message: 'No rules found for this contract' });
+  //     }
 
-      // Convert rule sets to RoyaltyRule format for the engine
-      const allRules = ruleSets.flatMap(ruleSet => {
-        const rulesDsl = ruleSet.rulesDsl as any;
-        return (rulesDsl?.rules || []).map((rule: any) => ({
-          id: rule.id || crypto.randomUUID(),
-          ruleName: rule.ruleName || rule.description || 'Unnamed Rule',
-          ruleType: rule.ruleType || 'percentage',
-          description: rule.description || '',
-          conditions: rule.conditions || {},
-          calculation: rule.calculation || {},
-          priority: rule.priority || 10,
-          isActive: true,
-          confidence: rule.confidence || 1.0
-        }));
-      });
+  //     // Convert rule sets to RoyaltyRule format for the engine
+  //     const allRules = ruleSets.flatMap(ruleSet => {
+  //       const rulesDsl = ruleSet.rulesDsl as any;
+  //       return (rulesDsl?.rules || []).map((rule: any) => ({
+  //         id: rule.id || crypto.randomUUID(),
+  //         ruleName: rule.ruleName || rule.description || 'Unnamed Rule',
+  //         ruleType: rule.ruleType || 'percentage',
+  //         description: rule.description || '',
+  //         conditions: rule.conditions || {},
+  //         calculation: rule.calculation || {},
+  //         priority: rule.priority || 10,
+  //         isActive: true,
+  //         confidence: rule.confidence || 1.0
+  //       }));
+  //     });
 
-      // Calculate royalties using the rules engine
-      const result = await RulesEngine.calculateRoyalties(allRules, calculationInput);
+  //     // Calculate royalties using the rules engine
+  //     const result = await RulesEngine.calculateRoyalties(allRules, calculationInput);
 
-      // Log the calculation
-      await createAuditLog(req, 'royalty_calculated', 'contract', contractId, {
-        inputData: calculationInput,
-        totalRoyalty: result.totalRoyalty,
-        rulesApplied: result.metadata.rulesApplied
-      });
+  //     // Log the calculation
+  //     await createAuditLog(req, 'royalty_calculated', 'contract', contractId, {
+  //       inputData: calculationInput,
+  //       totalRoyalty: result.totalRoyalty,
+  //       rulesApplied: result.metadata.rulesApplied
+  //     });
 
-      res.json(result);
-    } catch (error) {
-      console.error('Error calculating royalties:', error);
-      res.status(500).json({ message: 'Failed to calculate royalties' });
-    }
-  });
+  //     res.json(result);
+  //   } catch (error) {
+  //     console.error('Error calculating royalties:', error);
+  //     res.status(500).json({ message: 'Failed to calculate royalties' });
+  //   }
+  // });
 }
