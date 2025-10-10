@@ -72,7 +72,7 @@ export class DynamicRulesEngine {
     let minimumGuarantee: number | null = null;
     const rulesApplied = new Set<string>();
 
-    const tierRules = rules.filter(r => r.ruleType === 'tiered_pricing');
+    const tierRules = rules.filter(r => r.ruleType === 'tiered_pricing' || r.ruleType === 'formula_based');
     const minimumRule = rules.find(r => r.ruleType === 'minimum_guarantee');
 
     if (minimumRule && minimumRule.minimumGuarantee) {
