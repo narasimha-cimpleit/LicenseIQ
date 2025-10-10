@@ -44,6 +44,7 @@ export default function RoyaltyDashboard() {
   const [periodStart, setPeriodStart] = useState("");
   const [periodEnd, setPeriodEnd] = useState("");
   const [calculationName, setCalculationName] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Fetch contract details
   const { data: contract, isLoading: contractLoading } = useQuery({
@@ -79,6 +80,7 @@ export default function RoyaltyDashboard() {
     },
     onSuccess: (data) => {
       setIsCalculating(false);
+      setIsDialogOpen(false);
       toast({
         title: "Calculation Complete",
         description: data.message || "Royalties calculated successfully",
@@ -204,7 +206,7 @@ export default function RoyaltyDashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Dialog>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button 
                   className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
@@ -215,7 +217,7 @@ export default function RoyaltyDashboard() {
                   Run Calculation
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent onInteractOutside={(e) => e.preventDefault()}>
                 <DialogHeader>
                   <DialogTitle>Calculate Royalties</DialogTitle>
                   <DialogDescription>
