@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import MainLayout from "@/components/layout/main-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, FileSpreadsheet, AlertCircle, CheckCircle, Download } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
@@ -12,16 +13,28 @@ import { apiRequest } from "@/lib/queryClient";
 export default function SalesUpload() {
   const { toast } = useToast();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedContractId, setSelectedContractId] = useState<string>("");
   const [uploadResult, setUploadResult] = useState<any>(null);
+
+  // Fetch contracts
+  const { data: contractsData } = useQuery({
+    queryKey: ['/api/contracts'],
+  });
+
+  const contracts = contractsData?.contracts || [];
 
   const uploadMutation = useMutation({
     mutationFn: async () => {
       if (!selectedFile) {
         throw new Error("No file selected");
       }
+      if (!selectedContractId) {
+        throw new Error("Please select a contract");
+      }
 
       const formData = new FormData();
       formData.append("file", selectedFile);
+      formData.append("contractId", selectedContractId);
 
       const response = await apiRequest("POST", "/api/sales/upload", formData);
       return response.json();
@@ -175,6 +188,29 @@ export default function SalesUpload() {
               </div>
             </div>
 
+            {/* Contract Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="contract-select">Select Contract</Label>
+              <Select value={selectedContractId} onValueChange={setSelectedContractId}>
+                <SelectTrigger id="contract-select" data-testid="select-contract">
+                  <SelectValue placeholder="Choose a contract..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {contracts.length === 0 ? (
+                    <SelectItem value="no-contracts" disabled>
+                      No contracts found - upload a contract first
+                    </SelectItem>
+                  ) : (
+                    contracts.map((contract: any) => (
+                      <SelectItem key={contract.id} value={contract.id}>
+                        {contract.originalName || contract.name}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* File Upload */}
             <div className="space-y-2">
               <Label htmlFor="sales-file">Select File</Label>
@@ -253,9 +289,10 @@ export default function SalesUpload() {
               )}
 
               <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <p className="text-sm text-blue-800 dark:text-blue-200 font-semibold mb-2">Next Step:</p>
                 <p className="text-sm text-blue-800 dark:text-blue-200">
-                  <strong>Next Step:</strong> The system is now matching sales to contracts using AI. 
-                  Go to the Contracts page to see matched sales and calculate royalties.
+                  Go to the <strong>Contracts</strong> page and click on your contract to view the <strong>Royalty Dashboard</strong>. 
+                  There you can see your uploaded sales data and calculate royalties.
                 </p>
               </div>
             </CardContent>
