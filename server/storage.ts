@@ -325,7 +325,7 @@ export class DatabaseStorage implements IStorage {
     
     if (status === 'processing') {
       updateData.processingStartedAt = new Date();
-    } else if (status === 'analyzed' || status === 'failed') {
+    } else if (status === 'completed' || status === 'analyzed' || status === 'failed') {
       updateData.processingCompletedAt = new Date();
     }
 
