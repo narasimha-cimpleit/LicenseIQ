@@ -964,18 +964,27 @@ Report ID: ${contractId}
       const contractId = req.params.id;
       const userId = req.user?.id;
       
-      // Check permissions: admin, owner, or editor can delete sales data
+      // Verify contract exists and check ownership
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ message: 'Contract not found' });
+      }
+      
+      // Check permissions: admin, owner role, or contract uploader can delete sales data
       const user = await storage.getUser(userId);
-      const canDelete = user?.role === 'admin' || user?.role === 'owner' || user?.role === 'editor';
+      const isOwner = contract.uploadedBy === userId;
+      const isAdmin = user?.role === 'admin' || user?.role === 'owner';
+      const canDelete = isOwner || isAdmin;
       
       if (!canDelete) {
-        return res.status(403).json({ message: 'You do not have permission to delete sales data' });
+        return res.status(403).json({ message: 'You do not have permission to delete sales data for this contract' });
       }
       
       await storage.deleteAllSalesDataForContract(contractId);
       
       await createAuditLog(req, 'delete_sales_data', 'contract', contractId, {
-        action: 'bulk_delete_sales'
+        action: 'bulk_delete_sales',
+        contractName: contract.originalName
       });
       
       res.json({ message: 'All sales data deleted successfully' });
@@ -1105,18 +1114,27 @@ Report ID: ${contractId}
       const contractId = req.params.id;
       const userId = req.user?.id;
       
-      // Check permissions: admin, owner, or editor can delete calculations
+      // Verify contract exists and check ownership
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ message: 'Contract not found' });
+      }
+      
+      // Check permissions: admin, owner role, or contract uploader can delete calculations
       const user = await storage.getUser(userId);
-      const canDelete = user?.role === 'admin' || user?.role === 'owner' || user?.role === 'editor';
+      const isOwner = contract.uploadedBy === userId;
+      const isAdmin = user?.role === 'admin' || user?.role === 'owner';
+      const canDelete = isOwner || isAdmin;
       
       if (!canDelete) {
-        return res.status(403).json({ message: 'You do not have permission to delete calculations' });
+        return res.status(403).json({ message: 'You do not have permission to delete calculations for this contract' });
       }
       
       await storage.deleteAllCalculationsForContract(contractId);
       
       await createAuditLog(req, 'delete_royalty_calculations', 'contract', contractId, {
-        action: 'bulk_delete_calculations'
+        action: 'bulk_delete_calculations',
+        contractName: contract.originalName
       });
       
       res.json({ message: 'All royalty calculations deleted successfully' });
