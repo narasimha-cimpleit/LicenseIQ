@@ -17,7 +17,7 @@ export function FormulaPreview({ contractId, periodStart, periodEnd }: FormulaPr
 
   const { data: preview, isLoading, error } = useQuery({
     queryKey: [queryUrl, periodStart?.toISOString(), periodEnd?.toISOString()],
-    enabled: !!contractId && !!periodStart && !!periodEnd
+    enabled: !!contractId
   });
 
   if (isLoading) {
