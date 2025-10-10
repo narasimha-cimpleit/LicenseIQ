@@ -122,10 +122,16 @@ export class DynamicRulesEngine {
 
   private ruleMatchesSale(sale: SaleItem, rule: any): boolean {
     if (rule.productCategories && rule.productCategories.length > 0) {
-      const categoryMatch = rule.productCategories.some((cat: string) => 
-        sale.category?.toLowerCase().includes(cat.toLowerCase()) ||
-        sale.productName?.toLowerCase().includes(cat.toLowerCase())
-      );
+      const categoryMatch = rule.productCategories.some((cat: string) => {
+        const catLower = cat.toLowerCase();
+        const saleCategoryLower = sale.category?.toLowerCase() || '';
+        const saleProductLower = sale.productName?.toLowerCase() || '';
+        
+        // Bidirectional match: check both directions
+        return saleCategoryLower.includes(catLower) || 
+               catLower.includes(saleCategoryLower) ||
+               saleProductLower.includes(catLower);
+      });
       if (!categoryMatch) return false;
     }
 

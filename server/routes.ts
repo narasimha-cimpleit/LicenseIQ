@@ -1047,12 +1047,18 @@ Report ID: ${contractId}
         const tierRules = rules.filter(r => r.ruleType === 'tiered_pricing' || r.ruleType === 'formula_based');
         
         for (const rule of tierRules) {
-          // Check product categories
+          // Check product categories (bidirectional matching)
           if (rule.productCategories && rule.productCategories.length > 0) {
-            const categoryMatch = rule.productCategories.some((cat: string) => 
-              sale.category?.toLowerCase().includes(cat.toLowerCase()) ||
-              sale.productName?.toLowerCase().includes(cat.toLowerCase())
-            );
+            const categoryMatch = rule.productCategories.some((cat: string) => {
+              const catLower = cat.toLowerCase();
+              const saleCategoryLower = sale.category?.toLowerCase() || '';
+              const saleProductLower = sale.productName?.toLowerCase() || '';
+              
+              // Bidirectional match: check both directions
+              return saleCategoryLower.includes(catLower) || 
+                     catLower.includes(saleCategoryLower) ||
+                     saleProductLower.includes(catLower);
+            });
             if (!categoryMatch) continue;
           }
 
