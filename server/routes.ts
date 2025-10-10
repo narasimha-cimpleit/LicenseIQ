@@ -1117,7 +1117,7 @@ Report ID: ${contractId}
         for (const row of validRows) {
           const salesData = row.rowData as any;
           await storage.createSalesData({
-            contractId,
+            matchedContractId: contractId,
             transactionId: salesData.transactionId || `TXN-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             transactionDate: salesData.transactionDate ? new Date(salesData.transactionDate) : new Date(),
             productCode: salesData.productCode,
