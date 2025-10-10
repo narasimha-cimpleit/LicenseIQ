@@ -1163,8 +1163,8 @@ async function processContractAnalysis(contractId: string, filePath: string) {
       processingTime: 0, // Will be calculated if needed
     });
 
-    // Update status to completed
-    await storage.updateContractStatus(contractId, 'completed');
+    // Update status to analyzed (frontend expects this)
+    await storage.updateContractStatus(contractId, 'analyzed');
     
     console.log(`✅ Analysis completed for contract ${contractId}`);
   } catch (error) {
