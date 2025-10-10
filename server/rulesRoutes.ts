@@ -51,6 +51,8 @@ export function registerRulesRoutes(app: Express): void {
       // Get royalty rules from database
       const rules = await storage.getRoyaltyRulesByContract(contractId);
       
+      console.log(`📋 [RULES API] Returning ${rules.length} rules for contract ${contractId}`);
+      
       // Format response
       res.json({
         rules,
