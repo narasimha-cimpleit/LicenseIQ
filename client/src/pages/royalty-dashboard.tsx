@@ -110,13 +110,15 @@ export default function RoyaltyDashboard() {
         return { message: "Sales data deleted successfully" };
       }
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       toast({
         title: "Sales Data Deleted",
         description: data.message || "All sales data has been deleted",
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/contracts/${id}/sales`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/contracts/${id}/royalty-calculations`] });
+      await queryClient.invalidateQueries({ queryKey: [`/api/contracts/${id}/sales`] });
+      await queryClient.invalidateQueries({ queryKey: [`/api/contracts/${id}/royalty-calculations`] });
+      await queryClient.refetchQueries({ queryKey: [`/api/contracts/${id}/sales`] });
+      await queryClient.refetchQueries({ queryKey: [`/api/contracts/${id}/royalty-calculations`] });
     },
     onError: (error: Error) => {
       toast({
@@ -136,12 +138,13 @@ export default function RoyaltyDashboard() {
         return { message: "All calculations deleted successfully" };
       }
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       toast({
         title: "Calculations Deleted",
         description: data.message || "All royalty calculations have been deleted",
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/contracts/${id}/royalty-calculations`] });
+      await queryClient.invalidateQueries({ queryKey: [`/api/contracts/${id}/royalty-calculations`] });
+      await queryClient.refetchQueries({ queryKey: [`/api/contracts/${id}/royalty-calculations`] });
     },
     onError: (error: Error) => {
       toast({
@@ -161,12 +164,13 @@ export default function RoyaltyDashboard() {
         return { message: "Calculation deleted successfully" };
       }
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       toast({
         title: "Calculation Deleted",
         description: data.message || "Calculation has been deleted",
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/contracts/${id}/royalty-calculations`] });
+      await queryClient.invalidateQueries({ queryKey: [`/api/contracts/${id}/royalty-calculations`] });
+      await queryClient.refetchQueries({ queryKey: [`/api/contracts/${id}/royalty-calculations`] });
     },
     onError: (error: Error) => {
       toast({
