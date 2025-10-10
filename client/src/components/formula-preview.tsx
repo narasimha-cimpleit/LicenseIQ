@@ -8,7 +8,7 @@ interface FormulaPreviewProps {
 }
 
 export function FormulaPreview({ contractId }: FormulaPreviewProps) {
-  const { data: preview, isLoading } = useQuery({
+  const { data: preview, isLoading, error } = useQuery({
     queryKey: [`/api/contracts/${contractId}/formula-preview`],
     enabled: !!contractId
   });
@@ -24,6 +24,17 @@ export function FormulaPreview({ contractId }: FormulaPreviewProps) {
           <CardDescription>Loading formula preview...</CardDescription>
         </CardHeader>
       </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          Failed to load formula preview. Please refresh the page.
+        </AlertDescription>
+      </Alert>
     );
   }
 
