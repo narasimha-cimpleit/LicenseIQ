@@ -446,6 +446,12 @@ export const royaltyRules = pgTable("royalty_rules", {
   ruleType: varchar("rule_type").notNull(), // 'percentage', 'tiered', 'minimum_guarantee', 'cap', 'deduction', 'fixed_fee'
   ruleName: varchar("rule_name").notNull(),
   description: text("description"),
+  
+  // NEW: JSON-based dynamic formula storage
+  formulaDefinition: jsonb("formula_definition"), // Complete FormulaDefinition object with expression tree
+  formulaVersion: varchar("formula_version").default("1.0"), // Version for tracking formula changes
+  
+  // LEGACY: Tabular columns (kept for backwards compatibility during migration)
   productCategories: text("product_categories").array(), // Array of product categories this rule applies to
   territories: text("territories").array(), // Array of territories
   containerSizes: text("container_sizes").array(), // e.g., ["1-gallon", "5-gallon"]
@@ -455,6 +461,8 @@ export const royaltyRules = pgTable("royalty_rules", {
   baseRate: decimal("base_rate", { precision: 15, scale: 2 }), // Base royalty rate
   minimumGuarantee: decimal("minimum_guarantee", { precision: 15, scale: 2 }), // Annual minimum
   calculationFormula: text("calculation_formula"), // Description of how to calculate
+  
+  // Metadata
   priority: integer("priority").default(10), // Lower number = higher priority
   isActive: boolean("is_active").default(true),
   confidence: decimal("confidence", { precision: 5, scale: 2 }), // AI extraction confidence
@@ -506,6 +514,12 @@ export const insertRoyaltyRuleSchema = createInsertSchema(royaltyRules).pick({
   ruleType: true,
   ruleName: true,
   description: true,
+  
+  // NEW: JSON-based formula fields
+  formulaDefinition: true,
+  formulaVersion: true,
+  
+  // LEGACY: Tabular fields (kept for backwards compatibility)
   productCategories: true,
   territories: true,
   containerSizes: true,
@@ -515,6 +529,7 @@ export const insertRoyaltyRuleSchema = createInsertSchema(royaltyRules).pick({
   baseRate: true,
   minimumGuarantee: true,
   calculationFormula: true,
+  
   priority: true,
   isActive: true,
   confidence: true,
