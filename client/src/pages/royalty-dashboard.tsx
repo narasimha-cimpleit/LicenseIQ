@@ -10,15 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Calculator,
   DollarSign,
@@ -44,7 +36,7 @@ export default function RoyaltyDashboard() {
   const [periodStart, setPeriodStart] = useState("");
   const [periodEnd, setPeriodEnd] = useState("");
   const [calculationName, setCalculationName] = useState("");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
   // Fetch contract details
   const { data: contract, isLoading: contractLoading } = useQuery({
@@ -80,7 +72,7 @@ export default function RoyaltyDashboard() {
     },
     onSuccess: (data) => {
       setIsCalculating(false);
-      setIsDialogOpen(false);
+      setIsFormOpen(false);
       toast({
         title: "Calculation Complete",
         description: data.message || "Royalties calculated successfully",
@@ -206,75 +198,84 @@ export default function RoyaltyDashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
+            <Collapsible open={isFormOpen} onOpenChange={setIsFormOpen}>
+              <CollapsibleTrigger asChild>
                 <Button 
                   className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
                   disabled={salesData.length === 0}
                   data-testid="button-trigger-calculation"
                 >
                   <Calculator className="h-4 w-4 mr-2" />
-                  Run Calculation
+                  {isFormOpen ? "Hide Form" : "Run Calculation"}
                 </Button>
-              </DialogTrigger>
-              <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
-                <DialogHeader>
-                  <DialogTitle>Calculate Royalties</DialogTitle>
-                  <DialogDescription>
-                    Configure the calculation parameters for this contract.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-4">
+                <div className="border rounded-lg p-6 space-y-4 bg-gray-50 dark:bg-gray-900">
                   <div className="space-y-2">
-                    <Label htmlFor="calc-name">Calculation Name</Label>
-                    <Input
-                      id="calc-name"
-                      placeholder="Q1 2024 Royalties"
-                      value={calculationName}
-                      onChange={(e) => setCalculationName(e.target.value)}
-                      data-testid="input-calculation-name"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="period-start">Period Start (Optional)</Label>
-                      <Input
-                        id="period-start"
-                        type="date"
-                        value={periodStart}
-                        onChange={(e) => setPeriodStart(e.target.value)}
-                        data-testid="input-period-start"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="period-end">Period End (Optional)</Label>
-                      <Input
-                        id="period-end"
-                        type="date"
-                        value={periodEnd}
-                        onChange={(e) => setPeriodEnd(e.target.value)}
-                        data-testid="input-period-end"
-                      />
-                    </div>
-                  </div>
-                  <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-                    <p className="text-sm text-blue-800 dark:text-blue-200">
-                      <strong>Total Sales Data:</strong> {salesData.length} transactions
+                    <h3 className="text-lg font-semibold">Calculate Royalties</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Configure the calculation parameters for this contract.
                     </p>
                   </div>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="calc-name">Calculation Name</Label>
+                      <Input
+                        id="calc-name"
+                        placeholder="Q1 2024 Royalties"
+                        value={calculationName}
+                        onChange={(e) => setCalculationName(e.target.value)}
+                        data-testid="input-calculation-name"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="period-start">Period Start (Optional)</Label>
+                        <Input
+                          id="period-start"
+                          type="date"
+                          value={periodStart}
+                          onChange={(e) => setPeriodStart(e.target.value)}
+                          data-testid="input-period-start"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="period-end">Period End (Optional)</Label>
+                        <Input
+                          id="period-end"
+                          type="date"
+                          value={periodEnd}
+                          onChange={(e) => setPeriodEnd(e.target.value)}
+                          data-testid="input-period-end"
+                        />
+                      </div>
+                    </div>
+                    <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                      <p className="text-sm text-blue-800 dark:text-blue-200">
+                        <strong>Total Sales Data:</strong> {salesData.length} transactions
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsFormOpen(false)}
+                      data-testid="button-cancel-calculation"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={() => calculateMutation.mutate()}
+                      disabled={isCalculating}
+                      className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                      data-testid="button-confirm-calculation"
+                    >
+                      {isCalculating ? "Calculating..." : "Calculate"}
+                    </Button>
+                  </div>
                 </div>
-                <DialogFooter>
-                  <Button
-                    onClick={() => calculateMutation.mutate()}
-                    disabled={isCalculating}
-                    className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-                    data-testid="button-confirm-calculation"
-                  >
-                    {isCalculating ? "Calculating..." : "Calculate"}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+              </CollapsibleContent>
+            </Collapsible>
           </CardContent>
         </Card>
 
