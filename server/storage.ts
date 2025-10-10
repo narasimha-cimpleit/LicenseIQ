@@ -41,6 +41,8 @@ import {
   type InsertContractRoyaltyCalculation,
   type SalesData,
   type InsertSalesData,
+  type RoyaltyRule,
+  type InsertRoyaltyRule,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, ilike, count, gte } from "drizzle-orm";
@@ -196,6 +198,11 @@ export interface IStorage {
   updateCalculationStatus(id: string, status: string, comments?: string): Promise<ContractRoyaltyCalculation>;
   deleteContractRoyaltyCalculation(id: string): Promise<void>;
   deleteAllCalculationsForContract(contractId: string): Promise<void>;
+
+  // Royalty rule operations
+  createRoyaltyRule(rule: InsertRoyaltyRule): Promise<RoyaltyRule>;
+  getRoyaltyRulesByContract(contractId: string): Promise<RoyaltyRule[]>;
+  getActiveRoyaltyRulesByContract(contractId: string): Promise<RoyaltyRule[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1289,6 +1296,28 @@ export class DatabaseStorage implements IStorage {
 
   async deleteAllCalculationsForContract(contractId: string): Promise<void> {
     await db.delete(contractRoyaltyCalculations).where(eq(contractRoyaltyCalculations.contractId, contractId));
+  }
+
+  // Royalty rule operations
+  async createRoyaltyRule(rule: InsertRoyaltyRule): Promise<RoyaltyRule> {
+    const [newRule] = await db.insert(royaltyRules).values(rule).returning();
+    return newRule;
+  }
+
+  async getRoyaltyRulesByContract(contractId: string): Promise<RoyaltyRule[]> {
+    return await db
+      .select()
+      .from(royaltyRules)
+      .where(eq(royaltyRules.contractId, contractId))
+      .orderBy(royaltyRules.priority);
+  }
+
+  async getActiveRoyaltyRulesByContract(contractId: string): Promise<RoyaltyRule[]> {
+    return await db
+      .select()
+      .from(royaltyRules)
+      .where(and(eq(royaltyRules.contractId, contractId), eq(royaltyRules.isActive, true)))
+      .orderBy(royaltyRules.priority);
   }
 
 }
