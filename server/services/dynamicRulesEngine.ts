@@ -144,6 +144,12 @@ export class DynamicRulesEngine {
 
     let tierRate = parseFloat(rule.baseRate || '0');
     
+    console.log(`🔍 [CALC DEBUG] Rule: ${rule.ruleName}`);
+    console.log(`   - Base Rate: ${rule.baseRate} → ${tierRate}`);
+    console.log(`   - Volume Tiers: ${JSON.stringify(volumeTiers)}`);
+    console.log(`   - Seasonal Adj: ${JSON.stringify(seasonalAdj)}`);
+    console.log(`   - Territory Prem: ${JSON.stringify(territoryPrem)}`);
+    
     if (volumeTiers.length > 0) {
       const matchingTier = volumeTiers.find((tier: VolumeTier) => {
         if (tier.max === null) {
@@ -154,6 +160,7 @@ export class DynamicRulesEngine {
       
       if (matchingTier) {
         tierRate = matchingTier.rate;
+        console.log(`   ✓ Matching tier found: ${matchingTier.min}-${matchingTier.max || '∞'} @ rate ${matchingTier.rate}`);
       }
     }
 
@@ -169,6 +176,8 @@ export class DynamicRulesEngine {
     }
 
     const calculatedRoyalty = sale.quantity * tierRate * seasonalMultiplier * territoryMultiplier;
+    
+    console.log(`   💰 Calculation: ${sale.quantity} qty × ${tierRate} rate × ${seasonalMultiplier} seasonal × ${territoryMultiplier} territory = $${calculatedRoyalty.toFixed(2)}`);
 
     const explanation = this.buildExplanation(
       sale.quantity,

@@ -1380,26 +1380,50 @@ async function extractAndSaveRoyaltyRules(contractId: string, contractText: stri
     
     // Convert AI-extracted rules to database format
     for (const aiRule of detailedRules.rules) {
+      // Extract seasonal adjustments from various possible locations
+      const seasonalAdj = aiRule.calculation?.seasonalAdjustments || 
+                         aiRule.calculation?.seasonalMultipliers || 
+                         aiRule.seasonalAdjustments || 
+                         {};
+      
+      // Extract territory premiums from various possible locations
+      const territoryPrem = aiRule.calculation?.territoryPremiums || 
+                           aiRule.calculation?.territoryMultipliers || 
+                           aiRule.territoryPremiums || 
+                           {};
+      
+      // Extract volume tiers - ensure they're in correct format
+      let volumeTiers = aiRule.calculation?.tiers || [];
+      
+      // Extract base rate from multiple possible locations
+      const baseRate = aiRule.calculation?.rate?.toString() || 
+                      aiRule.calculation?.baseRate?.toString() || 
+                      aiRule.baseRate?.toString() || 
+                      null;
+      
       const ruleData: any = {
         contractId,
         ruleType: mapRuleType(aiRule.ruleType),
         ruleName: aiRule.ruleName || 'Extracted Rule',
         description: aiRule.description || '',
-        productCategories: aiRule.conditions.productCategories || [],
-        territories: aiRule.conditions.territories || [],
-        containerSizes: [], // Will be extracted from description if available
-        seasonalAdjustments: [], // Will be extracted from description if available
-        territoryPremiums: [], // Will be extracted from description if available
-        volumeTiers: aiRule.calculation.tiers || [],
-        baseRate: aiRule.calculation.rate?.toString() || null,
-        minimumGuarantee: aiRule.ruleType === 'minimum_guarantee' ? aiRule.calculation.amount?.toString() : null,
+        productCategories: aiRule.conditions?.productCategories || [],
+        territories: aiRule.conditions?.territories || [],
+        containerSizes: aiRule.conditions?.containerSizes || [],
+        seasonalAdjustments: seasonalAdj,
+        territoryPremiums: territoryPrem,
+        volumeTiers: volumeTiers,
+        baseRate: baseRate,
+        minimumGuarantee: aiRule.ruleType === 'minimum_guarantee' ? aiRule.calculation?.amount?.toString() : null,
         isActive: true,
         priority: aiRule.priority || 1,
+        confidence: aiRule.confidence || null,
+        sourceSection: aiRule.sourceSpan?.section || null,
+        sourceText: aiRule.sourceSpan?.text || null,
       };
 
       // Save to database
       await storage.createRoyaltyRule(ruleData);
-      console.log(`✅ Saved rule: ${aiRule.ruleName}`);
+      console.log(`✅ Saved rule: ${aiRule.ruleName} (baseRate: ${baseRate}, volumeTiers: ${volumeTiers.length}, seasonal: ${Object.keys(seasonalAdj).length}, territory: ${Object.keys(territoryPrem).length})`);
     }
     
     console.log(`🎉 Successfully extracted and saved ${detailedRules.rules.length} royalty rules`);
