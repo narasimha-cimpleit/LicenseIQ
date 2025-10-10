@@ -1355,6 +1355,9 @@ async function processContractAnalysis(contractId: string, filePath: string) {
       processingTime: 0, // Will be calculated if needed
     });
 
+    // 🚀 NEW: Extract and save royalty rules automatically
+    await extractAndSaveRoyaltyRules(contractId, extractedText, aiAnalysis);
+
     // Update status to analyzed (frontend expects this)
     await storage.updateContractStatus(contractId, 'analyzed');
     
@@ -1363,6 +1366,60 @@ async function processContractAnalysis(contractId: string, filePath: string) {
     console.error(`❌ Analysis failed for contract ${contractId}:`, error);
     await storage.updateContractStatus(contractId, 'failed');
   }
+}
+
+// Helper function to extract and save royalty rules from AI analysis
+async function extractAndSaveRoyaltyRules(contractId: string, contractText: string, aiAnalysis: any) {
+  try {
+    console.log(`🔍 Extracting royalty rules for contract ${contractId}...`);
+    
+    // Use Groq to extract detailed royalty rules
+    const detailedRules = await groqService.extractDetailedRoyaltyRules(contractText);
+    
+    console.log(`📋 Found ${detailedRules.rules.length} royalty rules from AI analysis`);
+    
+    // Convert AI-extracted rules to database format
+    for (const aiRule of detailedRules.rules) {
+      const ruleData: any = {
+        contractId,
+        ruleType: mapRuleType(aiRule.ruleType),
+        ruleName: aiRule.ruleName || 'Extracted Rule',
+        description: aiRule.description || '',
+        productCategories: aiRule.conditions.productCategories || [],
+        territories: aiRule.conditions.territories || [],
+        containerSizes: [], // Will be extracted from description if available
+        seasonalAdjustments: [], // Will be extracted from description if available
+        territoryPremiums: [], // Will be extracted from description if available
+        volumeTiers: aiRule.calculation.tiers || [],
+        baseRate: aiRule.calculation.rate?.toString() || null,
+        minimumGuarantee: aiRule.ruleType === 'minimum_guarantee' ? aiRule.calculation.amount?.toString() : null,
+        isActive: true,
+        priority: aiRule.priority || 1,
+      };
+
+      // Save to database
+      await storage.createRoyaltyRule(ruleData);
+      console.log(`✅ Saved rule: ${aiRule.ruleName}`);
+    }
+    
+    console.log(`🎉 Successfully extracted and saved ${detailedRules.rules.length} royalty rules`);
+  } catch (error) {
+    console.error(`⚠️ Failed to extract royalty rules:`, error);
+    // Don't fail the entire analysis if rule extraction fails
+  }
+}
+
+// Map AI rule types to database enum values
+function mapRuleType(aiRuleType: string): string {
+  const typeMap: { [key: string]: string } = {
+    'percentage': 'tiered_pricing',
+    'tiered': 'tiered_pricing',
+    'minimum_guarantee': 'minimum_guarantee',
+    'cap': 'tiered_pricing',
+    'deduction': 'tiered_pricing',
+    'fixed_fee': 'tiered_pricing',
+  };
+  return typeMap[aiRuleType] || 'tiered_pricing';
 }
 
 export default registerRoutes;
