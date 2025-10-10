@@ -59,6 +59,11 @@ The system uses a relational data model with core entities including Users (with
 ## Royalty Calculation Dashboard
 - **Beautiful Visualizations**: Gradient metric cards showing sales transactions, total sales, total royalty, and calculation history
 - **Interactive Charts**: Bar charts for sales & royalty breakdown, pie charts for revenue distribution using Recharts library
+- **Formula Preview**: Smart preview system showing which formulas will apply to sales data BEFORE calculation runs
+  - Displays sample products with matched formula types (volume tiers, seasonal adjustments, etc.)
+  - Shows active rules count, matched products, and unmatched products warnings
+  - Reuses same matching logic as calculation engine for accuracy
+  - Appears automatically after sales upload, before Calculate Royalties button
 - **Calculation Workflow**: Users can trigger calculations with custom date ranges and calculation names
 - **Calculation History**: Track all royalty calculation runs with status indicators (pending, approved, rejected)
 - **Contract-Based Workflow**: Each contract has its own sales data and calculation history, accessible from the contract analysis page
