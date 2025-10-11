@@ -132,9 +132,9 @@ export class DynamicRulesEngine {
           return false;
         }
         
-        // Primary match: bidirectional category matching (requires non-empty sale category)
+        // Primary match: word-based category matching (requires non-empty sale category)
         if (saleCategoryLower) {
-          return saleCategoryLower.includes(catLower) || catLower.includes(saleCategoryLower);
+          return this.categoriesMatch(saleCategoryLower, catLower);
         }
         
         // Fallback: product name matching (only if category is empty, and only exact substring)
@@ -155,6 +155,88 @@ export class DynamicRulesEngine {
     }
 
     return true;
+  }
+
+  /**
+   * Smart category matching with word-based overlap
+   * Requires meaningful category words to match, not just tier/grade labels
+   * Example: "Ornamental Shrubs" matches "Ornamental Trees & Shrubs" (shared: ornamental, shrubs)
+   * Example: "Tier 1 Shrubs" does NOT match "Tier 1 Trees" (different product category)
+   * Example: "Tier 1 Shrubs" does NOT match "Tier 2 Shrubs" (conflicting tier)
+   * Example: "Shrubs" does NOT match "Tier 2 Shrubs" (tier-specific rule requires tier match)
+   */
+  private categoriesMatch(saleCategory: string, ruleCategory: string): boolean {
+    // Word-based matching with tier/grade awareness
+    const saleWords = this.extractCategoryWords(saleCategory);
+    const ruleWords = this.extractCategoryWords(ruleCategory);
+    
+    // If either has no meaningful words, no match
+    if (saleWords.length === 0 || ruleWords.length === 0) {
+      return false;
+    }
+    
+    // CHECK TIER/GRADE CONFLICTS FIRST (before any matching logic)
+    const saleNumbers = saleWords.filter(word => /^\d+$/.test(word));
+    const ruleNumbers = ruleWords.filter(word => /^\d+$/.test(word));
+    
+    // If only ONE has numbers, it's a tier mismatch (e.g., "Shrubs" vs "Tier 2 Shrubs")
+    if ((saleNumbers.length > 0) !== (ruleNumbers.length > 0)) {
+      return false; // One is tiered, the other isn't
+    }
+    
+    // If BOTH have numbers, they must all match (e.g., "Tier 1" must match "Tier 1", not "Tier 2")
+    if (saleNumbers.length > 0 && ruleNumbers.length > 0) {
+      const numbersMatch = saleNumbers.every(num => ruleNumbers.includes(num)) &&
+                          ruleNumbers.every(num => saleNumbers.includes(num));
+      if (!numbersMatch) {
+        return false; // Conflicting tier/grade numbers
+      }
+    }
+    
+    // Identify generic tier/grade/level words and numbers
+    const genericWords = new Set(['tier', 'grade', 'level', 'class', 'type']);
+    const isGenericOrNumber = (word: string) => genericWords.has(word) || /^\d+$/.test(word);
+    
+    // Find shared words, separating category descriptors from tier/grade labels
+    const sharedWords = saleWords.filter(word => ruleWords.includes(word));
+    const sharedCategoryWords = sharedWords.filter(word => !isGenericOrNumber(word));
+    
+    // MUST have at least 1 shared meaningful category word (not just "tier" + number)
+    if (sharedCategoryWords.length === 0) {
+      return false;
+    }
+    
+    // For single-word categories (after filtering generics), require 100% match
+    const saleCategoryWords = saleWords.filter(word => !isGenericOrNumber(word));
+    const ruleCategoryWords = ruleWords.filter(word => !isGenericOrNumber(word));
+    
+    if (saleCategoryWords.length === 1 && ruleCategoryWords.length === 1) {
+      return saleCategoryWords[0] === ruleCategoryWords[0];
+    }
+    
+    // For multi-word categories, require at least 2 shared category words OR 100% of smaller
+    const minCategoryWords = Math.min(saleCategoryWords.length, ruleCategoryWords.length);
+    const requiredShared = Math.min(2, minCategoryWords);
+    
+    if (sharedCategoryWords.length < requiredShared) {
+      return false;
+    }
+    
+    return true;
+  }
+
+  /**
+   * Extract meaningful words from a category string
+   * Filters out ONLY stop words, keeps all other words including numbers/grades
+   */
+  private extractCategoryWords(category: string): string[] {
+    const stopWords = new Set(['and', 'or', 'the', 'a', 'an', 'of', 'in', 'on', 'at', 'to', 'for']);
+    
+    return category
+      .toLowerCase()
+      .split(/[\s&,/\-()]+/) // Split by space, &, comma, slash, dash, parentheses
+      .map(word => word.trim())
+      .filter(word => word.length > 0 && !stopWords.has(word)); // Keep all non-stop words
   }
 
   private calculateSaleRoyalty(sale: SaleItem, rule: any): RoyaltyBreakdownItem {
