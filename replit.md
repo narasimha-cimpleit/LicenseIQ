@@ -77,8 +77,25 @@ The system uses a relational data model with core entities including Users (with
   - Appears automatically after sales upload, before Calculate Royalties button
 - **Calculation Workflow**: Users can trigger calculations with custom date ranges and calculation names
 - **Calculation History**: Track all royalty calculation runs with status indicators (pending, approved, rejected)
+  - Displays detailed sales data breakdown with product names, quantities, and amounts
+  - Shows matched royalty rules and calculation explanations for each line item
+- **PDF Invoice Generation**: Professional invoice downloads in two formats
+  - **Detailed Invoice**: Complete line-by-line breakdown with products, quantities, rates, and amounts
+  - **Summary Invoice**: High-level overview with totals, statistics, and confidence scores
+  - Generated using html-pdf-node with branded HTML templates
+  - One-click download buttons with FileDown and Download icons
 - **Contract-Based Workflow**: Each contract has its own sales data and calculation history, accessible from the contract analysis page
 - **Responsive Design**: Mobile-friendly dashboard with gradient backgrounds and modern UI design
+
+## RAG-Powered Document Q&A System (100% FREE)
+- **Intelligent Contract Assistant**: AI-powered chat interface to ask questions about your contracts using Retrieval-Augmented Generation (RAG)
+- **Semantic Search**: Uses Hugging Face embeddings (BAAI/bge-small-en-v1.5) to find relevant contract sections based on your question
+- **AI-Generated Answers**: Groq LLaMA generates precise answers from retrieved contract context with confidence scoring
+- **Source Citations**: Each answer includes references to specific contracts and sections used to generate the response
+- **Contract Filtering**: Ask questions about all contracts or filter to specific contracts for targeted analysis
+- **Beautiful Chat UI**: Modern messaging interface with example questions sidebar and confidence badges
+- **Audit Trail**: All Q&A interactions logged for compliance and review
+- **Mobile-Responsive**: Gradient design matching platform aesthetics with smooth user experience
 
 ## AI-Driven Sales Matching Workflow (100% FREE APIs)
 1. **Contract Upload & Analysis**: Contracts are uploaded and analyzed by Groq LLaMA to extract key terms, products, territories, and royalty rules
