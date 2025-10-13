@@ -439,7 +439,7 @@ export default function RulesManagement() {
               <Label>Min Quantity</Label>
               <Input
                 type="number"
-                value={tier.min}
+                value={tier.min ?? 0}
                 onChange={(e) => updateVolumeTier(index, 'min', parseInt(e.target.value) || 0)}
                 data-testid={`input-tier-min-${index}`}
               />
@@ -769,9 +769,13 @@ export default function RulesManagement() {
                           // Volume-based tiered pricing formula
                           let formulaParts: string[] = [];
                           volumeTiers.forEach((tier: any, idx: number) => {
-                            const condition = tier.max 
-                              ? `if (quantity >= ${tier.min.toLocaleString()} && quantity <= ${tier.max.toLocaleString()})` 
-                              : `if (quantity >= ${tier.min.toLocaleString()})`;
+                            // Handle null values for min/max
+                            const minStr = tier.min != null ? tier.min.toLocaleString() : '0';
+                            const maxStr = tier.max != null ? tier.max.toLocaleString() : '∞';
+                            
+                            const condition = tier.max != null
+                              ? `if (quantity >= ${minStr} && quantity <= ${maxStr})` 
+                              : `if (quantity >= ${minStr})`;
                             
                             let rateStr = typeof tier.rate === 'number' 
                               ? `$${tier.rate.toFixed(2)}`
