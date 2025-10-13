@@ -183,12 +183,29 @@ export default function RoyaltyDashboard() {
     },
   });
 
-  // Prepare chart data
-  const chartData = latestCalculation?.breakdown?.slice(0, 10).map((item: any, index: number) => ({
-    name: item.productName || item.transactionId || `Sale ${index + 1}`,
-    sales: parseFloat(item.saleAmount || 0),
-    royalty: parseFloat(item.royaltyAmount || 0),
-  })) || [];
+  // Prepare chart data - aggregate by product name
+  const chartData = (() => {
+    if (!latestCalculation?.breakdown) return [];
+    
+    // Group by product name and sum amounts
+    const productMap = new Map<string, { sales: number; royalty: number }>();
+    
+    latestCalculation.breakdown.forEach((item: any) => {
+      const productName = item.productName || item.transactionId || 'Unknown';
+      const existing = productMap.get(productName) || { sales: 0, royalty: 0 };
+      
+      productMap.set(productName, {
+        sales: existing.sales + parseFloat(item.saleAmount || 0),
+        royalty: existing.royalty + parseFloat(item.royaltyAmount || 0),
+      });
+    });
+    
+    // Convert to array and sort by sales amount (descending)
+    return Array.from(productMap.entries())
+      .map(([name, data]) => ({ name, ...data }))
+      .sort((a, b) => b.sales - a.sales)
+      .slice(0, 10); // Top 10 products
+  })();
 
   const pieData = [
     { name: "Sales Amount", value: parseFloat(latestCalculation?.totalSalesAmount || 0), color: "#8b5cf6" },
@@ -532,7 +549,7 @@ export default function RoyaltyDashboard() {
                 Sales & Royalty Breakdown
               </CardTitle>
               <CardDescription>
-                Top {chartData.length} transactions with highest sales
+                Top {chartData.length} products by sales amount
               </CardDescription>
             </CardHeader>
             <CardContent>
