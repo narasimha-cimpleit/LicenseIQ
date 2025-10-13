@@ -118,9 +118,7 @@ export default function RulesManagement() {
   // Delete rule mutation
   const deleteMutation = useMutation({
     mutationFn: async (ruleId: string) => {
-      return apiRequest(`/api/contracts/${id}/rules/${ruleId}`, {
-        method: "DELETE",
-      });
+      return apiRequest("DELETE", `/api/contracts/${id}/rules/${ruleId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/contracts/${id}/rules`] });
@@ -141,10 +139,7 @@ export default function RulesManagement() {
   // Toggle active mutation
   const toggleActiveMutation = useMutation({
     mutationFn: async ({ ruleId, isActive }: { ruleId: string; isActive: boolean }) => {
-      return apiRequest(`/api/contracts/${id}/rules/${ruleId}`, {
-        method: "PATCH",
-        body: JSON.stringify({ isActive }),
-      });
+      return apiRequest("PATCH", `/api/contracts/${id}/rules/${ruleId}`, { isActive });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/contracts/${id}/rules`] });
@@ -160,16 +155,10 @@ export default function RulesManagement() {
     mutationFn: async (ruleData: any) => {
       if (editingRuleId && editingRuleId !== 'new') {
         // Update existing rule
-        return apiRequest(`/api/contracts/${id}/rules/${editingRuleId}`, {
-          method: "PATCH",
-          body: JSON.stringify(ruleData),
-        });
+        return apiRequest("PATCH", `/api/contracts/${id}/rules/${editingRuleId}`, ruleData);
       } else {
         // Create new rule
-        return apiRequest(`/api/contracts/${id}/rules`, {
-          method: "POST",
-          body: JSON.stringify({ ...ruleData, contractId: id }),
-        });
+        return apiRequest("POST", `/api/contracts/${id}/rules`, { ...ruleData, contractId: id });
       }
     },
     onSuccess: () => {
