@@ -214,6 +214,17 @@ export default function RulesManagement() {
   const startEdit = (rule: RoyaltyRule) => {
     setShowAddForm(false); // Close add form if open
     setEditingRuleId(rule.id);
+    
+    // Extract volume tiers from formula_definition if available, otherwise use legacy volumeTiers
+    const extractedTiers = rule.formulaDefinition 
+      ? extractVolumeTiersFromFormula(rule.formulaDefinition)
+      : (rule.volumeTiers || []);
+    
+    // Extract seasonal adjustments from formula_definition if available
+    const extractedSeasonalAdj = rule.formulaDefinition
+      ? extractSeasonalAdjustments(rule.formulaDefinition)
+      : (rule.seasonalAdjustments || {});
+    
     setEditForm({
       ruleName: rule.ruleName || "",
       description: rule.description || "",
@@ -223,8 +234,8 @@ export default function RulesManagement() {
       containerSizes: rule.containerSizes || [],
       baseRate: rule.baseRate || "",
       minimumGuarantee: rule.minimumGuarantee || "",
-      volumeTiers: rule.volumeTiers || [],
-      seasonalAdjustments: rule.seasonalAdjustments || {},
+      volumeTiers: extractedTiers,
+      seasonalAdjustments: extractedSeasonalAdj,
       territoryPremiums: rule.territoryPremiums || {},
       priority: rule.priority || 1,
     });
@@ -772,6 +783,46 @@ export default function RulesManagement() {
                             formulaParts.push(`${condition} {\n${formula}\n}`);
                           });
                           calculationFormula = formulaParts.join(' else ');
+                        } else if (rule.formulaDefinition?.formula) {
+                          // Generate formula from FormulaNode for non-tier formulas
+                          const generateFormulaText = (node: any): string => {
+                            if (!node) return '';
+                            
+                            if (node.type === 'reference') {
+                              return node.field;
+                            }
+                            
+                            if (node.type === 'multiply' && node.operands) {
+                              const parts = node.operands.map((op: any) => {
+                                if (op.type === 'reference' && op.field === 'baseRate') {
+                                  return 'baseRate';
+                                }
+                                if (op.type === 'lookup' && op.description) {
+                                  const desc = op.description.toLowerCase();
+                                  if (desc.includes('seasonal')) return 'seasonalMultiplier';
+                                  if (desc.includes('territory')) return 'territoryMultiplier';
+                                  if (desc.includes('organic')) return 'organicMultiplier';
+                                  return 'multiplier';
+                                }
+                                return generateFormulaText(op);
+                              }).filter(Boolean);
+                              return parts.join(' × ');
+                            }
+                            
+                            if (node.type === 'lookup') {
+                              const entries = Object.entries(node.table || {});
+                              if (entries.length > 0) {
+                                return `lookup(${entries.map(([k, v]) => `${k}:${v}`).join(', ')})`;
+                              }
+                            }
+                            
+                            return '';
+                          };
+                          
+                          const formulaText = generateFormulaText(rule.formulaDefinition.formula);
+                          if (formulaText) {
+                            calculationFormula = `royalty = quantity × ${formulaText}`;
+                          }
                         } else if (rule.baseRate) {
                           // Simple base rate formula
                           let rateStr = `$${parseFloat(rule.baseRate).toFixed(2)}`;
