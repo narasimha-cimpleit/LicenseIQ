@@ -245,7 +245,19 @@ export default function RulesManagement() {
       });
       return;
     }
-    saveRuleMutation.mutate(editForm);
+    
+    // Sanitize data: convert empty strings to null for numeric fields
+    const sanitizedData = {
+      ...editForm,
+      baseRate: (typeof editForm.baseRate === 'string' && editForm.baseRate.trim() === '') 
+        ? null 
+        : editForm.baseRate,
+      minimumGuarantee: (typeof editForm.minimumGuarantee === 'string' && editForm.minimumGuarantee.trim() === '') 
+        ? null 
+        : editForm.minimumGuarantee,
+    };
+    
+    saveRuleMutation.mutate(sanitizedData);
   };
 
   const startAddNew = () => {
