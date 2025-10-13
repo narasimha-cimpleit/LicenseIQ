@@ -43,11 +43,11 @@ function Router() {
           <ProtectedRoute path="/users" component={Users} />
           <ProtectedRoute path="/users/new" component={CreateUser} />
           <ProtectedRoute path="/audit" component={Audit} />
-          <ProtectedRoute path="/contracts/:id" component={ContractAnalysis} />
           {/* Royalty Calculations */}
           <ProtectedRoute path="/sales-upload" component={SalesUpload} />
           <ProtectedRoute path="/royalty-dashboard/:id" component={RoyaltyDashboard} />
-          <ProtectedRoute path="/rules-management/:id" component={RulesManagement} />
+          <ProtectedRoute path="/contracts/:id/rules" component={RulesManagement} />
+          <ProtectedRoute path="/contracts/:id" component={ContractAnalysis} />
         </>
       )}
       
