@@ -56,6 +56,17 @@ Preferred communication style: Simple, everyday language.
 ## Data Models & Schema
 The system uses a relational data model with core entities including Users (with role hierarchy), Contracts (with metadata and processing status), Contract Analysis (AI-generated insights and risk assessments), Sales Data (transaction records matched to contracts), Royalty Calculations (calculation results with breakdown details), and Audit Trails (complete activity logging). All entities are fully typed through Drizzle ORM schemas ensuring type safety from database to frontend.
 
+## Rules Management System
+- **Dual-Format Support**: System handles both AI-extracted and manually-created rules seamlessly
+  - **AI-Extracted Rules**: Stored in `formula_definition` column as FormulaNode JSON expression trees
+  - **Legacy Rules**: Stored in dedicated columns (`volume_tiers`, `base_rate`, `seasonal_adjustments`, etc.)
+  - **Smart Parsing**: UI automatically extracts volume tiers and seasonal adjustments from FormulaNode structures
+  - **Backward Compatibility**: Falls back to legacy columns if formula_definition is not present
+- **Formula Display**: Mathematical expressions showing exact calculation logic with volume tiers, seasonal multipliers, and territory premiums
+- **Inline Editing**: Add, edit, and delete rules directly in the page without dialog popups for streamlined workflow
+- **Automatic Extraction**: AI extracts volume tiers, seasonal adjustments, and territory premiums from contract PDFs during upload
+- **Formula Parsing**: extractVolumeTiersFromFormula() and extractSeasonalAdjustments() parse nested FormulaNode operands
+
 ## Royalty Calculation Dashboard
 - **Beautiful Visualizations**: Gradient metric cards showing sales transactions, total sales, total royalty, and calculation history
 - **Interactive Charts**: Bar charts for sales & royalty breakdown, pie charts for revenue distribution using Recharts library
