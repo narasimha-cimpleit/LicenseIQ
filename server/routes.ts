@@ -1959,6 +1959,9 @@ async function processContractAnalysis(contractId: string, filePath: string) {
     // 🚀 NEW: Extract and save royalty rules automatically
     await extractAndSaveRoyaltyRules(contractId, extractedText, aiAnalysis);
 
+    // 🔍 Generate embeddings for RAG/semantic search
+    await generateContractEmbeddings(contractId, aiAnalysis);
+
     // Update status to analyzed (frontend expects this)
     await storage.updateContractStatus(contractId, 'analyzed');
     
@@ -2082,6 +2085,59 @@ async function extractAndSaveRoyaltyRules(contractId: string, contractText: stri
   } catch (error) {
     console.error(`⚠️ Failed to extract royalty rules:`, error);
     // Don't fail the entire analysis if rule extraction fails
+  }
+}
+
+// Generate embeddings for contract (for RAG Q&A)
+async function generateContractEmbeddings(contractId: string, aiAnalysis: any) {
+  try {
+    console.log(`🔍 Generating embeddings for contract ${contractId}...`);
+    
+    // Generate embedding for summary
+    if (aiAnalysis.summary) {
+      const { embedding } = await HuggingFaceEmbeddingService.generateEmbedding(aiAnalysis.summary);
+      await storage.saveContractEmbedding({
+        contractId,
+        embeddingType: 'summary',
+        embedding,
+        sourceText: aiAnalysis.summary,
+        metadata: { type: 'summary' }
+      });
+      console.log(`✅ Generated summary embedding (${embedding.length} dimensions)`);
+    }
+    
+    // Generate embeddings for key terms
+    if (aiAnalysis.keyTerms && Array.isArray(aiAnalysis.keyTerms)) {
+      const keyTermsText = aiAnalysis.keyTerms.join(', ');
+      const { embedding } = await HuggingFaceEmbeddingService.generateEmbedding(keyTermsText);
+      await storage.saveContractEmbedding({
+        contractId,
+        embeddingType: 'key_terms',
+        embedding,
+        sourceText: keyTermsText,
+        metadata: { terms: aiAnalysis.keyTerms }
+      });
+      console.log(`✅ Generated key terms embedding`);
+    }
+    
+    // Generate embeddings for insights
+    if (aiAnalysis.insights && Array.isArray(aiAnalysis.insights)) {
+      const insightsText = aiAnalysis.insights.join(' ');
+      const { embedding } = await HuggingFaceEmbeddingService.generateEmbedding(insightsText);
+      await storage.saveContractEmbedding({
+        contractId,
+        embeddingType: 'insights',
+        embedding,
+        sourceText: insightsText,
+        metadata: { insights: aiAnalysis.insights }
+      });
+      console.log(`✅ Generated insights embedding`);
+    }
+    
+    console.log(`✅ All embeddings generated for contract ${contractId}`);
+  } catch (error) {
+    console.error(`⚠️ Failed to generate embeddings:`, error);
+    // Don't fail the entire analysis if embedding generation fails
   }
 }
 

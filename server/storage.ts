@@ -75,6 +75,15 @@ export interface IStorage {
   updateContractAnalysis(contractId: string, analysis: Partial<InsertContractAnalysis>): Promise<ContractAnalysis>;
   deleteContractAnalysis(contractId: string): Promise<void>;
   
+  // Contract embeddings operations
+  saveContractEmbedding(data: {
+    contractId: string;
+    embeddingType: string;
+    embedding: number[];
+    sourceText: string;
+    metadata?: any;
+  }): Promise<void>;
+  
   // Financial analysis operations
   createFinancialAnalysis(analysis: InsertFinancialAnalysis): Promise<FinancialAnalysis>;
   getFinancialAnalysis(contractId: string): Promise<FinancialAnalysis | undefined>;
@@ -527,6 +536,24 @@ export class DatabaseStorage implements IStorage {
   // Delete contract analysis  
   async deleteContractAnalysis(contractId: string): Promise<void> {
     await db.delete(contractAnalysis).where(eq(contractAnalysis.contractId, contractId));
+  }
+
+  // Contract embeddings operations
+  async saveContractEmbedding(data: {
+    contractId: string;
+    embeddingType: string;
+    embedding: number[];
+    sourceText: string;
+    metadata?: any;
+  }): Promise<void> {
+    const vectorString = `[${data.embedding.join(',')}]`;
+    await db.insert(contractEmbeddings).values({
+      contractId: data.contractId,
+      embeddingType: data.embeddingType,
+      embedding: sql`${vectorString}::vector`,
+      sourceText: data.sourceText,
+      metadata: data.metadata || {}
+    });
   }
 
   // Financial analysis operations
