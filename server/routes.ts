@@ -1130,6 +1130,7 @@ Report ID: ${contractId}
           volumeTiers: [],
           seasonalAdjustments: {},
           territoryPremiums: {},
+          calculationFormula: '',
           rawDefinition: def
         };
 
@@ -1219,6 +1220,41 @@ Report ID: ${contractId}
         // Start extraction from the formula root
         if (def.formula) {
           extractFromNode(def.formula);
+        }
+
+        // Generate human-readable calculation formula (matches DynamicRulesEngine logic)
+        const hasSeasonalAdj = Object.keys(details.seasonalAdjustments).length > 0;
+        const hasTerritoryPrem = Object.keys(details.territoryPremiums).length > 0;
+        
+        if (details.volumeTiers && details.volumeTiers.length > 0) {
+          // Volume-based tiered pricing formula
+          let formulaParts: string[] = [];
+          details.volumeTiers.forEach((tier: any, idx: number) => {
+            const condition = tier.max 
+              ? `if (quantity >= ${tier.min.toLocaleString()} && quantity <= ${tier.max.toLocaleString()})` 
+              : `if (quantity >= ${tier.min.toLocaleString()})`;
+            
+            // Always show rate as currency (per-unit dollar amount)
+            let rateStr = typeof tier.rate === 'number' 
+              ? `$${tier.rate.toFixed(2)}`
+              : 'rate';
+            
+            let formula = `  royalty = quantity × ${rateStr}`;
+            if (hasSeasonalAdj) formula += ' × seasonalMultiplier';
+            if (hasTerritoryPrem) formula += ' × territoryMultiplier';
+            
+            formulaParts.push(`${condition} {\n${formula}\n}`);
+          });
+          details.calculationFormula = formulaParts.join(' else ');
+        } else if (details.baseRate !== null) {
+          // Simple base rate formula - always show as per-unit currency
+          let rateStr = `$${details.baseRate.toFixed(2)}`;
+          
+          details.calculationFormula = `royalty = quantity × ${rateStr}`;
+          if (hasSeasonalAdj) details.calculationFormula += ' × seasonalMultiplier';
+          if (hasTerritoryPrem) details.calculationFormula += ' × territoryMultiplier';
+        } else {
+          details.calculationFormula = 'royalty = formula-based calculation (see rule details)';
         }
 
         return details;
@@ -1320,12 +1356,49 @@ Report ID: ${contractId}
             formulaType = 'Territory premiums';
           }
           
+          // Generate calculation formula for legacy rules (matches DynamicRulesEngine logic)
+          let calculationFormula = '';
+          const hasSeasonalAdj = Object.keys(seasonalAdj).length > 0;
+          const hasTerritoryPrem = Object.keys(territoryPrem).length > 0;
+          
+          if (volumeTiers.length > 0) {
+            // Volume-based tiered pricing formula
+            let formulaParts: string[] = [];
+            volumeTiers.forEach((tier: any, idx: number) => {
+              const condition = tier.max 
+                ? `if (quantity >= ${tier.min.toLocaleString()} && quantity <= ${tier.max.toLocaleString()})` 
+                : `if (quantity >= ${tier.min.toLocaleString()})`;
+              
+              // Always show rate as currency (per-unit dollar amount)
+              let rateStr = typeof tier.rate === 'number' 
+                ? `$${tier.rate.toFixed(2)}`
+                : 'rate';
+              
+              let formula = `  royalty = quantity × ${rateStr}`;
+              if (hasSeasonalAdj) formula += ' × seasonalMultiplier';
+              if (hasTerritoryPrem) formula += ' × territoryMultiplier';
+              
+              formulaParts.push(`${condition} {\n${formula}\n}`);
+            });
+            calculationFormula = formulaParts.join(' else ');
+          } else if (baseRate !== null) {
+            // Simple base rate formula - always show as per-unit currency
+            let rateStr = `$${baseRate.toFixed(2)}`;
+            
+            calculationFormula = `royalty = quantity × ${rateStr}`;
+            if (hasSeasonalAdj) calculationFormula += ' × seasonalMultiplier';
+            if (hasTerritoryPrem) calculationFormula += ' × territoryMultiplier';
+          } else {
+            calculationFormula = 'royalty = quantity × rate';
+          }
+          
           formulaDetails = {
             type: 'legacy',
             baseRate,
             volumeTiers,
             seasonalAdjustments: seasonalAdj,
-            territoryPremiums: territoryPrem
+            territoryPremiums: territoryPrem,
+            calculationFormula
           };
         }
 

@@ -109,6 +109,18 @@ export function FormulaPreview({ contractId, periodStart, periodEnd }: FormulaPr
                       📊 {sample.formulaType}
                     </div>
                     
+                    {/* Calculation Formula */}
+                    {sample.formulaDetails?.calculationFormula && (
+                      <div className="mt-2 p-2 bg-blue-100 dark:bg-blue-950 rounded border border-blue-300 dark:border-blue-700">
+                        <div className="text-xs font-semibold text-blue-900 dark:text-blue-100 mb-1">
+                          💡 Calculation Formula:
+                        </div>
+                        <pre className="text-xs text-blue-800 dark:text-blue-200 whitespace-pre-wrap font-mono">
+                          {sample.formulaDetails.calculationFormula}
+                        </pre>
+                      </div>
+                    )}
+                    
                     {/* Detailed Formula Information */}
                     {sample.formulaDetails && (
                       <div className="mt-2 space-y-1 text-xs">
