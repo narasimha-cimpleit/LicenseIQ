@@ -1852,16 +1852,27 @@ async function extractAndSaveRoyaltyRules(contractId: string, contractText: stri
     console.log(`📋 Found ${detailedRules.rules.length} legacy royalty rules`);
     
     // Convert AI-extracted rules to database format (legacy flat structure)
-    // FILTER OUT rules with empty product categories - they match everything incorrectly!
+    // Save ALL rules - global adjustments (without categories) are valid and useful!
     const validLegacyRules = detailedRules.rules.filter(rule => {
+      // Keep rules that have either:
+      // 1. Product categories (product-specific rules)
+      // 2. Seasonal adjustments or territory premiums (global multipliers)
+      // 3. Volume tiers or base rates (calculation rules)
       const hasCategories = rule.conditions?.productCategories && rule.conditions.productCategories.length > 0;
-      if (!hasCategories) {
-        console.log(`   ⚠️ Skipping rule with empty categories: ${rule.ruleName}`);
+      const hasSeasonalAdj = rule.calculation?.seasonalAdjustments || rule.seasonalAdjustments;
+      const hasTerritoryPrem = rule.calculation?.territoryPremiums || rule.territoryPremiums;
+      const hasTiers = rule.calculation?.tiers && rule.calculation.tiers.length > 0;
+      const hasRate = rule.calculation?.rate || rule.calculation?.baseRate || rule.baseRate;
+      
+      const isValid = hasCategories || hasSeasonalAdj || hasTerritoryPrem || hasTiers || hasRate;
+      
+      if (!isValid) {
+        console.log(`   ⚠️ Skipping empty rule (no data): ${rule.ruleName}`);
       }
-      return hasCategories;
+      return isValid;
     });
     
-    console.log(`📋 Filtered to ${validLegacyRules.length} valid legacy rules (removed rules with empty categories)`);
+    console.log(`📋 Keeping ${validLegacyRules.length} valid legacy rules (including global adjustments)`);
     
     for (const aiRule of validLegacyRules) {
       // Extract seasonal adjustments from various possible locations

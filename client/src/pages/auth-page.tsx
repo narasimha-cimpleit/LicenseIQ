@@ -79,7 +79,7 @@ export default function AuthPage() {
             <div className="flex items-center justify-center space-x-3 mb-6">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full blur-lg opacity-50"></div>
-                <img src={cimpleitLogo} alt="Cimpleit Logo" className="w-12 h-12 relative z-10 drop-shadow-lg" />
+                <img src={cimpleitLogo} alt="Cimpleit Inc Logo" className="w-12 h-12 relative z-10 drop-shadow-lg" />
               </div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                 LicenseIQ
@@ -333,7 +333,7 @@ export default function AuthPage() {
           <div className="text-center space-y-3 pt-6 border-t border-slate-200 dark:border-slate-700">
             <div className="flex items-center justify-center space-x-2">
               <span className="text-xs font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent tracking-wider">
-                CIMPLEIT
+                Cimpleit Inc
               </span>
             </div>
             <p className="text-xs text-muted-foreground">
@@ -344,10 +344,10 @@ export default function AuthPage() {
                 rel="noopener noreferrer" 
                 className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
               >
-                Cimpleit
+                Cimpleit Inc
               </a>
             </p>
-            <p className="text-xs text-muted-foreground">&copy; 2024 Cimpleit. All rights reserved.</p>
+            <p className="text-xs text-muted-foreground">&copy; 2024 Cimpleit Inc. All rights reserved.</p>
             <p className="text-xs text-muted-foreground">Innovative AI and Data Analytics Solutions</p>
           </div>
         </div>

@@ -100,7 +100,7 @@ export default function Sidebar({ className }: SidebarProps) {
       <div className="flex flex-col h-full">
         {/* Logo */}
         <div className="flex items-center px-6 py-4 border-b border-sidebar-border">
-          <img src={cimpleitLogo} alt="Cimpleit Logo" className="w-8 h-8 mr-3" />
+          <img src={cimpleitLogo} alt="Cimpleit Inc Logo" className="w-8 h-8 mr-3" />
           <h1 className="text-xl font-semibold text-sidebar-foreground">LicenseIQ</h1>
         </div>
         
