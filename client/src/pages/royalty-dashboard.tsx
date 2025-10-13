@@ -37,6 +37,8 @@ import {
   Calendar,
   Trash2,
   Settings,
+  Download,
+  FileDown,
 } from "lucide-react";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { format } from "date-fns";
@@ -652,6 +654,38 @@ export default function RoyaltyDashboard() {
                         {calc.status === "pending" && <Clock className="h-3 w-3 mr-1" />}
                         {calc.status || "Pending"}
                       </Badge>
+                      <div className="flex items-center gap-1 border-l pl-2 ml-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Download Detailed Invoice"
+                          className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:hover:bg-purple-950"
+                          onClick={() => {
+                            const link = document.createElement('a');
+                            link.href = `/api/royalty-calculations/${calc.id}/invoice/detailed`;
+                            link.download = `invoice-detailed-${calc.name}.pdf`;
+                            link.click();
+                          }}
+                          data-testid={`button-download-detailed-${calc.id}`}
+                        >
+                          <FileDown className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Download Summary Invoice"
+                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950"
+                          onClick={() => {
+                            const link = document.createElement('a');
+                            link.href = `/api/royalty-calculations/${calc.id}/invoice/summary`;
+                            link.download = `invoice-summary-${calc.name}.pdf`;
+                            link.click();
+                          }}
+                          data-testid={`button-download-summary-${calc.id}`}
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </div>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button

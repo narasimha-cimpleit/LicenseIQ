@@ -20,6 +20,7 @@ import NotFound from "@/pages/not-found";
 import RoyaltyDashboard from "@/pages/royalty-dashboard";
 import SalesUpload from "@/pages/sales-upload";
 import RulesManagement from "@/pages/rules-management";
+import ContractQnA from "@/pages/contract-qna";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -47,6 +48,8 @@ function Router() {
           <ProtectedRoute path="/sales-upload" component={SalesUpload} />
           <ProtectedRoute path="/royalty-dashboard/:id" component={RoyaltyDashboard} />
           <ProtectedRoute path="/contracts/:id/rules" component={RulesManagement} />
+          {/* Contract Q&A */}
+          <ProtectedRoute path="/contract-qna" component={ContractQnA} />
           <ProtectedRoute path="/contracts/:id" component={ContractAnalysis} />
         </>
       )}

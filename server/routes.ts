@@ -10,7 +10,9 @@ import { fileService } from "./services/fileService";
 import { groqService } from "./services/groqService";
 import { registerRulesRoutes } from "./rulesRoutes";
 import { SalesDataParser } from "./services/salesDataParser";
+import { PDFInvoiceService } from "./services/pdfInvoiceService";
 import { HuggingFaceEmbeddingService } from "./services/huggingFaceEmbedding";
+import { RAGService } from "./services/ragService";
 import { db } from "./db";
 import { contractEmbeddings, royaltyRules } from "@shared/schema";
 import { 
@@ -1630,6 +1632,128 @@ Report ID: ${contractId}
     }
   });
 
+  // Generate PDF invoice (detailed format)
+  app.get('/api/royalty-calculations/:id/invoice/detailed', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const calculationId = req.params.id;
+      
+      // Get calculation data
+      const calculation = await storage.getContractRoyaltyCalculation(calculationId);
+      if (!calculation) {
+        return res.status(404).json({ message: 'Calculation not found' });
+      }
+      
+      // Get contract data
+      const contract = await storage.getContract(calculation.contractId);
+      if (!contract) {
+        return res.status(404).json({ message: 'Contract not found' });
+      }
+
+      // Parse breakdown data
+      const breakdown = JSON.parse(calculation.breakdown);
+      const chartData = calculation.chartData ? JSON.parse(calculation.chartData) : {};
+      
+      // Prepare invoice data
+      const invoiceData = {
+        calculationId: calculation.id,
+        calculationName: calculation.name,
+        contractName: contract.originalName,
+        vendorName: contract.analysis?.licensor || 'Vendor Name',
+        licensee: contract.analysis?.licensee || 'Licensee Name',
+        calculationDate: calculation.createdAt,
+        periodStart: calculation.periodStart,
+        periodEnd: calculation.periodEnd,
+        totalRoyalty: parseFloat(calculation.totalRoyalty || '0'),
+        minimumGuarantee: chartData.minimumGuarantee,
+        finalRoyalty: parseFloat(calculation.totalRoyalty || '0'),
+        breakdown: breakdown.map((item: any) => ({
+          productName: item.productName,
+          category: item.category,
+          quantity: item.quantity,
+          grossAmount: item.saleAmount || 0,
+          ruleApplied: item.ruleApplied,
+          calculatedRoyalty: parseFloat(item.royaltyAmount || '0'),
+          explanation: item.explanation
+        })),
+        currency: 'USD',
+        paymentTerms: contract.analysis?.paymentTerms
+      };
+      
+      // Generate PDF
+      const pdfBuffer = await PDFInvoiceService.generateDetailedInvoice(invoiceData);
+      
+      // Set response headers for PDF download
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="invoice-detailed-${calculation.name.replace(/[^a-zA-Z0-9]/g, '-')}.pdf"`);
+      res.send(pdfBuffer);
+      
+    } catch (error: any) {
+      console.error('Error generating detailed invoice:', error);
+      res.status(500).json({ message: error.message || 'Failed to generate invoice' });
+    }
+  });
+
+  // Generate PDF invoice (summary format)
+  app.get('/api/royalty-calculations/:id/invoice/summary', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const calculationId = req.params.id;
+      
+      // Get calculation data
+      const calculation = await storage.getContractRoyaltyCalculation(calculationId);
+      if (!calculation) {
+        return res.status(404).json({ message: 'Calculation not found' });
+      }
+      
+      // Get contract data
+      const contract = await storage.getContract(calculation.contractId);
+      if (!contract) {
+        return res.status(404).json({ message: 'Contract not found' });
+      }
+
+      // Parse breakdown data
+      const breakdown = JSON.parse(calculation.breakdown);
+      const chartData = calculation.chartData ? JSON.parse(calculation.chartData) : {};
+      
+      // Prepare invoice data
+      const invoiceData = {
+        calculationId: calculation.id,
+        calculationName: calculation.name,
+        contractName: contract.originalName,
+        vendorName: contract.analysis?.licensor || 'Vendor Name',
+        licensee: contract.analysis?.licensee || 'Licensee Name',
+        calculationDate: calculation.createdAt,
+        periodStart: calculation.periodStart,
+        periodEnd: calculation.periodEnd,
+        totalRoyalty: parseFloat(calculation.totalRoyalty || '0'),
+        minimumGuarantee: chartData.minimumGuarantee,
+        finalRoyalty: parseFloat(calculation.totalRoyalty || '0'),
+        breakdown: breakdown.map((item: any) => ({
+          productName: item.productName,
+          category: item.category,
+          quantity: item.quantity,
+          grossAmount: item.saleAmount || 0,
+          ruleApplied: item.ruleApplied,
+          calculatedRoyalty: parseFloat(item.royaltyAmount || '0'),
+          explanation: item.explanation
+        })),
+        currency: 'USD',
+        paymentTerms: contract.analysis?.paymentTerms
+      };
+      
+      // Generate PDF
+      const pdfBuffer = await PDFInvoiceService.generateSummaryInvoice(invoiceData);
+      
+      // Set response headers for PDF download
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="invoice-summary-${calculation.name.replace(/[^a-zA-Z0-9]/g, '-')}.pdf"`);
+      res.send(pdfBuffer);
+      
+    } catch (error: any) {
+      console.error('Error generating summary invoice:', error);
+      res.status(500).json({ message: error.message || 'Failed to generate invoice' });
+    }
+  });
+
   // Delete a contract
   app.delete('/api/contracts/:id', isAuthenticated, async (req: any, res: Response) => {
     try {
@@ -1762,6 +1886,32 @@ Report ID: ${contractId}
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename="sample_sales_data.csv"');
     res.send(csv);
+  });
+
+  // RAG Q&A endpoint - Ask questions about contracts
+  app.post('/api/rag/ask', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { question, contractId } = req.body;
+      
+      if (!question || typeof question !== 'string') {
+        return res.status(400).json({ message: 'Question is required and must be a string' });
+      }
+      
+      console.log(`🤖 [RAG API] Question: "${question}"${contractId ? ` (contract: ${contractId})` : ''}`);
+      
+      const result = await RAGService.answerQuestion(question, contractId);
+      
+      await createAuditLog(req, 'rag_query', 'contract', contractId || 'all', {
+        question,
+        confidence: result.confidence,
+        sourcesCount: result.sources.length
+      });
+      
+      res.json(result);
+    } catch (error: any) {
+      console.error('RAG query error:', error);
+      res.status(500).json({ message: error.message || 'Failed to process question' });
+    }
   });
 
   // Return the configured app - server will be started in index.ts
@@ -1929,7 +2079,7 @@ async function extractAndSaveRoyaltyRules(contractId: string, contractText: stri
 
 // Map AI rule types to database enum values
 function mapRuleType(aiRuleType: string): string {
-  const typeMap: { [key: string]: string } = {
+  const typeMap: { [key: string]: string} = {
     'percentage': 'tiered_pricing',
     'tiered': 'tiered_pricing',
     'minimum_guarantee': 'minimum_guarantee',

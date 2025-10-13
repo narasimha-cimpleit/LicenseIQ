@@ -58,6 +58,12 @@ export default function Sidebar({ className }: SidebarProps) {
       current: location === "/sales-upload",
     },
     {
+      name: "Contract Q&A",
+      href: "/contract-qna",
+      icon: Brain,
+      current: location === "/contract-qna",
+    },
+    {
       name: "Analytics",
       href: "/analytics",
       icon: TrendingUp,
