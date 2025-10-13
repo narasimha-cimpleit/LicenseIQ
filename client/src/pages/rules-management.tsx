@@ -388,6 +388,54 @@ export default function RulesManagement() {
                   </div>
                 </CardHeader>
                 <CardContent>
+                  {/* Calculation Formula Display */}
+                  {(() => {
+                    const hasSeasonalAdj = rule.seasonalAdjustments && Object.keys(rule.seasonalAdjustments).length > 0;
+                    const hasTerritoryPrem = rule.territoryPremiums && Object.keys(rule.territoryPremiums).length > 0;
+                    let calculationFormula = '';
+                    
+                    if (rule.volumeTiers && rule.volumeTiers.length > 0) {
+                      // Volume-based tiered pricing formula
+                      let formulaParts: string[] = [];
+                      rule.volumeTiers.forEach((tier: any, idx: number) => {
+                        const condition = tier.max 
+                          ? `if (quantity >= ${tier.min.toLocaleString()} && quantity <= ${tier.max.toLocaleString()})` 
+                          : `if (quantity >= ${tier.min.toLocaleString()})`;
+                        
+                        let rateStr = typeof tier.rate === 'number' 
+                          ? `$${tier.rate.toFixed(2)}`
+                          : 'rate';
+                        
+                        let formula = `  royalty = quantity × ${rateStr}`;
+                        if (hasSeasonalAdj) formula += ' × seasonalMultiplier';
+                        if (hasTerritoryPrem) formula += ' × territoryMultiplier';
+                        
+                        formulaParts.push(`${condition} {\n${formula}\n}`);
+                      });
+                      calculationFormula = formulaParts.join(' else ');
+                    } else if (rule.baseRate) {
+                      // Simple base rate formula
+                      let rateStr = `$${parseFloat(rule.baseRate).toFixed(2)}`;
+                      
+                      calculationFormula = `royalty = quantity × ${rateStr}`;
+                      if (hasSeasonalAdj) calculationFormula += ' × seasonalMultiplier';
+                      if (hasTerritoryPrem) calculationFormula += ' × territoryMultiplier';
+                    } else if (rule.ruleType === 'minimum_guarantee' && rule.minimumGuarantee) {
+                      calculationFormula = `royalty = max(calculated_royalty, $${parseFloat(rule.minimumGuarantee).toFixed(2)})`;
+                    }
+                    
+                    return calculationFormula ? (
+                      <div className="mb-4 p-3 bg-blue-100 dark:bg-blue-950 rounded border border-blue-300 dark:border-blue-700">
+                        <div className="text-xs font-semibold text-blue-900 dark:text-blue-100 mb-1">
+                          💡 Calculation Formula:
+                        </div>
+                        <pre className="text-xs text-blue-800 dark:text-blue-200 whitespace-pre-wrap font-mono">
+                          {calculationFormula}
+                        </pre>
+                      </div>
+                    ) : null;
+                  })()}
+                  
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {rule.productCategories?.length > 0 && (
                       <div>
