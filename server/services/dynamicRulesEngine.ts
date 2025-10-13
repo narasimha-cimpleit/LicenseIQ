@@ -84,6 +84,14 @@ export class DynamicRulesEngine {
       
       if (matchingRule) {
         const calculation = this.calculateSaleRoyalty(sale, matchingRule);
+        
+        // 🛡️ SAFETY GUARD: Prevent royalties from exceeding sales amounts
+        if (calculation.calculatedRoyalty > sale.grossAmount * 1.01) { // Allow 1% tolerance for rounding
+          const errorMsg = `FORMULA ERROR: Royalty ($${calculation.calculatedRoyalty.toFixed(2)}) exceeds sale amount ($${sale.grossAmount.toFixed(2)}) for ${sale.productName}. Rule: ${matchingRule.ruleName}. This indicates incorrect tier rates or formula structure.`;
+          console.error(`🚨 ${errorMsg}`);
+          throw new Error(errorMsg); // Hard error - forces user to fix formula instead of silently capping
+        }
+        
         breakdown.push(calculation);
         totalRoyalty += calculation.calculatedRoyalty;
         rulesApplied.add(matchingRule.ruleName);

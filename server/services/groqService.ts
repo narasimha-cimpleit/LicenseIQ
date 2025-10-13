@@ -387,24 +387,29 @@ FORMULANODE TYPES:
   "type": "literal", "value": 1.25  // Fixed number
 }
 {
-  "type": "reference", "field": "units"  // Get value from sales data
+  "type": "reference", "field": "units"  // Get value from sales data (units, grossAmount, season, territory)
 }
 {
-  "type": "multiply", "operands": [node1, node2]  // Multiplication
+  "type": "multiply", "operands": [node1, node2, node3]  // Multiplication
 }
 {
-  "type": "tier", "reference": {field node}, "tiers": [{"min": 0, "max": 4999, "rate": 1.25, "label": "< 5000"}]
+  "type": "tier", "reference": {field node}, "tiers": [{"min": 0, "max": 4999, "rate": 11.25, "label": "< 5000"}]  // Returns rate as PERCENTAGE
 }
 {
   "type": "lookup", "reference": {field node}, "table": {"Spring": 1.10, "Summer": 1.0}, "default": 1.0
 }
+
+⚠️ **CRITICAL FORMULA RULES:**
+1. Tier nodes return PERCENTAGES (e.g., 11.25 = 11.25%, NOT $11.25/unit)
+2. ALWAYS multiply by grossAmount first for percentage-based royalties
+3. Formula structure: grossAmount × tier_percentage × seasonal_adjustment
 
 RESPONSE FORMAT - Return JSON array:
 [
   {
     "productName": "Aurora Flame Maple",
     "ruleName": "Aurora Flame Maple - 1-gallon with volume tiers",
-    "description": "1-gallon containers: $1.25 per unit, $1.10 for 5000+ units with seasonal adjustments",
+    "description": "1-gallon containers: 1.25% royalty, 1.10% for 5000+ units with seasonal adjustments",
     "conditions": {
       "containerSize": "1-gallon",
       "productCategories": ["Ornamental Trees"],
@@ -412,11 +417,15 @@ RESPONSE FORMAT - Return JSON array:
     },
     "formulaDefinition": {
       "name": "Aurora Flame Maple Royalty",
-      "description": "Volume-tiered with seasonal adjustment",
+      "description": "Volume-tiered percentage with seasonal adjustment",
       "filters": {"containerSize": "1-gallon"},
       "formula": {
         "type": "multiply",
         "operands": [
+          {
+            "type": "reference",
+            "field": "grossAmount"
+          },
           {
             "type": "tier",
             "reference": {"type": "reference", "field": "units"},

@@ -179,9 +179,12 @@ export class FormulaInterpreter {
         (tier.max === null || referenceValue <= tier.max);
       
       if (inRange) {
-        const result = tier.rate * referenceValue;
-        this.log(`Tier match: ${referenceValue} in [${tier.min}, ${tier.max ?? '∞'}] → rate ${tier.rate}${tier.label ? ` (${tier.label})` : ''} = ${result}`);
-        return result;
+        // ⚠️ CRITICAL ASSUMPTION: ALL tier rates MUST be stored as percentages (11.25 = 11.25%, NOT 0.1125)
+        // This is enforced by: (1) Groq service prompt, (2) database normalization, (3) safety guard
+        // Interpreter always converts percentage → decimal for calculation
+        const rateAsDecimal = tier.rate / 100; // Convert percentage to decimal (e.g., 11.25% → 0.1125)
+        this.log(`Tier match: ${referenceValue} in [${tier.min}, ${tier.max ?? '∞'}] → rate ${tier.rate}% (${rateAsDecimal})${tier.label ? ` (${tier.label})` : ''}`);
+        return rateAsDecimal;
       }
     }
     
