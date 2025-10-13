@@ -435,10 +435,25 @@ export default function ContractAnalysis() {
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Contract</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Are you sure you want to delete "{contract?.originalName}"? This action cannot be undone. 
-                    The contract file and all analysis data will be permanently removed.
+                  <AlertDialogTitle className="text-red-600">⚠️ Delete Contract & All Related Data</AlertDialogTitle>
+                  <AlertDialogDescription className="space-y-3">
+                    <p className="font-semibold text-foreground">
+                      Are you sure you want to delete "{contract?.originalName}"?
+                    </p>
+                    <p className="text-red-600 font-medium">
+                      This action cannot be undone and will permanently delete:
+                    </p>
+                    <ul className="list-disc list-inside space-y-1 text-sm text-foreground bg-red-50 dark:bg-red-950 p-3 rounded-md">
+                      <li>📄 Contract file and AI analysis</li>
+                      <li>📊 All royalty rules and formulas</li>
+                      <li>💰 All sales data</li>
+                      <li>🧮 All royalty calculations and history</li>
+                      <li>🤖 Contract embeddings and AI data</li>
+                      <li>📋 All audit trail records</li>
+                    </ul>
+                    <p className="text-sm text-muted-foreground italic">
+                      You can always re-upload the contract PDF to extract rules again.
+                    </p>
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -448,7 +463,7 @@ export default function ContractAnalysis() {
                     onClick={handleDelete}
                     disabled={deleteMutation.isPending}
                   >
-                    {deleteMutation.isPending ? "Deleting..." : "Delete Contract"}
+                    {deleteMutation.isPending ? "Deleting..." : "Yes, Delete Everything"}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
