@@ -1190,21 +1190,27 @@ Report ID: ${contractId}
       // Calculate total sales amount
       const totalSalesAmount = filteredSales.reduce((sum, sale) => sum + parseFloat(sale.grossAmount), 0);
       
-      // Prepare enhanced breakdown with rule details
-      const breakdown = result.breakdown.map(item => ({
-        saleId: item.saleId,
-        productName: item.productName,
-        category: item.category,
-        territory: item.territory,
-        quantity: item.quantity,
-        saleAmount: item.calculatedRoyalty / item.tierRate, // Approximate sale amount
-        royaltyAmount: item.calculatedRoyalty.toString(),
-        ruleApplied: item.ruleApplied,
-        explanation: item.explanation,
-        tierRate: item.tierRate,
-        seasonalMultiplier: item.seasonalMultiplier,
-        territoryMultiplier: item.territoryMultiplier
-      }));
+      // Create lookup map for sales data
+      const salesMap = new Map(filteredSales.map(sale => [sale.id, sale]));
+      
+      // Prepare enhanced breakdown with rule details and actual sale amounts
+      const breakdown = result.breakdown.map(item => {
+        const sale = salesMap.get(item.saleId);
+        return {
+          saleId: item.saleId,
+          productName: item.productName,
+          category: item.category,
+          territory: item.territory,
+          quantity: item.quantity,
+          saleAmount: sale ? parseFloat(sale.grossAmount) : 0, // Use actual gross amount
+          royaltyAmount: item.calculatedRoyalty.toString(),
+          ruleApplied: item.ruleApplied,
+          explanation: item.explanation,
+          tierRate: item.tierRate,
+          seasonalMultiplier: item.seasonalMultiplier,
+          territoryMultiplier: item.territoryMultiplier
+        };
+      });
       
       // Create calculation record with enhanced data
       const calculation = await storage.createContractRoyaltyCalculation({
