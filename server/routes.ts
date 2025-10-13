@@ -1649,9 +1649,13 @@ Report ID: ${contractId}
         return res.status(404).json({ message: 'Contract not found' });
       }
 
-      // Parse breakdown data
-      const breakdown = JSON.parse(calculation.breakdown);
-      const chartData = calculation.chartData ? JSON.parse(calculation.chartData) : {};
+      // Breakdown data is already an object from the database
+      const breakdown = typeof calculation.breakdown === 'string' 
+        ? JSON.parse(calculation.breakdown) 
+        : calculation.breakdown;
+      const chartData = calculation.chartData 
+        ? (typeof calculation.chartData === 'string' ? JSON.parse(calculation.chartData) : calculation.chartData)
+        : {};
       
       // Prepare invoice data
       const invoiceData = {
@@ -1710,9 +1714,13 @@ Report ID: ${contractId}
         return res.status(404).json({ message: 'Contract not found' });
       }
 
-      // Parse breakdown data
-      const breakdown = JSON.parse(calculation.breakdown);
-      const chartData = calculation.chartData ? JSON.parse(calculation.chartData) : {};
+      // Breakdown data is already an object from the database
+      const breakdown = typeof calculation.breakdown === 'string' 
+        ? JSON.parse(calculation.breakdown) 
+        : calculation.breakdown;
+      const chartData = calculation.chartData 
+        ? (typeof calculation.chartData === 'string' ? JSON.parse(calculation.chartData) : calculation.chartData)
+        : {};
       
       // Prepare invoice data
       const invoiceData = {

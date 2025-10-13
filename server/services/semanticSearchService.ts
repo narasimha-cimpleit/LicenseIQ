@@ -1,11 +1,10 @@
 import { db } from '../db';
-import { contractEmbeddings, contracts, licenseRuleSets } from '@shared/schema';
+import { contractEmbeddings, contracts } from '@shared/schema';
 import { cosineDistance, desc, sql, eq, and } from 'drizzle-orm';
 import { HuggingFaceEmbeddingService } from './huggingFaceEmbedding';
 
 export interface ContractMatch {
   contractId: string;
-  vendorId: string;
   similarity: number;
   embeddingType: string;
   sourceText: string;
@@ -59,7 +58,6 @@ export class SemanticSearchService {
           metadata: contractEmbeddings.metadata,
           distance,
           similarity,
-          vendorId: contracts.vendorId,
           contractStatus: contracts.status,
         })
         .from(contractEmbeddings)
@@ -80,7 +78,6 @@ export class SemanticSearchService {
 
       return results.map((r: any) => ({
         contractId: r.contractId,
-        vendorId: r.vendorId || '',
         similarity: Number(r.similarity),
         embeddingType: r.embeddingType || '',
         sourceText: r.sourceText || '',
@@ -104,7 +101,6 @@ export class SemanticSearchService {
     transactionDate?: Date;
   }): Promise<{
     contractId: string;
-    vendorId: string;
     confidence: number;
     reasoning: string;
     matches: ContractMatch[];
@@ -131,7 +127,6 @@ export class SemanticSearchService {
 
       return {
         contractId: bestMatch.contractId,
-        vendorId: bestMatch.vendorId,
         confidence: bestMatch.similarity,
         reasoning,
         matches,
@@ -189,7 +184,7 @@ export class SemanticSearchService {
       category?: string;
       territory?: string;
     }>
-  ): Promise<Map<string, { contractId: string; vendorId: string; confidence: number; reasoning: string }>> {
+  ): Promise<Map<string, { contractId: string; confidence: number; reasoning: string }>> {
     const results = new Map();
 
     // Process in parallel batches of 10
@@ -202,7 +197,6 @@ export class SemanticSearchService {
         if (match) {
           results.set(salesData.id, {
             contractId: match.contractId,
-            vendorId: match.vendorId,
             confidence: match.confidence,
             reasoning: match.reasoning,
           });
