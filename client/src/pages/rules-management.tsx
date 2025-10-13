@@ -23,8 +23,8 @@ interface RoyaltyRule {
   productCategories: string[];
   territories: string[];
   containerSizes: string[];
-  seasonalAdjustments: any[];
-  territoryPremiums: any[];
+  seasonalAdjustments: Record<string, number> | any;
+  territoryPremiums: Record<string, number> | any;
   volumeTiers: any[];
   baseRate: string | null;
   minimumGuarantee: string | null;
@@ -630,7 +630,7 @@ export default function RulesManagement() {
                 Royalty Rules Management
               </h1>
               <p className="text-muted-foreground mt-2">
-                {contract?.originalName || "Loading..."}
+                {(contract as any)?.originalName || "Loading..."}
               </p>
             </div>
             {!showAddForm && (
