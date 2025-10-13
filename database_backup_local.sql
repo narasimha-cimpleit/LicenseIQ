@@ -24,14 +24,20 @@ CREATE EXTENSION IF NOT EXISTS "vector";
 -- CORE TABLES
 -- ===============================================
 
--- Session storage table (required for authentication)
-CREATE TABLE IF NOT EXISTS "sessions" (
-  "sid" VARCHAR NOT NULL PRIMARY KEY,
-  "sess" JSONB NOT NULL,
-  "expire" TIMESTAMP NOT NULL
-);
-
-CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "sessions" ("expire");
+-- Session storage table (AUTO-CREATED by connect-pg-simple)
+-- DO NOT manually create this table - the app creates it automatically
+-- with the correct naming convention to avoid conflicts
+-- 
+-- If you need to recreate it, run: DROP TABLE IF EXISTS "sessions" CASCADE;
+-- Then restart your app and it will be auto-created
+--
+-- Uncomment below ONLY if you're not using the app's session store:
+-- CREATE TABLE IF NOT EXISTS "sessions" (
+--   "sid" VARCHAR NOT NULL PRIMARY KEY,
+--   "sess" JSONB NOT NULL,
+--   "expire" TIMESTAMP NOT NULL
+-- );
+-- CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "sessions" ("expire");
 
 -- Users table
 CREATE TABLE IF NOT EXISTS "users" (
