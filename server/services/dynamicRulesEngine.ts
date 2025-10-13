@@ -329,9 +329,12 @@ export class DynamicRulesEngine {
       }
     }
 
-    const calculatedRoyalty = sale.quantity * tierRate * seasonalMultiplier * territoryMultiplier;
+    // ⚠️ CRITICAL FIX: Legacy rules must use percentage-based calculation to match formula interpreter
+    // ALL rates stored as percentages (25 = 25%, NOT $25 per unit) - consistent with FormulaInterpreter
+    const rateAsDecimal = tierRate / 100; // Convert percentage to decimal (e.g., 25% → 0.25)
+    const calculatedRoyalty = sale.grossAmount * rateAsDecimal * seasonalMultiplier * territoryMultiplier;
     
-    console.log(`   💰 Calculation: ${sale.quantity} qty × ${tierRate} rate × ${seasonalMultiplier} seasonal × ${territoryMultiplier} territory = $${calculatedRoyalty.toFixed(2)}`);
+    console.log(`   💰 Calculation: $${sale.grossAmount} × ${tierRate}% × ${seasonalMultiplier} seasonal × ${territoryMultiplier} territory = $${calculatedRoyalty.toFixed(2)}`);
 
     const explanation = this.buildExplanation(
       sale.quantity,
@@ -376,7 +379,8 @@ export class DynamicRulesEngine {
     season: string,
     territoryName: string
   ): string {
-    const parts = [`${quantity} units × $${tierRate.toFixed(2)}`];
+    // Updated to reflect percentage-based calculation (consistent with formula interpreter)
+    const parts = [`${tierRate}% of gross sales`];
     
     if (seasonal !== 1.0) {
       parts.push(`× ${seasonal.toFixed(2)} (${season})`);
