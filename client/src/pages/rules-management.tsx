@@ -28,8 +28,50 @@ interface RoyaltyRule {
   volumeTiers: any[];
   baseRate: string | null;
   minimumGuarantee: string | null;
+  formulaDefinition: any | null;
   isActive: boolean;
   priority: number;
+}
+
+// Helper function to extract volume tiers from formula definition
+function extractVolumeTiersFromFormula(formulaDefinition: any): any[] {
+  if (!formulaDefinition?.formula) return [];
+  
+  const findTierNode = (node: any): any => {
+    if (!node) return null;
+    if (node.type === 'tier' && node.tiers) return node;
+    if (node.operands && Array.isArray(node.operands)) {
+      for (const operand of node.operands) {
+        const result = findTierNode(operand);
+        if (result) return result;
+      }
+    }
+    return null;
+  };
+  
+  const tierNode = findTierNode(formulaDefinition.formula);
+  return tierNode?.tiers || [];
+}
+
+// Helper function to extract seasonal adjustments from formula definition
+function extractSeasonalAdjustments(formulaDefinition: any): Record<string, number> {
+  if (!formulaDefinition?.formula) return {};
+  
+  const findSeasonalNode = (node: any): any => {
+    if (!node) return null;
+    if (node.type === 'lookup' && node.description?.toLowerCase().includes('seasonal')) {
+      return node.table;
+    }
+    if (node.operands && Array.isArray(node.operands)) {
+      for (const operand of node.operands) {
+        const result = findSeasonalNode(operand);
+        if (result) return result;
+      }
+    }
+    return null;
+  };
+  
+  return findSeasonalNode(formulaDefinition.formula) || {};
 }
 
 export default function RulesManagement() {
@@ -697,14 +739,24 @@ export default function RulesManagement() {
                     <CardContent>
                       {/* Calculation Formula Display */}
                       {(() => {
-                        const hasSeasonalAdj = rule.seasonalAdjustments && Object.keys(rule.seasonalAdjustments).length > 0;
+                        // Try to get volume tiers from formula_definition first, then fallback to legacy volumeTiers
+                        const volumeTiers = rule.formulaDefinition 
+                          ? extractVolumeTiersFromFormula(rule.formulaDefinition)
+                          : (rule.volumeTiers || []);
+                        
+                        // Try to get seasonal adjustments from formula_definition first, then fallback to legacy
+                        const seasonalAdj = rule.formulaDefinition
+                          ? extractSeasonalAdjustments(rule.formulaDefinition)
+                          : (rule.seasonalAdjustments || {});
+                        
+                        const hasSeasonalAdj = Object.keys(seasonalAdj).length > 0;
                         const hasTerritoryPrem = rule.territoryPremiums && Object.keys(rule.territoryPremiums).length > 0;
                         let calculationFormula = '';
                         
-                        if (rule.volumeTiers && rule.volumeTiers.length > 0) {
+                        if (volumeTiers && volumeTiers.length > 0) {
                           // Volume-based tiered pricing formula
                           let formulaParts: string[] = [];
-                          rule.volumeTiers.forEach((tier: any, idx: number) => {
+                          volumeTiers.forEach((tier: any, idx: number) => {
                             const condition = tier.max 
                               ? `if (quantity >= ${tier.min.toLocaleString()} && quantity <= ${tier.max.toLocaleString()})` 
                               : `if (quantity >= ${tier.min.toLocaleString()})`;
@@ -769,12 +821,18 @@ export default function RulesManagement() {
                           </div>
                         )}
                         
-                        {rule.volumeTiers?.length > 0 && (
-                          <div>
-                            <p className="text-sm font-medium mb-1">Volume Tiers</p>
-                            <p className="text-sm text-muted-foreground">{rule.volumeTiers.length} tier(s) configured</p>
-                          </div>
-                        )}
+                        {(() => {
+                          const volumeTiers = rule.formulaDefinition 
+                            ? extractVolumeTiersFromFormula(rule.formulaDefinition)
+                            : (rule.volumeTiers || []);
+                          
+                          return volumeTiers.length > 0 ? (
+                            <div>
+                              <p className="text-sm font-medium mb-1">Volume Tiers</p>
+                              <p className="text-sm text-muted-foreground">{volumeTiers.length} tier(s) configured</p>
+                            </div>
+                          ) : null;
+                        })()}
                       </div>
                     </CardContent>
                   </>
