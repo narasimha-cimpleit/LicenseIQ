@@ -1042,6 +1042,188 @@ Report ID: ${contractId}
         }
       });
 
+      // Helper to recursively evaluate a FormulaNode to a primitive value (number or string)
+      const evaluateNode = (node: any): any => {
+        if (!node) return null;
+        if (typeof node === 'number' || typeof node === 'string') return node;
+        if (!node.type) return null;
+
+        switch (node.type) {
+          case 'literal':
+            return node.value;
+            
+          case 'reference':
+            return node.field; // Return field name as string
+            
+          case 'multiply':
+            if (node.operands && Array.isArray(node.operands)) {
+              const values = node.operands.map(evaluateNode).filter((v: any) => typeof v === 'number');
+              return values.length > 0 ? values.reduce((a: any, b: any) => a * b, 1) : null;
+            }
+            return null;
+            
+          case 'add':
+            if (node.operands && Array.isArray(node.operands)) {
+              const values = node.operands.map(evaluateNode).filter((v: any) => typeof v === 'number');
+              return values.length > 0 ? values.reduce((a: any, b: any) => a + b, 0) : null;
+            }
+            return null;
+            
+          case 'subtract':
+            const left = evaluateNode(node.left);
+            const right = evaluateNode(node.right);
+            if (typeof left === 'number' && typeof right === 'number') {
+              return left - right;
+            }
+            return null;
+            
+          case 'premium':
+            const baseVal = evaluateNode(node.base);
+            if (typeof baseVal === 'number' && typeof node.percentage === 'number') {
+              if (node.mode === 'multiplicative') {
+                return baseVal * (1 + node.percentage / 100);
+              } else { // additive
+                return baseVal + node.percentage;
+              }
+            }
+            return null;
+            
+          case 'max':
+            if (node.operands && Array.isArray(node.operands)) {
+              const values = node.operands.map(evaluateNode).filter((v: any) => typeof v === 'number');
+              return values.length > 0 ? Math.max(...values) : null;
+            }
+            return null;
+            
+          case 'min':
+            if (node.operands && Array.isArray(node.operands)) {
+              const values = node.operands.map(evaluateNode).filter((v: any) => typeof v === 'number');
+              return values.length > 0 ? Math.min(...values) : null;
+            }
+            return null;
+            
+          case 'round':
+            const val = evaluateNode(node.value);
+            if (typeof val === 'number') {
+              const multiplier = Math.pow(10, node.precision || 2);
+              if (node.mode === 'floor') {
+                return Math.floor(val * multiplier) / multiplier;
+              } else if (node.mode === 'ceil') {
+                return Math.ceil(val * multiplier) / multiplier;
+              } else {
+                return Math.round(val * multiplier) / multiplier;
+              }
+            }
+            return null;
+            
+          default:
+            // For complex nodes we can't evaluate (tier, lookup, if), return null
+            return null;
+        }
+      };
+
+      // Helper to parse formula definition and extract displayable details
+      const parseFormulaDefinition = (def: any): any => {
+        const details: any = {
+          type: 'formula_based',
+          baseRate: null,
+          volumeTiers: [],
+          seasonalAdjustments: {},
+          territoryPremiums: {},
+          rawDefinition: def
+        };
+
+        // Recursive function to extract details from formula nodes
+        const extractFromNode = (node: any) => {
+          if (!node || !node.type) return;
+
+          switch (node.type) {
+            case 'literal':
+              // Extract base rate from percentage or decimal literals
+              if (node.unit === 'percent' && typeof node.value === 'number') {
+                details.baseRate = details.baseRate || (node.value / 100); // Convert percent to decimal
+              } else if (typeof node.value === 'number' && node.value < 1 && !node.unit) {
+                details.baseRate = details.baseRate || node.value;
+              } else if (typeof node.value === 'number' && node.value >= 1 && (node.unit === 'dollars' || node.unit === 'currency')) {
+                // Per-unit royalty (e.g., $1.25 per unit)
+                details.baseRate = details.baseRate || node.value;
+              }
+              break;
+
+            case 'tier':
+              // Extract volume tiers and evaluate rates to primitives
+              if (node.tiers && Array.isArray(node.tiers)) {
+                details.volumeTiers = node.tiers.map((tier: any) => ({
+                  min: tier.min,
+                  max: tier.max,
+                  rate: evaluateNode(tier.rate), // Evaluate rate to primitive
+                  label: tier.label
+                }));
+              }
+              break;
+
+            case 'lookup':
+              // Extract seasonal adjustments or territory premiums and evaluate to primitives
+              if (node.reference && node.reference.field) {
+                const table = node.table || {};
+                const evaluatedTable: any = {};
+                
+                // Evaluate each table entry to primitive value
+                for (const [key, value] of Object.entries(table)) {
+                  evaluatedTable[key] = evaluateNode(value);
+                }
+
+                if (node.reference.field === 'season') {
+                  details.seasonalAdjustments = evaluatedTable;
+                } else if (node.reference.field === 'territory') {
+                  details.territoryPremiums = evaluatedTable;
+                }
+              }
+              break;
+
+            case 'multiply':
+            case 'add':
+            case 'subtract':
+              // Recursively extract from operands
+              if (node.operands && Array.isArray(node.operands)) {
+                node.operands.forEach(extractFromNode);
+              }
+              if (node.left) extractFromNode(node.left);
+              if (node.right) extractFromNode(node.right);
+              break;
+
+            case 'if':
+              // Recursively extract from conditional branches
+              if (node.then) extractFromNode(node.then);
+              if (node.else) extractFromNode(node.else);
+              break;
+
+            case 'premium':
+              // Extract premium percentage as base rate if not set
+              if (node.percentage && !details.baseRate) {
+                details.baseRate = node.percentage / 100; // Convert percentage to decimal
+              }
+              if (node.base) extractFromNode(node.base);
+              break;
+
+            case 'max':
+            case 'min':
+              // Recursively extract from operands
+              if (node.operands && Array.isArray(node.operands)) {
+                node.operands.forEach(extractFromNode);
+              }
+              break;
+          }
+        };
+
+        // Start extraction from the formula root
+        if (def.formula) {
+          extractFromNode(def.formula);
+        }
+
+        return details;
+      };
+
       // Helper to find matching rule (same logic as DynamicRulesEngine)
       const findMatchingRule = (sale: any) => {
         const tierRules = rules.filter(r => r.ruleType === 'tiered_pricing' || r.ruleType === 'formula_based');
@@ -1103,19 +1285,48 @@ Report ID: ${contractId}
           };
         }
 
-        // Extract formula type from formula definition or legacy fields
+        // Extract formula type and details from formula definition or legacy fields
         let formulaType = 'Standard rate';
         let ruleDescription = matchingRule.description || '';
+        let formulaDetails: any = {};
 
         if (matchingRule.formulaDefinition) {
           const def = matchingRule.formulaDefinition as any;
           formulaType = def.description || def.name || 'Formula-based';
-        } else if (matchingRule.volumeTiers && matchingRule.volumeTiers.length > 0) {
-          formulaType = 'Volume tiers';
-        } else if (matchingRule.seasonalAdjustments) {
-          formulaType = 'Seasonal adjustments';
-        } else if (matchingRule.territoryPremiums) {
-          formulaType = 'Territory premiums';
+          
+          // Parse the formula definition to extract displayable details
+          formulaDetails = parseFormulaDefinition(def);
+          
+          // Override formula type based on extracted content
+          if (formulaDetails.volumeTiers && formulaDetails.volumeTiers.length > 0) {
+            formulaType = 'Volume-based tiered pricing';
+          } else if (Object.keys(formulaDetails.seasonalAdjustments).length > 0) {
+            formulaType = 'Seasonal adjustments';
+          } else if (Object.keys(formulaDetails.territoryPremiums).length > 0) {
+            formulaType = 'Territory premiums';
+          }
+        } else {
+          // Legacy format - extract rate, tiers, adjustments
+          const baseRate = matchingRule.baseRate ? parseFloat(matchingRule.baseRate) : null;
+          const volumeTiers = matchingRule.volumeTiers || [];
+          const seasonalAdj = matchingRule.seasonalAdjustments || {};
+          const territoryPrem = matchingRule.territoryPremiums || {};
+          
+          if (volumeTiers.length > 0) {
+            formulaType = 'Volume-based tiered pricing';
+          } else if (Object.keys(seasonalAdj).length > 0) {
+            formulaType = 'Seasonal adjustments';
+          } else if (Object.keys(territoryPrem).length > 0) {
+            formulaType = 'Territory premiums';
+          }
+          
+          formulaDetails = {
+            type: 'legacy',
+            baseRate,
+            volumeTiers,
+            seasonalAdjustments: seasonalAdj,
+            territoryPremiums: territoryPrem
+          };
         }
 
         return {
@@ -1126,6 +1337,7 @@ Report ID: ${contractId}
           ruleName: matchingRule.ruleName,
           ruleDescription,
           formulaType,
+          formulaDetails,
           priority: matchingRule.priority,
           confidence: matchingRule.confidence
         };

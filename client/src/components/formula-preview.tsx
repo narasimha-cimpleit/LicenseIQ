@@ -105,9 +105,63 @@ export function FormulaPreview({ contractId, periodStart, periodEnd }: FormulaPr
                     <div className="text-xs text-green-700 dark:text-green-300">
                       {sample.category} • {sample.sampleUnits} units
                     </div>
-                    <div className="text-xs text-purple-600 dark:text-purple-400 mt-1">
-                      {sample.formulaType}
+                    <div className="text-xs text-purple-600 dark:text-purple-400 mt-1 font-medium">
+                      📊 {sample.formulaType}
                     </div>
+                    
+                    {/* Detailed Formula Information */}
+                    {sample.formulaDetails && (
+                      <div className="mt-2 space-y-1 text-xs">
+                        {/* Base Rate */}
+                        {sample.formulaDetails.baseRate && (
+                          <div className="text-green-800 dark:text-green-200">
+                            <span className="font-semibold">Base Rate:</span> {(sample.formulaDetails.baseRate * 100).toFixed(1)}%
+                          </div>
+                        )}
+                        
+                        {/* Volume Tiers */}
+                        {sample.formulaDetails.volumeTiers && sample.formulaDetails.volumeTiers.length > 0 && (
+                          <div className="text-green-800 dark:text-green-200">
+                            <div className="font-semibold">Volume Tiers:</div>
+                            <ul className="ml-3 mt-1 space-y-0.5">
+                              {sample.formulaDetails.volumeTiers.map((tier: any, i: number) => (
+                                <li key={i}>
+                                  • {tier.min.toLocaleString()}{tier.max ? ` - ${tier.max.toLocaleString()}` : '+'} units → {(tier.rate * 100).toFixed(1)}%
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        
+                        {/* Seasonal Adjustments */}
+                        {sample.formulaDetails.seasonalAdjustments && Object.keys(sample.formulaDetails.seasonalAdjustments).length > 0 && (
+                          <div className="text-green-800 dark:text-green-200">
+                            <div className="font-semibold">Seasonal Adjustments:</div>
+                            <ul className="ml-3 mt-1 space-y-0.5">
+                              {Object.entries(sample.formulaDetails.seasonalAdjustments).map(([season, multiplier]: [string, any]) => (
+                                <li key={season}>
+                                  • {season}: {multiplier === 1 ? 'Standard' : `${((multiplier - 1) * 100).toFixed(0)}% ${multiplier > 1 ? 'bonus' : 'reduction'}`}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        
+                        {/* Territory Premiums */}
+                        {sample.formulaDetails.territoryPremiums && Object.keys(sample.formulaDetails.territoryPremiums).length > 0 && (
+                          <div className="text-green-800 dark:text-green-200">
+                            <div className="font-semibold">Territory Premiums:</div>
+                            <ul className="ml-3 mt-1 space-y-0.5">
+                              {Object.entries(sample.formulaDetails.territoryPremiums).map(([territory, multiplier]: [string, any]) => (
+                                <li key={territory}>
+                                  • {territory}: {multiplier === 1 ? 'Standard' : `${((multiplier - 1) * 100).toFixed(0)}% ${multiplier > 1 ? 'premium' : 'discount'}`}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div className="text-right">
                     <div className="text-xs font-medium text-green-800 dark:text-green-200">
