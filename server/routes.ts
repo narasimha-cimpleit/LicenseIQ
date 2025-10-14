@@ -1012,7 +1012,7 @@ Report ID: ${contractId}
         const endDate = new Date(periodEnd as string);
         
         allSales = allSales.filter(sale => {
-          const saleDate = new Date(sale.saleDate);
+          const saleDate = new Date(sale.transactionDate);
           return saleDate >= startDate && saleDate <= endDate;
         });
       }
@@ -1346,9 +1346,9 @@ Report ID: ${contractId}
         } else {
           // Legacy format - extract rate, tiers, adjustments
           const baseRate = matchingRule.baseRate ? parseFloat(matchingRule.baseRate) : null;
-          const volumeTiers = matchingRule.volumeTiers || [];
-          const seasonalAdj = matchingRule.seasonalAdjustments || {};
-          const territoryPrem = matchingRule.territoryPremiums || {};
+          const volumeTiers = (matchingRule.volumeTiers as any[]) || [];
+          const seasonalAdj = (matchingRule.seasonalAdjustments as Record<string, any>) || {};
+          const territoryPrem = (matchingRule.territoryPremiums as Record<string, any>) || {};
           
           if (volumeTiers.length > 0) {
             formulaType = 'Volume-based tiered pricing';
@@ -1657,16 +1657,22 @@ Report ID: ${contractId}
         ? (typeof calculation.chartData === 'string' ? JSON.parse(calculation.chartData) : calculation.chartData)
         : {};
       
+      // Extract vendor info from keyTerms if available
+      const keyTerms = contract.analysis?.keyTerms as any || {};
+      const vendorName = keyTerms?.licensor || keyTerms?.vendor || 'Vendor Name';
+      const licensee = keyTerms?.licensee || keyTerms?.client || 'Licensee Name';
+      const paymentTerms = keyTerms?.paymentTerms || 'Net 30 days';
+      
       // Prepare invoice data
       const invoiceData = {
         calculationId: calculation.id,
         calculationName: calculation.name,
         contractName: contract.originalName,
-        vendorName: contract.analysis?.licensor || 'Vendor Name',
-        licensee: contract.analysis?.licensee || 'Licensee Name',
-        calculationDate: calculation.createdAt,
-        periodStart: calculation.periodStart,
-        periodEnd: calculation.periodEnd,
+        vendorName,
+        licensee,
+        calculationDate: calculation.createdAt || new Date(),
+        periodStart: calculation.periodStart || new Date(),
+        periodEnd: calculation.periodEnd || new Date(),
         totalRoyalty: parseFloat(calculation.totalRoyalty || '0'),
         minimumGuarantee: chartData.minimumGuarantee,
         finalRoyalty: parseFloat(calculation.totalRoyalty || '0'),
@@ -1680,7 +1686,7 @@ Report ID: ${contractId}
           explanation: item.explanation
         })),
         currency: 'USD',
-        paymentTerms: contract.analysis?.paymentTerms
+        paymentTerms
       };
       
       // Generate PDF
@@ -1722,16 +1728,22 @@ Report ID: ${contractId}
         ? (typeof calculation.chartData === 'string' ? JSON.parse(calculation.chartData) : calculation.chartData)
         : {};
       
+      // Extract vendor info from keyTerms if available
+      const keyTerms = contract.analysis?.keyTerms as any || {};
+      const vendorName = keyTerms?.licensor || keyTerms?.vendor || 'Vendor Name';
+      const licensee = keyTerms?.licensee || keyTerms?.client || 'Licensee Name';
+      const paymentTerms = keyTerms?.paymentTerms || 'Net 30 days';
+      
       // Prepare invoice data
       const invoiceData = {
         calculationId: calculation.id,
         calculationName: calculation.name,
         contractName: contract.originalName,
-        vendorName: contract.analysis?.licensor || 'Vendor Name',
-        licensee: contract.analysis?.licensee || 'Licensee Name',
-        calculationDate: calculation.createdAt,
-        periodStart: calculation.periodStart,
-        periodEnd: calculation.periodEnd,
+        vendorName,
+        licensee,
+        calculationDate: calculation.createdAt || new Date(),
+        periodStart: calculation.periodStart || new Date(),
+        periodEnd: calculation.periodEnd || new Date(),
         totalRoyalty: parseFloat(calculation.totalRoyalty || '0'),
         minimumGuarantee: chartData.minimumGuarantee,
         finalRoyalty: parseFloat(calculation.totalRoyalty || '0'),
@@ -1745,7 +1757,7 @@ Report ID: ${contractId}
           explanation: item.explanation
         })),
         currency: 'USD',
-        paymentTerms: contract.analysis?.paymentTerms
+        paymentTerms
       };
       
       // Generate PDF
@@ -2015,20 +2027,23 @@ async function extractAndSaveRoyaltyRules(contractId: string, contractText: stri
     // Convert AI-extracted rules to database format (legacy flat structure)
     // Save ALL rules - global adjustments (without categories) are valid and useful!
     const validLegacyRules = detailedRules.rules.filter(rule => {
+      // Type assertion for AI rule as it comes from external API
+      const r = rule as any;
+      
       // Keep rules that have either:
       // 1. Product categories (product-specific rules)
       // 2. Seasonal adjustments or territory premiums (global multipliers)
       // 3. Volume tiers or base rates (calculation rules)
-      const hasCategories = rule.conditions?.productCategories && rule.conditions.productCategories.length > 0;
-      const hasSeasonalAdj = rule.calculation?.seasonalAdjustments || rule.seasonalAdjustments;
-      const hasTerritoryPrem = rule.calculation?.territoryPremiums || rule.territoryPremiums;
-      const hasTiers = rule.calculation?.tiers && rule.calculation.tiers.length > 0;
-      const hasRate = rule.calculation?.rate || rule.calculation?.baseRate || rule.baseRate;
+      const hasCategories = r.conditions?.productCategories && r.conditions.productCategories.length > 0;
+      const hasSeasonalAdj = r.calculation?.seasonalAdjustments || r.seasonalAdjustments;
+      const hasTerritoryPrem = r.calculation?.territoryPremiums || r.territoryPremiums;
+      const hasTiers = r.calculation?.tiers && r.calculation.tiers.length > 0;
+      const hasRate = r.calculation?.rate || r.calculation?.baseRate || r.baseRate;
       
       const isValid = hasCategories || hasSeasonalAdj || hasTerritoryPrem || hasTiers || hasRate;
       
       if (!isValid) {
-        console.log(`   ⚠️ Skipping empty rule (no data): ${rule.ruleName}`);
+        console.log(`   ⚠️ Skipping empty rule (no data): ${r.ruleName}`);
       }
       return isValid;
     });
@@ -2036,49 +2051,52 @@ async function extractAndSaveRoyaltyRules(contractId: string, contractText: stri
     console.log(`📋 Keeping ${validLegacyRules.length} valid legacy rules (including global adjustments)`);
     
     for (const aiRule of validLegacyRules) {
+      // Type assertion for AI rule as it comes from external API
+      const rule = aiRule as any;
+      
       // Extract seasonal adjustments from various possible locations
-      const seasonalAdj = aiRule.calculation?.seasonalAdjustments || 
-                         aiRule.calculation?.seasonalMultipliers || 
-                         aiRule.seasonalAdjustments || 
+      const seasonalAdj = rule.calculation?.seasonalAdjustments || 
+                         rule.calculation?.seasonalMultipliers || 
+                         rule.seasonalAdjustments || 
                          {};
       
       // Extract territory premiums from various possible locations
-      const territoryPrem = aiRule.calculation?.territoryPremiums || 
-                           aiRule.calculation?.territoryMultipliers || 
-                           aiRule.territoryPremiums || 
+      const territoryPrem = rule.calculation?.territoryPremiums || 
+                           rule.calculation?.territoryMultipliers || 
+                           rule.territoryPremiums || 
                            {};
       
       // Extract volume tiers - ensure they're in correct format
-      let volumeTiers = aiRule.calculation?.tiers || [];
+      let volumeTiers = rule.calculation?.tiers || [];
       
       // Extract base rate from multiple possible locations
-      const baseRate = aiRule.calculation?.rate?.toString() || 
-                      aiRule.calculation?.baseRate?.toString() || 
-                      aiRule.baseRate?.toString() || 
+      const baseRate = rule.calculation?.rate?.toString() || 
+                      rule.calculation?.baseRate?.toString() || 
+                      rule.baseRate?.toString() || 
                       null;
       
       const ruleData: any = {
         contractId,
-        ruleType: mapRuleType(aiRule.ruleType),
-        ruleName: aiRule.ruleName || 'Extracted Rule',
-        description: aiRule.description || '',
-        productCategories: aiRule.conditions?.productCategories || [],
-        territories: aiRule.conditions?.territories || [],
-        containerSizes: aiRule.conditions?.containerSizes || [],
+        ruleType: mapRuleType(rule.ruleType),
+        ruleName: rule.ruleName || 'Extracted Rule',
+        description: rule.description || '',
+        productCategories: rule.conditions?.productCategories || [],
+        territories: rule.conditions?.territories || [],
+        containerSizes: rule.conditions?.containerSizes || [],
         seasonalAdjustments: seasonalAdj,
         territoryPremiums: territoryPrem,
         volumeTiers: volumeTiers,
         baseRate: baseRate,
-        minimumGuarantee: aiRule.ruleType === 'minimum_guarantee' ? aiRule.calculation?.amount?.toString() : null,
+        minimumGuarantee: rule.ruleType === 'minimum_guarantee' ? rule.calculation?.amount?.toString() : null,
         isActive: true,
-        priority: aiRule.priority || 10, // Lower priority than formula-based rules
-        confidence: aiRule.confidence || null,
-        sourceSection: aiRule.sourceSpan?.section || null,
-        sourceText: aiRule.sourceSpan?.text || null,
+        priority: rule.priority || 10, // Lower priority than formula-based rules
+        confidence: rule.confidence || null,
+        sourceSection: rule.sourceSpan?.section || null,
+        sourceText: rule.sourceSpan?.text || null,
       };
 
       await storage.createRoyaltyRule(ruleData);
-      console.log(`✅ Saved legacy rule: ${aiRule.ruleName}`);
+      console.log(`✅ Saved legacy rule: ${rule.ruleName}`);
     }
     
     console.log(`🎉 Successfully extracted and saved ${productsWithFormulas.length + detailedRules.rules.length} total royalty rules`);
