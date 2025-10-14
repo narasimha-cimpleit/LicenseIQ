@@ -127,7 +127,11 @@ export function FormulaPreview({ contractId, periodStart, periodEnd }: FormulaPr
                         {/* Base Rate */}
                         {sample.formulaDetails.baseRate && (
                           <div className="text-green-800 dark:text-green-200">
-                            <span className="font-semibold">Base Rate:</span> {(sample.formulaDetails.baseRate * 100).toFixed(1)}%
+                            <span className="font-semibold">Base Rate:</span> {
+                              sample.formulaDetails.baseRate > 1 
+                                ? `$${sample.formulaDetails.baseRate.toFixed(2)} per unit`
+                                : `${(sample.formulaDetails.baseRate * 100).toFixed(1)}%`
+                            }
                           </div>
                         )}
                         
@@ -138,7 +142,11 @@ export function FormulaPreview({ contractId, periodStart, periodEnd }: FormulaPr
                             <ul className="ml-3 mt-1 space-y-0.5">
                               {sample.formulaDetails.volumeTiers.map((tier: any, i: number) => (
                                 <li key={i}>
-                                  • {tier.min.toLocaleString()}{tier.max ? ` - ${tier.max.toLocaleString()}` : '+'} units → {(tier.rate * 100).toFixed(1)}%
+                                  • {tier.min.toLocaleString()}{tier.max ? ` - ${tier.max.toLocaleString()}` : '+'} units → {
+                                    tier.rate > 1 
+                                      ? `$${tier.rate.toFixed(2)}/unit`
+                                      : `${(tier.rate * 100).toFixed(1)}%`
+                                  }
                                 </li>
                               ))}
                             </ul>
