@@ -2,6 +2,29 @@
 
 License IQ Research Platform is a SaaS web application built for intelligent contract management and analysis. The platform enables users to upload, process, and analyze legal contracts using AI-powered document analysis with Groq's LLaMA models. It features role-based access control, real-time contract processing, risk assessment, comprehensive analytics, and an automated royalty calculation system with beautiful visualizations.
 
+# Recent Changes (October 14, 2025)
+
+## Fixed: Base Rate Display Bug (2500% Issue)
+- **Bug**: Formula preview was showing base rates incorrectly (e.g., $25.00 displayed as "2500.0%")
+- **Root Cause**: Display logic always multiplied rates by 100, treating all rates as percentages
+- **Fix**: Smart rate detection - values >1 show as currency ($25.00 per unit), values ≤1 show as percentage (2.5%)
+- **Files Changed**: `client/src/components/formula-preview.tsx`
+
+## Fixed: Global Fallback Rule Priority Bug
+- **Bug**: "Organic Premium" global rule (no product categories) was matching ALL products, overriding specific formula-based rules
+- **Root Cause**: Rules with empty categories were checked first due to priority ordering and faulty matching logic
+- **Fix**: Two-phase matching algorithm - Phase 1 checks specific product rules first, Phase 2 falls back to global rules only if no match found
+- **Files Changed**: `server/routes.ts` (formula preview matching logic)
+- **Impact**: Now correctly applies specific tiered rates (e.g., Cascade Blue Hydrangea: $2.25→$1.95→$1.70) instead of global $25.00 fallback
+
+## TypeScript Compilation Fixes for Vercel Deployment
+- Fixed 27 TypeScript errors in `server/routes.ts`
+- Added proper type assertions for AI-extracted rules (external Groq API responses)
+- Fixed property name: `saleDate` → `transactionDate`
+- Fixed JSONB type handling for `volumeTiers`, `seasonalAdjustments`, `territoryPremiums`
+- Fixed ContractAnalysis properties extraction from `keyTerms` JSON field
+- All LSP errors resolved - deployment ready
+
 # User Preferences
 
 Preferred communication style: Simple, everyday language.

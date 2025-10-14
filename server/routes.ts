@@ -1266,33 +1266,36 @@ Report ID: ${contractId}
       const findMatchingRule = (sale: any) => {
         const tierRules = rules.filter(r => r.ruleType === 'tiered_pricing' || r.ruleType === 'formula_based');
         
+        // PHASE 1: Try to find specific rules (with product categories)
         for (const rule of tierRules) {
+          // Skip global fallback rules (no categories) in first pass
+          const hasCategories = Array.isArray(rule.productCategories) && rule.productCategories.length > 0;
+          if (!hasCategories) continue;
+          
           // Check product categories (bidirectional matching)
-          if (rule.productCategories && rule.productCategories.length > 0) {
-            const categoryMatch = rule.productCategories.some((cat: string) => {
-              const catLower = cat.toLowerCase().trim();
-              const saleCategoryLower = (sale.category?.toLowerCase() || '').trim();
-              const saleProductLower = (sale.productName?.toLowerCase() || '').trim();
-              
-              // Guard: require rule category to be non-empty
-              if (!catLower) {
-                return false;
-              }
-              
-              // Primary match: bidirectional category matching (requires non-empty sale category)
-              if (saleCategoryLower) {
-                return saleCategoryLower.includes(catLower) || catLower.includes(saleCategoryLower);
-              }
-              
-              // Fallback: product name matching (only if category is empty, and only exact substring)
-              if (saleProductLower) {
-                return saleProductLower.includes(catLower);
-              }
-              
+          const categoryMatch = rule.productCategories!.some((cat: string) => {
+            const catLower = cat.toLowerCase().trim();
+            const saleCategoryLower = (sale.category?.toLowerCase() || '').trim();
+            const saleProductLower = (sale.productName?.toLowerCase() || '').trim();
+            
+            // Guard: require rule category to be non-empty
+            if (!catLower) {
               return false;
-            });
-            if (!categoryMatch) continue;
-          }
+            }
+            
+            // Primary match: bidirectional category matching (requires non-empty sale category)
+            if (saleCategoryLower) {
+              return saleCategoryLower.includes(catLower) || catLower.includes(saleCategoryLower);
+            }
+            
+            // Fallback: product name matching (only if category is empty, and only exact substring)
+            if (saleProductLower) {
+              return saleProductLower.includes(catLower);
+            }
+            
+            return false;
+          });
+          if (!categoryMatch) continue;
 
           // Check territories
           if (rule.territories && rule.territories.length > 0 && !rule.territories.includes('All')) {
@@ -1302,9 +1305,26 @@ Report ID: ${contractId}
             if (!territoryMatch) continue;
           }
 
-          return rule;
+          return rule; // Found specific match
         }
-        return null;
+        
+        // PHASE 2: No specific match found, try global fallback rules (no categories)
+        for (const rule of tierRules) {
+          const hasCategories = Array.isArray(rule.productCategories) && rule.productCategories.length > 0;
+          if (hasCategories) continue; // Skip specific rules in second pass
+          
+          // Check territories for global rules
+          if (rule.territories && rule.territories.length > 0 && !rule.territories.includes('All')) {
+            const territoryMatch = rule.territories.some((terr: string) =>
+              sale.territory?.toLowerCase().includes(terr.toLowerCase())
+            );
+            if (!territoryMatch) continue;
+          }
+          
+          return rule; // Found global fallback
+        }
+        
+        return null; // No match found
       };
 
       // Create preview samples
