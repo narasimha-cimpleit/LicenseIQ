@@ -45,7 +45,7 @@ import {
   type InsertRoyaltyRule,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, or, ilike, count, gte } from "drizzle-orm";
+import { eq, desc, and, or, ilike, count, gte, sql } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
