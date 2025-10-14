@@ -16,7 +16,8 @@ import {
   Calculator,
   Brain,
   Database,
-  PlayCircle
+  PlayCircle,
+  Sparkles
 } from "lucide-react";
 import cimpleitLogo from "@assets/image_1757086402738.png";
 
@@ -62,6 +63,12 @@ export default function Sidebar({ className }: SidebarProps) {
       href: "/contract-qna",
       icon: Brain,
       current: location === "/contract-qna",
+    },
+    {
+      name: "RAG Dashboard",
+      href: "/rag-dashboard",
+      icon: Sparkles,
+      current: location === "/rag-dashboard",
     },
     {
       name: "Analytics",

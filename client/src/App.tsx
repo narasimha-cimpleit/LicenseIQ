@@ -21,6 +21,7 @@ import RoyaltyDashboard from "@/pages/royalty-dashboard";
 import SalesUpload from "@/pages/sales-upload";
 import RulesManagement from "@/pages/rules-management";
 import ContractQnA from "@/pages/contract-qna";
+import RAGDashboard from "@/pages/rag-dashboard";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -50,6 +51,7 @@ function Router() {
           <ProtectedRoute path="/contracts/:id/rules" component={RulesManagement} />
           {/* Contract Q&A */}
           <ProtectedRoute path="/contract-qna" component={ContractQnA} />
+          <ProtectedRoute path="/rag-dashboard" component={RAGDashboard} />
           <ProtectedRoute path="/contracts/:id" component={ContractAnalysis} />
         </>
       )}

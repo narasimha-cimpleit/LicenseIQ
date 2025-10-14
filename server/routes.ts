@@ -1954,6 +1954,73 @@ Report ID: ${contractId}
     }
   });
 
+  // RAG Stats endpoint - Get embedding statistics
+  app.get('/api/rag/stats', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      // Get total embeddings count
+      const totalEmbeddingsResult = await db
+        .select({ count: count() })
+        .from(contractEmbeddings);
+      const totalEmbeddings = totalEmbeddingsResult[0]?.count || 0;
+
+      // Get embeddings grouped by type
+      const embeddingsByTypeResult = await db
+        .select({
+          type: contractEmbeddings.embeddingType,
+          count: count()
+        })
+        .from(contractEmbeddings)
+        .groupBy(contractEmbeddings.embeddingType);
+
+      // Get distinct contracts with embeddings
+      const contractsWithEmbeddings = await db
+        .selectDistinct({ contractId: contractEmbeddings.contractId })
+        .from(contractEmbeddings);
+
+      // Get recent embeddings with contract info
+      const recentEmbeddingsData = await db
+        .select({
+          id: contractEmbeddings.id,
+          contractId: contractEmbeddings.contractId,
+          contractName: contracts.originalName,
+          embeddingType: contractEmbeddings.embeddingType,
+          sourceText: contractEmbeddings.sourceText,
+          createdAt: contractEmbeddings.createdAt,
+        })
+        .from(contractEmbeddings)
+        .innerJoin(contracts, eq(contractEmbeddings.contractId, contracts.id))
+        .orderBy(desc(contractEmbeddings.createdAt))
+        .limit(20);
+
+      // Calculate average chunk size
+      const avgChunkSize = recentEmbeddingsData.length > 0
+        ? recentEmbeddingsData.reduce((sum, emb) => sum + (emb.sourceText?.length || 0), 0) / recentEmbeddingsData.length
+        : 0;
+
+      res.json({
+        totalEmbeddings,
+        totalChunks: totalEmbeddings,
+        totalContracts: contractsWithEmbeddings.length,
+        avgChunkSize: Math.round(avgChunkSize),
+        embeddingsByType: embeddingsByTypeResult.map((item: any) => ({
+          type: item.type || 'unknown',
+          count: item.count
+        })),
+        recentEmbeddings: recentEmbeddingsData.map((emb: any) => ({
+          id: emb.id,
+          contractId: emb.contractId,
+          contractName: emb.contractName || 'Unknown Contract',
+          embeddingType: emb.embeddingType || 'unknown',
+          sourceText: emb.sourceText || '',
+          createdAt: emb.createdAt || new Date(),
+        })),
+      });
+    } catch (error: any) {
+      console.error('RAG stats error:', error);
+      res.status(500).json({ message: error.message || 'Failed to fetch RAG stats' });
+    }
+  });
+
   // Return the configured app - server will be started in index.ts
   return createServer(app);
 }
