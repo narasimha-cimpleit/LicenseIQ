@@ -4,6 +4,7 @@ import { Database, FileText, Sparkles, TrendingUp, Layers, Hash } from "lucide-r
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import MainLayout from "@/components/layout/main-layout";
 
 interface EmbeddingStats {
   totalEmbeddings: number;
@@ -31,24 +32,35 @@ export default function RAGDashboard() {
 
   if (isLoading) {
     return (
-      <div className="p-8 space-y-6">
-        <div>
-          <Skeleton className="h-10 w-64 mb-2" />
-          <Skeleton className="h-5 w-96" />
+      <MainLayout title="RAG Intelligence Dashboard" description="Vector embeddings and semantic search analytics">
+        <div className="space-y-6">
+          <div>
+            <Skeleton className="h-10 w-64 mb-2" />
+            <Skeleton className="h-5 w-96" />
+          </div>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} className="h-32" />
+            ))}
+          </div>
         </div>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-32" />
-          ))}
-        </div>
-      </div>
+      </MainLayout>
     );
   }
 
-  if (!stats) return null;
+  if (!stats) {
+    return (
+      <MainLayout title="RAG Intelligence Dashboard" description="Vector embeddings and semantic search analytics">
+        <div>
+          <p>No data available</p>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
-    <div className="p-8 space-y-6">
+    <MainLayout title="RAG Intelligence Dashboard" description="Vector embeddings and semantic search analytics powered by Hugging Face">
+      <div className="space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold flex items-center gap-3">
@@ -256,5 +268,6 @@ export default function RAGDashboard() {
         </CardContent>
       </Card>
     </div>
+    </MainLayout>
   );
 }

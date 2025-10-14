@@ -21,7 +21,7 @@ import {
   insertAuditTrailSchema,
   insertSalesDataSchema
 } from "@shared/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, count, desc } from "drizzle-orm";
 
 // Configure multer for secure file uploads with disk storage
 const uploadDir = path.join(process.cwd(), 'uploads');
