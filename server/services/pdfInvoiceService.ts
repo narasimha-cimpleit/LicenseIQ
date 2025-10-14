@@ -206,16 +206,19 @@ export class PDFInvoiceService {
 
         // Amount due box
         doc.y = statsY + 220;
-        doc.rect(50, doc.y, doc.page.width - 100, 100).fill('#7c3aed');
+        const amountBoxY = doc.y;
+        doc.rect(50, amountBoxY, doc.page.width - 100, 100).fill('#7c3aed');
         
         doc.fillColor('#ffffff')
           .fontSize(14)
           .font('Helvetica')
-          .text('TOTAL AMOUNT DUE', 50, doc.y + 20, { align: 'center', width: doc.page.width - 100 });
+          .text('TOTAL AMOUNT DUE', 50, amountBoxY + 20, { align: 'center', width: doc.page.width - 100 });
         
-        doc.fontSize(36)
+        doc.fontSize(32)
           .font('Helvetica-Bold')
-          .text(`$${data.finalRoyalty.toLocaleString('en-US', { minimumFractionDigits: 2 })} ${data.currency}`, 50, doc.y + 50, { align: 'center', width: doc.page.width - 100 });
+          .text(`$${data.finalRoyalty.toLocaleString('en-US', { minimumFractionDigits: 2 })} ${data.currency}`, 50, amountBoxY + 48, { align: 'center', width: doc.page.width - 100 });
+        
+        doc.y = amountBoxY + 100;
 
         // Contract info
         doc.y += 140;
