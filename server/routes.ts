@@ -14,7 +14,7 @@ import { PDFInvoiceService } from "./services/pdfInvoiceService";
 import { HuggingFaceEmbeddingService } from "./services/huggingFaceEmbedding";
 import { RAGService } from "./services/ragService";
 import { db } from "./db";
-import { contractEmbeddings, royaltyRules } from "@shared/schema";
+import { contracts, contractEmbeddings, royaltyRules } from "@shared/schema";
 import { 
   insertContractSchema, 
   insertContractAnalysisSchema, 

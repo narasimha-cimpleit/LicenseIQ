@@ -4,12 +4,16 @@ License IQ Research Platform is a SaaS web application built for intelligent con
 
 # Recent Changes (October 14, 2025)
 
-## Fixed: RAG Dashboard API Error
-- **Bug**: RAG Intelligence Dashboard showing 500 error - "count is not defined"
-- **Root Cause**: Missing `count` and `desc` imports from drizzle-orm in routes.ts
-- **Fix**: Added `count, desc` to drizzle-orm imports
-- **Files Changed**: `server/routes.ts` (line 27)
-- **Impact**: RAG stats API now returns embedding statistics successfully (total chunks, chunk types, recent embeddings)
+## Fixed: RAG Dashboard Empty Data Issue
+- **Bug**: RAG Intelligence Dashboard showing "No data available" and 500 error - "contracts is not defined"
+- **Root Cause**: Missing `contracts` table import from schema in routes.ts (needed for join query to get contract names)
+- **Fix**: Added `contracts` to imports from @shared/schema
+- **Files Changed**: `server/routes.ts` (line 20)
+- **Impact**: RAG stats API now successfully returns:
+  - Total embeddings count
+  - Embeddings grouped by type (summary, key_terms, insights)
+  - Recent embeddings with contract names
+  - Average chunk size statistics
 
 ## Fixed: Base Rate Display Bug (2500% Issue)
 - **Bug**: Formula preview was showing base rates incorrectly (e.g., $25.00 displayed as "2500.0%")
