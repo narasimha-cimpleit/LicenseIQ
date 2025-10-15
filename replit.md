@@ -4,6 +4,18 @@ License IQ Research Platform is a SaaS web application for intelligent contract 
 
 # Recent Changes (October 15, 2025)
 
+## Fixed: Formula Preview & Rules Management JSON Parsing Bug
+- **Bug**: Formula Preview showing no products (0 instead of 5), Rules Management missing FormulaNode rules
+- **Root Cause**: Groq API returning malformed JSON that failed to parse - JSON syntax errors, unquoted keys, trailing commas, Infinity values
+- **Fix**: Added robust `extractAndRepairJSON()` helper method that:
+  - Extracts JSON from responses with regex
+  - Repairs common issues (trailing commas, single quotes, unquoted keys, Infinity/NaN values)
+  - Normalizes whitespace and special characters
+  - Returns fallback values on parse failure
+- **Files Changed**: `server/services/groqService.ts` (added helper method at line 107, updated all JSON parsing methods)
+- **Impact**: Product formula extraction, tier rules, payment rules, and special adjustments now parse successfully
+- **Note**: Users need to re-upload contracts to trigger extraction with fixed parsing
+
 ## Fixed: Contract Q&A Answer Display Bug
 - **Bug**: Contract Q&A showing API endpoint path `/api/rag/ask` instead of actual answer
 - **Root Cause**: Frontend mutation not parsing JSON response - `apiRequest` returns Response object, not parsed data

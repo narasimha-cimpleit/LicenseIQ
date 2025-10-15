@@ -100,6 +100,42 @@ export class GroqService {
     }
   }
 
+  // Helper method to extract and repair malformed JSON from Groq responses
+  private extractAndRepairJSON(response: string, fallbackValue: any = []): any {
+    try {
+      const cleanResponse = response.trim();
+      
+      // Try to find JSON array or object
+      let jsonMatch = cleanResponse.match(/\[[\s\S]*\]/) || cleanResponse.match(/\{[\s\S]*\}/);
+      
+      if (!jsonMatch) {
+        console.warn('⚠️ No JSON found in response, returning fallback');
+        return fallbackValue;
+      }
+
+      let jsonStr = jsonMatch[0];
+      
+      // Repair common JSON issues
+      jsonStr = jsonStr
+        .replace(/:\s*Infinity/g, ': 999999999')  // Fix Infinity
+        .replace(/:\s*NaN/g, ': null')             // Fix NaN
+        .replace(/,\s*([}\]])/g, '$1')             // Remove trailing commas
+        .replace(/'/g, '"')                         // Fix single quotes
+        .replace(/([{,]\s*)(\w+):/g, '$1"$2":')    // Fix unquoted keys
+        .replace(/\n/g, ' ')                        // Remove newlines
+        .replace(/\r/g, '')                         // Remove carriage returns
+        .replace(/\t/g, ' ')                        // Replace tabs with spaces
+        .replace(/\s+/g, ' ');                      // Normalize whitespace
+
+      // Try to parse
+      return JSON.parse(jsonStr);
+    } catch (error: any) {
+      console.error('❌ JSON extraction/repair failed:', error.message);
+      console.error('📄 Response snippet:', response.substring(0, 500));
+      return fallbackValue;
+    }
+  }
+
   // =====================================================
   // ENHANCED ROYALTY RULES EXTRACTION 
   // =====================================================
@@ -178,7 +214,16 @@ Return only valid JSON.`;
         { role: 'user', content: prompt }
       ], 0.1, 1000); // Reduced tokens
       
-      return JSON.parse(response.trim());
+      return this.extractAndRepairJSON(response, {
+        documentType: 'license',
+        licenseType: 'License Agreement',
+        parties: { licensor: 'Not specified', licensee: 'Not specified' },
+        effectiveDate: null,
+        expirationDate: null,
+        currency: 'USD',
+        paymentTerms: 'Not specified',
+        reportingRequirements: []
+      });
     } catch (error) {
       console.error('Basic info extraction failed:', error);
       return {
@@ -238,14 +283,7 @@ Return only JSON array.`;
         { role: 'user', content: prompt }
       ], 0.1, 1500);
       
-      const cleanResponse = response.trim();
-      const jsonMatch = cleanResponse.match(/\[[\s\S]*\]/);
-      if (jsonMatch) {
-        // Fix Infinity values that break JSON parsing
-        const fixedJson = jsonMatch[0].replace(/:\s*Infinity/g, ': 999999999');
-        return JSON.parse(fixedJson);
-      }
-      return [];
+      return this.extractAndRepairJSON(response, []);
     } catch (error) {
       console.error('Tier rules extraction failed:', error);
       return [];
@@ -289,14 +327,7 @@ Return only JSON array.`;
         { role: 'user', content: prompt }
       ], 0.1, 1500);
       
-      const cleanResponse = response.trim();
-      const jsonMatch = cleanResponse.match(/\[[\s\S]*\]/);
-      if (jsonMatch) {
-        // Fix Infinity values that break JSON parsing
-        const fixedJson = jsonMatch[0].replace(/:\s*Infinity/g, ': 999999999');
-        return JSON.parse(fixedJson);
-      }
-      return [];
+      return this.extractAndRepairJSON(response, []);
     } catch (error) {
       console.error('Payment rules extraction failed:', error);
       return [];
@@ -338,14 +369,7 @@ Return only JSON array.`;
         { role: 'user', content: prompt }
       ], 0.1, 1500);
       
-      const cleanResponse = response.trim();
-      const jsonMatch = cleanResponse.match(/\[[\s\S]*\]/);
-      if (jsonMatch) {
-        // Fix Infinity values that break JSON parsing
-        const fixedJson = jsonMatch[0].replace(/:\s*Infinity/g, ': 999999999');
-        return JSON.parse(fixedJson);
-      }
-      return [];
+      return this.extractAndRepairJSON(response, []);
     } catch (error) {
       console.error('Special adjustments extraction failed:', error);
       return [];
@@ -458,12 +482,7 @@ CRITICAL: Return ONLY valid JSON array. No explanatory text.`;
         { role: 'user', content: prompt }
       ], 0.2, 3000); // Higher tokens for complex formulas
       
-      const cleanResponse = response.trim();
-      const jsonMatch = cleanResponse.match(/\[[\s\S]*\]/);
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
-      }
-      return [];
+      return this.extractAndRepairJSON(response, []);
     } catch (error) {
       console.error('Product formula extraction failed:', error);
       return [];
