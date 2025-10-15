@@ -81,6 +81,26 @@ export class RAGService {
       
       console.log(`✅ [RAG] Answer generated with ${sources.length} sources (avg confidence: ${(avgConfidence * 100).toFixed(1)}%)`);
       
+      // If confidence is too low (< 60%), fall back to full contract analysis
+      if (avgConfidence < 0.6) {
+        console.log(`⚠️ [RAG] Low confidence (${(avgConfidence * 100).toFixed(1)}%), falling back to full contract analysis`);
+        
+        // Get the full contract text
+        const contractToAnalyze = contractId 
+          ? contractDetails.find(c => c.id === contractId)
+          : contractDetails[0];
+        
+        if (contractToAnalyze) {
+          const fallbackAnswer = await this.generateAnswerFromFullContract(question, contractToAnalyze.id);
+          
+          return {
+            answer: fallbackAnswer,
+            sources: sources,
+            confidence: 0.75, // Indicate this is from full contract analysis
+          };
+        }
+      }
+      
       return {
         answer,
         sources,
@@ -90,6 +110,59 @@ export class RAGService {
     } catch (error: any) {
       console.error('RAG query error:', error);
       throw new Error(`Failed to answer question: ${error.message}`);
+    }
+  }
+  
+  /**
+   * Fallback: Generate answer from full contract when RAG confidence is low
+   */
+  private static async generateAnswerFromFullContract(question: string, contractId: string): Promise<string> {
+    try {
+      // Import needed here to avoid circular dependency
+      const { contractAnalysis } = await import('@shared/schema');
+      
+      // Get the full contract analysis
+      const contractDetails = await db
+        .select()
+        .from(contracts)
+        .where(eq(contracts.id, contractId))
+        .limit(1);
+      
+      if (contractDetails.length === 0) {
+        return "I couldn't find the contract to answer your question.";
+      }
+      
+      const contract = contractDetails[0];
+      
+      // Get the analysis data
+      const analysisData = await db
+        .select()
+        .from(contractAnalysis)
+        .where(eq(contractAnalysis.contractId, contractId))
+        .limit(1);
+      
+      if (analysisData.length === 0) {
+        return "The contract hasn't been analyzed yet.";
+      }
+      
+      const analysis = analysisData[0];
+      
+      // Build comprehensive context from analysis
+      const fullContext = `
+Contract: ${contract.originalName}
+Summary: ${analysis.summary || 'N/A'}
+Key Terms: ${typeof analysis.keyTerms === 'string' ? analysis.keyTerms : JSON.stringify(analysis.keyTerms)}
+Insights: ${typeof analysis.insights === 'string' ? analysis.insights : JSON.stringify(analysis.insights)}
+      `.trim();
+      
+      console.log(`📄 [RAG-FALLBACK] Using full contract analysis for: ${contract.originalName}`);
+      
+      // Ask Groq with full contract context
+      return await this.generateAnswer(question, fullContext);
+      
+    } catch (error: any) {
+      console.error('Full contract fallback error:', error);
+      return "I encountered an error while analyzing the contract. Please try again.";
     }
   }
   
