@@ -118,6 +118,8 @@ export class RAGService {
    */
   private static async generateAnswerFromFullContract(question: string, contractId: string): Promise<string> {
     try {
+      console.log(`📄 [RAG-FALLBACK] Starting full contract analysis for contract: ${contractId}`);
+      
       // Import needed here to avoid circular dependency
       const { contractAnalysis } = await import('@shared/schema');
       
@@ -128,11 +130,15 @@ export class RAGService {
         .where(eq(contracts.id, contractId))
         .limit(1);
       
+      console.log(`📄 [RAG-FALLBACK] Found ${contractDetails.length} contracts`);
+      
       if (contractDetails.length === 0) {
+        console.log(`❌ [RAG-FALLBACK] Contract not found: ${contractId}`);
         return "I couldn't find the contract to answer your question.";
       }
       
       const contract = contractDetails[0];
+      console.log(`📄 [RAG-FALLBACK] Contract name: ${contract.originalName}`);
       
       // Get the analysis data
       const analysisData = await db
@@ -141,8 +147,11 @@ export class RAGService {
         .where(eq(contractAnalysis.contractId, contractId))
         .limit(1);
       
+      console.log(`📄 [RAG-FALLBACK] Found ${analysisData.length} analysis records`);
+      
       if (analysisData.length === 0) {
-        return "The contract hasn't been analyzed yet.";
+        console.log(`❌ [RAG-FALLBACK] No analysis found for contract: ${contractId}`);
+        return "The contract hasn't been analyzed yet. Please wait for the analysis to complete.";
       }
       
       const analysis = analysisData[0];
@@ -155,15 +164,71 @@ Key Terms: ${typeof analysis.keyTerms === 'string' ? analysis.keyTerms : JSON.st
 Insights: ${typeof analysis.insights === 'string' ? analysis.insights : JSON.stringify(analysis.insights)}
       `.trim();
       
-      console.log(`📄 [RAG-FALLBACK] Using full contract analysis for: ${contract.originalName}`);
+      console.log(`📄 [RAG-FALLBACK] Context length: ${fullContext.length} chars`);
+      console.log(`📄 [RAG-FALLBACK] Asking Groq with full contract context...`);
       
-      // Ask Groq with full contract context
-      return await this.generateAnswer(question, fullContext);
+      // Ask Groq with full contract context using a more lenient prompt
+      const answer = await this.generateFallbackAnswer(question, fullContext);
+      console.log(`✅ [RAG-FALLBACK] Answer generated: ${answer.substring(0, 100)}...`);
+      
+      return answer;
       
     } catch (error: any) {
-      console.error('Full contract fallback error:', error);
+      console.error('❌ [RAG-FALLBACK] Error:', error);
+      console.error('❌ [RAG-FALLBACK] Stack:', error.stack);
       return "I encountered an error while analyzing the contract. Please try again.";
     }
+  }
+  
+  /**
+   * Generate answer from full contract (fallback mode - more lenient)
+   */
+  private static async generateFallbackAnswer(question: string, context: string): Promise<string> {
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) {
+      throw new Error('GROQ_API_KEY is not set');
+    }
+    
+    const systemPrompt = `You are an expert contract analyst assistant. You have been provided with comprehensive information from a contract analysis. Answer the user's question using the available information.
+
+Rules:
+1. Use all relevant information from the provided context to answer the question
+2. Be helpful and provide the best answer possible based on the available information
+3. If the exact answer isn't available, provide related information that might help
+4. Be concise but thorough
+5. Cite specific sections when possible (e.g., "According to the contract summary...")`;
+
+    const userPrompt = `Complete Contract Information:
+${context}
+
+User Question: ${question}
+
+Provide a helpful answer based on the contract information above:`;
+
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-8b-instant',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.5,
+        max_tokens: 500,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Groq API error: ${response.status} - ${error}`);
+    }
+
+    const data = await response.json();
+    return data.choices[0].message.content.trim();
   }
   
   /**
