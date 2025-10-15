@@ -1,5 +1,41 @@
 # Overview
 
+License IQ Research Platform is a SaaS web application for intelligent contract management and analysis.
+
+# Recent Changes (October 15, 2025)
+
+## Fixed: Contract Q&A Answer Display Bug
+- **Bug**: Contract Q&A showing API endpoint path `/api/rag/ask` instead of actual answer
+- **Root Cause**: Frontend mutation not parsing JSON response - `apiRequest` returns Response object, not parsed data
+- **Fix**: Added `.json()` call to parse response: `return response.json()`
+- **Files Changed**: `client/src/pages/contract-qna.tsx` (line 59)
+- **Impact**: Q&A now correctly displays AI-generated answers from Groq
+
+## Enhanced: Contract Q&A with Smart Fallback
+- **Enhancement**: Added intelligent fallback system when RAG confidence is low (<60%)
+- **Feature**: System now automatically falls back to full contract analysis using Groq API when semantic search doesn't find strong matches
+- **Impact**: Users always get answers to their questions instead of "not enough information" messages
+- **How It Works**: 
+  1. First tries semantic RAG search with embeddings
+  2. If confidence < 60%, falls back to analyzing full contract with Groq
+  3. Returns comprehensive answer with 75% confidence indicator
+- **Files Changed**: `server/services/ragService.ts`
+
+## Fixed: RAG Dashboard Empty Data Issue
+- **Bug**: RAG Intelligence Dashboard showing "No data available" and 500 error - "contracts is not defined"
+- **Root Cause**: Missing `contracts` table import from schema in routes.ts (needed for join query to get contract names)
+- **Fix**: Added `contracts` to imports from @shared/schema
+- **Files Changed**: `server/routes.ts` (line 20)
+- **Impact**: RAG stats API now successfully returns:
+  - Total embeddings count
+  - Embeddings grouped by type (summary, key_terms, insights)
+  - Recent embeddings with contract names
+  - Average chunk size statistics
+
+---
+
+# Overview (Continued)
+
 License IQ Research Platform is a SaaS web application for intelligent contract management and analysis. It enables users to upload, process, and analyze legal contracts using AI-powered document analysis with Groq's LLaMA models. Key features include role-based access control, real-time contract processing, risk assessment, comprehensive analytics, and an automated royalty calculation system with visualizations. The platform aims to streamline contract workflows, reduce manual effort, and provide actionable insights.
 
 # User Preferences

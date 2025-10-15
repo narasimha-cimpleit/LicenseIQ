@@ -53,7 +53,7 @@ export default function ContractQnA() {
         question,
         contractId: selectedContract === "all" ? undefined : selectedContract,
       });
-      return response;
+      return response.json();
     },
     onSuccess: (data: any) => {
       setMessages(prev => [
