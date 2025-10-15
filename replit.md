@@ -4,6 +4,27 @@ License IQ Research Platform is a SaaS web application for intelligent contract 
 
 # Recent Changes (October 15, 2025)
 
+## Updated: End-to-End Demo Navigation Structure
+- **Enhancement**: Completely redesigned navigation in all 8 demo workflow files to reflect actual application flow
+- **Navigation Items**: Added comprehensive 6-item menu structure:
+  - Dashboard (home)
+  - Upload (contract & sales uploads)
+  - Contracts (contract management)
+  - AI Analysis (analysis & matching processes)
+  - Royalty Calc (royalty calculations & invoices)
+  - Ask Contract (RAG-powered Q&A)
+- **Workflow-Specific Highlighting**: Each demo step now highlights the relevant navigation item:
+  - Step 1 (Contract Upload) → Upload
+  - Step 2 (AI Analysis Processing) → AI Analysis
+  - Step 3 (Analysis Results) → Contracts
+  - Step 4 (Sales Upload) → Upload
+  - Step 5 (AI Matching Progress) → AI Analysis
+  - Step 6 (Royalty Dashboard) → Royalty Calc
+  - Step 7 (Invoice Generation) → Royalty Calc
+  - Step 8 (Contract Q&A) → Ask Contract
+- **Files Changed**: All 8 HTML demo files in `end-to-end-mocks/` directory
+- **Impact**: Demo materials now provide clear visual context for each workflow step, making it easier for viewers to understand which part of the application they're seeing
+
 ## Fixed: Formula Preview & Rules Management JSON Parsing Bug
 - **Bug**: Formula Preview showing no products (0 instead of 5), Rules Management missing FormulaNode rules
 - **Root Cause**: Groq API returning malformed JSON that failed to parse - JSON syntax errors, unquoted keys, trailing commas, Infinity values
