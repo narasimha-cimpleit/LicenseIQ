@@ -2,12 +2,13 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 16.9 (63f4182)
--- Dumped by pg_dump version 16.9
+-- Dumped from database version 16.9 (165f042)
+-- Dumped by pg_dump version 17.5
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -15,6 +16,36 @@ SET check_function_bodies = false;
 SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
+
+--
+-- Name: public; Type: SCHEMA; Schema: -; Owner: neondb_owner
+--
+
+-- *not* creating schema, since initdb creates it
+
+
+ALTER SCHEMA public OWNER TO neondb_owner;
+
+--
+-- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: neondb_owner
+--
+
+COMMENT ON SCHEMA public IS '';
+
+
+--
+-- Name: vector; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION vector; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION vector IS 'vector data type and ivfflat and hnsw access methods';
+
 
 SET default_tablespace = '';
 
@@ -101,6 +132,23 @@ CREATE TABLE public.contract_comparisons (
 ALTER TABLE public.contract_comparisons OWNER TO neondb_owner;
 
 --
+-- Name: contract_embeddings; Type: TABLE; Schema: public; Owner: neondb_owner
+--
+
+CREATE TABLE public.contract_embeddings (
+    id character varying DEFAULT gen_random_uuid() NOT NULL,
+    contract_id character varying NOT NULL,
+    embedding_type character varying NOT NULL,
+    source_text text NOT NULL,
+    embedding public.vector(384),
+    metadata jsonb,
+    created_at timestamp without time zone DEFAULT now()
+);
+
+
+ALTER TABLE public.contract_embeddings OWNER TO neondb_owner;
+
+--
 -- Name: contract_obligations; Type: TABLE; Schema: public; Owner: neondb_owner
 --
 
@@ -121,6 +169,37 @@ CREATE TABLE public.contract_obligations (
 
 
 ALTER TABLE public.contract_obligations OWNER TO neondb_owner;
+
+--
+-- Name: contract_royalty_calculations; Type: TABLE; Schema: public; Owner: neondb_owner
+--
+
+CREATE TABLE public.contract_royalty_calculations (
+    id character varying DEFAULT gen_random_uuid() NOT NULL,
+    contract_id character varying NOT NULL,
+    name character varying NOT NULL,
+    period_start timestamp without time zone,
+    period_end timestamp without time zone,
+    status character varying DEFAULT 'pending_approval'::character varying,
+    total_sales_amount numeric(15,2),
+    total_royalty numeric(15,2),
+    currency character varying DEFAULT 'USD'::character varying,
+    sales_count integer,
+    breakdown jsonb,
+    chart_data jsonb,
+    calculated_by character varying,
+    approved_by character varying,
+    approved_at timestamp without time zone,
+    rejected_by character varying,
+    rejected_at timestamp without time zone,
+    rejection_reason text,
+    comments text,
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now()
+);
+
+
+ALTER TABLE public.contract_royalty_calculations OWNER TO neondb_owner;
 
 --
 -- Name: contracts; Type: TABLE; Schema: public; Owner: neondb_owner
@@ -148,49 +227,6 @@ CREATE TABLE public.contracts (
 ALTER TABLE public.contracts OWNER TO neondb_owner;
 
 --
--- Name: erp_connections; Type: TABLE; Schema: public; Owner: neondb_owner
---
-
-CREATE TABLE public.erp_connections (
-    id character varying DEFAULT gen_random_uuid() NOT NULL,
-    name character varying NOT NULL,
-    erp_type character varying NOT NULL,
-    connection_config jsonb,
-    mapping_config jsonb,
-    is_active boolean DEFAULT true,
-    last_sync_at timestamp without time zone,
-    created_by character varying,
-    created_at timestamp without time zone DEFAULT now(),
-    updated_at timestamp without time zone DEFAULT now(),
-    CONSTRAINT check_erp_type CHECK (((erp_type)::text = ANY ((ARRAY['csv'::character varying, 'sftp'::character varying, 'netsuite'::character varying, 'sap'::character varying, 'dynamics'::character varying, 'api'::character varying])::text[])))
-);
-
-
-ALTER TABLE public.erp_connections OWNER TO neondb_owner;
-
---
--- Name: erp_import_jobs; Type: TABLE; Schema: public; Owner: neondb_owner
---
-
-CREATE TABLE public.erp_import_jobs (
-    id character varying DEFAULT gen_random_uuid() NOT NULL,
-    connection_id character varying,
-    job_type character varying NOT NULL,
-    file_name character varying,
-    status character varying DEFAULT 'pending'::character varying,
-    records_imported integer,
-    records_failed integer,
-    errors jsonb,
-    started_at timestamp without time zone,
-    completed_at timestamp without time zone,
-    created_by character varying,
-    created_at timestamp without time zone DEFAULT now()
-);
-
-
-ALTER TABLE public.erp_import_jobs OWNER TO neondb_owner;
-
---
 -- Name: financial_analysis; Type: TABLE; Schema: public; Owner: neondb_owner
 --
 
@@ -212,78 +248,6 @@ CREATE TABLE public.financial_analysis (
 
 
 ALTER TABLE public.financial_analysis OWNER TO neondb_owner;
-
---
--- Name: license_documents; Type: TABLE; Schema: public; Owner: neondb_owner
---
-
-CREATE TABLE public.license_documents (
-    id character varying DEFAULT gen_random_uuid() NOT NULL,
-    vendor_id character varying NOT NULL,
-    file_name character varying NOT NULL,
-    original_name character varying NOT NULL,
-    file_path character varying NOT NULL,
-    file_size integer NOT NULL,
-    license_type character varying,
-    effective_date timestamp without time zone,
-    expiration_date timestamp without time zone,
-    status character varying DEFAULT 'uploaded'::character varying,
-    uploaded_by character varying,
-    created_at timestamp without time zone DEFAULT now(),
-    updated_at timestamp without time zone DEFAULT now()
-);
-
-
-ALTER TABLE public.license_documents OWNER TO neondb_owner;
-
---
--- Name: license_rule_sets; Type: TABLE; Schema: public; Owner: neondb_owner
---
-
-CREATE TABLE public.license_rule_sets (
-    id character varying DEFAULT gen_random_uuid() NOT NULL,
-    license_document_id character varying,
-    vendor_id character varying,
-    version integer NOT NULL,
-    name character varying NOT NULL,
-    status character varying DEFAULT 'draft'::character varying,
-    effective_date timestamp without time zone,
-    expiration_date timestamp without time zone,
-    rules_dsl jsonb NOT NULL,
-    extraction_metadata jsonb,
-    published_by character varying,
-    published_at timestamp without time zone,
-    created_by character varying,
-    created_at timestamp without time zone DEFAULT now(),
-    updated_at timestamp without time zone DEFAULT now(),
-    contract_id character varying,
-    CONSTRAINT check_ruleset_status CHECK (((status)::text = ANY ((ARRAY['draft'::character varying, 'published'::character varying, 'archived'::character varying])::text[])))
-);
-
-
-ALTER TABLE public.license_rule_sets OWNER TO neondb_owner;
-
---
--- Name: license_rules; Type: TABLE; Schema: public; Owner: neondb_owner
---
-
-CREATE TABLE public.license_rules (
-    id character varying DEFAULT gen_random_uuid() NOT NULL,
-    rule_set_id character varying NOT NULL,
-    rule_type character varying NOT NULL,
-    rule_name character varying NOT NULL,
-    conditions jsonb,
-    calculation jsonb,
-    priority integer DEFAULT 0,
-    is_active boolean DEFAULT true,
-    source_span jsonb,
-    confidence numeric(5,2),
-    created_at timestamp without time zone DEFAULT now(),
-    CONSTRAINT check_rule_type CHECK (((rule_type)::text = ANY ((ARRAY['percentage'::character varying, 'tiered'::character varying, 'minimum_guarantee'::character varying, 'cap'::character varying, 'deduction'::character varying])::text[])))
-);
-
-
-ALTER TABLE public.license_rules OWNER TO neondb_owner;
 
 --
 -- Name: market_benchmarks; Type: TABLE; Schema: public; Owner: neondb_owner
@@ -327,65 +291,37 @@ CREATE TABLE public.performance_metrics (
 ALTER TABLE public.performance_metrics OWNER TO neondb_owner;
 
 --
--- Name: product_mappings; Type: TABLE; Schema: public; Owner: neondb_owner
+-- Name: royalty_rules; Type: TABLE; Schema: public; Owner: neondb_owner
 --
 
-CREATE TABLE public.product_mappings (
+CREATE TABLE public.royalty_rules (
     id character varying DEFAULT gen_random_uuid() NOT NULL,
-    vendor_id character varying,
-    external_code character varying NOT NULL,
-    internal_category character varying NOT NULL,
-    description character varying,
+    contract_id character varying NOT NULL,
+    rule_type character varying NOT NULL,
+    rule_name character varying NOT NULL,
+    description text,
+    product_categories text[],
+    territories text[],
+    container_sizes text[],
+    seasonal_adjustments jsonb,
+    territory_premiums jsonb,
+    volume_tiers jsonb,
+    base_rate numeric(15,2),
+    minimum_guarantee numeric(15,2),
+    calculation_formula text,
+    priority integer DEFAULT 10,
     is_active boolean DEFAULT true,
-    created_at timestamp without time zone DEFAULT now()
+    confidence numeric(5,2),
+    source_section character varying,
+    source_text text,
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
+    formula_definition jsonb,
+    formula_version character varying DEFAULT '1.0'::character varying
 );
 
 
-ALTER TABLE public.product_mappings OWNER TO neondb_owner;
-
---
--- Name: royalty_results; Type: TABLE; Schema: public; Owner: neondb_owner
---
-
-CREATE TABLE public.royalty_results (
-    id character varying DEFAULT gen_random_uuid() NOT NULL,
-    run_id character varying NOT NULL,
-    sales_data_id character varying,
-    rule_id character varying,
-    sales_amount numeric(15,2) NOT NULL,
-    royalty_amount numeric(15,2) NOT NULL,
-    royalty_rate numeric(8,4),
-    calculation_details jsonb,
-    created_at timestamp without time zone DEFAULT now()
-);
-
-
-ALTER TABLE public.royalty_results OWNER TO neondb_owner;
-
---
--- Name: royalty_runs; Type: TABLE; Schema: public; Owner: neondb_owner
---
-
-CREATE TABLE public.royalty_runs (
-    id character varying DEFAULT gen_random_uuid() NOT NULL,
-    name character varying NOT NULL,
-    vendor_id character varying,
-    rule_set_id character varying,
-    period_start timestamp without time zone NOT NULL,
-    period_end timestamp without time zone NOT NULL,
-    status character varying DEFAULT 'pending'::character varying,
-    total_sales_amount numeric(15,2),
-    total_royalty numeric(15,2),
-    records_processed integer,
-    execution_log jsonb,
-    run_by character varying,
-    started_at timestamp without time zone,
-    completed_at timestamp without time zone,
-    created_at timestamp without time zone DEFAULT now()
-);
-
-
-ALTER TABLE public.royalty_runs OWNER TO neondb_owner;
+ALTER TABLE public.royalty_rules OWNER TO neondb_owner;
 
 --
 -- Name: sales_data; Type: TABLE; Schema: public; Owner: neondb_owner
@@ -393,7 +329,8 @@ ALTER TABLE public.royalty_runs OWNER TO neondb_owner;
 
 CREATE TABLE public.sales_data (
     id character varying DEFAULT gen_random_uuid() NOT NULL,
-    vendor_id character varying,
+    matched_contract_id character varying,
+    match_confidence numeric(5,2),
     transaction_date timestamp without time zone NOT NULL,
     transaction_id character varying,
     product_code character varying,
@@ -407,30 +344,11 @@ CREATE TABLE public.sales_data (
     unit_price numeric(15,2),
     custom_fields jsonb,
     import_job_id character varying,
-    created_at timestamp without time zone DEFAULT now(),
-    CONSTRAINT check_sales_currency_length CHECK ((char_length((currency)::text) = 3))
-);
-
-
-ALTER TABLE public.sales_data OWNER TO neondb_owner;
-
---
--- Name: sales_staging; Type: TABLE; Schema: public; Owner: neondb_owner
---
-
-CREATE TABLE public.sales_staging (
-    id character varying DEFAULT gen_random_uuid() NOT NULL,
-    import_job_id character varying NOT NULL,
-    external_id character varying,
-    row_data jsonb NOT NULL,
-    validation_status character varying DEFAULT 'pending'::character varying,
-    validation_errors jsonb,
-    processed_at timestamp without time zone,
     created_at timestamp without time zone DEFAULT now()
 );
 
 
-ALTER TABLE public.sales_staging OWNER TO neondb_owner;
+ALTER TABLE public.sales_data OWNER TO neondb_owner;
 
 --
 -- Name: session; Type: TABLE; Schema: public; Owner: neondb_owner
@@ -502,31 +420,6 @@ CREATE TABLE public.users (
 ALTER TABLE public.users OWNER TO neondb_owner;
 
 --
--- Name: vendors; Type: TABLE; Schema: public; Owner: neondb_owner
---
-
-CREATE TABLE public.vendors (
-    id character varying DEFAULT gen_random_uuid() NOT NULL,
-    name character varying NOT NULL,
-    code character varying NOT NULL,
-    contact_email character varying,
-    contact_phone character varying,
-    address text,
-    tax_id character varying,
-    currency character varying DEFAULT 'USD'::character varying,
-    payment_terms character varying,
-    notes text,
-    is_active boolean DEFAULT true,
-    created_by character varying,
-    created_at timestamp without time zone DEFAULT now(),
-    updated_at timestamp without time zone DEFAULT now(),
-    CONSTRAINT check_currency_length CHECK ((char_length((currency)::text) = 3))
-);
-
-
-ALTER TABLE public.vendors OWNER TO neondb_owner;
-
---
 -- Name: audit_trail audit_trail_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
 --
 
@@ -559,11 +452,27 @@ ALTER TABLE ONLY public.contract_comparisons
 
 
 --
+-- Name: contract_embeddings contract_embeddings_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.contract_embeddings
+    ADD CONSTRAINT contract_embeddings_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: contract_obligations contract_obligations_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY public.contract_obligations
     ADD CONSTRAINT contract_obligations_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: contract_royalty_calculations contract_royalty_calculations_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.contract_royalty_calculations
+    ADD CONSTRAINT contract_royalty_calculations_pkey PRIMARY KEY (id);
 
 
 --
@@ -575,51 +484,11 @@ ALTER TABLE ONLY public.contracts
 
 
 --
--- Name: erp_connections erp_connections_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
---
-
-ALTER TABLE ONLY public.erp_connections
-    ADD CONSTRAINT erp_connections_pkey PRIMARY KEY (id);
-
-
---
--- Name: erp_import_jobs erp_import_jobs_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
---
-
-ALTER TABLE ONLY public.erp_import_jobs
-    ADD CONSTRAINT erp_import_jobs_pkey PRIMARY KEY (id);
-
-
---
 -- Name: financial_analysis financial_analysis_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY public.financial_analysis
     ADD CONSTRAINT financial_analysis_pkey PRIMARY KEY (id);
-
-
---
--- Name: license_documents license_documents_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
---
-
-ALTER TABLE ONLY public.license_documents
-    ADD CONSTRAINT license_documents_pkey PRIMARY KEY (id);
-
-
---
--- Name: license_rule_sets license_rule_sets_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
---
-
-ALTER TABLE ONLY public.license_rule_sets
-    ADD CONSTRAINT license_rule_sets_pkey PRIMARY KEY (id);
-
-
---
--- Name: license_rules license_rules_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
---
-
-ALTER TABLE ONLY public.license_rules
-    ADD CONSTRAINT license_rules_pkey PRIMARY KEY (id);
 
 
 --
@@ -639,27 +508,11 @@ ALTER TABLE ONLY public.performance_metrics
 
 
 --
--- Name: product_mappings product_mappings_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
+-- Name: royalty_rules royalty_rules_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
 --
 
-ALTER TABLE ONLY public.product_mappings
-    ADD CONSTRAINT product_mappings_pkey PRIMARY KEY (id);
-
-
---
--- Name: royalty_results royalty_results_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
---
-
-ALTER TABLE ONLY public.royalty_results
-    ADD CONSTRAINT royalty_results_pkey PRIMARY KEY (id);
-
-
---
--- Name: royalty_runs royalty_runs_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
---
-
-ALTER TABLE ONLY public.royalty_runs
-    ADD CONSTRAINT royalty_runs_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.royalty_rules
+    ADD CONSTRAINT royalty_rules_pkey PRIMARY KEY (id);
 
 
 --
@@ -668,14 +521,6 @@ ALTER TABLE ONLY public.royalty_runs
 
 ALTER TABLE ONLY public.sales_data
     ADD CONSTRAINT sales_data_pkey PRIMARY KEY (id);
-
-
---
--- Name: sales_staging sales_staging_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
---
-
-ALTER TABLE ONLY public.sales_staging
-    ADD CONSTRAINT sales_staging_pkey PRIMARY KEY (id);
 
 
 --
@@ -703,30 +548,6 @@ ALTER TABLE ONLY public.strategic_analysis
 
 
 --
--- Name: royalty_results unique_calculation_result; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
---
-
-ALTER TABLE ONLY public.royalty_results
-    ADD CONSTRAINT unique_calculation_result UNIQUE (run_id, sales_data_id, rule_id);
-
-
---
--- Name: license_rule_sets unique_license_version; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
---
-
-ALTER TABLE ONLY public.license_rule_sets
-    ADD CONSTRAINT unique_license_version UNIQUE (license_document_id, version);
-
-
---
--- Name: product_mappings unique_vendor_external_code; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
---
-
-ALTER TABLE ONLY public.product_mappings
-    ADD CONSTRAINT unique_vendor_external_code UNIQUE (vendor_id, external_code);
-
-
---
 -- Name: users users_email_unique; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
 --
 
@@ -751,22 +572,6 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: vendors vendors_code_key; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
---
-
-ALTER TABLE ONLY public.vendors
-    ADD CONSTRAINT vendors_code_key UNIQUE (code);
-
-
---
--- Name: vendors vendors_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
---
-
-ALTER TABLE ONLY public.vendors
-    ADD CONSTRAINT vendors_pkey PRIMARY KEY (id);
-
-
---
 -- Name: IDX_session_expire; Type: INDEX; Schema: public; Owner: neondb_owner
 --
 
@@ -774,87 +579,24 @@ CREATE INDEX "IDX_session_expire" ON public.session USING btree (expire);
 
 
 --
--- Name: idx_royalty_results_run_id; Type: INDEX; Schema: public; Owner: neondb_owner
+-- Name: contract_embeddings_contract_idx; Type: INDEX; Schema: public; Owner: neondb_owner
 --
 
-CREATE INDEX idx_royalty_results_run_id ON public.royalty_results USING btree (run_id);
-
-
---
--- Name: idx_royalty_results_sales_data_id; Type: INDEX; Schema: public; Owner: neondb_owner
---
-
-CREATE INDEX idx_royalty_results_sales_data_id ON public.royalty_results USING btree (sales_data_id);
+CREATE INDEX contract_embeddings_contract_idx ON public.contract_embeddings USING btree (contract_id);
 
 
 --
--- Name: idx_royalty_runs_period; Type: INDEX; Schema: public; Owner: neondb_owner
+-- Name: contract_embeddings_embedding_hnsw_idx; Type: INDEX; Schema: public; Owner: neondb_owner
 --
 
-CREATE INDEX idx_royalty_runs_period ON public.royalty_runs USING btree (period_start, period_end);
-
-
---
--- Name: idx_royalty_runs_vendor_id; Type: INDEX; Schema: public; Owner: neondb_owner
---
-
-CREATE INDEX idx_royalty_runs_vendor_id ON public.royalty_runs USING btree (vendor_id);
+CREATE INDEX contract_embeddings_embedding_hnsw_idx ON public.contract_embeddings USING hnsw (embedding public.vector_cosine_ops);
 
 
 --
--- Name: idx_ruleset_dsl; Type: INDEX; Schema: public; Owner: neondb_owner
+-- Name: contract_embeddings_type_idx; Type: INDEX; Schema: public; Owner: neondb_owner
 --
 
-CREATE INDEX idx_ruleset_dsl ON public.license_rule_sets USING gin (rules_dsl);
-
-
---
--- Name: idx_sales_data_custom_fields; Type: INDEX; Schema: public; Owner: neondb_owner
---
-
-CREATE INDEX idx_sales_data_custom_fields ON public.sales_data USING gin (custom_fields);
-
-
---
--- Name: idx_sales_data_import_job; Type: INDEX; Schema: public; Owner: neondb_owner
---
-
-CREATE INDEX idx_sales_data_import_job ON public.sales_data USING btree (import_job_id);
-
-
---
--- Name: idx_sales_data_product_code; Type: INDEX; Schema: public; Owner: neondb_owner
---
-
-CREATE INDEX idx_sales_data_product_code ON public.sales_data USING btree (product_code);
-
-
---
--- Name: idx_sales_data_transaction_date; Type: INDEX; Schema: public; Owner: neondb_owner
---
-
-CREATE INDEX idx_sales_data_transaction_date ON public.sales_data USING btree (transaction_date);
-
-
---
--- Name: idx_sales_data_vendor_date; Type: INDEX; Schema: public; Owner: neondb_owner
---
-
-CREATE INDEX idx_sales_data_vendor_date ON public.sales_data USING btree (vendor_id, transaction_date);
-
-
---
--- Name: idx_sales_data_vendor_id; Type: INDEX; Schema: public; Owner: neondb_owner
---
-
-CREATE INDEX idx_sales_data_vendor_id ON public.sales_data USING btree (vendor_id);
-
-
---
--- Name: idx_sales_staging_import_job; Type: INDEX; Schema: public; Owner: neondb_owner
---
-
-CREATE INDEX idx_sales_staging_import_job ON public.sales_staging USING btree (import_job_id);
+CREATE INDEX contract_embeddings_type_idx ON public.contract_embeddings USING btree (embedding_type);
 
 
 --
@@ -890,11 +632,51 @@ ALTER TABLE ONLY public.contract_comparisons
 
 
 --
+-- Name: contract_embeddings contract_embeddings_contract_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.contract_embeddings
+    ADD CONSTRAINT contract_embeddings_contract_id_fkey FOREIGN KEY (contract_id) REFERENCES public.contracts(id);
+
+
+--
 -- Name: contract_obligations contract_obligations_contract_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY public.contract_obligations
     ADD CONSTRAINT contract_obligations_contract_id_fkey FOREIGN KEY (contract_id) REFERENCES public.contracts(id);
+
+
+--
+-- Name: contract_royalty_calculations contract_royalty_calculations_approved_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.contract_royalty_calculations
+    ADD CONSTRAINT contract_royalty_calculations_approved_by_fkey FOREIGN KEY (approved_by) REFERENCES public.users(id);
+
+
+--
+-- Name: contract_royalty_calculations contract_royalty_calculations_calculated_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.contract_royalty_calculations
+    ADD CONSTRAINT contract_royalty_calculations_calculated_by_fkey FOREIGN KEY (calculated_by) REFERENCES public.users(id);
+
+
+--
+-- Name: contract_royalty_calculations contract_royalty_calculations_contract_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.contract_royalty_calculations
+    ADD CONSTRAINT contract_royalty_calculations_contract_id_fkey FOREIGN KEY (contract_id) REFERENCES public.contracts(id);
+
+
+--
+-- Name: contract_royalty_calculations contract_royalty_calculations_rejected_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.contract_royalty_calculations
+    ADD CONSTRAINT contract_royalty_calculations_rejected_by_fkey FOREIGN KEY (rejected_by) REFERENCES public.users(id);
 
 
 --
@@ -906,115 +688,11 @@ ALTER TABLE ONLY public.contracts
 
 
 --
--- Name: erp_connections erp_connections_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
---
-
-ALTER TABLE ONLY public.erp_connections
-    ADD CONSTRAINT erp_connections_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id);
-
-
---
--- Name: erp_import_jobs erp_import_jobs_connection_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
---
-
-ALTER TABLE ONLY public.erp_import_jobs
-    ADD CONSTRAINT erp_import_jobs_connection_id_fkey FOREIGN KEY (connection_id) REFERENCES public.erp_connections(id);
-
-
---
--- Name: erp_import_jobs erp_import_jobs_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
---
-
-ALTER TABLE ONLY public.erp_import_jobs
-    ADD CONSTRAINT erp_import_jobs_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id);
-
-
---
 -- Name: financial_analysis financial_analysis_contract_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY public.financial_analysis
     ADD CONSTRAINT financial_analysis_contract_id_fkey FOREIGN KEY (contract_id) REFERENCES public.contracts(id);
-
-
---
--- Name: sales_data fk_sales_data_import_job; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
---
-
-ALTER TABLE ONLY public.sales_data
-    ADD CONSTRAINT fk_sales_data_import_job FOREIGN KEY (import_job_id) REFERENCES public.erp_import_jobs(id);
-
-
---
--- Name: sales_staging fk_sales_staging_import_job; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
---
-
-ALTER TABLE ONLY public.sales_staging
-    ADD CONSTRAINT fk_sales_staging_import_job FOREIGN KEY (import_job_id) REFERENCES public.erp_import_jobs(id);
-
-
---
--- Name: license_documents license_documents_uploaded_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
---
-
-ALTER TABLE ONLY public.license_documents
-    ADD CONSTRAINT license_documents_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES public.users(id);
-
-
---
--- Name: license_documents license_documents_vendor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
---
-
-ALTER TABLE ONLY public.license_documents
-    ADD CONSTRAINT license_documents_vendor_id_fkey FOREIGN KEY (vendor_id) REFERENCES public.vendors(id);
-
-
---
--- Name: license_rule_sets license_rule_sets_contract_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
---
-
-ALTER TABLE ONLY public.license_rule_sets
-    ADD CONSTRAINT license_rule_sets_contract_id_fkey FOREIGN KEY (contract_id) REFERENCES public.contracts(id);
-
-
---
--- Name: license_rule_sets license_rule_sets_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
---
-
-ALTER TABLE ONLY public.license_rule_sets
-    ADD CONSTRAINT license_rule_sets_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id);
-
-
---
--- Name: license_rule_sets license_rule_sets_license_document_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
---
-
-ALTER TABLE ONLY public.license_rule_sets
-    ADD CONSTRAINT license_rule_sets_license_document_id_fkey FOREIGN KEY (license_document_id) REFERENCES public.license_documents(id);
-
-
---
--- Name: license_rule_sets license_rule_sets_published_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
---
-
-ALTER TABLE ONLY public.license_rule_sets
-    ADD CONSTRAINT license_rule_sets_published_by_fkey FOREIGN KEY (published_by) REFERENCES public.users(id);
-
-
---
--- Name: license_rule_sets license_rule_sets_vendor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
---
-
-ALTER TABLE ONLY public.license_rule_sets
-    ADD CONSTRAINT license_rule_sets_vendor_id_fkey FOREIGN KEY (vendor_id) REFERENCES public.vendors(id);
-
-
---
--- Name: license_rules license_rules_rule_set_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
---
-
-ALTER TABLE ONLY public.license_rules
-    ADD CONSTRAINT license_rules_rule_set_id_fkey FOREIGN KEY (rule_set_id) REFERENCES public.license_rule_sets(id);
 
 
 --
@@ -1026,67 +704,19 @@ ALTER TABLE ONLY public.performance_metrics
 
 
 --
--- Name: product_mappings product_mappings_vendor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
+-- Name: royalty_rules royalty_rules_contract_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
 --
 
-ALTER TABLE ONLY public.product_mappings
-    ADD CONSTRAINT product_mappings_vendor_id_fkey FOREIGN KEY (vendor_id) REFERENCES public.vendors(id);
-
-
---
--- Name: royalty_results royalty_results_rule_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
---
-
-ALTER TABLE ONLY public.royalty_results
-    ADD CONSTRAINT royalty_results_rule_id_fkey FOREIGN KEY (rule_id) REFERENCES public.license_rules(id);
+ALTER TABLE ONLY public.royalty_rules
+    ADD CONSTRAINT royalty_rules_contract_id_fkey FOREIGN KEY (contract_id) REFERENCES public.contracts(id);
 
 
 --
--- Name: royalty_results royalty_results_run_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
---
-
-ALTER TABLE ONLY public.royalty_results
-    ADD CONSTRAINT royalty_results_run_id_fkey FOREIGN KEY (run_id) REFERENCES public.royalty_runs(id);
-
-
---
--- Name: royalty_results royalty_results_sales_data_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
---
-
-ALTER TABLE ONLY public.royalty_results
-    ADD CONSTRAINT royalty_results_sales_data_id_fkey FOREIGN KEY (sales_data_id) REFERENCES public.sales_data(id);
-
-
---
--- Name: royalty_runs royalty_runs_rule_set_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
---
-
-ALTER TABLE ONLY public.royalty_runs
-    ADD CONSTRAINT royalty_runs_rule_set_id_fkey FOREIGN KEY (rule_set_id) REFERENCES public.license_rule_sets(id);
-
-
---
--- Name: royalty_runs royalty_runs_run_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
---
-
-ALTER TABLE ONLY public.royalty_runs
-    ADD CONSTRAINT royalty_runs_run_by_fkey FOREIGN KEY (run_by) REFERENCES public.users(id);
-
-
---
--- Name: royalty_runs royalty_runs_vendor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
---
-
-ALTER TABLE ONLY public.royalty_runs
-    ADD CONSTRAINT royalty_runs_vendor_id_fkey FOREIGN KEY (vendor_id) REFERENCES public.vendors(id);
-
-
---
--- Name: sales_data sales_data_vendor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
+-- Name: sales_data sales_data_matched_contract_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
 --
 
 ALTER TABLE ONLY public.sales_data
-    ADD CONSTRAINT sales_data_vendor_id_fkey FOREIGN KEY (vendor_id) REFERENCES public.vendors(id);
+    ADD CONSTRAINT sales_data_matched_contract_id_fkey FOREIGN KEY (matched_contract_id) REFERENCES public.contracts(id);
 
 
 --
@@ -1098,11 +728,11 @@ ALTER TABLE ONLY public.strategic_analysis
 
 
 --
--- Name: vendors vendors_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
+-- Name: SCHEMA public; Type: ACL; Schema: -; Owner: neondb_owner
 --
 
-ALTER TABLE ONLY public.vendors
-    ADD CONSTRAINT vendors_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id);
+REVOKE USAGE ON SCHEMA public FROM PUBLIC;
+GRANT ALL ON SCHEMA public TO PUBLIC;
 
 
 --
@@ -1116,7 +746,7 @@ ALTER DEFAULT PRIVILEGES FOR ROLE cloud_admin IN SCHEMA public GRANT ALL ON SEQU
 -- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: public; Owner: cloud_admin
 --
 
-ALTER DEFAULT PRIVILEGES FOR ROLE cloud_admin IN SCHEMA public GRANT ALL ON TABLES TO neon_superuser WITH GRANT OPTION;
+ALTER DEFAULT PRIVILEGES FOR ROLE cloud_admin IN SCHEMA public GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLES TO neon_superuser WITH GRANT OPTION;
 
 
 --
