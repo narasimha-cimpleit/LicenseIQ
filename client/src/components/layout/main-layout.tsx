@@ -35,7 +35,7 @@ export default function MainLayout({ children, title, description }: MainLayoutP
               <span>•</span>
               <p>Powered by <a href="https://cimpleit.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Cimpleit Inc</a></p>
               <span>•</span>
-              <p>&copy; 2024 Cimpleit Inc. All rights reserved.</p>
+              <p>&copy; 2025 CimpleIT Inc. All rights reserved.</p>
             </div>
             <p>Innovative AI and Data Analytics Solutions</p>
           </div>
