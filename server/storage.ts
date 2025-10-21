@@ -272,6 +272,31 @@ export class DatabaseStorage implements IStorage {
 
   // Contract operations
   async createContract(contract: InsertContract): Promise<Contract> {
+    // Auto-generate contract number if not provided
+    if (!contract.contractNumber) {
+      const currentYear = new Date().getFullYear();
+      
+      // Get the highest contract number for the current year
+      const [lastContract] = await db
+        .select({ contractNumber: contracts.contractNumber })
+        .from(contracts)
+        .where(sql`contract_number LIKE ${`CNT-${currentYear}-%`}`)
+        .orderBy(desc(contracts.contractNumber))
+        .limit(1);
+      
+      let nextNumber = 1;
+      if (lastContract?.contractNumber) {
+        // Extract number from format CNT-YYYY-NNN and increment
+        const parts = lastContract.contractNumber.split('-');
+        if (parts.length === 3) {
+          nextNumber = parseInt(parts[2]) + 1;
+        }
+      }
+      
+      // Generate formatted contract number: CNT-YYYY-NNN
+      contract.contractNumber = `CNT-${currentYear}-${String(nextNumber).padStart(3, '0')}`;
+    }
+    
     const [newContract] = await db
       .insert(contracts)
       .values(contract)
