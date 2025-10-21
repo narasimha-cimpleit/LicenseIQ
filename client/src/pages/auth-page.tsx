@@ -346,40 +346,42 @@ export default function AuthPage() {
         </div>
       </div>
 
-      {/* Right side - Business Benefits Section */}
-      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 p-8 lg:p-12 items-center justify-center relative overflow-hidden">
-        {/* Decorative elements */}
-        <div className="absolute inset-0 bg-grid-white/5"></div>
-        <div className="absolute top-20 right-20 w-72 h-72 bg-white/5 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 left-20 w-96 h-96 bg-indigo-400/10 rounded-full blur-3xl"></div>
+      {/* Right side - Business Benefits Section - Light Professional Theme */}
+      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-8 lg:p-12 items-center justify-center relative overflow-hidden">
+        {/* Decorative elements - Light theme */}
+        <div className="absolute top-20 right-20 w-72 h-72 bg-blue-100/30 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 left-20 w-96 h-96 bg-indigo-100/20 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-br from-blue-50/50 to-purple-50/50 rounded-full blur-3xl"></div>
 
-        <div className="max-w-xl text-white relative z-10 space-y-8">
+        <div className="max-w-xl relative z-10 space-y-8">
           {/* Main Headline */}
           <div className="space-y-4 animate-in fade-in slide-in-from-right-8 duration-700">
-            <div className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
-              <Sparkles className="h-4 w-4" />
-              <span className="text-sm font-medium">AI-Powered Platform</span>
+            <div className="inline-flex items-center space-x-2 bg-blue-500 px-4 py-2 rounded-full shadow-lg">
+              <Sparkles className="h-4 w-4 text-white" />
+              <span className="text-sm font-medium text-white">AI-Powered Platform</span>
             </div>
-            <h2 className="text-4xl lg:text-5xl font-bold leading-tight">
+            <h2 className="text-4xl lg:text-5xl font-bold leading-tight bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
               Reads contracts like a lawyer, calculates like an accountant
             </h2>
-            <p className="text-lg text-blue-100 leading-relaxed">
+            <p className="text-lg text-slate-700 leading-relaxed">
               LicenseIQ transforms how manufacturing companies manage their licensing agreements and payment calculations. Our AI agent eliminates manual errors, ensures audit compliance, and automates complex royalty and licensing fee calculations with lawyer-level contract reading and accountant-level precision.
             </p>
           </div>
 
           {/* Key Benefits */}
           <div className="space-y-4 animate-in fade-in slide-in-from-right-8 duration-700 delay-200">
-            <h3 className="text-2xl font-bold">Key Benefits</h3>
+            <h3 className="text-2xl font-bold text-slate-800">Key Benefits</h3>
             
             <div className="grid gap-4">
               {/* AI Contract Intelligence */}
-              <div className="bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/20">
+              <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl border border-blue-100 shadow-md hover:shadow-lg transition-shadow">
                 <div className="flex items-start space-x-3">
-                  <Sparkles className="h-5 w-5 text-blue-200 mt-0.5 flex-shrink-0" />
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                    <Sparkles className="h-5 w-5 text-white" />
+                  </div>
                   <div>
-                    <h4 className="font-semibold text-base">AI Contract Intelligence</h4>
-                    <p className="text-sm text-blue-100 mt-1">
+                    <h4 className="font-semibold text-base text-slate-800">AI Contract Intelligence</h4>
+                    <p className="text-sm text-slate-600 mt-1">
                       Automatically extracts licensing terms and understands complex royalty structures
                     </p>
                   </div>
@@ -387,12 +389,14 @@ export default function AuthPage() {
               </div>
 
               {/* Eliminate Payment Errors */}
-              <div className="bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/20">
+              <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl border border-blue-100 shadow-md hover:shadow-lg transition-shadow">
                 <div className="flex items-start space-x-3">
-                  <Shield className="h-5 w-5 text-blue-200 mt-0.5 flex-shrink-0" />
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                    <Shield className="h-5 w-5 text-white" />
+                  </div>
                   <div>
-                    <h4 className="font-semibold text-base">Eliminate Payment Errors</h4>
-                    <p className="text-sm text-blue-100 mt-1">
+                    <h4 className="font-semibold text-base text-slate-800">Eliminate Payment Errors</h4>
+                    <p className="text-sm text-slate-600 mt-1">
                       Prevent $10K-$100K+ disputes with automated accuracy and audit-ready calculations
                     </p>
                   </div>
@@ -400,12 +404,14 @@ export default function AuthPage() {
               </div>
 
               {/* 95% Time Savings */}
-              <div className="bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/20">
+              <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl border border-blue-100 shadow-md hover:shadow-lg transition-shadow">
                 <div className="flex items-start space-x-3">
-                  <Clock className="h-5 w-5 text-blue-200 mt-0.5 flex-shrink-0" />
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                    <Clock className="h-5 w-5 text-white" />
+                  </div>
                   <div>
-                    <h4 className="font-semibold text-base">95% Time Savings</h4>
-                    <p className="text-sm text-blue-100 mt-1">
+                    <h4 className="font-semibold text-base text-slate-800">95% Time Savings</h4>
+                    <p className="text-sm text-slate-600 mt-1">
                       Turn 10-40 hours of work into just 30 minutes per agreement per quarter
                     </p>
                   </div>
@@ -413,12 +419,14 @@ export default function AuthPage() {
               </div>
 
               {/* Professional Reporting */}
-              <div className="bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/20">
+              <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl border border-blue-100 shadow-md hover:shadow-lg transition-shadow">
                 <div className="flex items-start space-x-3">
-                  <FileCheck className="h-5 w-5 text-blue-200 mt-0.5 flex-shrink-0" />
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                    <FileCheck className="h-5 w-5 text-white" />
+                  </div>
                   <div>
-                    <h4 className="font-semibold text-base">Professional Reporting</h4>
-                    <p className="text-sm text-blue-100 mt-1">
+                    <h4 className="font-semibold text-base text-slate-800">Professional Reporting</h4>
+                    <p className="text-sm text-slate-600 mt-1">
                       Generate branded audit-ready reports and compliance documentation instantly
                     </p>
                   </div>
@@ -428,22 +436,22 @@ export default function AuthPage() {
           </div>
 
           {/* Quick Implementation & ROI */}
-          <div className="bg-white/10 backdrop-blur-sm p-5 rounded-xl border border-white/20 animate-in fade-in slide-in-from-right-8 duration-700 delay-300">
-            <h4 className="font-semibold text-lg mb-3 flex items-center">
+          <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-5 rounded-xl shadow-xl animate-in fade-in slide-in-from-right-8 duration-700 delay-300">
+            <h4 className="font-semibold text-lg mb-3 flex items-center text-white">
               <TrendingUp className="h-5 w-5 mr-2" />
               Quick Implementation & ROI
             </h4>
-            <ul className="space-y-2 text-sm text-blue-100">
+            <ul className="space-y-2 text-sm text-blue-50">
               <li className="flex items-start">
-                <CheckCircle className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0 text-green-400" />
+                <CheckCircle className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0 text-green-300" />
                 <span>4-week implementation vs 18-month solutions</span>
               </li>
               <li className="flex items-start">
-                <CheckCircle className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0 text-green-400" />
+                <CheckCircle className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0 text-green-300" />
                 <span>Save $50K-$200K annually in labor costs</span>
               </li>
               <li className="flex items-start">
-                <CheckCircle className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0 text-green-400" />
+                <CheckCircle className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0 text-green-300" />
                 <span>Immediate ROI with CSV imports</span>
               </li>
             </ul>
@@ -451,16 +459,22 @@ export default function AuthPage() {
 
           {/* Enterprise-Ready Features */}
           <div className="flex items-center justify-between pt-4 animate-in fade-in slide-in-from-right-8 duration-700 delay-400">
-            <div className="flex items-center space-x-2 text-sm">
-              <Zap className="h-4 w-4" />
+            <div className="flex items-center space-x-2 text-sm text-slate-700 font-medium">
+              <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                <Zap className="h-4 w-4 text-blue-600" />
+              </div>
               <span>ERP Integration</span>
             </div>
-            <div className="flex items-center space-x-2 text-sm">
-              <Globe className="h-4 w-4" />
+            <div className="flex items-center space-x-2 text-sm text-slate-700 font-medium">
+              <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                <Globe className="h-4 w-4 text-blue-600" />
+              </div>
               <span>Multi-Currency</span>
             </div>
-            <div className="flex items-center space-x-2 text-sm">
-              <Shield className="h-4 w-4" />
+            <div className="flex items-center space-x-2 text-sm text-slate-700 font-medium">
+              <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                <Shield className="h-4 w-4 text-blue-600" />
+              </div>
               <span>Audit Compliance</span>
             </div>
           </div>
