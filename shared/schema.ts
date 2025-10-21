@@ -43,6 +43,7 @@ export const users = pgTable("users", {
 // Contracts table
 export const contracts = pgTable("contracts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  contractNumber: varchar("contract_number").unique(), // Auto-generated unique number: CNT-YYYY-NNN
   fileName: varchar("file_name").notNull(),
   originalName: varchar("original_name").notNull(),
   fileSize: integer("file_size").notNull(),
