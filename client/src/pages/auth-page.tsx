@@ -86,7 +86,7 @@ export default function AuthPage() {
             </div>
             <div className="flex items-center justify-center space-x-2 text-sm">
               <span className="text-muted-foreground font-medium">by</span>
-              <span className="font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">CimpleIT</span>
+              <span className="font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">CimpleIT Inc</span>
             </div>
             <p className="text-sm text-muted-foreground">
               AI-powered licensing management platform
@@ -338,7 +338,7 @@ export default function AuthPage() {
                 rel="noopener noreferrer" 
                 className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
               >
-                CimpleIT
+                CimpleIT Inc
               </a>
             </p>
             <p className="text-xs text-muted-foreground">&copy; 2025 CimpleIT Inc. All rights reserved.</p>

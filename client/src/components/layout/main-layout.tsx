@@ -29,11 +29,11 @@ export default function MainLayout({ children, title, description }: MainLayoutP
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <img src={cimpleitLogo} alt="Cimpleit Inc Logo" className="w-5 h-5" />
-                <span className="font-semibold text-primary">Cimpleit Inc</span>
+                <img src={cimpleitLogo} alt="CimpleIT Inc Logo" className="w-5 h-5" />
+                <span className="font-semibold text-primary">CimpleIT Inc</span>
               </div>
               <span>•</span>
-              <p>Powered by <a href="https://cimpleit.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Cimpleit Inc</a></p>
+              <p>Powered by <a href="https://cimpleit.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">CimpleIT Inc</a></p>
               <span>•</span>
               <p>&copy; 2025 CimpleIT Inc. All rights reserved.</p>
             </div>
