@@ -2,9 +2,34 @@
 
 License IQ Research Platform is a SaaS web application for intelligent contract management and analysis.
 
-# Recent Changes (October 15, 2025)
+# Recent Changes (October 21, 2025)
 
-## Updated: End-to-End Demo Navigation Structure
+## Fixed: Formula Preview Volume Tiers & Seasonal Adjustments Not Displaying
+- **Bug**: Formula Preview showing simple formulas like `royalty = quantity × $25.00` without volume tiers or seasonal adjustments, even though data existed in database
+- **Root Cause**: API had two mutually exclusive code paths - FormulaNode parsing vs legacy column reading. When a rule had FormulaNode JSON (from AI extraction), it would ignore the manually-populated `volume_tiers` and `seasonal_adjustments` JSONB columns entirely
+- **Fix**: Modified formula preview API to MERGE both data sources:
+  1. First parse FormulaNode if present
+  2. Then check legacy columns (volume_tiers, seasonal_adjustments, baseRate)
+  3. If FormulaNode didn't extract tiers/adjustments, merge in legacy column data
+  4. Regenerate calculation formula with complete merged data
+- **Enhancement**: Added source provenance - API now returns `sourceSection` and `sourceText` to show where rules were extracted from in the contract
+- **Frontend Update**: Added source section display with tooltip hover for full source text
+- **Database Updates**: Recreated 6 royalty rules with proper metadata:
+  - 3 volume tier rules (Organic Premium, Perennials, Ornamental Trees) with structured JSONB tiers
+  - 3 seasonal adjustment rules (Spring +15%, Fall -5%, Winter +20%)
+  - Added sourceSection (e.g., "Section 3: Royalty Terms & Payment Schedule - Table 3.1")
+  - Added sourceText excerpts from contract
+- **Files Changed**: 
+  - `server/routes.ts` (lines 1346-1483): API merge logic and source fields
+  - `client/src/components/formula-preview.tsx` (lines 198-202): Source display
+- **Impact**: Formula Preview now displays:
+  - Complete volume tier breakdowns with rate thresholds
+  - Seasonal adjustment multipliers with percentages
+  - Source attribution showing which contract section each rule came from
+  - Proper calculation formulas incorporating all conditions
+- **Note**: This fix enables both AI-extracted FormulaNode rules AND manually-created legacy column rules to coexist and display correctly
+
+## Updated: End-to-End Demo Navigation Structure (October 15, 2025)
 - **Enhancement**: Completely redesigned navigation in all 8 demo workflow files to reflect actual application flow
 - **Navigation Items**: Added comprehensive 6-item menu structure:
   - Dashboard (home)
