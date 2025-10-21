@@ -1348,6 +1348,12 @@ Report ID: ${contractId}
         let ruleDescription = matchingRule.description || '';
         let formulaDetails: any = {};
 
+        // ALWAYS read legacy columns first (these may be manually populated)
+        const baseRate = matchingRule.baseRate ? parseFloat(matchingRule.baseRate) : null;
+        const volumeTiers = (matchingRule.volumeTiers as any[]) || [];
+        const seasonalAdj = (matchingRule.seasonalAdjustments as Record<string, any>) || {};
+        const territoryPrem = (matchingRule.territoryPremiums as Record<string, any>) || {};
+
         if (matchingRule.formulaDefinition) {
           const def = matchingRule.formulaDefinition as any;
           formulaType = def.description || def.name || 'Formula-based';
@@ -1355,21 +1361,60 @@ Report ID: ${contractId}
           // Parse the formula definition to extract displayable details
           formulaDetails = parseFormulaDefinition(def);
           
-          // Override formula type based on extracted content
+          // MERGE: If FormulaNode didn't extract tiers/adjustments, use legacy columns
+          if ((!formulaDetails.volumeTiers || formulaDetails.volumeTiers.length === 0) && volumeTiers.length > 0) {
+            formulaDetails.volumeTiers = volumeTiers;
+          }
+          if ((!formulaDetails.seasonalAdjustments || Object.keys(formulaDetails.seasonalAdjustments).length === 0) && Object.keys(seasonalAdj).length > 0) {
+            formulaDetails.seasonalAdjustments = seasonalAdj;
+          }
+          if ((!formulaDetails.territoryPremiums || Object.keys(formulaDetails.territoryPremiums).length === 0) && Object.keys(territoryPrem).length > 0) {
+            formulaDetails.territoryPremiums = territoryPrem;
+          }
+          if (!formulaDetails.baseRate && baseRate !== null) {
+            formulaDetails.baseRate = baseRate;
+          }
+          
+          // Regenerate calculation formula with merged data
+          const hasSeasonalAdj = Object.keys(formulaDetails.seasonalAdjustments || {}).length > 0;
+          const hasTerritoryPrem = Object.keys(formulaDetails.territoryPremiums || {}).length > 0;
+          
+          if (formulaDetails.volumeTiers && formulaDetails.volumeTiers.length > 0) {
+            // Volume-based tiered pricing formula
+            let formulaParts: string[] = [];
+            formulaDetails.volumeTiers.forEach((tier: any, idx: number) => {
+              const condition = tier.max 
+                ? `if (quantity >= ${tier.min.toLocaleString()} && quantity <= ${tier.max.toLocaleString()})` 
+                : `if (quantity >= ${tier.min.toLocaleString()})`;
+              
+              let rateStr = typeof tier.rate === 'number' 
+                ? `$${tier.rate.toFixed(2)}`
+                : 'rate';
+              
+              let formula = `  royalty = quantity × ${rateStr}`;
+              if (hasSeasonalAdj) formula += ' × seasonalMultiplier';
+              if (hasTerritoryPrem) formula += ' × territoryMultiplier';
+              
+              formulaParts.push(`${condition} {\n${formula}\n}`);
+            });
+            formulaDetails.calculationFormula = formulaParts.join(' else ');
+          } else if (formulaDetails.baseRate !== null) {
+            let rateStr = `$${formulaDetails.baseRate.toFixed(2)}`;
+            formulaDetails.calculationFormula = `royalty = quantity × ${rateStr}`;
+            if (hasSeasonalAdj) formulaDetails.calculationFormula += ' × seasonalMultiplier';
+            if (hasTerritoryPrem) formulaDetails.calculationFormula += ' × territoryMultiplier';
+          }
+          
+          // Override formula type based on merged content
           if (formulaDetails.volumeTiers && formulaDetails.volumeTiers.length > 0) {
             formulaType = 'Volume-based tiered pricing';
-          } else if (Object.keys(formulaDetails.seasonalAdjustments).length > 0) {
+          } else if (Object.keys(formulaDetails.seasonalAdjustments || {}).length > 0) {
             formulaType = 'Seasonal adjustments';
-          } else if (Object.keys(formulaDetails.territoryPremiums).length > 0) {
+          } else if (Object.keys(formulaDetails.territoryPremiums || {}).length > 0) {
             formulaType = 'Territory premiums';
           }
         } else {
-          // Legacy format - extract rate, tiers, adjustments
-          const baseRate = matchingRule.baseRate ? parseFloat(matchingRule.baseRate) : null;
-          const volumeTiers = (matchingRule.volumeTiers as any[]) || [];
-          const seasonalAdj = (matchingRule.seasonalAdjustments as Record<string, any>) || {};
-          const territoryPrem = (matchingRule.territoryPremiums as Record<string, any>) || {};
-          
+          // Pure legacy format - no FormulaNode
           if (volumeTiers.length > 0) {
             formulaType = 'Volume-based tiered pricing';
           } else if (Object.keys(seasonalAdj).length > 0) {
@@ -1378,20 +1423,18 @@ Report ID: ${contractId}
             formulaType = 'Territory premiums';
           }
           
-          // Generate calculation formula for legacy rules (matches DynamicRulesEngine logic)
+          // Generate calculation formula for legacy rules
           let calculationFormula = '';
           const hasSeasonalAdj = Object.keys(seasonalAdj).length > 0;
           const hasTerritoryPrem = Object.keys(territoryPrem).length > 0;
           
           if (volumeTiers.length > 0) {
-            // Volume-based tiered pricing formula
             let formulaParts: string[] = [];
             volumeTiers.forEach((tier: any, idx: number) => {
               const condition = tier.max 
                 ? `if (quantity >= ${tier.min.toLocaleString()} && quantity <= ${tier.max.toLocaleString()})` 
                 : `if (quantity >= ${tier.min.toLocaleString()})`;
               
-              // Always show rate as currency (per-unit dollar amount)
               let rateStr = typeof tier.rate === 'number' 
                 ? `$${tier.rate.toFixed(2)}`
                 : 'rate';
@@ -1404,9 +1447,7 @@ Report ID: ${contractId}
             });
             calculationFormula = formulaParts.join(' else ');
           } else if (baseRate !== null) {
-            // Simple base rate formula - always show as per-unit currency
             let rateStr = `$${baseRate.toFixed(2)}`;
-            
             calculationFormula = `royalty = quantity × ${rateStr}`;
             if (hasSeasonalAdj) calculationFormula += ' × seasonalMultiplier';
             if (hasTerritoryPrem) calculationFormula += ' × territoryMultiplier';
@@ -1434,7 +1475,9 @@ Report ID: ${contractId}
           formulaType,
           formulaDetails,
           priority: matchingRule.priority,
-          confidence: matchingRule.confidence
+          confidence: matchingRule.confidence,
+          sourceSection: matchingRule.sourceSection || null,
+          sourceText: matchingRule.sourceText ? matchingRule.sourceText.substring(0, 150) + '...' : null
         };
       });
 
