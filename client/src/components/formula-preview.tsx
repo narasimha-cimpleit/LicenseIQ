@@ -183,13 +183,18 @@ export function FormulaPreview({ contractId, periodStart, periodEnd }: FormulaPr
                       </div>
                     )}
                   </div>
-                  <div className="text-right">
+                  <div className="text-right flex-shrink-0">
                     <div className="text-xs font-medium text-green-800 dark:text-green-200">
                       {sample.ruleName}
                     </div>
                     {sample.confidence && (
                       <div className="text-xs text-green-600 dark:text-green-400">
                         {Math.round(sample.confidence * 100)}% confident
+                      </div>
+                    )}
+                    {sample.sourceSection && (
+                      <div className="text-xs text-purple-700 dark:text-purple-400 mt-2 max-w-[200px]" title={sample.sourceText || sample.sourceSection}>
+                        📄 {sample.sourceSection}
                       </div>
                     )}
                   </div>
