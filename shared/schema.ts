@@ -135,6 +135,7 @@ export const registerSchema = insertUserSchema.extend({
 });
 
 export const insertContractSchema = createInsertSchema(contracts).pick({
+  contractNumber: true, // Optional - auto-generated if not provided
   fileName: true,
   originalName: true,
   fileSize: true,
@@ -144,7 +145,7 @@ export const insertContractSchema = createInsertSchema(contracts).pick({
   priority: true,
   uploadedBy: true,
   notes: true,
-});
+}).partial({ contractNumber: true }); // Make contractNumber optional
 
 export const insertContractAnalysisSchema = createInsertSchema(contractAnalysis).pick({
   contractId: true,

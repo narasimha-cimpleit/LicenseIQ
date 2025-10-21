@@ -4,6 +4,27 @@ License IQ Research Platform is a SaaS web application for intelligent contract 
 
 # Recent Changes (October 21, 2025)
 
+## Added: Auto-Generated Contract Numbers
+- **Feature**: Implemented automatic contract number generation for all contract uploads
+- **Format**: CNT-YYYY-NNN (e.g., CNT-2025-001, CNT-2025-002)
+  - CNT = Contract prefix
+  - YYYY = Year of upload
+  - NNN = Sequential number (zero-padded to 3 digits)
+- **Implementation Details**:
+  - Added `contractNumber` field to contracts schema with unique constraint
+  - Modified `createContract` method to auto-generate numbers if not provided
+  - Queries for highest number in current year and increments sequentially
+  - Existing contracts updated with generated numbers
+- **Files Changed**:
+  - `shared/schema.ts` (line 49): Added contractNumber column
+  - `shared/schema.ts` (lines 140-151): Updated insertContractSchema to include optional contractNumber
+  - `server/storage.ts` (lines 277-308): Auto-generation logic in createContract
+- **Database Changes**: 
+  - Added contract_number VARCHAR column with unique constraint
+  - Generated CNT-2025-001 for existing contract
+- **Status**: Backend implementation complete; UI updates pending
+- **Next Steps**: Display contract numbers in contracts list, royalty calculator, and rules management pages
+
 ## Fixed: Formula Preview Volume Tiers & Seasonal Adjustments Not Displaying
 - **Bug**: Formula Preview showing simple formulas like `royalty = quantity × $25.00` without volume tiers or seasonal adjustments, even though data existed in database
 - **Root Cause**: API had two mutually exclusive code paths - FormulaNode parsing vs legacy column reading. When a rule had FormulaNode JSON (from AI extraction), it would ignore the manually-populated `volume_tiers` and `seasonal_adjustments` JSONB columns entirely
