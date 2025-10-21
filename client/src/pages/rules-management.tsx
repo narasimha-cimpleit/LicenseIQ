@@ -31,6 +31,8 @@ interface RoyaltyRule {
   formulaDefinition: any | null;
   isActive: boolean;
   priority: number;
+  sourceSection: string | null;
+  sourceText: string | null;
 }
 
 // Helper function to extract volume tiers from formula definition
@@ -642,6 +644,11 @@ export default function RulesManagement() {
                 Royalty Rules Management
               </h1>
               <p className="text-muted-foreground mt-2">
+                {(contract as any)?.contractNumber && (
+                  <span className="font-mono font-semibold text-violet-600 dark:text-violet-400 mr-2">
+                    {(contract as any).contractNumber}
+                  </span>
+                )}
                 {(contract as any)?.originalName || "Loading..."}
               </p>
             </div>
@@ -717,6 +724,13 @@ export default function RulesManagement() {
                           </div>
                           {rule.description && (
                             <CardDescription className="mt-2">{rule.description}</CardDescription>
+                          )}
+                          {rule.sourceSection && (
+                            <div className="mt-3">
+                              <Badge variant="outline" className="text-xs" title={rule.sourceText || rule.sourceSection}>
+                                📄 {rule.sourceSection}
+                              </Badge>
+                            </div>
                           )}
                         </div>
                         <div className="flex items-center gap-2">

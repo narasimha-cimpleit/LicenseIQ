@@ -233,7 +233,9 @@ export default function RoyaltyDashboard() {
   return (
     <MainLayout
       title="Royalty Calculator"
-      description={`Calculate royalties for ${(contract as any)?.originalName || 'contract'}`}
+      description={
+        `Calculate royalties for ${(contract as any)?.contractNumber ? `${(contract as any).contractNumber} - ` : ''}${(contract as any)?.originalName || 'contract'}`
+      }
     >
       <div className="space-y-6">
         <div className="flex items-center justify-between">

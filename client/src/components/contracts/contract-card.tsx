@@ -190,12 +190,21 @@ export default function ContractCard({ contract, className }: ContractCardProps)
           <div className="flex items-start space-x-3 flex-1 min-w-0 overflow-hidden">
             {getFileIcon()}
             <div className="flex-1 min-w-0 overflow-hidden">
-              <h3 className="font-medium text-foreground text-sm leading-tight mb-1 break-words" title={contract.originalName}>
-                {contract.originalName}
-              </h3>
-              <p className="text-xs text-muted-foreground capitalize">
-                {contract.contractType || 'Unknown type'}
-              </p>
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="font-medium text-foreground text-sm leading-tight break-words flex-1" title={contract.originalName}>
+                  {contract.originalName}
+                </h3>
+              </div>
+              <div className="flex items-center gap-2">
+                {contract.contractNumber && (
+                  <Badge variant="outline" className="text-xs font-mono">
+                    {contract.contractNumber}
+                  </Badge>
+                )}
+                <p className="text-xs text-muted-foreground capitalize">
+                  {contract.contractType || 'Unknown type'}
+                </p>
+              </div>
             </div>
           </div>
           <div className="flex items-center space-x-2">
