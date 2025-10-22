@@ -95,21 +95,21 @@ export default function Landing() {
               </Button>
             </div>
 
-            {/* Trust Indicators */}
+            {/* AI Feature Highlights */}
             <div className="pt-8 animate-in fade-in duration-700 delay-400">
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Powered by industry-leading AI</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">AI-powered features that drive results</p>
               <div className="flex items-center justify-center gap-8 flex-wrap">
                 <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                  <Sparkles className="h-5 w-5 text-blue-600" />
-                  <span className="font-semibold">Groq LLaMA 3.1</span>
+                  <Brain className="h-5 w-5 text-blue-600" />
+                  <span className="font-semibold">Intelligent Contract Analysis</span>
                 </div>
                 <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                  <Brain className="h-5 w-5 text-indigo-600" />
-                  <span className="font-semibold">Hugging Face</span>
+                  <Calculator className="h-5 w-5 text-indigo-600" />
+                  <span className="font-semibold">Automated Calculations</span>
                 </div>
                 <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
                   <Shield className="h-5 w-5 text-green-600" />
-                  <span className="font-semibold">Enterprise Security</span>
+                  <span className="font-semibold">Risk Detection</span>
                 </div>
               </div>
             </div>
