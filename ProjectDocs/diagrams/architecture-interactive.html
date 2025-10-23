@@ -963,11 +963,12 @@
                 <text x="700" y="226" text-anchor="middle" font-size="12">• Rate Limiting & Throttling</text>
                 
                 <!-- Data Transformation -->
-                <rect x="530" y="260" width="340" height="100" rx="8" fill="#e3f2fd" stroke="#2196f3" stroke-width="2"/>
-                <text x="700" y="290" text-anchor="middle" font-size="16" font-weight="bold">Data Transformation Engine</text>
-                <text x="700" y="310" text-anchor="middle" font-size="12">• Field Mapping</text>
-                <text x="700" y="328" text-anchor="middle" font-size="12">• Schema Validation (Zod)</text>
-                <text x="700" y="346" text-anchor="middle" font-size="12">• Currency Conversion</text>
+                <rect x="530" y="260" width="340" height="100" rx="8" fill="#fce4ec" stroke="#c2185b" stroke-width="3"/>
+                <text x="700" y="285" text-anchor="middle" font-size="16" font-weight="bold">🤖 AI Data Transformation Engine</text>
+                <text x="700" y="305" text-anchor="middle" font-size="12" font-weight="bold">• AI Field Mapping (Custom LLaMA)</text>
+                <text x="700" y="323" text-anchor="middle" font-size="11">Dynamic mapping trained on ERP data</text>
+                <text x="700" y="341" text-anchor="middle" font-size="12">• Schema Validation (Zod)</text>
+                <text x="700" y="356" text-anchor="middle" font-size="12">• Currency Conversion</text>
                 
                 <!-- Core Database -->
                 <rect x="530" y="380" width="340" height="120" rx="8" fill="#b3e5fc" stroke="#0277bd" stroke-width="2"/>
@@ -1100,6 +1101,95 @@
                         <li>✓ Automated health checks</li>
                         <li>✓ Failover support</li>
                         <li>✓ Data encryption in transit (TLS)</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <h3 style="color: #2d3748; margin-top: 40px; margin-bottom: 20px;">🤖 AI-Powered Field Mapping Engine</h3>
+            
+            <div class="integration-card" style="border: 3px solid #c2185b; background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%);">
+                <h3>🧠 Custom LLaMA Model for Dynamic Field Mapping</h3>
+                <p style="color: #4a5568; margin-bottom: 15px; font-weight: bold;">
+                    Eliminates manual field mapping by training a custom AI model on your ERP transaction data. 
+                    The model automatically understands and maps fields from any ERP system based on context and data patterns.
+                </p>
+                
+                <h4 style="color: #2d3748; margin-top: 20px; margin-bottom: 10px;">How It Works</h4>
+                <div class="process-step">
+                    <h4>1. Training Phase (One-Time Setup)</h4>
+                    <p>• Collect sample transaction data from your ERP system (SAP, Oracle, NetSuite, etc.)<br>
+                    • Train custom LLaMA 3.1 model on your specific field names, data types, and business logic<br>
+                    • Model learns patterns like "GL_ACCOUNT_NO" → "account_number", "CUST_INV_AMT" → "invoice_amount"<br>
+                    • Training dataset: 10,000+ transaction records for 95%+ accuracy</p>
+                </div>
+                
+                <div class="process-step">
+                    <h4>2. Dynamic Mapping (Automatic)</h4>
+                    <p>• AI analyzes incoming transaction data structure in real-time<br>
+                    • Matches ERP field names to LicenseIQ schema using semantic understanding<br>
+                    • Handles variations: "SALES_AMT", "Sale Amount", "SalesTotal" → all map to "sales_amount"<br>
+                    • Confidence scoring: High (≥0.9) auto-maps, Medium (0.7-0.9) suggests, Low (&lt;0.7) flags for review</p>
+                </div>
+                
+                <div class="process-step">
+                    <h4>3. Continuous Learning</h4>
+                    <p>• Model learns from user corrections when manual overrides are made<br>
+                    • Adapts to new field names as ERP systems evolve<br>
+                    • Stores mapping history for audit compliance<br>
+                    • Performance improves over time with more transaction data</p>
+                </div>
+                
+                <h4 style="color: #2d3748; margin-top: 20px; margin-bottom: 10px;">Key Benefits</h4>
+                <div class="integration-features">
+                    <ul style="list-style: none; padding: 0;">
+                        <li>✓ <strong>Zero Manual Mapping:</strong> AI handles all field mappings automatically</li>
+                        <li>✓ <strong>Multi-ERP Support:</strong> Works with SAP, Oracle, NetSuite, QuickBooks, custom ERPs</li>
+                        <li>✓ <strong>Semantic Understanding:</strong> Recognizes synonyms and variations (Amount/Amt/Total)</li>
+                        <li>✓ <strong>95%+ Accuracy:</strong> After training on your ERP data</li>
+                    </ul>
+                    <ul style="list-style: none; padding: 0;">
+                        <li>✓ <strong>Real-Time Adaptation:</strong> Updates mappings as ERP schemas change</li>
+                        <li>✓ <strong>Human-in-the-Loop:</strong> Flags uncertain mappings for review</li>
+                        <li>✓ <strong>Audit Trail:</strong> Complete history of all mapping decisions</li>
+                        <li>✓ <strong>Fast Setup:</strong> 2-3 hours vs. 2-3 weeks for manual configuration</li>
+                    </ul>
+                </div>
+                
+                <h4 style="color: #2d3748; margin-top: 20px; margin-bottom: 10px;">Example: SAP to LicenseIQ Mapping</h4>
+                <div style="background: white; padding: 15px; border-radius: 6px; margin-top: 10px;">
+                    <p style="font-family: monospace; font-size: 12px; margin: 5px 0;"><strong>SAP Field:</strong> "VBRK-NETWR" (Invoice Net Value)</p>
+                    <p style="font-family: monospace; font-size: 12px; margin: 5px 0;"><strong>AI Analysis:</strong> "Net invoice value in sales document"</p>
+                    <p style="font-family: monospace; font-size: 12px; margin: 5px 0;"><strong>LicenseIQ Mapping:</strong> → "sales_amount" (Confidence: 0.94)</p>
+                    <p style="font-family: monospace; font-size: 12px; margin: 5px 0; color: #388e3c;"><strong>Result:</strong> ✓ Auto-mapped (no human intervention needed)</p>
+                </div>
+                
+                <div style="background: white; padding: 15px; border-radius: 6px; margin-top: 10px;">
+                    <p style="font-family: monospace; font-size: 12px; margin: 5px 0;"><strong>Oracle Field:</strong> "CUST_TRX_LINE_SALESREP_ID"</p>
+                    <p style="font-family: monospace; font-size: 12px; margin: 5px 0;"><strong>AI Analysis:</strong> "Customer transaction line sales representative identifier"</p>
+                    <p style="font-family: monospace; font-size: 12px; margin: 5px 0;"><strong>LicenseIQ Mapping:</strong> → "salesperson_id" (Confidence: 0.88)</p>
+                    <p style="font-family: monospace; font-size: 12px; margin: 5px 0; color: #388e3c;"><strong>Result:</strong> ✓ Auto-mapped</p>
+                </div>
+                
+                <div style="background: white; padding: 15px; border-radius: 6px; margin-top: 10px;">
+                    <p style="font-family: monospace; font-size: 12px; margin: 5px 0;"><strong>NetSuite Field:</strong> "CUSTOM_FIELD_123"</p>
+                    <p style="font-family: monospace; font-size: 12px; margin: 5px 0;"><strong>AI Analysis:</strong> "Ambiguous custom field - insufficient context"</p>
+                    <p style="font-family: monospace; font-size: 12px; margin: 5px 0;"><strong>LicenseIQ Mapping:</strong> → Unknown (Confidence: 0.45)</p>
+                    <p style="font-family: monospace; font-size: 12px; margin: 5px 0; color: #ff6f00;"><strong>Result:</strong> ⚠ Flagged for human review</p>
+                </div>
+                
+                <h4 style="color: #2d3748; margin-top: 20px; margin-bottom: 10px;">Technical Architecture</h4>
+                <div class="integration-features">
+                    <ul style="list-style: none; padding: 0;">
+                        <li><strong>Model:</strong> Fine-tuned LLaMA 3.1 8B (Groq API)</li>
+                        <li><strong>Training Data:</strong> ERP transaction samples + field metadata</li>
+                        <li><strong>Embedding:</strong> Hugging Face BAAI/bge-small-en-v1.5 for semantic similarity</li>
+                        <li><strong>Storage:</strong> PostgreSQL with pgvector for mapping history</li>
+                    </ul>
+                    <ul style="list-style: none; padding: 0;">
+                        <li><strong>Inference Time:</strong> &lt;500ms per field</li>
+                        <li><strong>Batch Processing:</strong> 10,000 fields in &lt;5 minutes</li>
+                        <li><strong>Retraining:</strong> Monthly updates with new data</li>
+                        <li><strong>Cost:</strong> FREE (uses Groq + Hugging Face free tiers)</li>
                     </ul>
                 </div>
             </div>
