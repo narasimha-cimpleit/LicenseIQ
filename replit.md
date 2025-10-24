@@ -2,6 +2,14 @@
 
 License IQ Research Platform is a SaaS web application for intelligent contract management and analysis. It enables users to upload, process, and analyze legal contracts using AI-powered document analysis. The platform aims to streamline contract workflows, reduce manual effort, and provide actionable insights through features like automated royalty calculation, risk assessment, and a RAG-powered Q&A system. The platform offers a comprehensive solution for contract management, revenue assurance, and compliance, targeting industries with complex licensing agreements. It emphasizes an "AI-Native" architecture, embedding AI assistance throughout the user experience, from multi-source contract ingestion and dynamic ERP field mapping to ubiquitous in-app AI Q&A.
 
+# Recent Fix (October 24, 2025)
+
+**Fixed: Sheet Overlay Opacity Issue**
+- Reduced Sheet component overlay opacity from 80% to 20% (light mode) and 40% (dark mode)
+- Background is now clearly visible when AI Agent panel is open
+- Users can see their work context while chatting with AI
+- File modified: `client/src/components/ui/sheet.tsx`
+
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
