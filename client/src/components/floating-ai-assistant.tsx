@@ -98,7 +98,7 @@ export function FloatingAIAssistant() {
   };
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+    <Sheet open={isOpen} onOpenChange={setIsOpen} modal={false}>
       <SheetTrigger asChild>
         <Button
           size="lg"
@@ -109,7 +109,7 @@ export function FloatingAIAssistant() {
           <Sparkles className="h-6 w-6 text-white group-hover:animate-pulse" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-full sm:w-[540px] p-0 overflow-hidden">
+      <SheetContent side="right" className="w-full sm:w-[540px] p-0 overflow-hidden" onPointerDownOutside={(e) => e.preventDefault()}>
         <SheetHeader className="p-6 pb-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950 dark:to-pink-950 border-b">
           <SheetTitle className="flex items-center gap-2 text-xl">
             <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg">

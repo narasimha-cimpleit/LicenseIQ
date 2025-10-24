@@ -10,6 +10,13 @@ License IQ Research Platform is a SaaS web application for intelligent contract 
 - Users can see their work context while chatting with AI
 - File modified: `client/src/components/ui/sheet.tsx`
 
+**Fixed: AI Panel Stays Open When Clicking Background**
+- Made Sheet non-modal (`modal={false}`) so panel stays open when clicking outside
+- Added pointer event prevention to keep panel open during background interaction
+- Users can now interact with the background while keeping AI panel open
+- Only closes when clicking the X button or the floating AI button again
+- File modified: `client/src/components/floating-ai-assistant.tsx`
+
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
