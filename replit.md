@@ -17,6 +17,13 @@ License IQ Research Platform is a SaaS web application for intelligent contract 
 - Only closes when clicking the X button or the floating AI button again
 - File modified: `client/src/components/floating-ai-assistant.tsx`
 
+**Added: Auto-Scroll to Latest Answer**
+- Chat window now automatically scrolls to the bottom when new messages arrive
+- Smooth scroll animation for better UX
+- Uses `useRef` and `useEffect` to track message updates
+- Users can see the latest AI response without manual scrolling
+- File modified: `client/src/components/floating-ai-assistant.tsx`
+
 # User Preferences
 
 Preferred communication style: Simple, everyday language.

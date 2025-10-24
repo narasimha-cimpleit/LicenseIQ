@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +37,12 @@ export function FloatingAIAssistant() {
   const [selectedContract, setSelectedContract] = useState<string>("all");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isAsking, setIsAsking] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   // Fetch all contracts
   const { data: contractsResponse } = useQuery({
@@ -236,6 +242,7 @@ export function FloatingAIAssistant() {
                     </div>
                   </div>
                 ))}
+                <div ref={messagesEndRef} />
               </>
             )}
           </div>
