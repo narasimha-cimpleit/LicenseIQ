@@ -2,9 +2,61 @@
 
 License IQ Research Platform is a SaaS web application for intelligent contract management and analysis. It enables users to upload, process, and analyze legal contracts using AI-powered document analysis. The platform aims to streamline contract workflows, reduce manual effort, and provide actionable insights through features like automated royalty calculation, risk assessment, and a RAG-powered Q&A system.
 
-# Recent Changes (October 22, 2025)
+# Recent Changes (October 24, 2025)
 
-## Enhanced: Comprehensive Landing Page with Full Feature Coverage
+## Enhanced: Architecture Diagram with Multi-Source Contract Ingestion, Reordered Flows, and Omnipresent AI Agent
+- **Feature**: Comprehensive updates to interactive architecture diagram (97KB, 1,498 lines)
+- **Multi-Source Contract Ingestion (Flow #1)**:
+  - Expanded beyond PDF-only to include multiple contract sources
+  - Added support for: DocuSign, HelloSign, Adobe Sign, PandaDoc, contract management systems (Icertis, Agiloft), email attachments, SFTP imports
+  - Visual diagram shows 4 input channels converging into unified ingestion hub
+  - Reflects modern enterprise contract workflows where contracts come from various platforms
+- **Reordered Process Flows for Logical Workflow**:
+  - Flow #1: Contract Upload & AI Analysis (multi-source ingestion)
+  - Flow #2: Dynamic Rule Engine Management (MOVED from #4 - setup rules early!)
+  - Flow #3: Sales Data Matching (moved from #2)
+  - Flow #4: Royalty Calculation with HITL (moved from #3)
+  - Flow #5: AI Q&A Process (RAG-Powered) - unchanged
+  - Rationale: Rules should be configured BEFORE running calculations to reduce errors and rework
+- **Flow of Thought Narrative**:
+  - Added comprehensive introduction explaining the logical sequence of actual system usage
+  - Explains why Rule Management comes early (foundational for accurate calculations)
+  - Shows progression: Ingest contracts → Configure rules → Match sales → Calculate royalties → Ask questions
+  - Helps users understand the platform's workflow at a glance
+- **LicenseIQ AI Agent Omnipresence**:
+  - Added prominent purple gradient banner explaining AI Agent is always available across entire platform
+  - AI Agent availability callout added to EVERY process flow (5 flows total)
+  - Flow-specific AI assistance examples:
+    - Flow #1: "Ask questions during upload, validate contract terms"
+    - Flow #2: "Get assistance with formula logic, suggest optimal royalty structures"
+    - Flow #3: "Help with data formatting, resolve matching conflicts, explain confidence scores"
+    - Flow #4: "Explain calculation logic, validate formula outputs, troubleshoot discrepancies"
+    - Flow #5: "THIS IS the AI Agent - ask any question about contracts with natural language"
+  - Demonstrates AI-Native architecture where AI is integrated throughout, not siloed in one feature
+  - Added 🤖 emoji indicators throughout diagrams to reinforce AI presence
+- **AI-Powered ERP Field Mapping (Tab 5)**:
+  - Added comprehensive AI-powered dynamic field mapping section using custom LLaMA model
+  - Updated Data Transformation Engine diagram to highlight AI field mapping (pink/magenta with 🤖 emoji)
+  - Detailed 3-phase process: Training → Dynamic Mapping → Continuous Learning
+  - Key benefits: Zero manual mapping, 95%+ accuracy, 2-3 hours setup (vs 2-3 weeks manual)
+  - Real examples of SAP, Oracle, NetSuite field mappings with confidence scores
+  - Technical architecture: Fine-tuned LLaMA 3.1 8B, Hugging Face embeddings, pgvector storage
+  - Semantic understanding handles field name variations (SALES_AMT, Sale Amount, SalesTotal → sales_amount)
+  - Human-in-the-Loop for uncertain cases (<0.7 confidence)
+  - FREE implementation using Groq + Hugging Face free tiers
+- **Files Changed**:
+  - `ProjectDocs/diagrams/architecture-interactive.html`: 90KB → 97KB (+7KB new content, 1,498 lines)
+  - Removed duplicate `architecture-interactive (copy).html`
+- **Impact**:
+  - Clear demonstration of multi-channel contract ingestion (enterprise readiness)
+  - Logical flow order mirrors actual user workflows (better UX understanding)
+  - AI Agent omnipresence shows platform is truly "AI-Native" not "AI-bolted-on"
+  - Comprehensive ERP integration story with AI-powered zero-config field mapping
+  - Professional technical documentation for customer presentations and sales
+  - Addresses real pain points: multiple contract sources, complex ERP mappings, need for AI assistance
+- **Status**: Complete and tested
+
+## Enhanced (October 22, 2025): Comprehensive Landing Page with Full Feature Coverage
 - **Feature**: Expanded professional landing page (775 lines) covering all app features with content from CimpleIT.com/licenseiq
 - **Hero Section**:
   - CimpleIT tagline: "Reads contracts like a lawyer, calculates like an accountant"
