@@ -36,7 +36,9 @@ import {
   User,
   Calendar,
   Trash2,
-  Calculator
+  Calculator,
+  Sparkles,
+  Network
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -114,6 +116,39 @@ export default function ContractAnalysis() {
       });
     },
   });
+
+  const triggerExtractionMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", `/api/contracts/${id}/extract-dynamic`);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Dynamic Extraction Started",
+        description: "AI is analyzing the contract structure. Results will appear shortly.",
+      });
+      // Invalidate both extraction runs and dynamic rules to show fresh data
+      queryClient.invalidateQueries({ queryKey: ["/api/contracts", id, "extraction-runs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/contracts", id, "dynamic-rules"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Extraction Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const { data: extractionRuns = [] } = useQuery({
+    queryKey: ["/api/contracts", id, "extraction-runs"],
+    enabled: !!id,
+  }) as { data: any[] };
+
+  const { data: dynamicRules = [] } = useQuery({
+    queryKey: ["/api/contracts", id, "dynamic-rules"],
+    enabled: !!id,
+  }) as { data: any[] };
 
   const { data: contract, isLoading, error } = useQuery({
     queryKey: ["/api/contracts", id],
@@ -405,6 +440,16 @@ export default function ContractAnalysis() {
             >
               <AlertTriangle className="h-4 w-4 mr-2 text-amber-400" />
               {reprocessMutation.isPending ? "Reprocessing..." : "Reprocess"}
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => triggerExtractionMutation.mutate()}
+              disabled={triggerExtractionMutation.isPending}
+              data-testid="button-trigger-extraction"
+              className="border-purple-200 text-purple-600 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-400 dark:hover:bg-purple-950"
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              {triggerExtractionMutation.isPending ? "Extracting..." : "AI Extract"}
             </Button>
             <Button variant="outline" onClick={handleExport} data-testid="button-export">
               <Download className="h-4 w-4 mr-2 text-blue-400" />
@@ -698,6 +743,75 @@ export default function ContractAnalysis() {
                         </div>
                       ))}
                     </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Dynamic Extraction Results */}
+              {extractionRuns && extractionRuns.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Network className="h-5 w-5 text-purple-500" />
+                      AI Dynamic Extraction
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {extractionRuns.slice(0, 3).map((run: any) => (
+                      <div key={run.id} className="p-4 border rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <Badge variant={run.status === 'completed' ? 'default' : run.status === 'processing' ? 'secondary' : 'destructive'}>
+                            {run.status}
+                          </Badge>
+                          <span className="text-sm text-muted-foreground">
+                            {run.createdAt ? formatDistanceToNow(new Date(run.createdAt), { addSuffix: true }) : 'recently'}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4 text-sm">
+                          <div>
+                            <p className="text-muted-foreground">Confidence</p>
+                            <p className="font-medium">{run.overallConfidence ? Math.round(Number(run.overallConfidence) * 100) : '0'}%</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Entities</p>
+                            <p className="font-medium">{run.nodesExtracted || 0}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Rules</p>
+                            <p className="font-medium">{run.rulesExtracted || 0}</p>
+                          </div>
+                        </div>
+                        {run.validationResults && run.validationResults.issues && run.validationResults.issues.length > 0 && (
+                          <div className="mt-2 p-2 bg-amber-50 dark:bg-amber-950/20 rounded text-sm">
+                            <p className="text-amber-800 dark:text-amber-200">
+                              {run.validationResults.issues.length} validation {run.validationResults.issues.length === 1 ? 'issue' : 'issues'} found
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    {dynamicRules && dynamicRules.length > 0 && (
+                      <div className="mt-4 p-4 bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-lg">
+                        <h4 className="font-semibold text-purple-900 dark:text-purple-100 mb-2">
+                          Dynamically Extracted Rules ({dynamicRules.length})
+                        </h4>
+                        <div className="space-y-2">
+                          {dynamicRules.slice(0, 3).map((rule: any) => (
+                            <div key={rule.id} className="flex items-center justify-between text-sm">
+                              <span className="text-purple-800 dark:text-purple-200">{rule.ruleName}</span>
+                              <Badge variant={rule.isActive ? 'default' : 'secondary'}>
+                                {rule.isActive ? 'Active' : 'Pending Review'}
+                              </Badge>
+                            </div>
+                          ))}
+                          {dynamicRules.length > 3 && (
+                            <p className="text-sm text-muted-foreground italic">
+                              + {dynamicRules.length - 3} more rules
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               )}
