@@ -549,3 +549,335 @@ export type ContractRoyaltyCalculation = typeof contractRoyaltyCalculations.$inf
 export type InsertContractRoyaltyCalculation = z.infer<typeof insertContractRoyaltyCalculationSchema>;
 export type RoyaltyRule = typeof royaltyRules.$inferSelect;
 export type InsertRoyaltyRule = z.infer<typeof insertRoyaltyRuleSchema>;
+
+// ======================
+// DYNAMIC CONTRACT PROCESSING SYSTEM
+// AI-Powered Knowledge Graph & Flexible Extraction
+// ======================
+
+// Contract Documents - Raw text segments with metadata
+export const contractDocuments = pgTable("contract_documents", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  contractId: varchar("contract_id").notNull().references(() => contracts.id),
+  extractionRunId: varchar("extraction_run_id"),
+  documentSection: varchar("document_section"), // 'header', 'parties', 'terms', 'payment', 'termination', etc.
+  sectionOrder: integer("section_order"), // Order within document
+  rawText: text("raw_text").notNull(), // Original text from PDF
+  normalizedText: text("normalized_text"), // Cleaned/normalized version
+  pageNumber: integer("page_number"),
+  metadata: jsonb("metadata"), // Layout info, confidence, formatting details
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("contract_documents_contract_idx").on(table.contractId),
+  index("contract_documents_extraction_idx").on(table.extractionRunId),
+]);
+
+// Contract Graph Nodes - Entities extracted from contracts (people, terms, clauses, etc.)
+export const contractGraphNodes = pgTable("contract_graph_nodes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  contractId: varchar("contract_id").notNull().references(() => contracts.id),
+  extractionRunId: varchar("extraction_run_id"),
+  nodeType: varchar("node_type").notNull(), // 'party', 'product', 'territory', 'clause', 'term', 'obligation', 'royalty_rule'
+  label: varchar("label").notNull(), // Human-readable name
+  properties: jsonb("properties").notNull(), // All extracted properties as flexible JSON
+  confidence: decimal("confidence", { precision: 5, scale: 2 }), // AI confidence (0-1)
+  sourceDocumentId: varchar("source_document_id").references(() => contractDocuments.id),
+  sourceText: text("source_text"), // Original text this was extracted from
+  embedding: vector("embedding", { dimensions: 384 }), // Semantic embedding for this node
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("graph_nodes_contract_idx").on(table.contractId),
+  index("graph_nodes_type_idx").on(table.nodeType),
+  index("graph_nodes_extraction_idx").on(table.extractionRunId),
+]);
+
+// Contract Graph Edges - Relationships between nodes
+export const contractGraphEdges = pgTable("contract_graph_edges", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  contractId: varchar("contract_id").notNull().references(() => contracts.id),
+  extractionRunId: varchar("extraction_run_id"),
+  sourceNodeId: varchar("source_node_id").notNull().references(() => contractGraphNodes.id),
+  targetNodeId: varchar("target_node_id").notNull().references(() => contractGraphNodes.id),
+  relationshipType: varchar("relationship_type").notNull(), // 'applies_to', 'references', 'requires', 'modifies', etc.
+  properties: jsonb("properties"), // Additional relationship metadata
+  confidence: decimal("confidence", { precision: 5, scale: 2 }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("graph_edges_contract_idx").on(table.contractId),
+  index("graph_edges_source_idx").on(table.sourceNodeId),
+  index("graph_edges_target_idx").on(table.targetNodeId),
+]);
+
+// Extraction Runs - Track each AI extraction attempt with confidence and validation
+export const extractionRuns = pgTable("extraction_runs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  contractId: varchar("contract_id").notNull().references(() => contracts.id),
+  runType: varchar("run_type").notNull(), // 'initial', 'reprocess', 'manual_correction'
+  status: varchar("status").notNull().default("processing"), // 'processing', 'completed', 'failed', 'pending_review'
+  overallConfidence: decimal("overall_confidence", { precision: 5, scale: 2 }),
+  nodesExtracted: integer("nodes_extracted"),
+  edgesExtracted: integer("edges_extracted"),
+  rulesExtracted: integer("rules_extracted"),
+  validationResults: jsonb("validation_results"), // Results from validation checks
+  aiModel: varchar("ai_model").default("llama-3.1-8b"), // Which LLM was used
+  processingTime: integer("processing_time"), // Milliseconds
+  errorLog: text("error_log"),
+  triggeredBy: varchar("triggered_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+}, (table) => [
+  index("extraction_runs_contract_idx").on(table.contractId),
+  index("extraction_runs_status_idx").on(table.status),
+]);
+
+// Rule Definitions - Dynamic rule storage with extensible formula types
+export const ruleDefinitions = pgTable("rule_definitions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  contractId: varchar("contract_id").notNull().references(() => contracts.id),
+  extractionRunId: varchar("extraction_run_id").references(() => extractionRuns.id),
+  linkedGraphNodeId: varchar("linked_graph_node_id").references(() => contractGraphNodes.id), // Link to knowledge graph
+  ruleType: varchar("rule_type").notNull(), // Can be ANY type, not just predefined ones
+  ruleName: varchar("rule_name").notNull(),
+  description: text("description"),
+  formulaDefinition: jsonb("formula_definition").notNull(), // Complete FormulaNode tree
+  applicabilityFilters: jsonb("applicability_filters"), // When this rule applies (flexible JSON)
+  confidence: decimal("confidence", { precision: 5, scale: 2 }),
+  validationStatus: varchar("validation_status").default("pending"), // 'pending', 'validated', 'failed', 'approved'
+  validationErrors: jsonb("validation_errors"), // Any validation issues found
+  isActive: boolean("is_active").default(false), // Only active after approval
+  version: integer("version").default(1),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("rule_definitions_contract_idx").on(table.contractId),
+  index("rule_definitions_status_idx").on(table.validationStatus),
+]);
+
+// Rule Node Definitions - Registry of custom FormulaNode types (extensible system)
+export const ruleNodeDefinitions = pgTable("rule_node_definitions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  nodeType: varchar("node_type").unique().notNull(), // e.g., 'hybrid_percentage_plus_fixed', 'conditional_tier'
+  displayName: varchar("display_name").notNull(),
+  description: text("description"),
+  schema: jsonb("schema").notNull(), // JSON schema for this node type's structure
+  evaluationAdapter: text("evaluation_adapter"), // Optional: custom evaluation logic
+  examples: jsonb("examples"), // Example usage
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Human Review Tasks - Queue for low-confidence extractions
+export const humanReviewTasks = pgTable("human_review_tasks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  contractId: varchar("contract_id").notNull().references(() => contracts.id),
+  extractionRunId: varchar("extraction_run_id").references(() => extractionRuns.id),
+  taskType: varchar("task_type").notNull(), // 'node_review', 'rule_review', 'relationship_review', 'field_mapping'
+  priority: varchar("priority").default("normal"), // 'low', 'normal', 'high', 'critical'
+  status: varchar("status").default("pending"), // 'pending', 'in_review', 'approved', 'rejected', 'needs_revision'
+  targetId: varchar("target_id"), // ID of the node/rule/edge being reviewed
+  targetType: varchar("target_type"), // 'graph_node', 'rule_definition', 'graph_edge', 'field_mapping'
+  originalData: jsonb("original_data").notNull(), // Original AI extraction
+  suggestedCorrection: jsonb("suggested_correction"), // User's correction
+  confidence: decimal("confidence", { precision: 5, scale: 2 }),
+  reviewNotes: text("review_notes"),
+  assignedTo: varchar("assigned_to").references(() => users.id),
+  reviewedBy: varchar("reviewed_by").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("review_tasks_contract_idx").on(table.contractId),
+  index("review_tasks_status_idx").on(table.status),
+  index("review_tasks_assigned_idx").on(table.assignedTo),
+]);
+
+// Sales Field Mappings - Learned associations between sales data columns and contract terms
+export const salesFieldMappings = pgTable("sales_field_mappings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  contractId: varchar("contract_id").references(() => contracts.id), // Can be contract-specific or global (null)
+  sourceFieldName: varchar("source_field_name").notNull(), // Field name from sales data (e.g., "Item", "SKU")
+  targetFieldType: varchar("target_field_type").notNull(), // Semantic type (e.g., "productName", "territory", "quantity")
+  mappingConfidence: decimal("mapping_confidence", { precision: 5, scale: 2 }),
+  mappingMethod: varchar("mapping_method").default("ai_semantic"), // 'ai_semantic', 'manual', 'learned', 'exact_match'
+  sampleValues: jsonb("sample_values"), // Example values to help validate mapping
+  approvedBy: varchar("approved_by").references(() => users.id),
+  approvedAt: timestamp("approved_at"),
+  usageCount: integer("usage_count").default(0), // How many times this mapping was successfully used
+  lastUsedAt: timestamp("last_used_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("field_mappings_contract_idx").on(table.contractId),
+  index("field_mappings_source_idx").on(table.sourceFieldName),
+]);
+
+// Semantic Index Entries - GraphRAG embeddings for enhanced search
+export const semanticIndexEntries = pgTable("semantic_index_entries", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  contractId: varchar("contract_id").notNull().references(() => contracts.id),
+  indexType: varchar("index_type").notNull(), // 'graph_node', 'document_chunk', 'rule_description', 'combined'
+  sourceId: varchar("source_id"), // ID of source (graph node, document, rule)
+  content: text("content").notNull(), // Text content that was embedded
+  embedding: vector("embedding", { dimensions: 384 }),
+  metadata: jsonb("metadata"), // Context about this entry (node type, section, etc.)
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("semantic_index_contract_idx").on(table.contractId),
+  index("semantic_index_type_idx").on(table.indexType),
+]);
+
+// Rule Validation Events - Audit trail for rule validation
+export const ruleValidationEvents = pgTable("rule_validation_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  ruleDefinitionId: varchar("rule_definition_id").notNull().references(() => ruleDefinitions.id),
+  validationType: varchar("validation_type").notNull(), // 'dimensional', 'ai_consistency', 'monte_carlo', 'manual'
+  validationResult: varchar("validation_result").notNull(), // 'passed', 'failed', 'warning'
+  issues: jsonb("issues"), // Array of validation issues found
+  recommendations: jsonb("recommendations"), // Suggested fixes
+  validatorId: varchar("validator_id").references(() => users.id), // For manual validations
+  validatedAt: timestamp("validated_at").defaultNow(),
+}, (table) => [
+  index("validation_events_rule_idx").on(table.ruleDefinitionId),
+]);
+
+// ======================
+// INSERT SCHEMAS FOR NEW TABLES
+// ======================
+
+export const insertContractDocumentSchema = createInsertSchema(contractDocuments).pick({
+  contractId: true,
+  extractionRunId: true,
+  documentSection: true,
+  sectionOrder: true,
+  rawText: true,
+  normalizedText: true,
+  pageNumber: true,
+  metadata: true,
+});
+
+export const insertContractGraphNodeSchema = createInsertSchema(contractGraphNodes).pick({
+  contractId: true,
+  extractionRunId: true,
+  nodeType: true,
+  label: true,
+  properties: true,
+  confidence: true,
+  sourceDocumentId: true,
+  sourceText: true,
+});
+
+export const insertContractGraphEdgeSchema = createInsertSchema(contractGraphEdges).pick({
+  contractId: true,
+  extractionRunId: true,
+  sourceNodeId: true,
+  targetNodeId: true,
+  relationshipType: true,
+  properties: true,
+  confidence: true,
+});
+
+export const insertExtractionRunSchema = createInsertSchema(extractionRuns).pick({
+  contractId: true,
+  runType: true,
+  status: true,
+  overallConfidence: true,
+  nodesExtracted: true,
+  edgesExtracted: true,
+  rulesExtracted: true,
+  validationResults: true,
+  aiModel: true,
+  processingTime: true,
+  errorLog: true,
+  triggeredBy: true,
+});
+
+export const insertRuleDefinitionSchema = createInsertSchema(ruleDefinitions).pick({
+  contractId: true,
+  extractionRunId: true,
+  linkedGraphNodeId: true,
+  ruleType: true,
+  ruleName: true,
+  description: true,
+  formulaDefinition: true,
+  applicabilityFilters: true,
+  confidence: true,
+  validationStatus: true,
+  validationErrors: true,
+  isActive: true,
+  version: true,
+});
+
+export const insertRuleNodeDefinitionSchema = createInsertSchema(ruleNodeDefinitions).pick({
+  nodeType: true,
+  displayName: true,
+  description: true,
+  schema: true,
+  evaluationAdapter: true,
+  examples: true,
+});
+
+export const insertHumanReviewTaskSchema = createInsertSchema(humanReviewTasks).pick({
+  contractId: true,
+  extractionRunId: true,
+  taskType: true,
+  priority: true,
+  status: true,
+  targetId: true,
+  targetType: true,
+  originalData: true,
+  suggestedCorrection: true,
+  confidence: true,
+  reviewNotes: true,
+  assignedTo: true,
+});
+
+export const insertSalesFieldMappingSchema = createInsertSchema(salesFieldMappings).pick({
+  contractId: true,
+  sourceFieldName: true,
+  targetFieldType: true,
+  mappingConfidence: true,
+  mappingMethod: true,
+  sampleValues: true,
+  approvedBy: true,
+});
+
+export const insertSemanticIndexEntrySchema = createInsertSchema(semanticIndexEntries).pick({
+  contractId: true,
+  indexType: true,
+  sourceId: true,
+  content: true,
+  metadata: true,
+});
+
+export const insertRuleValidationEventSchema = createInsertSchema(ruleValidationEvents).pick({
+  ruleDefinitionId: true,
+  validationType: true,
+  validationResult: true,
+  issues: true,
+  recommendations: true,
+  validatorId: true,
+});
+
+// ======================
+// TYPES FOR NEW TABLES
+// ======================
+
+export type ContractDocument = typeof contractDocuments.$inferSelect;
+export type InsertContractDocument = z.infer<typeof insertContractDocumentSchema>;
+export type ContractGraphNode = typeof contractGraphNodes.$inferSelect;
+export type InsertContractGraphNode = z.infer<typeof insertContractGraphNodeSchema>;
+export type ContractGraphEdge = typeof contractGraphEdges.$inferSelect;
+export type InsertContractGraphEdge = z.infer<typeof insertContractGraphEdgeSchema>;
+export type ExtractionRun = typeof extractionRuns.$inferSelect;
+export type InsertExtractionRun = z.infer<typeof insertExtractionRunSchema>;
+export type RuleDefinition = typeof ruleDefinitions.$inferSelect;
+export type InsertRuleDefinition = z.infer<typeof insertRuleDefinitionSchema>;
+export type RuleNodeDefinition = typeof ruleNodeDefinitions.$inferSelect;
+export type InsertRuleNodeDefinition = z.infer<typeof insertRuleNodeDefinitionSchema>;
+export type HumanReviewTask = typeof humanReviewTasks.$inferSelect;
+export type InsertHumanReviewTask = z.infer<typeof insertHumanReviewTaskSchema>;
+export type SalesFieldMapping = typeof salesFieldMappings.$inferSelect;
+export type InsertSalesFieldMapping = z.infer<typeof insertSalesFieldMappingSchema>;
+export type SemanticIndexEntry = typeof semanticIndexEntries.$inferSelect;
+export type InsertSemanticIndexEntry = z.infer<typeof insertSemanticIndexEntrySchema>;
+export type RuleValidationEvent = typeof ruleValidationEvents.$inferSelect;
+export type InsertRuleValidationEvent = z.infer<typeof insertRuleValidationEventSchema>;
