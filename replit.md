@@ -57,6 +57,23 @@ License IQ Research Platform is a SaaS web application for intelligent contract 
   - Admin/owner-only access with navigation link in sidebar
 - Files modified: `server/routes.ts`, `server/storage.ts`, `client/src/App.tsx`, `client/src/components/layout/sidebar.tsx`
 
+**Phase 4: Contract Detail Page Integration**
+- Integrated dynamic extraction trigger and results display into contract detail page
+- Added "AI Extract" button to trigger zero-shot extraction pipeline directly from contract view
+- Created extraction run history display showing:
+  - Status badges (completed, processing, failed) with color coding
+  - Confidence scores (0-100%) with correct percentage calculation
+  - Entity and rule extraction counts
+  - Validation issue warnings for low-confidence results
+  - Relative timestamps ("2 hours ago" format)
+- Dynamically extracted rules visualization:
+  - Shows up to 3 rules with active vs pending review badges
+  - Indicates total rule count with "+ N more rules" when applicable
+  - Purple-themed UI to distinguish from manual rules
+- Automatic cache invalidation: triggers refresh of both extraction runs and dynamic rules queries
+- Production-ready implementation confirmed by architect review
+- File modified: `client/src/pages/contract-analysis.tsx`
+
 ## October 24, 2025 - AI Agent UX Improvements
 
 **Fixed: Sheet Overlay Opacity Issue**
