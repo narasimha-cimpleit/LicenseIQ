@@ -2,7 +2,30 @@
 
 License IQ Research Platform is a SaaS web application for intelligent contract management and analysis. It enables users to upload, process, and analyze legal contracts using AI-powered document analysis. The platform aims to streamline contract workflows, reduce manual effort, and provide actionable insights through features like automated royalty calculation, risk assessment, and a RAG-powered Q&A system. The platform offers a comprehensive solution for contract management, revenue assurance, and compliance, targeting industries with complex licensing agreements. It emphasizes an "AI-Native" architecture, embedding AI assistance throughout the user experience, from multi-source contract ingestion and dynamic ERP field mapping to ubiquitous in-app AI Q&A.
 
-# Recent Fix (October 24, 2025)
+# Recent Changes
+
+## October 25, 2025 - Dynamic Contract Processing Schema
+
+**Added: Knowledge Graph Database Schema**
+- Created 10 new tables for AI-powered dynamic contract extraction system
+- Enables zero-shot learning for ANY contract format without predefined schemas
+- Supports human-in-the-loop validation workflow with confidence scoring
+- Tables added to PostgreSQL database:
+  - `contract_documents` - Raw text segments with metadata and page numbers
+  - `contract_graph_nodes` - Extracted entities (parties, products, terms, clauses) with semantic embeddings (384d vectors)
+  - `contract_graph_edges` - Relationships between entities (applies_to, references, modifies, requires)
+  - `extraction_runs` - AI extraction tracking with confidence, validation results, and processing time
+  - `rule_definitions` - Dynamic royalty rules with FormulaNode JSON trees and applicability filters
+  - `rule_node_definitions` - Registry of custom FormulaNode types with JSON schemas
+  - `human_review_tasks` - Queue for low-confidence extractions requiring manual approval
+  - `sales_field_mappings` - Learned associations between sales CSV columns and contract terms
+  - `semantic_index_entries` - GraphRAG embeddings for enhanced document search
+  - `rule_validation_events` - Audit trail for dimensional and AI consistency validation
+- All tables use pgvector for semantic similarity search (384 dimensions for BAAI/bge-small-en-v1.5 embeddings)
+- Schema is backward compatible - augments existing contract system without breaking changes
+- File modified: `shared/schema.ts`
+
+## October 24, 2025 - AI Agent UX Improvements
 
 **Fixed: Sheet Overlay Opacity Issue**
 - Reduced Sheet component overlay opacity from 80% to 20% (light mode) and 40% (dark mode)
