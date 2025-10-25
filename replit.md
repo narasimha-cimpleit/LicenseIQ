@@ -4,9 +4,9 @@ License IQ Research Platform is a SaaS web application for intelligent contract 
 
 # Recent Changes
 
-## October 25, 2025 - Dynamic Contract Processing Schema
+## October 25, 2025 - Dynamic Contract Processing System
 
-**Added: Knowledge Graph Database Schema**
+**Phase 1: Knowledge Graph Database Schema**
 - Created 10 new tables for AI-powered dynamic contract extraction system
 - Enables zero-shot learning for ANY contract format without predefined schemas
 - Supports human-in-the-loop validation workflow with confidence scoring
@@ -24,6 +24,17 @@ License IQ Research Platform is a SaaS web application for intelligent contract 
 - All tables use pgvector for semantic similarity search (384 dimensions for BAAI/bge-small-en-v1.5 embeddings)
 - Schema is backward compatible - augments existing contract system without breaking changes
 - File modified: `shared/schema.ts`
+
+**Phase 2: Core AI Extraction Services**
+- Built 5 production-ready services for dynamic contract processing:
+  1. **documentOrchestratorService.ts** - Coordinates entire extraction pipeline with confidence scoring
+  2. **zeroShotExtractionService.ts** - LLM-powered entity extraction without predefined schemas
+  3. **knowledgeGraphService.ts** - Builds structured knowledge graphs with semantic embeddings
+  4. **ruleSynthesisService.ts** - Dynamically generates FormulaNode trees from ANY contract type
+  5. **validationService.ts** - Multi-layer validation (dimensional, consistency, business logic)
+- Pipeline flow: PDF parsing → zero-shot extraction → graph building → rule synthesis → validation → review queue
+- Confidence threshold: ≥70% auto-approve, <70% human review
+- Files created: `server/services/documentOrchestratorService.ts`, `server/services/zeroShotExtractionService.ts`, `server/services/knowledgeGraphService.ts`, `server/services/ruleSynthesisService.ts`, `server/services/validationService.ts`
 
 ## October 24, 2025 - AI Agent UX Improvements
 
