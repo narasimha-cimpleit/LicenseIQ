@@ -36,6 +36,27 @@ License IQ Research Platform is a SaaS web application for intelligent contract 
 - Confidence threshold: ≥70% auto-approve, <70% human review
 - Files created: `server/services/documentOrchestratorService.ts`, `server/services/zeroShotExtractionService.ts`, `server/services/knowledgeGraphService.ts`, `server/services/ruleSynthesisService.ts`, `server/services/validationService.ts`
 
+**Phase 3: API Endpoints and UI Integration**
+- Added 9 secure API endpoints for dynamic extraction system:
+  - POST `/api/contracts/:id/extract-dynamic` - Trigger dynamic extraction pipeline
+  - GET `/api/extraction-runs/:id` - Get extraction run details
+  - GET `/api/contracts/:id/extraction-runs` - List all extraction runs for a contract
+  - GET `/api/contracts/:id/knowledge-graph` - Get knowledge graph (nodes + edges)
+  - GET `/api/contracts/:id/dynamic-rules` - Get dynamically extracted rules
+  - GET `/api/human-review-tasks` - List pending review tasks (admin/owner only)
+  - PATCH `/api/human-review-tasks/:id/approve` - Approve extraction with authorization checks
+  - PATCH `/api/human-review-tasks/:id/reject` - Reject extraction with required review notes
+  - GET `/api/rules/:id/validation-events` - Get validation audit trail
+- Implemented proper authorization: only assigned reviewers or admin/owner can approve/reject tasks
+- Added input validation for all endpoints to prevent malformed data
+- Created Human Review Queue UI page (`client/src/pages/HumanReviewQueue.tsx`) with:
+  - Tabbed interface filtering by entity type (All, Entities, Relationships, Rules)
+  - Confidence scoring visualization with color-coded priority badges
+  - Side-by-side display of original data and AI-suggested corrections
+  - Approve/reject workflow with review notes
+  - Admin/owner-only access with navigation link in sidebar
+- Files modified: `server/routes.ts`, `server/storage.ts`, `client/src/App.tsx`, `client/src/components/layout/sidebar.tsx`
+
 ## October 24, 2025 - AI Agent UX Improvements
 
 **Fixed: Sheet Overlay Opacity Issue**
