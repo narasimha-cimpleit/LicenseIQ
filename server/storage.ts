@@ -14,6 +14,12 @@ import {
   contractRoyaltyCalculations,
   salesData,
   royaltyRules,
+  extractionRuns,
+  contractGraphNodes,
+  contractGraphEdges,
+  humanReviewTasks,
+  ruleDefinitions,
+  ruleValidationEvents,
   type User,
   type InsertUser,
   type Contract,
@@ -214,6 +220,16 @@ export interface IStorage {
   getActiveRoyaltyRulesByContract(contractId: string): Promise<RoyaltyRule[]>;
   deleteRoyaltyRule(ruleId: string): Promise<void>;
   updateRoyaltyRule(ruleId: string, updates: Partial<InsertRoyaltyRule>): Promise<RoyaltyRule>;
+  
+  // Dynamic extraction operations
+  getExtractionRun(id: string): Promise<any>;
+  getExtractionRunsByContract(contractId: string): Promise<any[]>;
+  getContractKnowledgeGraph(contractId: string): Promise<{ nodes: any[], edges: any[] }>;
+  getPendingReviewTasks(userId?: string): Promise<any[]>;
+  approveReviewTask(taskId: string, userId: string, reviewNotes?: string): Promise<void>;
+  rejectReviewTask(taskId: string, userId: string, reviewNotes: string): Promise<void>;
+  getDynamicRulesByContract(contractId: string): Promise<any[]>;
+  getRuleValidationEvents(ruleId: string): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1385,6 +1401,90 @@ export class DatabaseStorage implements IStorage {
       .where(eq(royaltyRules.id, ruleId))
       .returning();
     return updated;
+  }
+
+  // Dynamic extraction operations
+  async getExtractionRun(id: string): Promise<any> {
+    const run = await db.query.extractionRuns.findFirst({
+      where: (runs, { eq }) => eq(runs.id, id),
+    });
+    return run;
+  }
+
+  async getExtractionRunsByContract(contractId: string): Promise<any[]> {
+    const runs = await db.query.extractionRuns.findMany({
+      where: (runs, { eq }) => eq(runs.contractId, contractId),
+      orderBy: (runs, { desc }) => [desc(runs.createdAt)],
+    });
+    return runs;
+  }
+
+  async getContractKnowledgeGraph(contractId: string): Promise<{ nodes: any[], edges: any[] }> {
+    const nodes = await db.query.contractGraphNodes.findMany({
+      where: (nodes, { eq }) => eq(nodes.contractId, contractId),
+    });
+    
+    const edges = await db.query.contractGraphEdges.findMany({
+      where: (edges, { eq }) => eq(edges.contractId, contractId),
+    });
+    
+    return { nodes, edges };
+  }
+
+  async getPendingReviewTasks(userId?: string): Promise<any[]> {
+    let whereClause = (tasks: any, { eq, and }: any) => {
+      const conditions = [eq(tasks.status, 'pending')];
+      if (userId) {
+        conditions.push(eq(tasks.assignedTo, userId));
+      }
+      return and(...conditions);
+    };
+
+    const tasks = await db.query.humanReviewTasks.findMany({
+      where: whereClause,
+      orderBy: (tasks, { desc }) => [desc(tasks.priority), desc(tasks.createdAt)],
+    });
+    return tasks;
+  }
+
+  async approveReviewTask(taskId: string, userId: string, reviewNotes?: string): Promise<void> {
+    await db
+      .update(humanReviewTasks)
+      .set({
+        status: 'approved',
+        reviewNotes: reviewNotes || 'Approved',
+        reviewedBy: userId,
+        reviewedAt: new Date(),
+      })
+      .where(eq(humanReviewTasks.id, taskId));
+  }
+
+  async rejectReviewTask(taskId: string, userId: string, reviewNotes: string): Promise<void> {
+    await db
+      .update(humanReviewTasks)
+      .set({
+        status: 'rejected',
+        reviewNotes,
+        reviewedBy: userId,
+        reviewedAt: new Date(),
+      })
+      .where(eq(humanReviewTasks.id, taskId));
+  }
+
+  async getDynamicRulesByContract(contractId: string): Promise<any[]> {
+    const rules = await db.query.ruleDefinitions.findMany({
+      where: (rules, { eq }) => eq(rules.contractId, contractId),
+      orderBy: (rules, { desc }) => [desc(rules.createdAt)],
+    });
+    return rules;
+  }
+
+  async getRuleValidationEvents(ruleId: string): Promise<any[]> {
+    const events = await db.query.ruleValidationEvents.findMany({
+      where: (events, { eq }) => eq(events.ruleDefinitionId, ruleId),
+      orderBy: (events, { desc }) => [desc(events.createdAt)],
+    });
+    return events;
   }
 
 }

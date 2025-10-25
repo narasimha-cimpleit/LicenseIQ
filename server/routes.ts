@@ -223,6 +223,175 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Dynamic extraction endpoints
+  app.post('/api/contracts/:id/extract-dynamic', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const contractId = req.params.id;
+      const userId = req.user.id;
+
+      // Import orchestrator service dynamically
+      const { triggerDynamicExtraction } = await import('./services/documentOrchestratorService');
+      
+      // Start extraction in background
+      triggerDynamicExtraction(contractId, userId)
+        .then(() => console.log(`✅ Dynamic extraction completed for contract ${contractId}`))
+        .catch(err => console.error(`❌ Dynamic extraction failed for contract ${contractId}:`, err));
+
+      await createAuditLog(req, 'dynamic_extraction_triggered', 'contract', contractId);
+
+      res.json({ 
+        message: 'Dynamic extraction started',
+        contractId 
+      });
+    } catch (error: any) {
+      console.error('Dynamic extraction trigger error:', error);
+      res.status(500).json({ error: error.message || 'Failed to start dynamic extraction' });
+    }
+  });
+
+  app.get('/api/extraction-runs/:id', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const run = await storage.getExtractionRun(req.params.id);
+      if (!run) {
+        return res.status(404).json({ error: 'Extraction run not found' });
+      }
+      res.json(run);
+    } catch (error: any) {
+      console.error('Get extraction run error:', error);
+      res.status(500).json({ error: error.message || 'Failed to fetch extraction run' });
+    }
+  });
+
+  app.get('/api/contracts/:id/extraction-runs', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const runs = await storage.getExtractionRunsByContract(req.params.id);
+      res.json(runs);
+    } catch (error: any) {
+      console.error('Get extraction runs error:', error);
+      res.status(500).json({ error: error.message || 'Failed to fetch extraction runs' });
+    }
+  });
+
+  app.get('/api/contracts/:id/knowledge-graph', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const graph = await storage.getContractKnowledgeGraph(req.params.id);
+      res.json(graph);
+    } catch (error: any) {
+      console.error('Get knowledge graph error:', error);
+      res.status(500).json({ error: error.message || 'Failed to fetch knowledge graph' });
+    }
+  });
+
+  app.get('/api/contracts/:id/dynamic-rules', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const rules = await storage.getDynamicRulesByContract(req.params.id);
+      res.json(rules);
+    } catch (error: any) {
+      console.error('Get dynamic rules error:', error);
+      res.status(500).json({ error: error.message || 'Failed to fetch dynamic rules' });
+    }
+  });
+
+  app.get('/api/human-review-tasks', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const userRole = (await storage.getUser(userId))?.role;
+      const canViewAll = userRole === 'admin' || userRole === 'owner';
+      
+      const tasks = await storage.getPendingReviewTasks(canViewAll ? undefined : userId);
+      res.json(tasks);
+    } catch (error: any) {
+      console.error('Get review tasks error:', error);
+      res.status(500).json({ error: error.message || 'Failed to fetch review tasks' });
+    }
+  });
+
+  app.patch('/api/human-review-tasks/:id/approve', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const taskId = req.params.id;
+      
+      // Get task and check authorization
+      const task = await db.query.humanReviewTasks.findFirst({
+        where: (tasks, { eq }) => eq(tasks.id, taskId),
+      });
+      
+      if (!task) {
+        return res.status(404).json({ error: 'Task not found' });
+      }
+      
+      // Check if user is assigned to task or has admin/owner role
+      const userRole = (await storage.getUser(userId))?.role;
+      const isAuthorized = task.assignedTo === userId || userRole === 'admin' || userRole === 'owner';
+      
+      if (!isAuthorized) {
+        return res.status(403).json({ error: 'You are not authorized to approve this task' });
+      }
+      
+      // Validate and sanitize review notes
+      let reviewData = '';
+      if (req.body.reviewNotes !== undefined && req.body.reviewNotes !== null) {
+        if (typeof req.body.reviewNotes !== 'string') {
+          return res.status(400).json({ error: 'Review notes must be a string' });
+        }
+        reviewData = req.body.reviewNotes.trim();
+      }
+      
+      await storage.approveReviewTask(taskId, userId, reviewData || 'Approved');
+      await createAuditLog(req, 'review_task_approved', 'human_review_task', taskId);
+      res.json({ message: 'Task approved' });
+    } catch (error: any) {
+      console.error('Approve task error:', error);
+      res.status(500).json({ error: error.message || 'Failed to approve task' });
+    }
+  });
+
+  app.patch('/api/human-review-tasks/:id/reject', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const taskId = req.params.id;
+      
+      // Validate request body
+      if (!req.body.reviewNotes || typeof req.body.reviewNotes !== 'string' || req.body.reviewNotes.trim() === '') {
+        return res.status(400).json({ error: 'Review notes are required for rejection' });
+      }
+      
+      // Get task and check authorization
+      const task = await db.query.humanReviewTasks.findFirst({
+        where: (tasks, { eq }) => eq(tasks.id, taskId),
+      });
+      
+      if (!task) {
+        return res.status(404).json({ error: 'Task not found' });
+      }
+      
+      // Check if user is assigned to task or has admin/owner role
+      const userRole = (await storage.getUser(userId))?.role;
+      const isAuthorized = task.assignedTo === userId || userRole === 'admin' || userRole === 'owner';
+      
+      if (!isAuthorized) {
+        return res.status(403).json({ error: 'You are not authorized to reject this task' });
+      }
+      
+      await storage.rejectReviewTask(taskId, userId, req.body.reviewNotes);
+      await createAuditLog(req, 'review_task_rejected', 'human_review_task', taskId);
+      res.json({ message: 'Task rejected' });
+    } catch (error: any) {
+      console.error('Reject task error:', error);
+      res.status(500).json({ error: error.message || 'Failed to reject task' });
+    }
+  });
+
+  app.get('/api/rules/:id/validation-events', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const events = await storage.getRuleValidationEvents(req.params.id);
+      res.json(events);
+    } catch (error: any) {
+      console.error('Get validation events error:', error);
+      res.status(500).json({ error: error.message || 'Failed to fetch validation events' });
+    }
+  });
+
   // Analytics API endpoints
   app.get('/api/analytics/metrics', isAuthenticated, async (req: any, res) => {
     try {
