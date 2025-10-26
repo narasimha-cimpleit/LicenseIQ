@@ -229,11 +229,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const contractId = req.params.id;
       const userId = req.user.id;
 
+      // Fetch contract to get file path
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+
+      // Extract text from file
+      const mimeType = contract.fileType || 'application/pdf';
+      const rawText = await fileService.extractTextFromFile(contract.filePath, mimeType);
+      
+      if (!rawText || rawText.trim().length === 0) {
+        return res.status(400).json({ error: 'Failed to extract text from contract file' });
+      }
+
       // Import orchestrator service dynamically
-      const { triggerDynamicExtraction } = await import('./services/documentOrchestratorService');
+      const { processContractDynamic } = await import('./services/documentOrchestratorService');
       
       // Start extraction in background
-      triggerDynamicExtraction(contractId, userId)
+      processContractDynamic(contractId, rawText, userId)
         .then(() => console.log(`✅ Dynamic extraction completed for contract ${contractId}`))
         .catch(err => console.error(`❌ Dynamic extraction failed for contract ${contractId}:`, err));
 
