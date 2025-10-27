@@ -880,6 +880,30 @@ export default function Landing() {
               <CardContent className="p-8">
                 <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">LicenseIQ</h3>
                 <p className="text-slate-600 dark:text-slate-300 mb-6 min-h-[48px]">For finance teams needing control, live visibility, and audit-readiness</p>
+                
+                <div className="space-y-3 mb-6">
+                  <div className="flex items-start space-x-2">
+                    <CheckCircle className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-slate-700 dark:text-slate-300">AI contract reading & term extraction</span>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <CheckCircle className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-slate-700 dark:text-slate-300">Automated royalty calculations</span>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <CheckCircle className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-slate-700 dark:text-slate-300">Complete audit trail & compliance</span>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <CheckCircle className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-slate-700 dark:text-slate-300">Basic ERP/CRM integrations</span>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <CheckCircle className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-slate-700 dark:text-slate-300">5 users included</span>
+                  </div>
+                </div>
+                
                 <div className="space-y-3 mb-6">
                   <Input 
                     type="email" 
@@ -909,6 +933,34 @@ export default function Landing() {
               <CardContent className="p-8">
                 <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">LicenseIQ <span className="text-teal-600">Plus</span></h3>
                 <p className="text-slate-600 dark:text-slate-300 mb-6 min-h-[48px]">For growing teams looking to scale across international entities</p>
+                
+                <div className="space-y-3 mb-6">
+                  <div className="flex items-start space-x-2">
+                    <CheckCircle className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-slate-700 dark:text-slate-300"><strong>Everything in LicenseIQ, plus:</strong></span>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <CheckCircle className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-slate-700 dark:text-slate-300">Multi-entity & multi-currency support</span>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <CheckCircle className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-slate-700 dark:text-slate-300">Advanced workflow automation</span>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <CheckCircle className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-slate-700 dark:text-slate-300">Priority support & onboarding</span>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <CheckCircle className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-slate-700 dark:text-slate-300">Custom integrations (SAP, Oracle, NetSuite)</span>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <CheckCircle className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-slate-700 dark:text-slate-300">15 users included</span>
+                  </div>
+                </div>
+                
                 <div className="space-y-3 mb-6">
                   <Input 
                     type="email" 
@@ -935,6 +987,34 @@ export default function Landing() {
               <CardContent className="p-8">
                 <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">LicenseIQ <span className="text-purple-600">Ultra</span></h3>
                 <p className="text-slate-600 dark:text-slate-300 mb-6 min-h-[48px]">For larger teams preparing for IPO, handling more finance complexity</p>
+                
+                <div className="space-y-3 mb-6">
+                  <div className="flex items-start space-x-2">
+                    <CheckCircle className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-slate-700 dark:text-slate-300"><strong>Everything in Plus, plus:</strong></span>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <CheckCircle className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-slate-700 dark:text-slate-300">SOC 2 & GDPR compliance ready</span>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <CheckCircle className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-slate-700 dark:text-slate-300">Dedicated account manager</span>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <CheckCircle className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-slate-700 dark:text-slate-300">Custom AI model training</span>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <CheckCircle className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-slate-700 dark:text-slate-300">White-glove implementation & training</span>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <CheckCircle className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-slate-700 dark:text-slate-300">Unlimited users</span>
+                  </div>
+                </div>
+                
                 <div className="space-y-3 mb-6">
                   <Input 
                     type="email" 
