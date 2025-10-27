@@ -38,6 +38,15 @@ License IQ Research Platform is a SaaS web application for intelligent contract 
   - Smooth slide-in animations on early access section
   - All animations use subtle, professional timing for polished UX
 - Increased landing page navbar logo to h-14 (56px) for better visibility
+- Fixed dashboard sidebar logo:
+  - Increased size from h-12 to h-16 (33% larger)
+  - Centered logo in navigation bar with proper flex alignment
+  - Matched background color to sidebar (no longer looks like a patch)
+  - Increased vertical padding for better spacing
+- Fixed login page logo:
+  - Increased size from h-16 to h-20 (25% larger)
+  - Removed decorative gradient blur background (no longer looks like a patch)
+  - Simplified design for cleaner, more professional appearance
 
 ## October 25, 2025 - Dynamic Contract Processing System
 

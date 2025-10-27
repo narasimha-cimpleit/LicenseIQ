@@ -75,11 +75,8 @@ export default function AuthPage() {
         <div className="w-full max-w-md space-y-6 relative z-10">
           {/* Logo and Title */}
           <div className="text-center space-y-3 animate-in fade-in slide-in-from-top-4 duration-700">
-            <div className="flex items-center justify-center space-x-3 mb-6">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full blur-lg opacity-50"></div>
-                <img src={licenseIQLogo} alt="LicenseIQ Logo" className="h-16 relative z-10 drop-shadow-lg" />
-              </div>
+            <div className="flex items-center justify-center mb-6">
+              <img src={licenseIQLogo} alt="LicenseIQ Logo" className="h-20" />
             </div>
             <p className="text-sm text-muted-foreground">
               AI-powered licensing management platform

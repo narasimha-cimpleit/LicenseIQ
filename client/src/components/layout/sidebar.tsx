@@ -126,8 +126,8 @@ export default function Sidebar({ className }: SidebarProps) {
     <aside className={cn("fixed inset-y-0 left-0 w-64 bg-sidebar border-r border-sidebar-border sidebar-transition", className)}>
       <div className="flex flex-col h-full">
         {/* Logo */}
-        <div className="flex items-center px-6 py-4 border-b border-sidebar-border">
-          <img src={licenseIQLogo} alt="LicenseIQ Logo" className="h-12" />
+        <div className="flex items-center justify-center px-6 py-6 border-b border-sidebar-border bg-sidebar">
+          <img src={licenseIQLogo} alt="LicenseIQ Logo" className="h-16" />
         </div>
         
         {/* Navigation */}
