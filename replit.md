@@ -37,6 +37,7 @@ Fixed critical bug where the system was generating phantom payment rules for con
 4. Updated all rule extraction prompts with strict "Do NOT fabricate" instructions
 5. Enhanced UI empty state to explain non-licensing contracts are normal
 6. Added schema mapping to maintain compatibility with existing data model
+7. Made product formula extraction conditional - only runs when hasRoyaltyTerms is true
 
 **Impact:**
 - Subcontractor agreements, service contracts, and other non-licensing documents now correctly show zero rules
