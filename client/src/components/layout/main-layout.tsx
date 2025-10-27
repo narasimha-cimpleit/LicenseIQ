@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import Sidebar from "./sidebar";
 import Header from "./header";
-import licenseIQLogo from "@assets/image_1761582089199.png";
+import licenseIQLogo from "@assets/image_1761594259468.png";
 
 interface MainLayoutProps {
   children: React.ReactNode;

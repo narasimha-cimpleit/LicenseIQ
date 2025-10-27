@@ -17,7 +17,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Loader2, Lock, Mail, User, ArrowRight, Sparkles, CheckCircle, TrendingUp, Clock, FileCheck, Shield, Zap, Globe } from "lucide-react";
-import licenseIQLogo from "@assets/image_1761582089199.png";
+import licenseIQLogo from "@assets/image_1761594259468.png";
 
 export default function AuthPage() {
   const [, setLocation] = useLocation();

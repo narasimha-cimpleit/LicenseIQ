@@ -21,7 +21,7 @@ import {
   ClipboardCheck,
   Mail
 } from "lucide-react";
-import licenseIQLogo from "@assets/image_1761582089199.png";
+import licenseIQLogo from "@assets/image_1761594259468.png";
 
 interface SidebarProps {
   className?: string;
