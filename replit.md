@@ -22,6 +22,16 @@ License IQ Research Platform is a SaaS web application for intelligent contract 
   - LicenseIQ: 5 contracts included
   - LicenseIQ Plus: 15 contracts included
   - LicenseIQ Ultra: Unlimited contracts
+- Replaced "royalty/royalties" terminology with more professional payment-focused language:
+  - "royalty calculations" → "payment calculations"
+  - "royalty rates" → "payment rates"
+  - "royalty management" → "payment management"
+  - Updated all references to use "license fees" instead of "royalties"
+- Updated early access section with professional, light color scheme:
+  - Changed from heavy dark blue gradient to light slate/blue/indigo gradient
+  - Updated text colors from white to dark slate for better readability
+  - Redesigned form inputs with clean white backgrounds and proper borders
+  - Enhanced button styling with blue-to-indigo gradient
 
 ## October 25, 2025 - Dynamic Contract Processing System
 

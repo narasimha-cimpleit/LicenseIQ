@@ -172,7 +172,7 @@ export default function Landing() {
             <p className="text-xl md:text-2xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto animate-in fade-in slide-in-from-top-8 duration-700 delay-200">
               <strong className="text-slate-900 dark:text-white">"From contract to cash — automated, accurate, and audit-ready."</strong>
               <br /><br />
-              LicenseIQ turns complex contracts into executable rules. It reads agreements, extracts terms, calculates payments, and generates audit-ready reports — automating royalties, rebates, commissions, and service fees with finance-grade accuracy.
+              LicenseIQ turns complex contracts into executable rules. It reads agreements, extracts terms, calculates payments, and generates audit-ready reports — automating license fees, rebates, commissions, and service fees with finance-grade accuracy.
             </p>
 
             {/* CTA Buttons */}
@@ -246,7 +246,7 @@ export default function Landing() {
                     AI Contract Reading
                   </h3>
                   <p className="text-slate-600 dark:text-slate-300">
-                    Automatically extracts licensing terms, royalty rates, territories, and exclusions from any PDF contract
+                    Automatically extracts licensing terms, payment rates, territories, and exclusions from any PDF contract
                   </p>
                 </div>
               </CardContent>
@@ -269,7 +269,7 @@ export default function Landing() {
               </CardContent>
             </Card>
 
-            {/* Feature 3 - Royalty Calculator */}
+            {/* Feature 3 - Payment Calculator */}
             <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-purple-200 dark:hover:border-purple-800">
               <CardContent className="p-6 space-y-4">
                 <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
@@ -630,7 +630,7 @@ export default function Landing() {
                 <Star className="h-8 w-8 text-blue-600" />
               </div>
               <h4 className="font-semibold text-lg text-slate-900 dark:text-white mb-2">Consumer Products</h4>
-              <p className="text-sm text-slate-600 dark:text-slate-300">Brand licensing and royalty management</p>
+              <p className="text-sm text-slate-600 dark:text-slate-300">Brand licensing and payment management</p>
             </div>
 
             <div className="text-center">
@@ -695,7 +695,7 @@ export default function Landing() {
                     <MessageSquare className="h-6 w-6 text-purple-600 flex-shrink-0 mt-1" />
                     <div>
                       <p className="font-semibold text-slate-900 dark:text-white mb-1">Contextual Q&A</p>
-                      <p className="text-sm text-slate-600 dark:text-slate-400">"What royalty rate applies to Product X in EMEA?"</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">"What payment rate applies to Product X in EMEA?"</p>
                     </div>
                   </div>
                 </div>
@@ -842,7 +842,7 @@ export default function Landing() {
                   <DollarSign className="h-8 w-8 text-white" />
                 </div>
                 <h4 className="font-bold text-slate-900 dark:text-white mb-2">Payment Calculation</h4>
-                <p className="text-sm text-slate-600 dark:text-slate-400">Automated royalty, rebate & commission processing</p>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Automated payment, rebate & commission processing</p>
               </div>
 
               {/* Audit Report */}
@@ -888,7 +888,7 @@ export default function Landing() {
                   </div>
                   <div className="flex items-start space-x-2">
                     <CheckCircle className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm text-slate-700 dark:text-slate-300">Automated royalty calculations</span>
+                    <span className="text-sm text-slate-700 dark:text-slate-300">Automated payment calculations</span>
                   </div>
                   <div className="flex items-start space-x-2">
                     <CheckCircle className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />
@@ -1101,56 +1101,56 @@ export default function Landing() {
       </section>
 
       {/* Beta Program Section */}
-      <section id="early-access" className="py-20 md:py-32 bg-gradient-to-br from-blue-600 to-indigo-600 text-white">
+      <section id="early-access" className="py-20 md:py-32 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-blue-950 dark:to-indigo-950">
         <div className="container mx-auto px-4 text-center">
           <div className="max-w-3xl mx-auto space-y-8">
-            <div className="inline-flex items-center space-x-2 bg-white/20 px-4 py-2 rounded-full">
-              <Rocket className="h-5 w-5" />
-              <span className="text-sm font-medium">Limited Beta Program - Q4 2025</span>
+            <div className="inline-flex items-center space-x-2 bg-blue-600/10 dark:bg-blue-600/20 px-4 py-2 rounded-full">
+              <Rocket className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Limited Beta Program - Q4 2025</span>
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold">
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white">
               Be among the first to experience LicenseIQ
             </h2>
-            <p className="text-xl text-blue-100">
+            <p className="text-xl text-slate-600 dark:text-slate-300">
               Join our exclusive beta program and help shape the future of contract intelligence
             </p>
             
             <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto text-left">
               <div className="flex items-start space-x-3">
-                <Award className="h-6 w-6 flex-shrink-0 mt-1" />
+                <Award className="h-6 w-6 flex-shrink-0 mt-1 text-blue-600 dark:text-blue-400" />
                 <div>
-                  <h4 className="font-semibold mb-1">Free Trial Period</h4>
-                  <p className="text-sm text-blue-100">Extended trial with full feature access</p>
+                  <h4 className="font-semibold mb-1 text-slate-900 dark:text-white">Free Trial Period</h4>
+                  <p className="text-sm text-slate-600 dark:text-slate-300">Extended trial with full feature access</p>
                 </div>
               </div>
               <div className="flex items-start space-x-3">
-                <DollarSign className="h-6 w-6 flex-shrink-0 mt-1" />
+                <DollarSign className="h-6 w-6 flex-shrink-0 mt-1 text-blue-600 dark:text-blue-400" />
                 <div>
-                  <h4 className="font-semibold mb-1">Early Bird Discount</h4>
-                  <p className="text-sm text-blue-100">Exclusive pricing for beta participants</p>
+                  <h4 className="font-semibold mb-1 text-slate-900 dark:text-white">Early Bird Discount</h4>
+                  <p className="text-sm text-slate-600 dark:text-slate-300">Exclusive pricing for beta participants</p>
                 </div>
               </div>
               <div className="flex items-start space-x-3">
-                <Users className="h-6 w-6 flex-shrink-0 mt-1" />
+                <Users className="h-6 w-6 flex-shrink-0 mt-1 text-blue-600 dark:text-blue-400" />
                 <div>
-                  <h4 className="font-semibold mb-1">Direct Design Input</h4>
-                  <p className="text-sm text-blue-100">Shape features based on your needs</p>
+                  <h4 className="font-semibold mb-1 text-slate-900 dark:text-white">Direct Design Input</h4>
+                  <p className="text-sm text-slate-600 dark:text-slate-300">Shape features based on your needs</p>
                 </div>
               </div>
               <div className="flex items-start space-x-3">
-                <Star className="h-6 w-6 flex-shrink-0 mt-1" />
+                <Star className="h-6 w-6 flex-shrink-0 mt-1 text-blue-600 dark:text-blue-400" />
                 <div>
-                  <h4 className="font-semibold mb-1">Case Study Partnership</h4>
-                  <p className="text-sm text-blue-100">Featured success story opportunity</p>
+                  <h4 className="font-semibold mb-1 text-slate-900 dark:text-white">Case Study Partnership</h4>
+                  <p className="text-sm text-slate-600 dark:text-slate-300">Featured success story opportunity</p>
                 </div>
               </div>
             </div>
 
             <div className="pt-4">
-              <p className="text-blue-100 mb-4 text-sm">Fill out the form below to join our beta program:</p>
+              <p className="text-slate-600 dark:text-slate-300 mb-4 text-sm">Fill out the form below to join our beta program:</p>
               
               {/* Early Access Form Inline */}
-              <div className="max-w-xl mx-auto bg-white/10 backdrop-blur-sm rounded-xl p-8 border border-white/20">
+              <div className="max-w-xl mx-auto bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-xl p-8 border border-blue-200 dark:border-blue-800 shadow-xl">
                 <form 
                   id="beta-form" 
                   className="space-y-4"
@@ -1161,7 +1161,7 @@ export default function Landing() {
                     name="name"
                     placeholder="Full Name"
                     required
-                    className="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white/50"
+                    className="w-full px-4 py-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     data-testid="input-name"
                   />
                   <input
@@ -1169,14 +1169,14 @@ export default function Landing() {
                     name="email"
                     placeholder="Work Email"
                     required
-                    className="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white/50"
+                    className="w-full px-4 py-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     data-testid="input-email"
                   />
                   <input
                     type="text"
                     name="company"
                     placeholder="Company Name"
-                    className="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white/50"
+                    className="w-full px-4 py-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     data-testid="input-company"
                   />
                   <input
@@ -1184,22 +1184,21 @@ export default function Landing() {
                     name="phone"
                     placeholder="Phone Number"
                     required
-                    className="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white/50"
+                    className="w-full px-4 py-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     data-testid="input-phone"
                   />
                   <textarea
                     name="message"
                     placeholder="Tell us about your use case (optional)"
                     rows={3}
-                    className="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white/50 resize-none"
+                    className="w-full px-4 py-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                     data-testid="input-message"
                   />
                   <Button 
                     type="submit"
                     size="lg" 
-                    variant="secondary"
                     disabled={isSubmittingEarlyAccess}
-                    className="w-full px-10 h-14 text-lg bg-white text-blue-600 hover:bg-slate-100 shadow-xl hover:shadow-2xl transition-all duration-300"
+                    className="w-full px-10 h-14 text-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-xl hover:shadow-2xl transition-all duration-300"
                     data-testid="button-submit-access"
                   >
                     {isSubmittingEarlyAccess ? "Submitting..." : "Request Early Access"}
