@@ -12,6 +12,10 @@ import {
   Layers, PieChart, Receipt, FileOutput,
   ChevronRight, Star, Award, Rocket
 } from "lucide-react";
+import { 
+  SiSap, SiOracle, SiSalesforce, SiQuickbooks,
+  SiSnowflake
+} from "react-icons/si";
 
 export default function Landing() {
   return (
@@ -57,26 +61,26 @@ export default function Landing() {
 
             {/* Main Headline */}
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-slate-900 dark:text-white animate-in fade-in slide-in-from-top-6 duration-700 delay-100">
-              Reads contracts like a{" "}
+              AI-Powered Platform for{" "}
               <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                lawyer
+                Sales-Based
               </span>
-              ,<br />
-              calculates like an{" "}
+              <br />
               <span className="bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                accountant
+                Contract Automation
               </span>
             </h1>
 
             {/* Subtitle */}
             <p className="text-xl md:text-2xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto animate-in fade-in slide-in-from-top-8 duration-700 delay-200">
-              LicenseIQ transforms how manufacturing companies manage their licensing agreements and payment calculations. 
-              Our AI agent eliminates manual errors, ensures audit compliance, and automates complex royalty calculations.
+              <strong className="text-slate-900 dark:text-white">"From contract to cash — automated, accurate, and audit-ready."</strong>
+              <br /><br />
+              LicenseIQ turns complex contracts into executable rules. It reads agreements, extracts terms, calculates payments, and generates audit-ready reports — automating royalties, rebates, commissions, and service fees with finance-grade accuracy.
             </p>
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4 animate-in fade-in slide-in-from-top-10 duration-700 delay-300">
-              <Link href="/auth">
+              <a href="#early-access">
                 <Button 
                   size="lg" 
                   className="px-8 h-14 text-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-xl hover:shadow-2xl transition-all duration-300"
@@ -85,7 +89,7 @@ export default function Landing() {
                   Get Early Access
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
-              </Link>
+              </a>
               <Button 
                 variant="outline" 
                 size="lg"
@@ -176,10 +180,10 @@ export default function Landing() {
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
-                    Royalty Calculator
+                    Automated Payment Calculator
                   </h3>
                   <p className="text-slate-600 dark:text-slate-300">
-                    Automated calculations with volume tiers, seasonal adjustments, minimums, and multi-party splits
+                    Generates rules as determined from the contract with volume tiers, seasonal adjustments, minimums, and multi-party splits
                   </p>
                 </div>
               </CardContent>
@@ -230,7 +234,7 @@ export default function Landing() {
                     Rules Management
                   </h3>
                   <p className="text-slate-600 dark:text-slate-300">
-                    View, edit, and create royalty calculation rules with full source attribution to contract clauses
+                    View, edit, and create payment calculation rules with full source attribution to contract clauses
                   </p>
                 </div>
               </CardContent>
@@ -694,8 +698,69 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Integrations Section */}
+      <section className="py-20 md:py-32 bg-white dark:bg-slate-950">
+        <div className="container mx-auto px-4">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4">
+                Works with your systems —{" "}
+                <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  no new interface required
+                </span>
+              </h2>
+              <p className="text-lg text-slate-600 dark:text-slate-300 max-w-3xl mx-auto mt-4">
+                LicenseIQ connects seamlessly with your ERP, CRM, and CLM tools — transforming static contracts into live financial intelligence.
+              </p>
+            </div>
+
+            {/* Integration Logos Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-8 items-center justify-items-center">
+              <div className="flex flex-col items-center space-y-2 p-6 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
+                <SiSap className="h-16 w-16 text-blue-600" />
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">SAP</span>
+              </div>
+              <div className="flex flex-col items-center space-y-2 p-6 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
+                <SiOracle className="h-16 w-16 text-red-600" />
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Oracle</span>
+              </div>
+              <div className="flex flex-col items-center space-y-2 p-6 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
+                <div className="h-16 flex items-center">
+                  <span className="text-3xl font-bold text-blue-700 dark:text-blue-400">NetSuite</span>
+                </div>
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">NetSuite</span>
+              </div>
+              <div className="flex flex-col items-center space-y-2 p-6 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
+                <div className="h-16 flex items-center">
+                  <span className="text-3xl font-bold text-orange-600 dark:text-orange-400">Workday</span>
+                </div>
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Workday</span>
+              </div>
+              <div className="flex flex-col items-center space-y-2 p-6 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
+                <SiSalesforce className="h-16 w-16 text-blue-500" />
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Salesforce</span>
+              </div>
+              <div className="flex flex-col items-center space-y-2 p-6 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
+                <SiQuickbooks className="h-16 w-16 text-green-600" />
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">QuickBooks</span>
+              </div>
+              <div className="flex flex-col items-center space-y-2 p-6 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
+                <SiSnowflake className="h-16 w-16 text-blue-400" />
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Snowflake</span>
+              </div>
+              <div className="flex flex-col items-center space-y-2 p-6 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
+                <div className="h-16 flex items-center">
+                  <FileText className="h-12 w-12 text-indigo-600" />
+                </div>
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">DocuSign</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Beta Program Section */}
-      <section className="py-20 md:py-32 bg-gradient-to-br from-blue-600 to-indigo-600 text-white">
+      <section id="early-access" className="py-20 md:py-32 bg-gradient-to-br from-blue-600 to-indigo-600 text-white">
         <div className="container mx-auto px-4 text-center">
           <div className="max-w-3xl mx-auto space-y-8">
             <div className="inline-flex items-center space-x-2 bg-white/20 px-4 py-2 rounded-full">
@@ -740,17 +805,97 @@ export default function Landing() {
               </div>
             </div>
 
-            <Link href="/auth">
-              <Button 
-                size="lg" 
-                variant="secondary"
-                className="px-10 h-14 text-lg bg-white text-blue-600 hover:bg-slate-100 shadow-xl hover:shadow-2xl transition-all duration-300"
-                data-testid="button-beta-access"
-              >
-                Get Early Access
-                <ChevronRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
+            <div className="pt-4">
+              <p className="text-blue-100 mb-4 text-sm">Fill out the form below to join our beta program:</p>
+              
+              {/* Early Access Form Inline */}
+              <div className="max-w-xl mx-auto bg-white/10 backdrop-blur-sm rounded-xl p-8 border border-white/20">
+                <form 
+                  id="beta-form" 
+                  className="space-y-4"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const form = e.target as HTMLFormElement;
+                    const formData = new FormData(form);
+                    
+                    // Show success message
+                    const formContainer = document.getElementById('beta-form');
+                    if (formContainer) {
+                      formContainer.innerHTML = `
+                        <div class="text-center py-8">
+                          <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                          </div>
+                          <h3 class="text-2xl font-bold mb-2">Thank You!</h3>
+                          <p class="text-blue-100">Someone from the LicenseIQ team will reach out to schedule a meeting with you soon.</p>
+                        </div>
+                      `;
+                    }
+                  }}
+                >
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <input
+                      type="text"
+                      name="firstName"
+                      placeholder="First Name"
+                      required
+                      className="px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white/50"
+                      data-testid="input-first-name"
+                    />
+                    <input
+                      type="text"
+                      name="lastName"
+                      placeholder="Last Name"
+                      required
+                      className="px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white/50"
+                      data-testid="input-last-name"
+                    />
+                  </div>
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="Work Email"
+                    required
+                    className="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white/50"
+                    data-testid="input-email"
+                  />
+                  <input
+                    type="text"
+                    name="company"
+                    placeholder="Company Name"
+                    required
+                    className="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white/50"
+                    data-testid="input-company"
+                  />
+                  <input
+                    type="tel"
+                    name="phone"
+                    placeholder="Phone Number"
+                    className="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white/50"
+                    data-testid="input-phone"
+                  />
+                  <textarea
+                    name="message"
+                    placeholder="Tell us about your use case (optional)"
+                    rows={3}
+                    className="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white/50 resize-none"
+                    data-testid="input-message"
+                  />
+                  <Button 
+                    type="submit"
+                    size="lg" 
+                    variant="secondary"
+                    className="w-full px-10 h-14 text-lg bg-white text-blue-600 hover:bg-slate-100 shadow-xl hover:shadow-2xl transition-all duration-300"
+                    data-testid="button-submit-access"
+                  >
+                    Request Early Access
+                    <ChevronRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </form>
+              </div>
+            </div>
           </div>
         </div>
       </section>
