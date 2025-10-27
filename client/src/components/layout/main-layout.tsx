@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import Sidebar from "./sidebar";
 import Header from "./header";
-import cimpleitLogo from "@assets/image_1757086402738.png";
+import licenseIQLogo from "@assets/image_1761582089199.png";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -29,15 +29,12 @@ export default function MainLayout({ children, title, description }: MainLayoutP
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <img src={cimpleitLogo} alt="CimpleIT Inc Logo" className="w-5 h-5" />
-                <span className="font-semibold text-primary">CimpleIT Inc</span>
+                <img src={licenseIQLogo} alt="LicenseIQ Logo" className="h-4" />
               </div>
               <span>•</span>
-              <p>Powered by <a href="https://cimpleit.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">CimpleIT Inc</a></p>
-              <span>•</span>
-              <p>&copy; 2025 CimpleIT Inc. All rights reserved.</p>
+              <p>&copy; 2025 LicenseIQ. All rights reserved.</p>
             </div>
-            <p>Innovative AI and Data Analytics Solutions</p>
+            <p>Agentic AI for Financial Contracts</p>
           </div>
         </footer>
       </main>

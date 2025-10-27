@@ -17,7 +17,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Loader2, Lock, Mail, User, ArrowRight, Sparkles, CheckCircle, TrendingUp, Clock, FileCheck, Shield, Zap, Globe } from "lucide-react";
-import cimpleitLogo from "@assets/image_1757086402738.png";
+import licenseIQLogo from "@assets/image_1761582089199.png";
 
 export default function AuthPage() {
   const [, setLocation] = useLocation();
@@ -78,15 +78,8 @@ export default function AuthPage() {
             <div className="flex items-center justify-center space-x-3 mb-6">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full blur-lg opacity-50"></div>
-                <img src={cimpleitLogo} alt="CimpleIT Inc Logo" className="w-12 h-12 relative z-10 drop-shadow-lg" />
+                <img src={licenseIQLogo} alt="LicenseIQ Logo" className="h-16 relative z-10 drop-shadow-lg" />
               </div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                LicenseIQ
-              </h1>
-            </div>
-            <div className="flex items-center justify-center space-x-2 text-sm">
-              <span className="text-muted-foreground font-medium">by</span>
-              <span className="font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">CimpleIT Inc</span>
             </div>
             <p className="text-sm text-muted-foreground">
               AI-powered licensing management platform
@@ -330,18 +323,7 @@ export default function AuthPage() {
 
           {/* Footer */}
           <div className="text-center space-y-2 pt-6 border-t border-slate-200 dark:border-slate-700">
-            <p className="text-xs text-muted-foreground">
-              Powered by{" "}
-              <a 
-                href="https://cimpleit.com" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
-              >
-                CimpleIT Inc
-              </a>
-            </p>
-            <p className="text-xs text-muted-foreground">&copy; 2025 CimpleIT Inc. All rights reserved.</p>
+            <p className="text-xs text-muted-foreground">&copy; 2025 LicenseIQ. All rights reserved.</p>
           </div>
         </div>
       </div>

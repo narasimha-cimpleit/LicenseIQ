@@ -1139,8 +1139,7 @@ export default function Landing() {
               <span className="text-xl font-bold text-white">LicenseIQ</span>
             </div>
             <div className="text-center md:text-right text-sm">
-              <p>Powered by <span className="text-blue-400 font-semibold">CimpleIT Inc</span></p>
-              <p className="text-slate-400">&copy; 2025 CimpleIT Inc. All rights reserved.</p>
+              <p className="text-slate-400">&copy; 2025 LicenseIQ. All rights reserved.</p>
             </div>
           </div>
         </div>
