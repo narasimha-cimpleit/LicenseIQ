@@ -22,6 +22,27 @@ Preferred communication style: Simple, everyday language.
 - Replaced "royalty/royalties" with professional payment-focused language ("payment calculations", "license fees")
 - Added SOC 2 & GDPR compliance to all pricing plans with blue Shield icon for visual prominence
 
+## Critical Bug Fix: Phantom Royalty Rules Eliminated (October 27, 2025)
+Fixed critical bug where the system was generating phantom payment rules for contracts that don't contain royalty/license terms:
+
+**Root Cause:**
+- AI extraction prompts were biased toward licensing agreements
+- Rule extractors ran unconditionally regardless of contract type
+- Fallback values generated phantom data when extraction failed
+
+**Solution Implemented:**
+1. Rewrote contract analysis prompt to neutrally detect document type (service, subcontractor, employment, license, etc.)
+2. Added `hasRoyaltyTerms` flag - only extracts rules when explicitly true
+3. Implemented confidence threshold filtering (>= 0.6) and source text validation
+4. Updated all rule extraction prompts with strict "Do NOT fabricate" instructions
+5. Enhanced UI empty state to explain non-licensing contracts are normal
+6. Added schema mapping to maintain compatibility with existing data model
+
+**Impact:**
+- Subcontractor agreements, service contracts, and other non-licensing documents now correctly show zero rules
+- Contract party extraction is accurate (no longer forcing licensor/licensee labels)
+- Rules engine is truly dynamic - only creates rules that actually exist in uploaded PDFs
+
 # System Architecture
 
 ## UI/UX Decisions
