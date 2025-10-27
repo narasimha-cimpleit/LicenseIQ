@@ -1183,6 +1183,7 @@ export default function Landing() {
                     type="tel"
                     name="phone"
                     placeholder="Phone Number"
+                    required
                     className="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white/50"
                     data-testid="input-phone"
                   />
