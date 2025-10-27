@@ -660,7 +660,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* lIQ Agent - AI Copilot Section */}
+      {/* liQ Agent - AI Copilot Section */}
       <section className="py-20 md:py-32 bg-gradient-to-br from-purple-50 via-white to-pink-50 dark:from-purple-950/20 dark:via-slate-950 dark:to-pink-950/20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
@@ -668,7 +668,7 @@ export default function Landing() {
             <h2 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4">
               Meet{" "}
               <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                lIQ Agent
+                liQ Agent
               </span>
             </h2>
             <p className="text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
@@ -676,15 +676,15 @@ export default function Landing() {
             </p>
           </div>
 
-          {/* lIQ Agent Visual */}
+          {/* liQ Agent Visual */}
           <div className="max-w-4xl mx-auto mb-12">
             <div className="relative">
-              {/* Central lIQ Agent */}
+              {/* Central liQ Agent */}
               <div className="flex flex-col items-center text-center mb-12">
                 <div className="w-32 h-32 bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl flex items-center justify-center mb-6 shadow-2xl animate-pulse">
                   <Sparkles className="h-16 w-16 text-white" />
                 </div>
-                <h3 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">lIQ Agent</h3>
+                <h3 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">liQ Agent</h3>
                 <p className="text-lg text-slate-600 dark:text-slate-300">Available everywhere you work</p>
               </div>
 
@@ -740,7 +740,7 @@ export default function Landing() {
                 <Sparkles className="h-8 w-8 text-purple-600" />
               </div>
               <h4 className="font-bold text-slate-900 dark:text-white mb-2">Omnipresent</h4>
-              <p className="text-sm text-slate-600 dark:text-slate-300">Access lIQ Agent from any page — always ready to help</p>
+              <p className="text-sm text-slate-600 dark:text-slate-300">Access liQ Agent from any page — always ready to help</p>
             </div>
 
             <div className="text-center">
