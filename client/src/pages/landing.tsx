@@ -62,15 +62,11 @@ export default function Landing() {
     }
 
     try {
-      const result = await apiRequest('/api/early-access-signup', {
-        method: 'POST',
-        body: JSON.stringify({ email, name, company }),
-        headers: { 'Content-Type': 'application/json' },
-      });
+      await apiRequest('POST', '/api/early-access-signup', { email, name, company });
 
       toast({
         title: "Success!",
-        description: result.message || "Thank you for your interest! We'll be in touch soon.",
+        description: "Thank you for your interest! We'll be in touch soon.",
       });
 
       // Reset form
@@ -101,15 +97,11 @@ export default function Landing() {
     setIsSubmittingDemo(prev => ({ ...prev, [buttonId]: true }));
 
     try {
-      const result = await apiRequest('/api/demo-request', {
-        method: 'POST',
-        body: JSON.stringify({ email, planTier }),
-        headers: { 'Content-Type': 'application/json' },
-      });
+      await apiRequest('POST', '/api/demo-request', { email, planTier });
 
       toast({
         title: "Success!",
-        description: result.message || "Thank you! We'll contact you soon to schedule your demo.",
+        description: "Thank you! We'll contact you soon to schedule your demo.",
       });
 
       // Clear the input field using state
