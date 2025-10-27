@@ -76,7 +76,7 @@ export default function AuthPage() {
           {/* Logo and Title */}
           <div className="text-center space-y-3 animate-in fade-in slide-in-from-top-4 duration-700">
             <div className="flex items-center justify-center mb-6">
-              <img src={licenseIQLogo} alt="LicenseIQ Logo" className="h-20" />
+              <img src={licenseIQLogo} alt="LicenseIQ Logo" className="h-20" style={{ mixBlendMode: 'multiply' }} />
             </div>
             <p className="text-sm text-muted-foreground">
               AI-powered licensing management platform

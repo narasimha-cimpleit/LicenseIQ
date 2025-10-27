@@ -47,6 +47,8 @@ License IQ Research Platform is a SaaS web application for intelligent contract 
   - Increased size from h-16 to h-20 (25% larger)
   - Removed decorative gradient blur background (no longer looks like a patch)
   - Simplified design for cleaner, more professional appearance
+  - Applied mix-blend-mode to make white backgrounds transparent and blend seamlessly
+- Applied CSS blending to sidebar logo for seamless background integration in both light and dark modes
 
 ## October 25, 2025 - Dynamic Contract Processing System
 
