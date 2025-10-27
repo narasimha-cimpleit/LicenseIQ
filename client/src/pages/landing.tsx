@@ -725,14 +725,14 @@ export default function Landing() {
                 <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Oracle</span>
               </div>
               <div className="flex flex-col items-center space-y-2 p-6 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
-                <div className="h-16 flex items-center">
-                  <span className="text-3xl font-bold text-blue-700 dark:text-blue-400">NetSuite</span>
+                <div className="h-16 flex items-center justify-center bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg px-6 py-3">
+                  <span className="text-2xl font-bold text-white tracking-tight">NetSuite</span>
                 </div>
                 <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">NetSuite</span>
               </div>
               <div className="flex flex-col items-center space-y-2 p-6 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
-                <div className="h-16 flex items-center">
-                  <span className="text-3xl font-bold text-orange-600 dark:text-orange-400">Workday</span>
+                <div className="h-16 flex items-center justify-center bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg px-6 py-3">
+                  <span className="text-2xl font-bold text-white tracking-tight">Workday</span>
                 </div>
                 <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Workday</span>
               </div>
@@ -749,8 +749,8 @@ export default function Landing() {
                 <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Snowflake</span>
               </div>
               <div className="flex flex-col items-center space-y-2 p-6 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
-                <div className="h-16 flex items-center">
-                  <FileText className="h-12 w-12 text-indigo-600" />
+                <div className="h-16 flex items-center justify-center bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-lg px-6 py-3">
+                  <span className="text-2xl font-bold text-slate-900 tracking-tight">DocuSign</span>
                 </div>
                 <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">DocuSign</span>
               </div>
