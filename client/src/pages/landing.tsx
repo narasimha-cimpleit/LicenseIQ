@@ -1057,40 +1057,40 @@ export default function Landing() {
 
             {/* Integration Logos Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-8 items-center justify-items-center">
-              <div className="flex flex-col items-center space-y-2 p-6 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
-                <SiSap className="h-16 w-16 text-blue-600" />
+              <div className="flex flex-col items-center space-y-2 p-6 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-all duration-300 hover:scale-110 animate-in fade-in zoom-in-50 duration-700">
+                <SiSap className="h-16 w-16 text-blue-600 transition-transform duration-300" />
                 <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">SAP</span>
               </div>
-              <div className="flex flex-col items-center space-y-2 p-6 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
-                <SiOracle className="h-16 w-16 text-red-600" />
+              <div className="flex flex-col items-center space-y-2 p-6 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-all duration-300 hover:scale-110 animate-in fade-in zoom-in-50 duration-700 delay-100">
+                <SiOracle className="h-16 w-16 text-red-600 transition-transform duration-300" />
                 <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Oracle</span>
               </div>
-              <div className="flex flex-col items-center space-y-2 p-6 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
-                <div className="h-16 flex items-center justify-center bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg px-6 py-3">
+              <div className="flex flex-col items-center space-y-2 p-6 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-all duration-300 hover:scale-110 animate-in fade-in zoom-in-50 duration-700 delay-200">
+                <div className="h-16 flex items-center justify-center bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg px-6 py-3 transition-transform duration-300">
                   <span className="text-2xl font-bold text-white tracking-tight">NetSuite</span>
                 </div>
                 <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">NetSuite</span>
               </div>
-              <div className="flex flex-col items-center space-y-2 p-6 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
-                <div className="h-16 flex items-center justify-center bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg px-6 py-3">
+              <div className="flex flex-col items-center space-y-2 p-6 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-all duration-300 hover:scale-110 animate-in fade-in zoom-in-50 duration-700 delay-300">
+                <div className="h-16 flex items-center justify-center bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg px-6 py-3 transition-transform duration-300">
                   <span className="text-2xl font-bold text-white tracking-tight">Workday</span>
                 </div>
                 <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Workday</span>
               </div>
-              <div className="flex flex-col items-center space-y-2 p-6 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
-                <SiSalesforce className="h-16 w-16 text-blue-500" />
+              <div className="flex flex-col items-center space-y-2 p-6 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-all duration-300 hover:scale-110 animate-in fade-in zoom-in-50 duration-700 delay-150">
+                <SiSalesforce className="h-16 w-16 text-blue-500 transition-transform duration-300" />
                 <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Salesforce</span>
               </div>
-              <div className="flex flex-col items-center space-y-2 p-6 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
-                <SiQuickbooks className="h-16 w-16 text-green-600" />
+              <div className="flex flex-col items-center space-y-2 p-6 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-all duration-300 hover:scale-110 animate-in fade-in zoom-in-50 duration-700 delay-250">
+                <SiQuickbooks className="h-16 w-16 text-green-600 transition-transform duration-300" />
                 <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">QuickBooks</span>
               </div>
-              <div className="flex flex-col items-center space-y-2 p-6 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
-                <SiSnowflake className="h-16 w-16 text-blue-400" />
+              <div className="flex flex-col items-center space-y-2 p-6 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-all duration-300 hover:scale-110 animate-in fade-in zoom-in-50 duration-700 delay-350">
+                <SiSnowflake className="h-16 w-16 text-blue-400 transition-transform duration-300" />
                 <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Snowflake</span>
               </div>
-              <div className="flex flex-col items-center space-y-2 p-6 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
-                <div className="h-16 flex items-center justify-center bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-lg px-6 py-3">
+              <div className="flex flex-col items-center space-y-2 p-6 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-all duration-300 hover:scale-110 animate-in fade-in zoom-in-50 duration-700 delay-450">
+                <div className="h-16 flex items-center justify-center bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-lg px-6 py-3 transition-transform duration-300">
                   <span className="text-2xl font-bold text-slate-900 tracking-tight">DocuSign</span>
                 </div>
                 <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">DocuSign</span>
