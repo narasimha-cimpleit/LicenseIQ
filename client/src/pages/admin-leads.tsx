@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Mail, Building2, Calendar, Star } from "lucide-react";
+import { Mail, Building2, Calendar, Star, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 
 interface EarlyAccessSignup {
@@ -33,6 +35,12 @@ export default function AdminLeads() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
+          <Link href="/">
+            <Button variant="ghost" size="sm" className="mb-4" data-testid="button-back">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Dashboard
+            </Button>
+          </Link>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
             Lead Management
           </h1>

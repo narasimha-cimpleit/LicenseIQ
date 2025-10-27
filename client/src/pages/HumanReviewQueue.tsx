@@ -1,4 +1,5 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { Link } from 'wouter';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, CheckCircle, XCircle, Clock, Sparkles, ShieldAlert, RefreshCw } from 'lucide-react';
+import { AlertCircle, CheckCircle, XCircle, Clock, Sparkles, ShieldAlert, RefreshCw, ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -44,10 +45,7 @@ export default function HumanReviewQueue() {
 
   const approveMutation = useMutation({
     mutationFn: async ({ taskId, notes }: { taskId: string; notes?: string }) => {
-      return apiRequest(`/api/human-review-tasks/${taskId}/approve`, {
-        method: 'PATCH',
-        body: { reviewNotes: notes },
-      });
+      return apiRequest('PATCH', `/api/human-review-tasks/${taskId}/approve`, { reviewNotes: notes });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/human-review-tasks'] });
@@ -67,10 +65,7 @@ export default function HumanReviewQueue() {
 
   const rejectMutation = useMutation({
     mutationFn: async ({ taskId, notes }: { taskId: string; notes: string }) => {
-      return apiRequest(`/api/human-review-tasks/${taskId}/reject`, {
-        method: 'PATCH',
-        body: { reviewNotes: notes },
-      });
+      return apiRequest('PATCH', `/api/human-review-tasks/${taskId}/reject`, { reviewNotes: notes });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/human-review-tasks'] });
@@ -187,6 +182,12 @@ export default function HumanReviewQueue() {
 
   return (
     <div className="container mx-auto p-6">
+      <Link href="/">
+        <Button variant="ghost" size="sm" className="mb-4" data-testid="button-back">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Dashboard
+        </Button>
+      </Link>
       <div className="flex items-center gap-3 mb-6">
         <Sparkles className="h-8 w-8 text-primary" />
         <div>
