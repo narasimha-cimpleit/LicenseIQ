@@ -3,6 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
+import { apiRequest } from "@/lib/queryClient";
 import { 
   Brain, Shield, FileText, BarChart3, 
   CheckCircle, ArrowRight, Sparkles, 
@@ -19,6 +22,82 @@ import {
 } from "react-icons/si";
 
 export default function Landing() {
+  const { toast } = useToast();
+  const [isSubmittingEarlyAccess, setIsSubmittingEarlyAccess] = useState(false);
+  const [isSubmittingDemo, setIsSubmittingDemo] = useState<Record<string, boolean>>({});
+
+  const handleEarlyAccessSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmittingEarlyAccess(true);
+
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get('email') as string;
+    const name = formData.get('name') as string;
+    const company = formData.get('company') as string;
+
+    try {
+      const result = await apiRequest('/api/early-access-signup', {
+        method: 'POST',
+        body: JSON.stringify({ email, name, company }),
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      toast({
+        title: "Success!",
+        description: result.message || "Thank you for your interest! We'll be in touch soon.",
+      });
+
+      // Reset form
+      (e.target as HTMLFormElement).reset();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to submit. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmittingEarlyAccess(false);
+    }
+  };
+
+  const handleDemoRequest = async (email: string, planTier: string, buttonId: string) => {
+    if (!email || !email.includes('@')) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmittingDemo(prev => ({ ...prev, [buttonId]: true }));
+
+    try {
+      const result = await apiRequest('/api/demo-request', {
+        method: 'POST',
+        body: JSON.stringify({ email, planTier }),
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      toast({
+        title: "Success!",
+        description: result.message || "Thank you! We'll contact you soon to schedule your demo.",
+      });
+
+      // Clear the input field
+      const inputElement = document.getElementById(`email-${buttonId}`) as HTMLInputElement;
+      if (inputElement) inputElement.value = '';
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to submit. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmittingDemo(prev => ({ ...prev, [buttonId]: false }));
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950">
       {/* Navigation Bar */}
@@ -783,6 +862,7 @@ export default function Landing() {
                 <p className="text-slate-600 dark:text-slate-300 mb-6 min-h-[48px]">For finance teams needing control, live visibility, and audit-readiness</p>
                 <div className="space-y-3 mb-6">
                   <Input 
+                    id="email-basic"
                     type="email" 
                     placeholder="Enter your work email" 
                     className="bg-white dark:bg-slate-950"
@@ -791,8 +871,13 @@ export default function Landing() {
                   <Button 
                     className="w-full bg-teal-600 hover:bg-teal-700 text-white"
                     data-testid="button-schedule-demo-basic"
+                    disabled={isSubmittingDemo['basic']}
+                    onClick={() => {
+                      const inputEl = document.getElementById('email-basic') as HTMLInputElement;
+                      if (inputEl) handleDemoRequest(inputEl.value, 'licenseiq', 'basic');
+                    }}
                   >
-                    Schedule demo
+                    {isSubmittingDemo['basic'] ? "Submitting..." : "Schedule demo"}
                   </Button>
                 </div>
               </CardContent>
@@ -808,6 +893,7 @@ export default function Landing() {
                 <p className="text-slate-600 dark:text-slate-300 mb-6 min-h-[48px]">For growing teams looking to scale across international entities</p>
                 <div className="space-y-3 mb-6">
                   <Input 
+                    id="email-plus"
                     type="email" 
                     placeholder="Enter your work email" 
                     className="bg-white dark:bg-slate-950"
@@ -816,8 +902,13 @@ export default function Landing() {
                   <Button 
                     className="w-full bg-teal-600 hover:bg-teal-700 text-white"
                     data-testid="button-schedule-demo-plus"
+                    disabled={isSubmittingDemo['plus']}
+                    onClick={() => {
+                      const inputEl = document.getElementById('email-plus') as HTMLInputElement;
+                      if (inputEl) handleDemoRequest(inputEl.value, 'licenseiq_plus', 'plus');
+                    }}
                   >
-                    Schedule demo
+                    {isSubmittingDemo['plus'] ? "Submitting..." : "Schedule demo"}
                   </Button>
                 </div>
               </CardContent>
@@ -830,6 +921,7 @@ export default function Landing() {
                 <p className="text-slate-600 dark:text-slate-300 mb-6 min-h-[48px]">For larger teams preparing for IPO, handling more finance complexity</p>
                 <div className="space-y-3 mb-6">
                   <Input 
+                    id="email-ultra"
                     type="email" 
                     placeholder="Enter your work email" 
                     className="bg-white dark:bg-slate-950"
@@ -838,8 +930,13 @@ export default function Landing() {
                   <Button 
                     className="w-full bg-teal-600 hover:bg-teal-700 text-white"
                     data-testid="button-schedule-demo-ultra"
+                    disabled={isSubmittingDemo['ultra']}
+                    onClick={() => {
+                      const inputEl = document.getElementById('email-ultra') as HTMLInputElement;
+                      if (inputEl) handleDemoRequest(inputEl.value, 'licenseiq_ultra', 'ultra');
+                    }}
                   >
-                    Schedule demo
+                    {isSubmittingDemo['ultra'] ? "Submitting..." : "Schedule demo"}
                   </Button>
                 </div>
               </CardContent>
@@ -963,46 +1060,16 @@ export default function Landing() {
                 <form 
                   id="beta-form" 
                   className="space-y-4"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const form = e.target as HTMLFormElement;
-                    const formData = new FormData(form);
-                    
-                    // Show success message
-                    const formContainer = document.getElementById('beta-form');
-                    if (formContainer) {
-                      formContainer.innerHTML = `
-                        <div class="text-center py-8">
-                          <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                            </svg>
-                          </div>
-                          <h3 class="text-2xl font-bold mb-2">Thank You!</h3>
-                          <p class="text-blue-100">Someone from the LicenseIQ team will reach out to schedule a meeting with you soon.</p>
-                        </div>
-                      `;
-                    }
-                  }}
+                  onSubmit={handleEarlyAccessSubmit}
                 >
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <input
-                      type="text"
-                      name="firstName"
-                      placeholder="First Name"
-                      required
-                      className="px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white/50"
-                      data-testid="input-first-name"
-                    />
-                    <input
-                      type="text"
-                      name="lastName"
-                      placeholder="Last Name"
-                      required
-                      className="px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white/50"
-                      data-testid="input-last-name"
-                    />
-                  </div>
+                  <input
+                    type="text"
+                    name="name"
+                    placeholder="Full Name"
+                    required
+                    className="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white/50"
+                    data-testid="input-name"
+                  />
                   <input
                     type="email"
                     name="email"
@@ -1015,7 +1082,6 @@ export default function Landing() {
                     type="text"
                     name="company"
                     placeholder="Company Name"
-                    required
                     className="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white/50"
                     data-testid="input-company"
                   />
@@ -1037,11 +1103,12 @@ export default function Landing() {
                     type="submit"
                     size="lg" 
                     variant="secondary"
+                    disabled={isSubmittingEarlyAccess}
                     className="w-full px-10 h-14 text-lg bg-white text-blue-600 hover:bg-slate-100 shadow-xl hover:shadow-2xl transition-all duration-300"
                     data-testid="button-submit-access"
                   >
-                    Request Early Access
-                    <ChevronRight className="ml-2 h-5 w-5" />
+                    {isSubmittingEarlyAccess ? "Submitting..." : "Request Early Access"}
+                    {!isSubmittingEarlyAccess && <ChevronRight className="ml-2 h-5 w-5" />}
                   </Button>
                 </form>
               </div>
