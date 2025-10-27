@@ -895,6 +895,10 @@ export default function Landing() {
                     <span className="text-sm text-slate-700 dark:text-slate-300">Complete audit trail & compliance</span>
                   </div>
                   <div className="flex items-start space-x-2">
+                    <Shield className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-slate-700 dark:text-slate-300"><strong>SOC 2 & GDPR compliance ready</strong></span>
+                  </div>
+                  <div className="flex items-start space-x-2">
                     <CheckCircle className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />
                     <span className="text-sm text-slate-700 dark:text-slate-300">Basic ERP/CRM integrations</span>
                   </div>
@@ -938,6 +942,10 @@ export default function Landing() {
                   <div className="flex items-start space-x-2">
                     <CheckCircle className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />
                     <span className="text-sm text-slate-700 dark:text-slate-300"><strong>Everything in LicenseIQ, plus:</strong></span>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <Shield className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-slate-700 dark:text-slate-300"><strong>SOC 2 & GDPR compliance ready</strong></span>
                   </div>
                   <div className="flex items-start space-x-2">
                     <CheckCircle className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />
@@ -994,8 +1002,8 @@ export default function Landing() {
                     <span className="text-sm text-slate-700 dark:text-slate-300"><strong>Everything in Plus, plus:</strong></span>
                   </div>
                   <div className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm text-slate-700 dark:text-slate-300">SOC 2 & GDPR compliance ready</span>
+                    <Shield className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-slate-700 dark:text-slate-300"><strong>SOC 2 & GDPR compliance ready</strong></span>
                   </div>
                   <div className="flex items-start space-x-2">
                     <CheckCircle className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />

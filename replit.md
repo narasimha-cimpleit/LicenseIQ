@@ -6,6 +6,22 @@ License IQ Research Platform is a SaaS web application for intelligent contract 
 
 Preferred communication style: Simple, everyday language.
 
+# Recent Updates (October 27, 2025)
+
+## Logo and Branding Enhancements
+- Increased landing page navbar logo to h-14 (56px) for better visibility
+- Dashboard sidebar logo: Increased to h-16 (64px), centered, with proper background integration
+- Login page logo: Increased to h-16 size with clean white card container (rounded corners, shadow, border) for professional appearance
+
+## Landing Page Animations
+- Added professional scroll animations to feature cards with staggered fade-in effects
+- Animated pricing cards with delayed entrance timing (700ms duration)
+- Integration icons section: Staggered fade-in and zoom-in effects (8 icons with 50-450ms delays), hover scale effect (10% larger)
+
+## Terminology and Compliance Updates
+- Replaced "royalty/royalties" with professional payment-focused language ("payment calculations", "license fees")
+- Added SOC 2 & GDPR compliance to all pricing plans with blue Shield icon for visual prominence
+
 # System Architecture
 
 ## UI/UX Decisions
