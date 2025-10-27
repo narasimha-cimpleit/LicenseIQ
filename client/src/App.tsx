@@ -24,6 +24,7 @@ import RulesManagement from "@/pages/rules-management";
 import ContractQnA from "@/pages/contract-qna";
 import RAGDashboard from "@/pages/rag-dashboard";
 import HumanReviewQueue from "@/pages/HumanReviewQueue";
+import AdminLeads from "@/pages/admin-leads";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -57,6 +58,8 @@ function Router() {
             <ProtectedRoute path="/rag-dashboard" component={RAGDashboard} />
             {/* Dynamic Extraction */}
             <ProtectedRoute path="/review-queue" component={HumanReviewQueue} />
+            {/* Admin */}
+            <ProtectedRoute path="/admin/leads" component={AdminLeads} />
             <ProtectedRoute path="/contracts/:id" component={ContractAnalysis} />
           </>
         )}

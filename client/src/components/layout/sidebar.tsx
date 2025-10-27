@@ -18,7 +18,8 @@ import {
   Database,
   PlayCircle,
   Sparkles,
-  ClipboardCheck
+  ClipboardCheck,
+  Mail
 } from "lucide-react";
 import cimpleitLogo from "@assets/image_1757086402738.png";
 
@@ -87,6 +88,12 @@ export default function Sidebar({ className }: SidebarProps) {
 
   // Add admin-only navigation items
   if (user?.role === 'admin' || user?.role === 'owner') {
+    navigation.push({
+      name: "Lead Management",
+      href: "/admin/leads",
+      icon: Mail,
+      current: location === "/admin/leads",
+    });
     navigation.push({
       name: "Review Queue",
       href: "/review-queue",
