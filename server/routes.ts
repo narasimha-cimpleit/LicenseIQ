@@ -2485,4 +2485,151 @@ function mapRuleType(aiRuleType: string): string {
   return typeMap[aiRuleType] || 'tiered_pricing';
 }
 
+  // ========================
+  // LEAD CAPTURE ENDPOINTS
+  // ========================
+
+  // Early access signup (public endpoint - no auth required)
+  app.post('/api/early-access-signup', async (req, res) => {
+    try {
+      const { email, name, company } = req.body;
+
+      // Basic validation
+      if (!email || !email.includes('@')) {
+        return res.status(400).json({ error: 'Valid email is required' });
+      }
+
+      const signup = await storage.createEarlyAccessSignup({
+        email,
+        name: name || null,
+        company: company || null,
+        source: 'landing_page',
+      });
+
+      res.json({ 
+        success: true, 
+        message: 'Thank you for your interest! We\'ll be in touch soon.',
+        id: signup.id 
+      });
+    } catch (error) {
+      console.error('Early access signup error:', error);
+      res.status(500).json({ error: 'Failed to process signup' });
+    }
+  });
+
+  // Demo request signup (public endpoint - no auth required)
+  app.post('/api/demo-request', async (req, res) => {
+    try {
+      const { email, planTier } = req.body;
+
+      // Basic validation
+      if (!email || !email.includes('@')) {
+        return res.status(400).json({ error: 'Valid email is required' });
+      }
+
+      if (!planTier) {
+        return res.status(400).json({ error: 'Plan tier is required' });
+      }
+
+      const request = await storage.createDemoRequest({
+        email,
+        planTier,
+        source: 'pricing_section',
+      });
+
+      res.json({ 
+        success: true, 
+        message: 'Thank you! We\'ll contact you soon to schedule your demo.',
+        id: request.id 
+      });
+    } catch (error) {
+      console.error('Demo request error:', error);
+      res.status(500).json({ error: 'Failed to process demo request' });
+    }
+  });
+
+  // Get all early access signups (admin only)
+  app.get('/api/admin/early-access-signups', isAuthenticated, async (req, res) => {
+    try {
+      // Check if user is admin or owner
+      if (req.user?.role !== 'admin' && req.user?.role !== 'owner') {
+        return res.status(403).json({ error: 'Access denied. Admin privileges required.' });
+      }
+
+      const { status } = req.query;
+      const signups = await storage.getAllEarlyAccessSignups(status as string);
+
+      res.json(signups);
+    } catch (error) {
+      console.error('Get early access signups error:', error);
+      res.status(500).json({ error: 'Failed to retrieve signups' });
+    }
+  });
+
+  // Get all demo requests (admin only)
+  app.get('/api/admin/demo-requests', isAuthenticated, async (req, res) => {
+    try {
+      // Check if user is admin or owner
+      if (req.user?.role !== 'admin' && req.user?.role !== 'owner') {
+        return res.status(403).json({ error: 'Access denied. Admin privileges required.' });
+      }
+
+      const { status, planTier } = req.query;
+      const requests = await storage.getAllDemoRequests(status as string, planTier as string);
+
+      res.json(requests);
+    } catch (error) {
+      console.error('Get demo requests error:', error);
+      res.status(500).json({ error: 'Failed to retrieve demo requests' });
+    }
+  });
+
+  // Update early access signup status (admin only)
+  app.patch('/api/admin/early-access-signups/:id', isAuthenticated, async (req, res) => {
+    try {
+      // Check if user is admin or owner
+      if (req.user?.role !== 'admin' && req.user?.role !== 'owner') {
+        return res.status(403).json({ error: 'Access denied. Admin privileges required.' });
+      }
+
+      const { id } = req.params;
+      const { status, notes } = req.body;
+
+      if (!status) {
+        return res.status(400).json({ error: 'Status is required' });
+      }
+
+      const signup = await storage.updateEarlyAccessSignupStatus(id, status, notes);
+
+      res.json(signup);
+    } catch (error) {
+      console.error('Update early access signup error:', error);
+      res.status(500).json({ error: 'Failed to update signup' });
+    }
+  });
+
+  // Update demo request status (admin only)
+  app.patch('/api/admin/demo-requests/:id', isAuthenticated, async (req, res) => {
+    try {
+      // Check if user is admin or owner
+      if (req.user?.role !== 'admin' && req.user?.role !== 'owner') {
+        return res.status(403).json({ error: 'Access denied. Admin privileges required.' });
+      }
+
+      const { id } = req.params;
+      const { status, notes } = req.body;
+
+      if (!status) {
+        return res.status(400).json({ error: 'Status is required' });
+      }
+
+      const request = await storage.updateDemoRequestStatus(id, status, notes);
+
+      res.json(request);
+    } catch (error) {
+      console.error('Update demo request error:', error);
+      res.status(500).json({ error: 'Failed to update demo request' });
+    }
+  });
+
 export default registerRoutes;
