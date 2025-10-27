@@ -2492,13 +2492,16 @@ function mapRuleType(aiRuleType: string): string {
   // Early access signup (public endpoint - no auth required)
   app.post('/api/early-access-signup', async (req, res) => {
     try {
+      console.log('📝 Early access signup request received:', req.body);
       const { email, name, company } = req.body;
 
       // Basic validation
       if (!email || !email.includes('@')) {
+        console.log('❌ Validation failed: invalid email');
         return res.status(400).json({ error: 'Valid email is required' });
       }
 
+      console.log('✅ Validation passed, calling storage.createEarlyAccessSignup...');
       const signup = await storage.createEarlyAccessSignup({
         email,
         name: name || null,
@@ -2506,13 +2509,14 @@ function mapRuleType(aiRuleType: string): string {
         source: 'landing_page',
       });
 
+      console.log('✅ Signup created successfully, returning response:', signup.id);
       res.json({ 
         success: true, 
         message: 'Thank you for your interest! We\'ll be in touch soon.',
         id: signup.id 
       });
     } catch (error) {
-      console.error('Early access signup error:', error);
+      console.error('❌ Early access signup error:', error);
       res.status(500).json({ error: 'Failed to process signup' });
     }
   });

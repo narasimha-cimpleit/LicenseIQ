@@ -1503,10 +1503,12 @@ export class DatabaseStorage implements IStorage {
 
   // Lead capture operations
   async createEarlyAccessSignup(signup: InsertEarlyAccessSignup): Promise<EarlyAccessSignup> {
+    console.log('🔍 createEarlyAccessSignup called with:', signup);
     const [result] = await db
       .insert(earlyAccessSignups)
       .values(signup)
       .returning();
+    console.log('✅ createEarlyAccessSignup result:', result);
     return result;
   }
 
