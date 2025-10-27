@@ -1045,20 +1045,28 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate, onRepr
       ) : (
         <Card className="text-center py-16 border-2 border-dashed border-muted bg-gradient-to-br from-background to-muted/20">
           <CardContent className="space-y-6">
-            <div className="mx-auto w-20 h-20 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg">
+            <div className="mx-auto w-20 h-20 bg-gradient-to-br from-slate-400 to-slate-600 rounded-full flex items-center justify-center shadow-lg">
               <Calculator className="h-10 w-10 text-white" />
             </div>
             <div className="space-y-3">
-              <h3 className="text-xl font-semibold text-foreground">No Royalty Rules Found</h3>
-              <p className="text-muted-foreground max-w-lg mx-auto leading-relaxed">
-                Our AI couldn't extract royalty calculation rules from this contract. The document may not contain 
-                licensing terms, or the rules might be in a complex format that requires manual review.
-              </p>
+              <h3 className="text-xl font-semibold text-foreground">No Payment Rules Detected</h3>
+              <div className="text-muted-foreground max-w-lg mx-auto leading-relaxed space-y-2">
+                <p>
+                  This contract does not appear to contain royalty or license fee payment terms.
+                </p>
+                <p className="text-sm">
+                  This is normal for contracts like service agreements, subcontractor agreements, NDAs, 
+                  employment contracts, and other non-licensing documents.
+                </p>
+                <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                  If this contract should have payment rules, you can reprocess it or add them manually.
+                </p>
+              </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 justify-center items-center pt-4">
               <Button 
                 variant="outline" 
-                className="flex items-center gap-2 border-purple-200 hover:border-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/20"
+                className="flex items-center gap-2"
                 onClick={onReprocess}
                 data-testid="button-reprocess-contract"
               >
@@ -1071,7 +1079,7 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate, onRepr
                 data-testid="button-add-first-rule"
               >
                 <Plus className="h-4 w-4" />
-                Add First Rule
+                Add Manual Rule
               </Button>
             </div>
           </CardContent>

@@ -141,44 +141,78 @@ export class GroqService {
   // =====================================================
   
   async extractDetailedRoyaltyRules(contractText: string): Promise<LicenseRuleExtractionResult> {
-    console.log(`🚀 Starting multi-request royalty extraction...`);
+    console.log(`🚀 Starting contract analysis...`);
     
-    // Step 1: Extract basic contract info (small request)
+    // Step 1: Extract basic contract info and determine if it has royalty terms
     const basicInfo = await this.extractBasicContractInfo(contractText);
-    await this.delay(2000); // 2 second delay between requests
+    console.log(`📄 Contract type detected: ${basicInfo.documentType}, Has royalty terms: ${basicInfo.hasRoyaltyTerms}`);
     
-    // Step 2: Extract tier-based rules (focused request)
-    const tierRules = await this.extractTierBasedRules(contractText);
-    await this.delay(2000);
+    let allRules: RoyaltyRule[] = [];
     
-    // Step 3: Extract payment and calculation rules (focused request)  
-    const paymentRules = await this.extractPaymentCalculationRules(contractText);
-    await this.delay(2000);
+    // Step 2: ONLY extract rules if the contract actually contains royalty/payment terms
+    if (basicInfo.hasRoyaltyTerms === true) {
+      console.log(`💰 Royalty terms detected - extracting payment rules...`);
+      await this.delay(2000); // 2 second delay between requests
+      
+      // Extract tier-based rules
+      const tierRules = await this.extractTierBasedRules(contractText);
+      await this.delay(2000);
+      
+      // Extract payment and calculation rules  
+      const paymentRules = await this.extractPaymentCalculationRules(contractText);
+      await this.delay(2000);
+      
+      // Extract special adjustments
+      const adjustmentRules = await this.extractSpecialAdjustments(contractText);
+      
+      // Combine all results
+      allRules = [...tierRules, ...paymentRules, ...adjustmentRules];
+      
+      // Filter out low-confidence or empty rules
+      allRules = allRules.filter(rule => 
+        rule.confidence >= 0.6 && 
+        rule.sourceSpan?.text && 
+        rule.sourceSpan.text.trim().length > 0
+      );
+      
+      console.log(`✅ Rule extraction complete: ${allRules.length} valid rules found`);
+    } else {
+      console.log(`ℹ️ No royalty terms detected - skipping rule extraction`);
+    }
     
-    // Step 4: Extract special adjustments (focused request)
-    const adjustmentRules = await this.extractSpecialAdjustments(contractText);
+    // Map the flexible AI response to the expected schema format
+    const documentType: 'license' | 'royalty_agreement' | 'revenue_share' | 'other' = 
+      basicInfo.hasRoyaltyTerms === true ? 'license' : 'other';
     
-    // Combine all results
-    const allRules = [...tierRules, ...paymentRules, ...adjustmentRules];
-    
-    console.log(`✅ Multi-request extraction complete: ${allRules.length} rules found`);
+    // Map dynamic party structure to expected licensor/licensee format
+    let parties;
+    if (basicInfo.parties) {
+      const party1 = basicInfo.parties.party1 || basicInfo.parties;
+      const party2 = basicInfo.parties.party2;
+      parties = {
+        licensor: typeof party1 === 'object' ? party1.name : (party1 || 'Not specified'),
+        licensee: typeof party2 === 'object' ? party2.name : (party2 || 'Not specified')
+      };
+    } else {
+      parties = { licensor: 'Not specified', licensee: 'Not specified' };
+    }
     
     return {
-      documentType: basicInfo.documentType,
-      licenseType: basicInfo.licenseType,
-      parties: basicInfo.parties,
+      documentType,
+      licenseType: basicInfo.contractTitle || basicInfo.documentType || 'Contract',
+      parties,
       effectiveDate: basicInfo.effectiveDate,
       expirationDate: basicInfo.expirationDate,
       rules: allRules,
-      currency: basicInfo.currency,
-      paymentTerms: basicInfo.paymentTerms,
-      reportingRequirements: basicInfo.reportingRequirements,
+      currency: basicInfo.currency || 'USD',
+      paymentTerms: basicInfo.paymentTerms || 'Not specified',
+      reportingRequirements: [],
       extractionMetadata: {
         totalRulesFound: allRules.length,
         avgConfidence: allRules.length > 0 
           ? allRules.reduce((sum, rule) => sum + rule.confidence, 0) / allRules.length
-          : 0.8,
-        processingTime: 12, // Estimated for multi-request
+          : 0,
+        processingTime: basicInfo.hasRoyaltyTerms ? 12 : 2,
         ruleComplexity: allRules.length > 5 ? 'complex' : allRules.length > 2 ? 'moderate' : 'simple'
       }
     };
@@ -189,101 +223,119 @@ export class GroqService {
   }
 
   private async extractBasicContractInfo(contractText: string): Promise<any> {
-    const prompt = `Extract basic contract information from this licensing agreement. Focus only on basic details.
+    const prompt = `Analyze this contract and identify its type. DO NOT assume it is a license agreement.
 
 Contract Text:
 ${contractText.substring(0, 3000)}
 
-Return JSON with these fields only:
+Identify the actual contract type (e.g., "License Agreement", "Service Agreement", "Subcontractor Agreement", "Employment Contract", "NDA", etc.) and extract the appropriate parties based on the contract type.
+
+CRITICAL: 
+- If this is NOT a license/royalty agreement, set "hasRoyaltyTerms" to false
+- Only set "hasRoyaltyTerms" to true if the contract explicitly contains royalty, license fees, or revenue-sharing payment terms
+- Do NOT fabricate party information - extract exactly what is in the contract
+- Use appropriate party labels for the contract type (e.g., "contractor" and "client" for service agreements, "employer" and "employee" for employment contracts)
+
+Return JSON:
 {
-  "documentType": "license",
-  "licenseType": "specific type found",
-  "parties": { "licensor": "name", "licensee": "name" },
+  "documentType": "actual type (license/service/subcontractor/employment/other)",
+  "contractTitle": "exact title from document",
+  "hasRoyaltyTerms": true or false,
+  "parties": { 
+    "party1": {"name": "exact name", "role": "actual role"},
+    "party2": {"name": "exact name", "role": "actual role"}
+  },
   "effectiveDate": "date or null",
   "expirationDate": "date or null", 
-  "currency": "USD",
-  "paymentTerms": "quarterly/monthly/etc",
-  "reportingRequirements": []
+  "currency": "USD or null",
+  "paymentTerms": "only if found, otherwise null"
 }
 
-Return only valid JSON.`;
+If no information found, return null for that field. Return only valid JSON.`;
 
     try {
       const response = await this.makeRequest([
-        { role: 'system', content: 'Extract basic contract info. Return only JSON.' },
+        { role: 'system', content: 'You are a precise contract analyzer. Extract only what exists in the document. Do NOT assume license/royalty terms. Return only JSON.' },
         { role: 'user', content: prompt }
-      ], 0.1, 1000); // Reduced tokens
+      ], 0.1, 1000);
       
-      return this.extractAndRepairJSON(response, {
-        documentType: 'license',
-        licenseType: 'License Agreement',
-        parties: { licensor: 'Not specified', licensee: 'Not specified' },
-        effectiveDate: null,
-        expirationDate: null,
-        currency: 'USD',
-        paymentTerms: 'Not specified',
-        reportingRequirements: []
-      });
+      const extracted = this.extractAndRepairJSON(response, null);
+      
+      // If extraction failed completely, return a safe default
+      if (!extracted) {
+        return {
+          documentType: 'unknown',
+          contractTitle: 'Unknown Contract',
+          hasRoyaltyTerms: false,
+          parties: null,
+          effectiveDate: null,
+          expirationDate: null,
+          currency: null,
+          paymentTerms: null
+        };
+      }
+      
+      return extracted;
     } catch (error) {
       console.error('Basic info extraction failed:', error);
       return {
-        documentType: 'license',
-        licenseType: 'License Agreement',
-        parties: { licensor: 'Not specified', licensee: 'Not specified' },
+        documentType: 'unknown',
+        contractTitle: 'Unknown Contract',
+        hasRoyaltyTerms: false,
+        parties: null,
         effectiveDate: null,
         expirationDate: null,
-        currency: 'USD',
-        paymentTerms: 'Not specified',
-        reportingRequirements: []
+        currency: null,
+        paymentTerms: null
       };
     }
   }
 
   private async extractTierBasedRules(contractText: string): Promise<RoyaltyRule[]> {
-    const prompt = `Extract TIER-BASED royalty rules from this contract. Look for Tier 1, Tier 2, etc. with specific rates and product categories.
+    const prompt = `Extract TIER-BASED royalty/license fee rules ONLY if they explicitly exist in this contract.
 
 Contract Text:
 ${contractText}
 
-Find tier-based rules like:
-- "Tier 1 — Ornamental Trees & Shrubs: $1.25 per unit"
-- "Tier 2 — Perennials: $1.10 per unit" 
-- Volume thresholds and tier conditions
+CRITICAL REQUIREMENTS:
+- ONLY extract rules if you find explicit tier-based payment structures in the contract
+- If NO tier-based rules exist, return an empty array []
+- Do NOT fabricate or assume rules
+- Each rule MUST have actual source text from the contract in sourceSpan.text
+- Set confidence below 0.6 if you're uncertain
 
-IMPORTANT: ruleType must be one of: "percentage", "tiered", "minimum_guarantee", "cap", "deduction", "fixed_fee"
+Look for tier structures like:
+- "Tier 1: $1.25 per unit for products A, B, C"
+- "Volume tier: 0-5000 units = 5%, 5001+ units = 7%"
+- "Product tier 1 rate: $X, Product tier 2 rate: $Y"
 
-Return JSON array of rules:
+ruleType must be one of: "percentage", "tiered", "minimum_guarantee", "cap", "deduction", "fixed_fee"
+
+Return JSON array (empty if no rules found):
 [
   {
     "ruleType": "tiered",
-    "ruleName": "Tier 1 — Ornamental Trees & Shrubs",
-    "description": "full description with rates",
-    "conditions": {
-      "productCategories": ["Ornamental Trees", "Shrubs"],
-      "salesVolumeMin": 5000,
-      "territories": ["Primary Territory"],
-      "currency": "USD"
-    },
-    "calculation": {
-      "tiers": [{"min": 0, "max": 4999, "rate": 1.25}, {"min": 5000, "rate": 1.10}],
-      "formula": "per unit * tier rate"
-    },
+    "ruleName": "exact name from contract",
+    "description": "exact description",
+    "conditions": {...},
+    "calculation": {...},
     "priority": 1,
-    "sourceSpan": {"section": "found section", "text": "extracted text"},
-    "confidence": 0.9
+    "sourceSpan": {"section": "actual section name", "text": "verbatim text from contract"},
+    "confidence": 0.6 to 1.0
   }
 ]
 
-Return only JSON array.`;
+If NO tier-based rules exist, return: []`;
 
     try {
       console.log(`🔍 Extracting tier-based rules...`);
       const response = await this.makeRequest([
-        { role: 'system', content: 'Extract tier-based royalty rules. Return only JSON array.' },
+        { role: 'system', content: 'Extract ONLY rules that explicitly exist. Do NOT fabricate. Return empty array [] if none found. Return only JSON.' },
         { role: 'user', content: prompt }
       ], 0.1, 1500);
       
-      return this.extractAndRepairJSON(response, []);
+      const rules = this.extractAndRepairJSON(response, []);
+      return Array.isArray(rules) ? rules : [];
     } catch (error) {
       console.error('Tier rules extraction failed:', error);
       return [];
@@ -291,43 +343,51 @@ Return only JSON array.`;
   }
 
   private async extractPaymentCalculationRules(contractText: string): Promise<RoyaltyRule[]> {
-    const prompt = `Extract PAYMENT and CALCULATION rules from this contract. Look for minimum guarantees, payment schedules, and calculation formulas.
+    const prompt = `Extract PAYMENT CALCULATION rules ONLY if they explicitly exist in this contract.
 
 Contract Text:
 ${contractText}
 
-Find rules like:
-- Minimum annual guarantees
-- Quarterly payment requirements  
-- Calculation formulas
-- Container size multipliers
+CRITICAL REQUIREMENTS:
+- ONLY extract if you find explicit payment/royalty calculation rules in the contract
+- If NO payment calculation rules exist, return an empty array []
+- Do NOT fabricate or assume rules
+- Each rule MUST have actual source text from the contract in sourceSpan.text
+- Set confidence below 0.6 if you're uncertain
 
-IMPORTANT: ruleType must be one of: "percentage", "tiered", "minimum_guarantee", "cap", "deduction", "fixed_fee"
+Look for calculation rules like:
+- "Minimum annual guarantee: $85,000"
+- "Royalty rate: 5% of net sales"
+- "Container size multiplier: 1 gallon = $1.00, 5 gallon = $3.50"
+- "Quarterly payment due within 30 days of quarter end"
 
-Return JSON array of rules:
+ruleType must be one of: "percentage", "tiered", "minimum_guarantee", "cap", "deduction", "fixed_fee"
+
+Return JSON array (empty if no rules found):
 [
   {
     "ruleType": "minimum_guarantee",
-    "ruleName": "Annual Minimum Guarantee", 
-    "description": "minimum payment required annually",
-    "conditions": {"timeperiod": "annually", "currency": "USD"},
-    "calculation": {"amount": 85000, "formula": "minimum annual payment"},
+    "ruleName": "exact name from contract",
+    "description": "exact description",
+    "conditions": {...},
+    "calculation": {...},
     "priority": 2,
-    "sourceSpan": {"section": "found section", "text": "extracted text"},
-    "confidence": 0.9
+    "sourceSpan": {"section": "actual section name", "text": "verbatim text from contract"},
+    "confidence": 0.6 to 1.0
   }
 ]
 
-Return only JSON array.`;
+If NO payment calculation rules exist, return: []`;
 
     try {
       console.log(`💰 Extracting payment calculation rules...`);
       const response = await this.makeRequest([
-        { role: 'system', content: 'Extract payment and calculation rules. Return only JSON array.' },
+        { role: 'system', content: 'Extract ONLY rules that explicitly exist. Do NOT fabricate. Return empty array [] if none found. Return only JSON.' },
         { role: 'user', content: prompt }
       ], 0.1, 1500);
       
-      return this.extractAndRepairJSON(response, []);
+      const rules = this.extractAndRepairJSON(response, []);
+      return Array.isArray(rules) ? rules : [];
     } catch (error) {
       console.error('Payment rules extraction failed:', error);
       return [];
@@ -335,41 +395,49 @@ Return only JSON array.`;
   }
 
   private async extractSpecialAdjustments(contractText: string): Promise<RoyaltyRule[]> {
-    const prompt = `Extract SPECIAL ADJUSTMENTS and PREMIUM rules from this contract. Look for seasonal adjustments, territory premiums, organic premiums.
+    const prompt = `Extract SPECIAL ADJUSTMENTS and PREMIUMS ONLY if they explicitly exist in this contract.
 
 Contract Text:
 ${contractText}
 
-Find adjustment rules like:
-- Seasonal adjustments (Spring +10-15%, Fall, Holiday)
-- Territory premiums  
-- Organic premiums (+25%)
-- Special multipliers
+CRITICAL REQUIREMENTS:
+- ONLY extract if you find explicit special adjustments/premiums in the contract
+- If NO special adjustment rules exist, return an empty array []
+- Do NOT fabricate or assume rules
+- Each rule MUST have actual source text from the contract in sourceSpan.text
+- Set confidence below 0.6 if you're uncertain
 
-Return JSON array of rules:
+Look for adjustment rules like:
+- "Spring season premium: additional 15% of base rate"
+- "Organic certification bonus: +25%"
+- "Territory premium for West Coast: +$0.50 per unit"
+- "Holiday multiplier: 1.2x standard rate"
+
+Return JSON array (empty if no rules found):
 [
   {
     "ruleType": "percentage",
-    "ruleName": "Spring Seasonal Premium",
-    "description": "seasonal adjustment for spring sales",
-    "conditions": {"timeperiod": "Spring", "currency": "USD"},
-    "calculation": {"rate": 15, "formula": "base rate + 15%"},
+    "ruleName": "exact name from contract",
+    "description": "exact description",
+    "conditions": {...},
+    "calculation": {...},
     "priority": 3,
-    "sourceSpan": {"section": "found section", "text": "extracted text"},
-    "confidence": 0.85
+    "sourceSpan": {"section": "actual section name", "text": "verbatim text from contract"},
+    "confidence": 0.6 to 1.0
   }
 ]
 
-Return only JSON array.`;
+If NO special adjustments exist, return: []`;
 
     try {
       console.log(`🌟 Extracting special adjustments...`);
       const response = await this.makeRequest([
-        { role: 'system', content: 'Extract special adjustments and premiums. Return only JSON array.' },
+        { role: 'system', content: 'Extract ONLY adjustments that explicitly exist. Do NOT fabricate. Return empty array [] if none found. Return only JSON.' },
         { role: 'user', content: prompt }
       ], 0.1, 1500);
       
-      return this.extractAndRepairJSON(response, []);
+      const rules = this.extractAndRepairJSON(response, []);
+      return Array.isArray(rules) ? rules : [];
     } catch (error) {
       console.error('Special adjustments extraction failed:', error);
       return [];
