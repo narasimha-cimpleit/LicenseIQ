@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { apiRequest } from "@/lib/queryClient";
+import licenseIQLogo from "@assets/image_1761582089199.png";
 import { 
   Brain, Shield, FileText, BarChart3, 
   CheckCircle, ArrowRight, Sparkles, 
@@ -123,11 +124,8 @@ export default function Landing() {
       <nav className="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <FileText className="h-8 w-8 text-blue-600" />
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                LicenseIQ
-              </span>
+            <div className="flex items-center">
+              <img src={licenseIQLogo} alt="LicenseIQ" className="h-10" />
             </div>
             <Link href="/auth">
               <Button 
