@@ -32,6 +32,12 @@ License IQ Research Platform is a SaaS web application for intelligent contract 
   - Updated text colors from white to dark slate for better readability
   - Redesigned form inputs with clean white backgrounds and proper borders
   - Enhanced button styling with blue-to-indigo gradient
+- Added professional scroll animations to landing page:
+  - Staggered fade-in animations on feature cards for smooth cascading effect
+  - Animated pricing cards with delayed entrance timing
+  - Smooth slide-in animations on early access section
+  - All animations use subtle, professional timing for polished UX
+- Increased landing page navbar logo to h-14 (56px) for better visibility
 
 ## October 25, 2025 - Dynamic Contract Processing System
 

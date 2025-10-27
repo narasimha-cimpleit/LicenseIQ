@@ -125,7 +125,7 @@ export default function Landing() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <img src={licenseIQLogo} alt="LicenseIQ" className="h-12" />
+              <img src={licenseIQLogo} alt="LicenseIQ" className="h-14" />
             </div>
             <Link href="/auth">
               <Button 
@@ -236,7 +236,7 @@ export default function Landing() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Feature 1 - AI Contract Reading */}
-            <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-blue-200 dark:hover:border-blue-800">
+            <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-blue-200 dark:hover:border-blue-800 animate-in fade-in slide-in-from-bottom-4 duration-700">
               <CardContent className="p-6 space-y-4">
                 <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
                   <Brain className="h-7 w-7 text-white" />
@@ -253,7 +253,7 @@ export default function Landing() {
             </Card>
 
             {/* Feature 2 - Sales Matching */}
-            <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-green-200 dark:hover:border-green-800">
+            <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-green-200 dark:hover:border-green-800 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
               <CardContent className="p-6 space-y-4">
                 <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
                   <Target className="h-7 w-7 text-white" />
@@ -270,7 +270,7 @@ export default function Landing() {
             </Card>
 
             {/* Feature 3 - Payment Calculator */}
-            <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-purple-200 dark:hover:border-purple-800">
+            <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-purple-200 dark:hover:border-purple-800 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
               <CardContent className="p-6 space-y-4">
                 <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
                   <Calculator className="h-7 w-7 text-white" />
@@ -287,7 +287,7 @@ export default function Landing() {
             </Card>
 
             {/* Feature 4 - PDF Invoices */}
-            <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-indigo-200 dark:hover:border-indigo-800">
+            <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-indigo-200 dark:hover:border-indigo-800 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
               <CardContent className="p-6 space-y-4">
                 <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
                   <Receipt className="h-7 w-7 text-white" />
@@ -304,7 +304,7 @@ export default function Landing() {
             </Card>
 
             {/* Feature 5 - Contract Q&A */}
-            <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-pink-200 dark:hover:border-pink-800">
+            <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-pink-200 dark:hover:border-pink-800 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150">
               <CardContent className="p-6 space-y-4">
                 <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-pink-500 to-pink-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
                   <MessageSquare className="h-7 w-7 text-white" />
@@ -321,7 +321,7 @@ export default function Landing() {
             </Card>
 
             {/* Feature 6 - Rules Management */}
-            <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-orange-200 dark:hover:border-orange-800">
+            <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-orange-200 dark:hover:border-orange-800 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-250">
               <CardContent className="p-6 space-y-4">
                 <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
                   <Settings className="h-7 w-7 text-white" />
@@ -876,7 +876,7 @@ export default function Landing() {
 
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {/* LicenseIQ */}
-            <Card className="border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
+            <Card className="border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 animate-in fade-in slide-in-from-bottom-8 duration-700">
               <CardContent className="p-8">
                 <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">LicenseIQ</h3>
                 <p className="text-slate-600 dark:text-slate-300 mb-6 min-h-[48px]">For finance teams needing control, live visibility, and audit-readiness</p>
@@ -926,7 +926,7 @@ export default function Landing() {
             </Card>
 
             {/* LicenseIQ Plus */}
-            <Card className="border-2 border-teal-500 dark:border-teal-600 relative shadow-xl bg-white dark:bg-slate-900">
+            <Card className="border-2 border-teal-500 dark:border-teal-600 relative shadow-xl bg-white dark:bg-slate-900 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-150">
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                 <Badge className="bg-teal-600 text-white px-4 py-1">Most popular</Badge>
               </div>
@@ -983,7 +983,7 @@ export default function Landing() {
             </Card>
 
             {/* LicenseIQ Ultra */}
-            <Card className="border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
+            <Card className="border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300">
               <CardContent className="p-8">
                 <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">LicenseIQ <span className="text-purple-600">Ultra</span></h3>
                 <p className="text-slate-600 dark:text-slate-300 mb-6 min-h-[48px]">For larger teams preparing for IPO, handling more finance complexity</p>
@@ -1103,7 +1103,7 @@ export default function Landing() {
       {/* Beta Program Section */}
       <section id="early-access" className="py-20 md:py-32 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-blue-950 dark:to-indigo-950">
         <div className="container mx-auto px-4 text-center">
-          <div className="max-w-3xl mx-auto space-y-8">
+          <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
             <div className="inline-flex items-center space-x-2 bg-blue-600/10 dark:bg-blue-600/20 px-4 py-2 rounded-full">
               <Rocket className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Limited Beta Program - Q4 2025</span>
