@@ -564,11 +564,11 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* lIQ Agent Highlight Section */}
+      {/* lIQ Agent - AI Copilot Section */}
       <section className="py-20 md:py-32 bg-gradient-to-br from-purple-50 via-white to-pink-50 dark:from-purple-950/20 dark:via-slate-950 dark:to-pink-950/20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <Badge className="mb-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white">AI-Powered Intelligence</Badge>
+            <Badge className="mb-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white">AI Copilot</Badge>
             <h2 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4">
               Meet{" "}
               <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
@@ -576,13 +576,115 @@ export default function Landing() {
               </span>
             </h2>
             <p className="text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-              Your AI copilot that transforms contracts into executable rules and automated workflows
+              Your intelligent AI assistant available across the entire platform — ask questions, get instant answers, and work smarter
+            </p>
+          </div>
+
+          {/* lIQ Agent Visual */}
+          <div className="max-w-4xl mx-auto mb-12">
+            <div className="relative">
+              {/* Central lIQ Agent */}
+              <div className="flex flex-col items-center text-center mb-12">
+                <div className="w-32 h-32 bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl flex items-center justify-center mb-6 shadow-2xl animate-pulse">
+                  <Sparkles className="h-16 w-16 text-white" />
+                </div>
+                <h3 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">lIQ Agent</h3>
+                <p className="text-lg text-slate-600 dark:text-slate-300">Available everywhere you work</p>
+              </div>
+
+              {/* Example Questions */}
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-lg border-2 border-purple-200 dark:border-purple-800">
+                  <div className="flex items-start gap-3 mb-3">
+                    <MessageSquare className="h-6 w-6 text-purple-600 flex-shrink-0 mt-1" />
+                    <div>
+                      <p className="font-semibold text-slate-900 dark:text-white mb-1">Contextual Q&A</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">"What royalty rate applies to Product X in EMEA?"</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-lg border-2 border-pink-200 dark:border-pink-800">
+                  <div className="flex items-start gap-3 mb-3">
+                    <Search className="h-6 w-6 text-pink-600 flex-shrink-0 mt-1" />
+                    <div>
+                      <p className="font-semibold text-slate-900 dark:text-white mb-1">Smart Search</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">"Find all contracts with volume discounts"</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-lg border-2 border-indigo-200 dark:border-indigo-800">
+                  <div className="flex items-start gap-3 mb-3">
+                    <FileCheck className="h-6 w-6 text-indigo-600 flex-shrink-0 mt-1" />
+                    <div>
+                      <p className="font-semibold text-slate-900 dark:text-white mb-1">Instant Insights</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">"What are the payment terms in Contract ABC?"</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-lg border-2 border-purple-200 dark:border-purple-800">
+                  <div className="flex items-start gap-3 mb-3">
+                    <Brain className="h-6 w-6 text-purple-600 flex-shrink-0 mt-1" />
+                    <div>
+                      <p className="font-semibold text-slate-900 dark:text-white mb-1">Always Learning</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">"Show me similar clauses across all contracts"</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Key Features */}
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            <div className="text-center">
+              <div className="inline-flex p-4 bg-purple-100 dark:bg-purple-900/30 rounded-xl mb-4">
+                <Sparkles className="h-8 w-8 text-purple-600" />
+              </div>
+              <h4 className="font-bold text-slate-900 dark:text-white mb-2">Omnipresent</h4>
+              <p className="text-sm text-slate-600 dark:text-slate-300">Access lIQ Agent from any page — always ready to help</p>
+            </div>
+
+            <div className="text-center">
+              <div className="inline-flex p-4 bg-pink-100 dark:bg-pink-900/30 rounded-xl mb-4">
+                <Target className="h-8 w-8 text-pink-600" />
+              </div>
+              <h4 className="font-bold text-slate-900 dark:text-white mb-2">Context-Aware</h4>
+              <p className="text-sm text-slate-600 dark:text-slate-300">Understands your contracts and provides accurate answers</p>
+            </div>
+
+            <div className="text-center">
+              <div className="inline-flex p-4 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl mb-4">
+                <Rocket className="h-8 w-8 text-indigo-600" />
+              </div>
+              <h4 className="font-bold text-slate-900 dark:text-white mb-2">Instant Responses</h4>
+              <p className="text-sm text-slate-600 dark:text-slate-300">Get answers in seconds with confidence scores and sources</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Automation Workflow Section */}
+      <section className="py-20 md:py-32 bg-white dark:bg-slate-950">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <Badge className="mb-4 bg-blue-600 text-white">End-to-End Automation</Badge>
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4">
+              From{" "}
+              <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                Contract to Cash
+              </span>
+            </h2>
+            <p className="text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
+              Fully automated workflow that transforms PDFs into payments
             </p>
           </div>
 
           {/* Automation Flow Diagram */}
-          <div className="max-w-6xl mx-auto mb-12">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+          <div className="max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center mb-8">
               {/* Contract */}
               <div className="flex flex-col items-center text-center">
                 <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
@@ -593,22 +695,22 @@ export default function Landing() {
               </div>
 
               <div className="flex justify-center items-center">
-                <ArrowRight className="h-8 w-8 text-purple-500 md:block hidden" />
-                <ChevronDown className="h-8 w-8 text-purple-500 md:hidden" />
+                <ArrowRight className="h-8 w-8 text-blue-500 md:block hidden" />
+                <ChevronDown className="h-8 w-8 text-blue-500 md:hidden" />
               </div>
 
               {/* AI */}
               <div className="flex flex-col items-center text-center">
-                <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg animate-pulse">
-                  <Sparkles className="h-10 w-10 text-white" />
+                <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+                  <Brain className="h-10 w-10 text-white" />
                 </div>
-                <h4 className="font-bold text-slate-900 dark:text-white mb-1">lIQ Agent</h4>
-                <p className="text-xs text-slate-600 dark:text-slate-400">AI Analysis</p>
+                <h4 className="font-bold text-slate-900 dark:text-white mb-1">AI Analysis</h4>
+                <p className="text-xs text-slate-600 dark:text-slate-400">Extract Terms</p>
               </div>
 
               <div className="flex justify-center items-center">
-                <ArrowRight className="h-8 w-8 text-purple-500 md:block hidden" />
-                <ChevronDown className="h-8 w-8 text-purple-500 md:hidden" />
+                <ArrowRight className="h-8 w-8 text-blue-500 md:block hidden" />
+                <ChevronDown className="h-8 w-8 text-blue-500 md:hidden" />
               </div>
 
               {/* Rules */}
@@ -621,22 +723,22 @@ export default function Landing() {
               </div>
             </div>
 
-            <div className="flex justify-center my-6">
-              <ChevronDown className="h-8 w-8 text-purple-500" />
+            <div className="flex justify-center mb-8">
+              <ChevronDown className="h-8 w-8 text-blue-500" />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* ERP/CRM Integration */}
-              <div className="flex flex-col items-center text-center bg-white dark:bg-slate-900 rounded-xl p-6 shadow-lg">
+              <div className="flex flex-col items-center text-center bg-slate-50 dark:bg-slate-900 rounded-xl p-6 shadow-lg border-2 border-slate-200 dark:border-slate-700">
                 <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mb-4">
                   <Building2 className="h-8 w-8 text-white" />
                 </div>
                 <h4 className="font-bold text-slate-900 dark:text-white mb-2">ERP/CRM Sync</h4>
-                <p className="text-sm text-slate-600 dark:text-slate-400">Connect to SAP, Oracle, NetSuite, Salesforce</p>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Connects to SAP, Oracle, NetSuite, Salesforce</p>
               </div>
 
               {/* Payment Calculation */}
-              <div className="flex flex-col items-center text-center bg-white dark:bg-slate-900 rounded-xl p-6 shadow-lg">
+              <div className="flex flex-col items-center text-center bg-slate-50 dark:bg-slate-900 rounded-xl p-6 shadow-lg border-2 border-slate-200 dark:border-slate-700">
                 <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center mb-4">
                   <DollarSign className="h-8 w-8 text-white" />
                 </div>
@@ -645,40 +747,13 @@ export default function Landing() {
               </div>
 
               {/* Audit Report */}
-              <div className="flex flex-col items-center text-center bg-white dark:bg-slate-900 rounded-xl p-6 shadow-lg">
+              <div className="flex flex-col items-center text-center bg-slate-50 dark:bg-slate-900 rounded-xl p-6 shadow-lg border-2 border-slate-200 dark:border-slate-700">
                 <div className="w-16 h-16 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center mb-4">
                   <FileOutput className="h-8 w-8 text-white" />
                 </div>
                 <h4 className="font-bold text-slate-900 dark:text-white mb-2">Audit Report</h4>
                 <p className="text-sm text-slate-600 dark:text-slate-400">Complete audit trail & compliance documentation</p>
               </div>
-            </div>
-          </div>
-
-          {/* lIQ Agent Capabilities */}
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto mt-16">
-            <div className="text-center">
-              <div className="inline-flex p-4 bg-purple-100 dark:bg-purple-900/30 rounded-xl mb-4">
-                <Brain className="h-8 w-8 text-purple-600" />
-              </div>
-              <h4 className="font-bold text-slate-900 dark:text-white mb-2">Zero-Shot Learning</h4>
-              <p className="text-sm text-slate-600 dark:text-slate-300">Works with ANY contract format - no templates required</p>
-            </div>
-
-            <div className="text-center">
-              <div className="inline-flex p-4 bg-pink-100 dark:bg-pink-900/30 rounded-xl mb-4">
-                <Target className="h-8 w-8 text-pink-600" />
-              </div>
-              <h4 className="font-bold text-slate-900 dark:text-white mb-2">High Accuracy</h4>
-              <p className="text-sm text-slate-600 dark:text-slate-300">AI-powered extraction with confidence scoring and human review</p>
-            </div>
-
-            <div className="text-center">
-              <div className="inline-flex p-4 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl mb-4">
-                <Zap className="h-8 w-8 text-indigo-600" />
-              </div>
-              <h4 className="font-bold text-slate-900 dark:text-white mb-2">Continuous Learning</h4>
-              <p className="text-sm text-slate-600 dark:text-slate-300">Gets smarter with every contract you process</p>
             </div>
           </div>
         </div>
