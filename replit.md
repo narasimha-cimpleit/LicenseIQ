@@ -4,6 +4,13 @@ License IQ Research Platform is a SaaS web application for intelligent contract 
 
 # Recent Changes
 
+## October 27, 2025 - Branding Updates
+- Updated landing page to be industry-agnostic: "Built for enterprise leaders" instead of "Built for manufacturing leaders"
+- Replaced text-based navigation with professional LicenseIQ logo across all pages
+- Removed "LicenseIQ" text next to logo in dashboard sidebar for cleaner appearance
+- Updated PDF invoice footers with "Agentic AI for Financial Contracts" tagline
+- Consistent logo-only branding throughout application (landing page, dashboard, auth pages)
+
 ## October 25, 2025 - Dynamic Contract Processing System
 
 **Phase 1: Knowledge Graph Database Schema**
