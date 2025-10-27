@@ -780,42 +780,45 @@ export default function Landing() {
 
           {/* Automation Flow Diagram */}
           <div className="max-w-6xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center mb-8">
-              {/* Contract */}
-              <div className="flex flex-col items-center text-center">
-                <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
-                  <FileText className="h-10 w-10 text-white" />
+            {/* Top Row - Contract to Rules (All in one box) */}
+            <div className="bg-slate-50 dark:bg-slate-900 rounded-xl p-8 shadow-lg border-2 border-slate-200 dark:border-slate-700 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                {/* Contract */}
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+                    <FileText className="h-10 w-10 text-white" />
+                  </div>
+                  <h4 className="font-bold text-slate-900 dark:text-white mb-1">Contract</h4>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">Upload PDF</p>
                 </div>
-                <h4 className="font-bold text-slate-900 dark:text-white mb-1">Contract</h4>
-                <p className="text-xs text-slate-600 dark:text-slate-400">Upload PDF</p>
-              </div>
 
-              <div className="flex justify-center items-center">
-                <ArrowRight className="h-8 w-8 text-blue-500 md:block hidden" />
-                <ChevronDown className="h-8 w-8 text-blue-500 md:hidden" />
-              </div>
-
-              {/* AI */}
-              <div className="flex flex-col items-center text-center bg-slate-50 dark:bg-slate-900 rounded-xl p-6 shadow-lg border-2 border-indigo-200 dark:border-indigo-700">
-                <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
-                  <Brain className="h-10 w-10 text-white" />
+                <div className="flex justify-center items-center">
+                  <ArrowRight className="h-8 w-8 text-blue-500 md:block hidden" />
+                  <ChevronDown className="h-8 w-8 text-blue-500 md:hidden" />
                 </div>
-                <h4 className="font-bold text-slate-900 dark:text-white mb-2">AI Analysis</h4>
-                <p className="text-sm text-slate-600 dark:text-slate-400">Extract Terms</p>
-              </div>
 
-              <div className="flex justify-center items-center">
-                <ArrowRight className="h-8 w-8 text-blue-500 md:block hidden" />
-                <ChevronDown className="h-8 w-8 text-blue-500 md:hidden" />
-              </div>
-
-              {/* Rules */}
-              <div className="flex flex-col items-center text-center">
-                <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
-                  <Settings className="h-10 w-10 text-white" />
+                {/* AI */}
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+                    <Brain className="h-10 w-10 text-white" />
+                  </div>
+                  <h4 className="font-bold text-slate-900 dark:text-white mb-1">AI Analysis</h4>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">Extract Terms</p>
                 </div>
-                <h4 className="font-bold text-slate-900 dark:text-white mb-1">Rules</h4>
-                <p className="text-xs text-slate-600 dark:text-slate-400">Auto-Generated</p>
+
+                <div className="flex justify-center items-center">
+                  <ArrowRight className="h-8 w-8 text-blue-500 md:block hidden" />
+                  <ChevronDown className="h-8 w-8 text-blue-500 md:hidden" />
+                </div>
+
+                {/* Rules */}
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+                    <Settings className="h-10 w-10 text-white" />
+                  </div>
+                  <h4 className="font-bold text-slate-900 dark:text-white mb-1">Rules</h4>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">Auto-Generated</p>
+                </div>
               </div>
             </div>
 
