@@ -20,6 +20,8 @@ import {
   humanReviewTasks,
   ruleDefinitions,
   ruleValidationEvents,
+  earlyAccessSignups,
+  demoRequests,
   type User,
   type InsertUser,
   type Contract,
@@ -49,6 +51,10 @@ import {
   type InsertSalesData,
   type RoyaltyRule,
   type InsertRoyaltyRule,
+  type EarlyAccessSignup,
+  type InsertEarlyAccessSignup,
+  type DemoRequest,
+  type InsertDemoRequest,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, ilike, count, gte, sql } from "drizzle-orm";
@@ -230,6 +236,14 @@ export interface IStorage {
   rejectReviewTask(taskId: string, userId: string, reviewNotes: string): Promise<void>;
   getDynamicRulesByContract(contractId: string): Promise<any[]>;
   getRuleValidationEvents(ruleId: string): Promise<any[]>;
+  
+  // Lead capture operations
+  createEarlyAccessSignup(signup: InsertEarlyAccessSignup): Promise<EarlyAccessSignup>;
+  getAllEarlyAccessSignups(status?: string): Promise<EarlyAccessSignup[]>;
+  updateEarlyAccessSignupStatus(id: string, status: string, notes?: string): Promise<EarlyAccessSignup>;
+  createDemoRequest(request: InsertDemoRequest): Promise<DemoRequest>;
+  getAllDemoRequests(status?: string, planTier?: string): Promise<DemoRequest[]>;
+  updateDemoRequestStatus(id: string, status: string, notes?: string): Promise<DemoRequest>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1485,6 +1499,87 @@ export class DatabaseStorage implements IStorage {
       orderBy: (events, { desc }) => [desc(events.createdAt)],
     });
     return events;
+  }
+
+  // Lead capture operations
+  async createEarlyAccessSignup(signup: InsertEarlyAccessSignup): Promise<EarlyAccessSignup> {
+    const [result] = await db
+      .insert(earlyAccessSignups)
+      .values(signup)
+      .returning();
+    return result;
+  }
+
+  async getAllEarlyAccessSignups(status?: string): Promise<EarlyAccessSignup[]> {
+    let query = db.select().from(earlyAccessSignups);
+    
+    if (status) {
+      query = query.where(eq(earlyAccessSignups.status, status));
+    }
+    
+    return await query.orderBy(desc(earlyAccessSignups.createdAt));
+  }
+
+  async updateEarlyAccessSignupStatus(id: string, status: string, notes?: string): Promise<EarlyAccessSignup> {
+    const updateData: any = {
+      status,
+      updatedAt: new Date(),
+    };
+    
+    if (notes) {
+      updateData.notes = notes;
+    }
+    
+    const [result] = await db
+      .update(earlyAccessSignups)
+      .set(updateData)
+      .where(eq(earlyAccessSignups.id, id))
+      .returning();
+    return result;
+  }
+
+  async createDemoRequest(request: InsertDemoRequest): Promise<DemoRequest> {
+    const [result] = await db
+      .insert(demoRequests)
+      .values(request)
+      .returning();
+    return result;
+  }
+
+  async getAllDemoRequests(status?: string, planTier?: string): Promise<DemoRequest[]> {
+    let query = db.select().from(demoRequests);
+    
+    const conditions = [];
+    if (status) {
+      conditions.push(eq(demoRequests.status, status));
+    }
+    if (planTier) {
+      conditions.push(eq(demoRequests.planTier, planTier));
+    }
+    
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+    
+    return await query.orderBy(desc(demoRequests.createdAt));
+  }
+
+  async updateDemoRequestStatus(id: string, status: string, notes?: string): Promise<DemoRequest> {
+    const updateData: any = {
+      status,
+      updatedAt: new Date(),
+    };
+    
+    if (notes) {
+      updateData.notes = notes;
+    }
+    
+    const [result] = await db
+      .update(demoRequests)
+      .set(updateData)
+      .where(eq(demoRequests.id, id))
+      .returning();
+    return result;
   }
 
 }
