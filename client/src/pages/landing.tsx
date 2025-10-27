@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { 
   Brain, Shield, FileText, BarChart3, 
   CheckCircle, ArrowRight, Sparkles, 
@@ -10,7 +11,7 @@ import {
   Users, Lock, FileSpreadsheet, MessageSquare,
   DollarSign, Target, Building2, Settings,
   Layers, PieChart, Receipt, FileOutput,
-  ChevronRight, Star, Award, Rocket
+  ChevronRight, ChevronDown, Star, Award, Rocket
 } from "lucide-react";
 import { 
   SiSap, SiOracle, SiSalesforce, SiQuickbooks,
