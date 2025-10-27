@@ -127,7 +127,7 @@ export default function Sidebar({ className }: SidebarProps) {
       <div className="flex flex-col h-full">
         {/* Logo */}
         <div className="flex items-center px-6 py-4 border-b border-sidebar-border">
-          <img src={licenseIQLogo} alt="LicenseIQ Logo" className="h-8" />
+          <img src={licenseIQLogo} alt="LicenseIQ Logo" className="h-12" />
         </div>
         
         {/* Navigation */}

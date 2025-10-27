@@ -13,6 +13,15 @@ License IQ Research Platform is a SaaS web application for intelligent contract 
 - Updated to new professional LicenseIQ logo design with dark red/coral accent (image_1761594259468.png)
 - Made name, email, and phone fields mandatory in early access form
 - Updated all instances of "lIQ Agent" to correct "liQ Agent" branding
+- Increased logo sizes across all pages for better visibility:
+  - Landing page navbar: h-12 (48px)
+  - Dashboard sidebar: h-12 (48px)
+  - Auth pages: h-16 (64px)
+  - Dashboard footer: h-7 (28px)
+- Changed pricing tiers from "users included" to "contracts included":
+  - LicenseIQ: 5 contracts included
+  - LicenseIQ Plus: 15 contracts included
+  - LicenseIQ Ultra: Unlimited contracts
 
 ## October 25, 2025 - Dynamic Contract Processing System
 

@@ -125,7 +125,7 @@ export default function Landing() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <img src={licenseIQLogo} alt="LicenseIQ" className="h-8" />
+              <img src={licenseIQLogo} alt="LicenseIQ" className="h-12" />
             </div>
             <Link href="/auth">
               <Button 
@@ -900,7 +900,7 @@ export default function Landing() {
                   </div>
                   <div className="flex items-start space-x-2">
                     <CheckCircle className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm text-slate-700 dark:text-slate-300">5 users included</span>
+                    <span className="text-sm text-slate-700 dark:text-slate-300">5 contracts included</span>
                   </div>
                 </div>
                 
@@ -957,7 +957,7 @@ export default function Landing() {
                   </div>
                   <div className="flex items-start space-x-2">
                     <CheckCircle className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm text-slate-700 dark:text-slate-300">15 users included</span>
+                    <span className="text-sm text-slate-700 dark:text-slate-300">15 contracts included</span>
                   </div>
                 </div>
                 
@@ -1011,7 +1011,7 @@ export default function Landing() {
                   </div>
                   <div className="flex items-start space-x-2">
                     <CheckCircle className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm text-slate-700 dark:text-slate-300">Unlimited users</span>
+                    <span className="text-sm text-slate-700 dark:text-slate-300">Unlimited contracts</span>
                   </div>
                 </div>
                 
