@@ -858,6 +858,56 @@ export const insertRuleValidationEventSchema = createInsertSchema(ruleValidation
 });
 
 // ======================
+// LEAD CAPTURE TABLES
+// ======================
+
+// Early access signups from landing page
+export const earlyAccessSignups = pgTable("early_access_signups", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email").notNull(),
+  name: varchar("name"),
+  company: varchar("company"),
+  source: varchar("source").default("landing_page"), // landing_page, referral, etc.
+  status: varchar("status").notNull().default("new"), // new, contacted, scheduled, converted
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("early_access_email_idx").on(table.email),
+  index("early_access_status_idx").on(table.status),
+]);
+
+// Demo requests from pricing section
+export const demoRequests = pgTable("demo_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email").notNull(),
+  planTier: varchar("plan_tier").notNull(), // licenseiq, licenseiq_plus, licenseiq_ultra
+  source: varchar("source").default("pricing_section"), // pricing_section, other
+  status: varchar("status").notNull().default("new"), // new, contacted, scheduled, converted
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("demo_requests_email_idx").on(table.email),
+  index("demo_requests_status_idx").on(table.status),
+  index("demo_requests_plan_idx").on(table.planTier),
+]);
+
+// Insert schemas for lead capture
+export const insertEarlyAccessSignupSchema = createInsertSchema(earlyAccessSignups).pick({
+  email: true,
+  name: true,
+  company: true,
+  source: true,
+});
+
+export const insertDemoRequestSchema = createInsertSchema(demoRequests).pick({
+  email: true,
+  planTier: true,
+  source: true,
+});
+
+// ======================
 // TYPES FOR NEW TABLES
 // ======================
 
@@ -881,3 +931,7 @@ export type SemanticIndexEntry = typeof semanticIndexEntries.$inferSelect;
 export type InsertSemanticIndexEntry = z.infer<typeof insertSemanticIndexEntrySchema>;
 export type RuleValidationEvent = typeof ruleValidationEvents.$inferSelect;
 export type InsertRuleValidationEvent = z.infer<typeof insertRuleValidationEventSchema>;
+export type EarlyAccessSignup = typeof earlyAccessSignups.$inferSelect;
+export type InsertEarlyAccessSignup = z.infer<typeof insertEarlyAccessSignupSchema>;
+export type DemoRequest = typeof demoRequests.$inferSelect;
+export type InsertDemoRequest = z.infer<typeof insertDemoRequestSchema>;
