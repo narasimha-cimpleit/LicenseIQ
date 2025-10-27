@@ -78,7 +78,7 @@ export default function AuthPage() {
             <div className="flex items-center justify-center space-x-3 mb-6">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full blur-lg opacity-50"></div>
-                <img src={licenseIQLogo} alt="LicenseIQ Logo" className="h-16 relative z-10 drop-shadow-lg" />
+                <img src={licenseIQLogo} alt="LicenseIQ Logo" className="h-12 relative z-10 drop-shadow-lg" />
               </div>
             </div>
             <p className="text-sm text-muted-foreground">
