@@ -563,135 +563,209 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* lIQ Agent Highlight Section */}
+      <section className="py-20 md:py-32 bg-gradient-to-br from-purple-50 via-white to-pink-50 dark:from-purple-950/20 dark:via-slate-950 dark:to-pink-950/20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <Badge className="mb-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white">AI-Powered Intelligence</Badge>
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4">
+              Meet{" "}
+              <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                lIQ Agent
+              </span>
+            </h2>
+            <p className="text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
+              Your AI copilot that transforms contracts into executable rules and automated workflows
+            </p>
+          </div>
+
+          {/* Automation Flow Diagram */}
+          <div className="max-w-6xl mx-auto mb-12">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+              {/* Contract */}
+              <div className="flex flex-col items-center text-center">
+                <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+                  <FileText className="h-10 w-10 text-white" />
+                </div>
+                <h4 className="font-bold text-slate-900 dark:text-white mb-1">Contract</h4>
+                <p className="text-xs text-slate-600 dark:text-slate-400">Upload PDF</p>
+              </div>
+
+              <div className="flex justify-center items-center">
+                <ArrowRight className="h-8 w-8 text-purple-500 md:block hidden" />
+                <ChevronDown className="h-8 w-8 text-purple-500 md:hidden" />
+              </div>
+
+              {/* AI */}
+              <div className="flex flex-col items-center text-center">
+                <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg animate-pulse">
+                  <Sparkles className="h-10 w-10 text-white" />
+                </div>
+                <h4 className="font-bold text-slate-900 dark:text-white mb-1">lIQ Agent</h4>
+                <p className="text-xs text-slate-600 dark:text-slate-400">AI Analysis</p>
+              </div>
+
+              <div className="flex justify-center items-center">
+                <ArrowRight className="h-8 w-8 text-purple-500 md:block hidden" />
+                <ChevronDown className="h-8 w-8 text-purple-500 md:hidden" />
+              </div>
+
+              {/* Rules */}
+              <div className="flex flex-col items-center text-center">
+                <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+                  <Settings className="h-10 w-10 text-white" />
+                </div>
+                <h4 className="font-bold text-slate-900 dark:text-white mb-1">Rules</h4>
+                <p className="text-xs text-slate-600 dark:text-slate-400">Auto-Generated</p>
+              </div>
+            </div>
+
+            <div className="flex justify-center my-6">
+              <ChevronDown className="h-8 w-8 text-purple-500" />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* ERP/CRM Integration */}
+              <div className="flex flex-col items-center text-center bg-white dark:bg-slate-900 rounded-xl p-6 shadow-lg">
+                <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mb-4">
+                  <Building2 className="h-8 w-8 text-white" />
+                </div>
+                <h4 className="font-bold text-slate-900 dark:text-white mb-2">ERP/CRM Sync</h4>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Connect to SAP, Oracle, NetSuite, Salesforce</p>
+              </div>
+
+              {/* Payment Calculation */}
+              <div className="flex flex-col items-center text-center bg-white dark:bg-slate-900 rounded-xl p-6 shadow-lg">
+                <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center mb-4">
+                  <DollarSign className="h-8 w-8 text-white" />
+                </div>
+                <h4 className="font-bold text-slate-900 dark:text-white mb-2">Payment Calculation</h4>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Automated royalty, rebate & commission processing</p>
+              </div>
+
+              {/* Audit Report */}
+              <div className="flex flex-col items-center text-center bg-white dark:bg-slate-900 rounded-xl p-6 shadow-lg">
+                <div className="w-16 h-16 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center mb-4">
+                  <FileOutput className="h-8 w-8 text-white" />
+                </div>
+                <h4 className="font-bold text-slate-900 dark:text-white mb-2">Audit Report</h4>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Complete audit trail & compliance documentation</p>
+              </div>
+            </div>
+          </div>
+
+          {/* lIQ Agent Capabilities */}
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto mt-16">
+            <div className="text-center">
+              <div className="inline-flex p-4 bg-purple-100 dark:bg-purple-900/30 rounded-xl mb-4">
+                <Brain className="h-8 w-8 text-purple-600" />
+              </div>
+              <h4 className="font-bold text-slate-900 dark:text-white mb-2">Zero-Shot Learning</h4>
+              <p className="text-sm text-slate-600 dark:text-slate-300">Works with ANY contract format - no templates required</p>
+            </div>
+
+            <div className="text-center">
+              <div className="inline-flex p-4 bg-pink-100 dark:bg-pink-900/30 rounded-xl mb-4">
+                <Target className="h-8 w-8 text-pink-600" />
+              </div>
+              <h4 className="font-bold text-slate-900 dark:text-white mb-2">High Accuracy</h4>
+              <p className="text-sm text-slate-600 dark:text-slate-300">AI-powered extraction with confidence scoring and human review</p>
+            </div>
+
+            <div className="text-center">
+              <div className="inline-flex p-4 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl mb-4">
+                <Zap className="h-8 w-8 text-indigo-600" />
+              </div>
+              <h4 className="font-bold text-slate-900 dark:text-white mb-2">Continuous Learning</h4>
+              <p className="text-sm text-slate-600 dark:text-slate-300">Gets smarter with every contract you process</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Pricing Section */}
       <section className="py-20 md:py-32 bg-white dark:bg-slate-950">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <Badge className="mb-4 bg-blue-600 text-white">Flexible Pricing</Badge>
+            <Badge className="mb-4 bg-blue-600 text-white">Flexible Solutions</Badge>
             <h2 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4">
-              Choose your{" "}
+              Find the{" "}
               <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                plan
+                right fit
               </span>
             </h2>
             <p className="text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-              Start with contract intelligence, scale with enterprise features
+              Schedule a personalized demo to see how LicenseIQ can transform your contract workflows
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {/* Starter Plan */}
-            <Card className="border-2 border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-600 transition-all duration-300">
+            {/* LicenseIQ */}
+            <Card className="border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
               <CardContent className="p-8">
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Starter</h3>
-                <p className="text-slate-600 dark:text-slate-300 mb-6">Perfect for small to mid-size manufacturers</p>
-                <div className="mb-6">
-                  <span className="text-4xl font-bold text-slate-900 dark:text-white">$2,000</span>
-                  <span className="text-slate-600 dark:text-slate-300">/month</span>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">LicenseIQ</h3>
+                <p className="text-slate-600 dark:text-slate-300 mb-6 min-h-[48px]">For finance teams needing control, live visibility, and audit-readiness</p>
+                <div className="space-y-3 mb-6">
+                  <Input 
+                    type="email" 
+                    placeholder="Enter your work email" 
+                    className="bg-white dark:bg-slate-950"
+                    data-testid="input-email-basic"
+                  />
+                  <Button 
+                    className="w-full bg-teal-600 hover:bg-teal-700 text-white"
+                    data-testid="button-schedule-demo-basic"
+                  >
+                    Schedule demo
+                  </Button>
                 </div>
-                <ul className="space-y-3 mb-8">
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-slate-600 dark:text-slate-300">Up to 5 Contracts</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-slate-600 dark:text-slate-300">AI Contract Reading & Parsing</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-slate-600 dark:text-slate-300">Basic Calculation Engine</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-slate-600 dark:text-slate-300">CSV/Excel Import & Export</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-slate-600 dark:text-slate-300">Standard Reports</span>
-                  </li>
-                </ul>
-                <Button className="w-full" variant="outline">Get Started</Button>
               </CardContent>
             </Card>
 
-            {/* Professional Plan */}
-            <Card className="border-2 border-blue-500 dark:border-blue-600 relative shadow-xl">
+            {/* LicenseIQ Plus */}
+            <Card className="border-2 border-teal-500 dark:border-teal-600 relative shadow-xl bg-white dark:bg-slate-900">
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                <Badge className="bg-blue-600 text-white px-4 py-1">Most Popular</Badge>
+                <Badge className="bg-teal-600 text-white px-4 py-1">Most popular</Badge>
               </div>
               <CardContent className="p-8">
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Professional</h3>
-                <p className="text-slate-600 dark:text-slate-300 mb-6">Full-featured platform for growing manufacturers</p>
-                <div className="mb-6">
-                  <span className="text-4xl font-bold text-slate-900 dark:text-white">$5,000</span>
-                  <span className="text-slate-600 dark:text-slate-300">/month</span>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">LicenseIQ <span className="text-teal-600">Plus</span></h3>
+                <p className="text-slate-600 dark:text-slate-300 mb-6 min-h-[48px]">For growing teams looking to scale across international entities</p>
+                <div className="space-y-3 mb-6">
+                  <Input 
+                    type="email" 
+                    placeholder="Enter your work email" 
+                    className="bg-white dark:bg-slate-950"
+                    data-testid="input-email-plus"
+                  />
+                  <Button 
+                    className="w-full bg-teal-600 hover:bg-teal-700 text-white"
+                    data-testid="button-schedule-demo-plus"
+                  >
+                    Schedule demo
+                  </Button>
                 </div>
-                <ul className="space-y-3 mb-8">
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-slate-600 dark:text-slate-300">Up to 25 Contracts</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-slate-600 dark:text-slate-300">AI Contract Reading & Parsing</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-slate-600 dark:text-slate-300">Semi-Automated Calculation Engine</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-slate-600 dark:text-slate-300">CSV/Excel Import & Export</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-slate-600 dark:text-slate-300">Simple ERP Integrations (QBO, NetSuite)</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-slate-600 dark:text-slate-300">Advanced Reports & Analytics</span>
-                  </li>
-                </ul>
-                <Button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">Get Started</Button>
               </CardContent>
             </Card>
 
-            {/* Enterprise Plan */}
-            <Card className="border-2 border-slate-200 dark:border-slate-700 hover:border-purple-400 dark:hover:border-purple-600 transition-all duration-300">
+            {/* LicenseIQ Ultra */}
+            <Card className="border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
               <CardContent className="p-8">
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Enterprise</h3>
-                <p className="text-slate-600 dark:text-slate-300 mb-6">Custom solutions for large manufacturers</p>
-                <div className="mb-6">
-                  <span className="text-4xl font-bold text-slate-900 dark:text-white">Custom</span>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">LicenseIQ <span className="text-purple-600">Ultra</span></h3>
+                <p className="text-slate-600 dark:text-slate-300 mb-6 min-h-[48px]">For larger teams preparing for IPO, handling more finance complexity</p>
+                <div className="space-y-3 mb-6">
+                  <Input 
+                    type="email" 
+                    placeholder="Enter your work email" 
+                    className="bg-white dark:bg-slate-950"
+                    data-testid="input-email-ultra"
+                  />
+                  <Button 
+                    className="w-full bg-teal-600 hover:bg-teal-700 text-white"
+                    data-testid="button-schedule-demo-ultra"
+                  >
+                    Schedule demo
+                  </Button>
                 </div>
-                <ul className="space-y-3 mb-8">
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-slate-600 dark:text-slate-300">Unlimited Contracts</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-slate-600 dark:text-slate-300">Fully Automated Calculation Engine</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-slate-600 dark:text-slate-300">ERP + Custom Integrations</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-slate-600 dark:text-slate-300">Advanced AI Validations</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-slate-600 dark:text-slate-300">Custom Reports & Dashboards</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-slate-600 dark:text-slate-300">White-Glove Support</span>
-                  </li>
-                </ul>
-                <Button className="w-full" variant="outline">Contact Sales</Button>
               </CardContent>
             </Card>
           </div>
