@@ -25,6 +25,11 @@ export default function Landing() {
   const { toast } = useToast();
   const [isSubmittingEarlyAccess, setIsSubmittingEarlyAccess] = useState(false);
   const [isSubmittingDemo, setIsSubmittingDemo] = useState<Record<string, boolean>>({});
+  const [demoEmails, setDemoEmails] = useState<Record<string, string>>({
+    basic: '',
+    plus: '',
+    ultra: ''
+  });
 
   const handleEarlyAccessSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -34,6 +39,27 @@ export default function Landing() {
     const email = formData.get('email') as string;
     const name = formData.get('name') as string;
     const company = formData.get('company') as string;
+
+    // Client-side validation
+    if (!email || !email.includes('@')) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+      });
+      setIsSubmittingEarlyAccess(false);
+      return;
+    }
+
+    if (!name || name.trim().length === 0) {
+      toast({
+        title: "Name Required",
+        description: "Please enter your name.",
+        variant: "destructive",
+      });
+      setIsSubmittingEarlyAccess(false);
+      return;
+    }
 
     try {
       const result = await apiRequest('/api/early-access-signup', {
@@ -60,7 +86,9 @@ export default function Landing() {
     }
   };
 
-  const handleDemoRequest = async (email: string, planTier: string, buttonId: string) => {
+  const handleDemoRequest = async (planTier: string, buttonId: string) => {
+    const email = demoEmails[buttonId as keyof typeof demoEmails];
+    
     if (!email || !email.includes('@')) {
       toast({
         title: "Invalid Email",
@@ -84,9 +112,8 @@ export default function Landing() {
         description: result.message || "Thank you! We'll contact you soon to schedule your demo.",
       });
 
-      // Clear the input field
-      const inputElement = document.getElementById(`email-${buttonId}`) as HTMLInputElement;
-      if (inputElement) inputElement.value = '';
+      // Clear the input field using state
+      setDemoEmails(prev => ({ ...prev, [buttonId]: '' }));
     } catch (error: any) {
       toast({
         title: "Error",
@@ -862,20 +889,18 @@ export default function Landing() {
                 <p className="text-slate-600 dark:text-slate-300 mb-6 min-h-[48px]">For finance teams needing control, live visibility, and audit-readiness</p>
                 <div className="space-y-3 mb-6">
                   <Input 
-                    id="email-basic"
                     type="email" 
                     placeholder="Enter your work email" 
                     className="bg-white dark:bg-slate-950"
                     data-testid="input-email-basic"
+                    value={demoEmails.basic}
+                    onChange={(e) => setDemoEmails(prev => ({ ...prev, basic: e.target.value }))}
                   />
                   <Button 
                     className="w-full bg-teal-600 hover:bg-teal-700 text-white"
                     data-testid="button-schedule-demo-basic"
                     disabled={isSubmittingDemo['basic']}
-                    onClick={() => {
-                      const inputEl = document.getElementById('email-basic') as HTMLInputElement;
-                      if (inputEl) handleDemoRequest(inputEl.value, 'licenseiq', 'basic');
-                    }}
+                    onClick={() => handleDemoRequest('licenseiq', 'basic')}
                   >
                     {isSubmittingDemo['basic'] ? "Submitting..." : "Schedule demo"}
                   </Button>
@@ -893,20 +918,18 @@ export default function Landing() {
                 <p className="text-slate-600 dark:text-slate-300 mb-6 min-h-[48px]">For growing teams looking to scale across international entities</p>
                 <div className="space-y-3 mb-6">
                   <Input 
-                    id="email-plus"
                     type="email" 
                     placeholder="Enter your work email" 
                     className="bg-white dark:bg-slate-950"
                     data-testid="input-email-plus"
+                    value={demoEmails.plus}
+                    onChange={(e) => setDemoEmails(prev => ({ ...prev, plus: e.target.value }))}
                   />
                   <Button 
                     className="w-full bg-teal-600 hover:bg-teal-700 text-white"
                     data-testid="button-schedule-demo-plus"
                     disabled={isSubmittingDemo['plus']}
-                    onClick={() => {
-                      const inputEl = document.getElementById('email-plus') as HTMLInputElement;
-                      if (inputEl) handleDemoRequest(inputEl.value, 'licenseiq_plus', 'plus');
-                    }}
+                    onClick={() => handleDemoRequest('licenseiq_plus', 'plus')}
                   >
                     {isSubmittingDemo['plus'] ? "Submitting..." : "Schedule demo"}
                   </Button>
@@ -921,20 +944,18 @@ export default function Landing() {
                 <p className="text-slate-600 dark:text-slate-300 mb-6 min-h-[48px]">For larger teams preparing for IPO, handling more finance complexity</p>
                 <div className="space-y-3 mb-6">
                   <Input 
-                    id="email-ultra"
                     type="email" 
                     placeholder="Enter your work email" 
                     className="bg-white dark:bg-slate-950"
                     data-testid="input-email-ultra"
+                    value={demoEmails.ultra}
+                    onChange={(e) => setDemoEmails(prev => ({ ...prev, ultra: e.target.value }))}
                   />
                   <Button 
                     className="w-full bg-teal-600 hover:bg-teal-700 text-white"
                     data-testid="button-schedule-demo-ultra"
                     disabled={isSubmittingDemo['ultra']}
-                    onClick={() => {
-                      const inputEl = document.getElementById('email-ultra') as HTMLInputElement;
-                      if (inputEl) handleDemoRequest(inputEl.value, 'licenseiq_ultra', 'ultra');
-                    }}
+                    onClick={() => handleDemoRequest('licenseiq_ultra', 'ultra')}
                   >
                     {isSubmittingDemo['ultra'] ? "Submitting..." : "Schedule demo"}
                   </Button>
