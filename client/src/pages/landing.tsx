@@ -796,12 +796,12 @@ export default function Landing() {
               </div>
 
               {/* AI */}
-              <div className="flex flex-col items-center text-center">
+              <div className="flex flex-col items-center text-center bg-slate-50 dark:bg-slate-900 rounded-xl p-6 shadow-lg border-2 border-indigo-200 dark:border-indigo-700">
                 <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
                   <Brain className="h-10 w-10 text-white" />
                 </div>
-                <h4 className="font-bold text-slate-900 dark:text-white mb-1">AI Analysis</h4>
-                <p className="text-xs text-slate-600 dark:text-slate-400">Extract Terms</p>
+                <h4 className="font-bold text-slate-900 dark:text-white mb-2">AI Analysis</h4>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Extract Terms</p>
               </div>
 
               <div className="flex justify-center items-center">
@@ -820,7 +820,7 @@ export default function Landing() {
             </div>
 
             <div className="flex justify-center mb-8">
-              <ChevronDown className="h-8 w-8 text-blue-500" />
+              <ChevronDown className="h-10 w-10 text-indigo-600 dark:text-indigo-400" />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
