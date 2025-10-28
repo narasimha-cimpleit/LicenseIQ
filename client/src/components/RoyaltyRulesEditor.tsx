@@ -16,7 +16,9 @@ import { apiRequest } from "@/lib/queryClient";
 interface RoyaltyRule {
   id: string;
   ruleName: string;
-  ruleType: 'percentage' | 'tiered' | 'minimum_guarantee' | 'cap' | 'deduction' | 'fixed_fee';
+  ruleType: 'percentage' | 'tiered' | 'minimum_guarantee' | 'cap' | 'deduction' | 'fixed_fee' | 
+             'payment_schedule' | 'payment_method' | 'rate_structure' | 'invoice_requirements' | 
+             'late_payment_penalty' | 'advance_payment' | 'milestone_payment' | 'formula_based';
   description: string;
   conditions: {
     productCategories?: string[];
@@ -1036,8 +1038,52 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate, onRepr
               </CardHeader>
               <CardContent>
                 {ruleSet.rules && ruleSet.rules.length > 0 ? (
-                  <div className="grid gap-3">
-                    {ruleSet.rules.map((rule, ruleIndex) => renderRule(rule, ruleIndex, ruleSet.id))}
+                  <div className="space-y-6">
+                    {/* Categorize rules by type */}
+                    {(() => {
+                      const royaltyRules = ruleSet.rules.filter(r => 
+                        ['percentage', 'tiered', 'minimum_guarantee', 'cap', 'deduction', 'fixed_fee', 'formula_based'].includes(r.ruleType)
+                      );
+                      const paymentTerms = ruleSet.rules.filter(r => 
+                        ['payment_schedule', 'payment_method', 'rate_structure', 'invoice_requirements', 'late_payment_penalty', 'advance_payment', 'milestone_payment'].includes(r.ruleType)
+                      );
+
+                      return (
+                        <>
+                          {/* Royalty/License Fee Rules */}
+                          {royaltyRules.length > 0 && (
+                            <div className="space-y-2">
+                              <h4 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
+                                <Percent className="h-4 w-4" />
+                                Royalty & License Fee Rules ({royaltyRules.length})
+                              </h4>
+                              <div className="grid gap-3">
+                                {royaltyRules.map((rule, ruleIndex) => {
+                                  const actualIndex = ruleSet.rules.findIndex(r => r.id === rule.id);
+                                  return renderRule(rule, actualIndex, ruleSet.id);
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Payment Terms */}
+                          {paymentTerms.length > 0 && (
+                            <div className="space-y-2">
+                              <h4 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
+                                <Calendar className="h-4 w-4" />
+                                Payment Terms & Conditions ({paymentTerms.length})
+                              </h4>
+                              <div className="grid gap-3">
+                                {paymentTerms.map((rule, ruleIndex) => {
+                                  const actualIndex = ruleSet.rules.findIndex(r => r.id === rule.id);
+                                  return renderRule(rule, actualIndex, ruleSet.id);
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">

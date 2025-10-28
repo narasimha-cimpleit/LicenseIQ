@@ -34,7 +34,9 @@ interface ContractAnalysisResult {
 // =====================================================
 
 interface RoyaltyRule {
-  ruleType: 'percentage' | 'tiered' | 'minimum_guarantee' | 'cap' | 'deduction' | 'fixed_fee';
+  ruleType: 'percentage' | 'tiered' | 'minimum_guarantee' | 'cap' | 'deduction' | 'fixed_fee' | 
+             'payment_schedule' | 'payment_method' | 'rate_structure' | 'invoice_requirements' | 
+             'late_payment_penalty' | 'advance_payment' | 'milestone_payment' | 'formula_based';
   ruleName: string;
   description: string;
   conditions: {

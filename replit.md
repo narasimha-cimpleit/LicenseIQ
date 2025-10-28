@@ -6,6 +6,33 @@ License IQ Research Platform is a SaaS web application for intelligent contract 
 
 Preferred communication style: Simple, everyday language.
 
+# Recent Updates (October 28, 2025)
+
+## Expanded Payment Terms Extraction (October 28, 2025)
+Enhanced the dynamic rule extraction system to capture ALL payment-related clauses, not just royalty/licensing terms:
+
+**New Payment Term Types Extracted:**
+- `payment_schedule`: Payment timelines (Net 30, Net 45, milestone-based)
+- `payment_method`: How payments are made (wire, direct deposit, ACH, check)
+- `rate_structure`: Pricing models (hourly rate, fixed fee, daily rate, monthly retainer)
+- `invoice_requirements`: Documentation needed for payment (invoice format, supporting docs)
+- `late_payment_penalty`: Fees or interest for overdue payments
+- `advance_payment`: Upfront payments or deposits
+- `milestone_payment`: Payments tied to deliverables or dates
+
+**Implementation:**
+- Added `extractGeneralPaymentTerms()` function in groqService.ts
+- Backend extracts both royalty rules AND general payment terms in parallel
+- Frontend displays all rule types with appropriate labels and icons
+- Quality filters apply to all rule types (confidence >= 0.6, source text validation)
+- Backward compatible - existing royalty extraction unchanged
+
+**Impact:**
+- Subcontractor agreements now show payment schedules, hourly rates, invoice requirements
+- Service agreements show milestone payments, retainer terms, payment methods
+- Licensing agreements continue to show royalty rules as before
+- Truly universal payment term extraction across ALL contract types
+
 # Recent Updates (October 27, 2025)
 
 ## Logo and Branding Enhancements
