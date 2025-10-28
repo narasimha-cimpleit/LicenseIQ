@@ -418,10 +418,15 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate, onRepr
           </div>
         </div>
 
-        {/* Calculation Settings */}
+        {/* Calculation Settings - DYNAMIC BASED ON RULE TYPE */}
         <div className="space-y-4">
-          <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Calculation Settings</h4>
+          <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+            {['payment_schedule', 'payment_method', 'rate_structure', 'invoice_requirements', 'late_payment_penalty', 'advance_payment', 'milestone_payment'].includes(currentRule.ruleType)
+              ? 'Payment Term Details'
+              : 'Calculation Settings'}
+          </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* ROYALTY RULES - Percentage */}
             {currentRule.ruleType === 'percentage' && (
               <>
                 <div className="space-y-2">
@@ -437,7 +442,7 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate, onRepr
                       ...(prev || rule),
                       calculation: { ...(prev || rule).calculation, rate: parseFloat(e.target.value) || 0 }
                     }))}
-                    placeholder="Enter percentage rate"
+                    placeholder="e.g., 5.5"
                     className="h-10"
                     data-testid="input-rule-rate"
                   />
@@ -464,6 +469,7 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate, onRepr
               </>
             )}
             
+            {/* ROYALTY RULES - Fixed amounts */}
             {(currentRule.ruleType === 'fixed_fee' || currentRule.ruleType === 'minimum_guarantee' || currentRule.ruleType === 'cap') && (
               <div className="space-y-2">
                 <Label htmlFor="amount" className="text-sm font-medium">Amount ($)</Label>
@@ -477,13 +483,239 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate, onRepr
                     ...(prev || rule),
                     calculation: { ...(prev || rule).calculation, amount: parseFloat(e.target.value) || 0 }
                   }))}
-                  placeholder="Enter amount in dollars"
+                  placeholder="e.g., 10000"
                   className="h-10"
                   data-testid="input-rule-amount"
                 />
               </div>
             )}
+
+            {/* PAYMENT SCHEDULE - Net 30, Net 45, etc. */}
+            {currentRule.ruleType === 'payment_schedule' && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="payment-terms" className="text-sm font-medium">Payment Terms</Label>
+                  <Input
+                    id="payment-terms"
+                    value={currentRule.calculation.formula || ''}
+                    onChange={(e) => setLocalEditRule(prev => ({
+                      ...(prev || rule),
+                      calculation: { ...(prev || rule).calculation, formula: e.target.value }
+                    }))}
+                    placeholder="e.g., Net 45, Net 30, Upon receipt"
+                    className="h-10"
+                    data-testid="input-payment-terms"
+                  />
+                  <p className="text-xs text-muted-foreground">When payment is due (Net 30, Net 45, etc.)</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="schedule-type" className="text-sm font-medium">Schedule Type</Label>
+                  <Input
+                    id="schedule-type"
+                    value={currentRule.conditions.timeperiod || ''}
+                    onChange={(e) => setLocalEditRule(prev => ({
+                      ...(prev || rule),
+                      conditions: { ...(prev || rule).conditions, timeperiod: e.target.value }
+                    }))}
+                    placeholder="e.g., Monthly, Milestone-based"
+                    className="h-10"
+                    data-testid="input-schedule-type"
+                  />
+                </div>
+              </>
+            )}
+
+            {/* PAYMENT METHOD - Wire, ACH, Check, etc. */}
+            {currentRule.ruleType === 'payment_method' && (
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="payment-method" className="text-sm font-medium">Payment Method</Label>
+                <Input
+                  id="payment-method"
+                  value={currentRule.calculation.formula || ''}
+                  onChange={(e) => setLocalEditRule(prev => ({
+                    ...(prev || rule),
+                    calculation: { ...(prev || rule).calculation, formula: e.target.value }
+                  }))}
+                  placeholder="e.g., Direct deposit, Wire transfer, ACH, Check"
+                  className="h-10"
+                  data-testid="input-payment-method"
+                />
+                <p className="text-xs text-muted-foreground">How payment will be made</p>
+              </div>
+            )}
+
+            {/* RATE STRUCTURE - Hourly, Daily, Monthly rates */}
+            {currentRule.ruleType === 'rate_structure' && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="rate-amount" className="text-sm font-medium">Rate Amount ($)</Label>
+                  <Input
+                    id="rate-amount"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={currentRule.calculation.amount || ''}
+                    onChange={(e) => setLocalEditRule(prev => ({
+                      ...(prev || rule),
+                      calculation: { ...(prev || rule).calculation, amount: parseFloat(e.target.value) || 0 }
+                    }))}
+                    placeholder="e.g., 125.00"
+                    className="h-10"
+                    data-testid="input-rate-amount"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="rate-unit" className="text-sm font-medium">Rate Unit</Label>
+                  <Input
+                    id="rate-unit"
+                    value={currentRule.calculation.formula || ''}
+                    onChange={(e) => setLocalEditRule(prev => ({
+                      ...(prev || rule),
+                      calculation: { ...(prev || rule).calculation, formula: e.target.value }
+                    }))}
+                    placeholder="e.g., per hour, per day, per month"
+                    className="h-10"
+                    data-testid="input-rate-unit"
+                  />
+                </div>
+              </>
+            )}
+
+            {/* INVOICE REQUIREMENTS */}
+            {currentRule.ruleType === 'invoice_requirements' && (
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="invoice-reqs" className="text-sm font-medium">Invoice Requirements</Label>
+                <Input
+                  id="invoice-reqs"
+                  value={currentRule.calculation.formula || ''}
+                  onChange={(e) => setLocalEditRule(prev => ({
+                    ...(prev || rule),
+                    calculation: { ...(prev || rule).calculation, formula: e.target.value }
+                  }))}
+                  placeholder="e.g., Itemized invoice with timesheets, W-9 form required"
+                  className="h-10"
+                  data-testid="input-invoice-requirements"
+                />
+                <p className="text-xs text-muted-foreground">Documentation needed for payment</p>
+              </div>
+            )}
+
+            {/* LATE PAYMENT PENALTY */}
+            {currentRule.ruleType === 'late_payment_penalty' && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="penalty-rate" className="text-sm font-medium">Penalty Rate (%)</Label>
+                  <Input
+                    id="penalty-rate"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={currentRule.calculation.rate || ''}
+                    onChange={(e) => setLocalEditRule(prev => ({
+                      ...(prev || rule),
+                      calculation: { ...(prev || rule).calculation, rate: parseFloat(e.target.value) || 0 }
+                    }))}
+                    placeholder="e.g., 1.5 (for 1.5% per month)"
+                    className="h-10"
+                    data-testid="input-penalty-rate"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="penalty-details" className="text-sm font-medium">Penalty Details</Label>
+                  <Input
+                    id="penalty-details"
+                    value={currentRule.calculation.formula || ''}
+                    onChange={(e) => setLocalEditRule(prev => ({
+                      ...(prev || rule),
+                      calculation: { ...(prev || rule).calculation, formula: e.target.value }
+                    }))}
+                    placeholder="e.g., per month after due date"
+                    className="h-10"
+                    data-testid="input-penalty-details"
+                  />
+                </div>
+              </>
+            )}
+
+            {/* ADVANCE PAYMENT */}
+            {currentRule.ruleType === 'advance_payment' && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="advance-amount" className="text-sm font-medium">Advance Amount ($)</Label>
+                  <Input
+                    id="advance-amount"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={currentRule.calculation.amount || ''}
+                    onChange={(e) => setLocalEditRule(prev => ({
+                      ...(prev || rule),
+                      calculation: { ...(prev || rule).calculation, amount: parseFloat(e.target.value) || 0 }
+                    }))}
+                    placeholder="e.g., 5000"
+                    className="h-10"
+                    data-testid="input-advance-amount"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="advance-percentage" className="text-sm font-medium">Percentage (Optional)</Label>
+                  <Input
+                    id="advance-percentage"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                    value={currentRule.calculation.rate || ''}
+                    onChange={(e) => setLocalEditRule(prev => ({
+                      ...(prev || rule),
+                      calculation: { ...(prev || rule).calculation, rate: parseFloat(e.target.value) || 0 }
+                    }))}
+                    placeholder="e.g., 25 (for 25% down)"
+                    className="h-10"
+                    data-testid="input-advance-percentage"
+                  />
+                </div>
+              </>
+            )}
+
+            {/* MILESTONE PAYMENT */}
+            {currentRule.ruleType === 'milestone_payment' && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="milestone-amount" className="text-sm font-medium">Payment Amount ($)</Label>
+                  <Input
+                    id="milestone-amount"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={currentRule.calculation.amount || ''}
+                    onChange={(e) => setLocalEditRule(prev => ({
+                      ...(prev || rule),
+                      calculation: { ...(prev || rule).calculation, amount: parseFloat(e.target.value) || 0 }
+                    }))}
+                    placeholder="e.g., 15000"
+                    className="h-10"
+                    data-testid="input-milestone-amount"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="milestone-trigger" className="text-sm font-medium">Milestone Trigger</Label>
+                  <Input
+                    id="milestone-trigger"
+                    value={currentRule.calculation.formula || ''}
+                    onChange={(e) => setLocalEditRule(prev => ({
+                      ...(prev || rule),
+                      calculation: { ...(prev || rule).calculation, formula: e.target.value }
+                    }))}
+                    placeholder="e.g., Upon project completion, Phase 1 delivery"
+                    className="h-10"
+                    data-testid="input-milestone-trigger"
+                  />
+                </div>
+              </>
+            )}
             
+            {/* Priority field - always shown */}
             <div className="space-y-2">
               <Label htmlFor="priority" className="text-sm font-medium">Priority (1-100)</Label>
               <Input
