@@ -557,6 +557,101 @@ CRITICAL: Return ONLY valid JSON array. No explanatory text.`;
     }
   }
 
+  // =====================================================
+  // NEW: GENERAL PAYMENT TERMS EXTRACTION
+  // =====================================================
+  async extractGeneralPaymentTerms(contractText: string): Promise<any[]> {
+    const prompt = `You are a contract payment terms analyst. Extract ALL payment-related clauses from this contract.
+
+IMPORTANT: Extract ACTUAL payment terms from the contract. Do NOT fabricate or assume data. If no payment terms exist, return empty array [].
+
+CONTRACT TEXT:
+${contractText.substring(0, 8000)}
+
+Extract the following types of payment terms if they exist:
+
+1. **PAYMENT SCHEDULE**: When payments are due (Net 30, Net 45, milestone-based, etc.)
+2. **PAYMENT METHOD**: How payments should be made (wire transfer, direct deposit, check, ACH, etc.)
+3. **RATE STRUCTURE**: Pricing model (hourly rate, fixed fee, daily rate, monthly retainer, etc.)
+4. **INVOICE REQUIREMENTS**: What's needed for payment (invoice format, supporting documentation, approval process, etc.)
+5. **LATE PAYMENT PENALTIES**: Fees or interest for overdue payments
+6. **ADVANCE/DEPOSIT**: Upfront payments or deposits required
+7. **MILESTONE PAYMENTS**: Payments tied to specific deliverables or dates
+
+CRITICAL RULES:
+- ONLY extract terms that are EXPLICITLY stated in the contract
+- Do NOT fabricate payment amounts if not specified
+- Include confidence score (0.6-1.0) based on clarity of the text
+- Include source text citation
+- If ZERO payment terms exist, return empty array []
+
+Return ONLY a JSON array (no explanatory text):
+[
+  {
+    "ruleType": "payment_schedule",
+    "ruleName": "Payment Timeline",
+    "description": "Payment due within 45 days of receiving invoice and supporting documentation",
+    "paymentTerms": {
+      "dueDays": 45,
+      "triggerEvent": "Invoice receipt with documentation",
+      "frequency": "per_invoice"
+    },
+    "confidence": 0.95,
+    "sourceText": "exact text from contract"
+  },
+  {
+    "ruleType": "payment_method",
+    "ruleName": "Payment Method",
+    "description": "Direct deposit to bank account",
+    "paymentTerms": {
+      "method": "direct_deposit",
+      "requirement": "Sub-contractor must sign up for direct deposit"
+    },
+    "confidence": 0.90,
+    "sourceText": "exact text from contract"
+  },
+  {
+    "ruleType": "rate_structure",
+    "ruleName": "Hourly Rate",
+    "description": "Compensation based on hourly rate",
+    "paymentTerms": {
+      "rateType": "hourly",
+      "amount": null,
+      "currency": "USD"
+    },
+    "confidence": 0.85,
+    "sourceText": "exact text from contract"
+  }
+]
+
+Return empty array [] if contract has NO payment terms.`;
+
+    try {
+      console.log(`💰 Extracting general payment terms...`);
+      const response = await this.makeRequest([
+        { role: 'system', content: 'Extract payment terms from contract. Return only JSON array.' },
+        { role: 'user', content: prompt }
+      ], 0.1, 2000);
+      
+      const extracted = this.extractAndRepairJSON(response, []);
+      
+      // Quality filter: Only keep terms with confidence >= 0.6 and source text
+      const validTerms = extracted.filter((term: any) => {
+        const hasConfidence = term.confidence && term.confidence >= 0.6;
+        const hasSourceText = term.sourceText && term.sourceText.length > 10;
+        const hasValidType = ['payment_schedule', 'payment_method', 'rate_structure', 'invoice_requirements', 'late_payment_penalty', 'advance_payment', 'milestone_payment'].includes(term.ruleType);
+        
+        return hasConfidence && hasSourceText && hasValidType;
+      });
+      
+      console.log(`📋 Found ${validTerms.length} valid payment terms (filtered from ${extracted.length} raw extractions)`);
+      return validTerms;
+    } catch (error) {
+      console.error('General payment terms extraction failed:', error);
+      return [];
+    }
+  }
+
   // Keep the old single-request method as backup
   async extractDetailedRoyaltyRulesSingleRequest(contractText: string): Promise<LicenseRuleExtractionResult> {
     const prompt = `
