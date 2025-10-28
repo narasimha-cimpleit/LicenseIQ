@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Calculator, Edit, Plus, Trash2, Play, DollarSign, Percent, TrendingUp, RefreshCw, Sparkles, ChevronDown, ChevronUp, Save, X, Info } from "lucide-react";
+import { Calculator, Edit, Plus, Trash2, Play, DollarSign, Percent, TrendingUp, RefreshCw, Sparkles, ChevronDown, ChevronUp, Save, X, Info, Calendar } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -75,7 +75,15 @@ const RULE_TYPE_LABELS = {
   minimum_guarantee: "Minimum Guarantee",
   cap: "Maximum Cap",
   deduction: "Deduction",
-  fixed_fee: "Fixed Fee"
+  fixed_fee: "Fixed Fee",
+  payment_schedule: "Payment Schedule",
+  payment_method: "Payment Method",
+  rate_structure: "Rate Structure",
+  invoice_requirements: "Invoice Requirements",
+  late_payment_penalty: "Late Payment Penalty",
+  advance_payment: "Advance/Deposit",
+  milestone_payment: "Milestone Payment",
+  formula_based: "Formula-Based"
 };
 
 const RULE_TYPE_ICONS = {
@@ -84,7 +92,15 @@ const RULE_TYPE_ICONS = {
   minimum_guarantee: DollarSign,
   cap: DollarSign,
   deduction: DollarSign,
-  fixed_fee: DollarSign
+  fixed_fee: DollarSign,
+  payment_schedule: Calendar,
+  payment_method: DollarSign,
+  rate_structure: Calculator,
+  invoice_requirements: Info,
+  late_payment_penalty: DollarSign,
+  advance_payment: DollarSign,
+  milestone_payment: DollarSign,
+  formula_based: Calculator
 };
 
 export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate, onReprocess }: RoyaltyRulesEditorProps) {
@@ -1049,17 +1065,16 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate, onRepr
               <Calculator className="h-10 w-10 text-white" />
             </div>
             <div className="space-y-3">
-              <h3 className="text-xl font-semibold text-foreground">No Payment Rules Detected</h3>
+              <h3 className="text-xl font-semibold text-foreground">No Payment Terms Detected</h3>
               <div className="text-muted-foreground max-w-lg mx-auto leading-relaxed space-y-2">
                 <p>
-                  This contract does not appear to contain royalty or license fee payment terms.
+                  This contract does not appear to contain payment-related clauses (royalties, payment schedules, invoice requirements, etc.).
                 </p>
                 <p className="text-sm">
-                  This is normal for contracts like service agreements, subcontractor agreements, NDAs, 
-                  employment contracts, and other non-licensing documents.
+                  This is normal for contracts like NDAs, partnership agreements, and other non-financial documents.
                 </p>
                 <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                  If this contract should have payment rules, you can reprocess it or add them manually.
+                  If this contract should have payment terms, you can reprocess it or add them manually.
                 </p>
               </div>
             </div>
