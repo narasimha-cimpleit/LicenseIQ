@@ -2566,7 +2566,37 @@ async function extractAndSaveRoyaltyRules(contractId: string, contractText: stri
       console.log(`✅ Saved legacy rule: ${rule.ruleName}`);
     }
     
-    console.log(`🎉 Successfully extracted and saved ${productsWithFormulas.length + detailedRules.rules.length} total royalty rules`);
+    // 💰 NEW: Extract general payment terms (works for all contract types)
+    console.log(`💰 Extracting general payment terms (payment schedules, methods, rates)...`);
+    const generalPaymentTerms = await groqService.extractGeneralPaymentTerms(contractText);
+    console.log(`📋 Found ${generalPaymentTerms.length} general payment terms`);
+    
+    for (const term of generalPaymentTerms) {
+      const termData: any = {
+        contractId,
+        ruleType: term.ruleType, // payment_schedule, payment_method, rate_structure, etc.
+        ruleName: term.ruleName,
+        description: term.description,
+        productCategories: [],
+        territories: [],
+        containerSizes: [],
+        
+        // Store payment terms data as JSON in the baseRate field (reusing existing schema)
+        baseRate: term.paymentTerms ? JSON.stringify(term.paymentTerms) : null,
+        
+        isActive: true,
+        priority: 5, // Medium priority
+        confidence: term.confidence || null,
+        sourceSection: null,
+        sourceText: term.sourceText || null,
+      };
+
+      await storage.createRoyaltyRule(termData);
+      console.log(`✅ Saved payment term: ${term.ruleName} (type: ${term.ruleType})`);
+    }
+    
+    const totalRules = productsWithFormulas.length + validLegacyRules.length + generalPaymentTerms.length;
+    console.log(`🎉 Successfully extracted and saved ${totalRules} total rules (${productsWithFormulas.length} formula-based, ${validLegacyRules.length} royalty, ${generalPaymentTerms.length} payment terms)`);
   } catch (error) {
     console.error(`⚠️ Failed to extract royalty rules:`, error);
     // Don't fail the entire analysis if rule extraction fails
