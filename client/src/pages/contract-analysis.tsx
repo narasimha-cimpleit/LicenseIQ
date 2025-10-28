@@ -249,28 +249,34 @@ export default function ContractAnalysis() {
     // Extract parties from summary with improved pattern matching
     const summary = analysis.summary || '';
     
-    // Try multiple patterns to find licensor/licensee
-    let licensorMatch = summary.match(/([^(]+)\s*\(Licensor\)/i);
-    let licenseeMatch = summary.match(/([^(]+)\s*\(Licensee\)/i);
+    // Try multiple patterns to find parties (contract-type agnostic)
+    let party1: string | null = null;
+    let party2: string | null = null;
     
-    // Improved fallback patterns
-    if (!licensorMatch) {
-      // Look for "between X and Y" pattern where X is typically the licensor
-      const betweenPattern = summary.match(/between\s+([^,\s]+(?:\s+[^,\s]+)*)\s+and\s+(?:an?\s+)?(?:unnamed\s+)?(\w+)/i);
+    // Pattern 1: Licensing-style (Licensor/Licensee)
+    const licensorMatch = summary.match(/([^(,]+)\s*\(Licensor\)/i);
+    const licenseeMatch = summary.match(/([^(,]+)\s*\(Licensee\)/i);
+    
+    if (licensorMatch && licenseeMatch) {
+      party1 = licensorMatch[1]?.trim();
+      party2 = licenseeMatch[1]?.trim();
+    }
+    
+    // Pattern 2: Generic "between X and Y" pattern (works for all contract types)
+    if (!party1 || !party2) {
+      const betweenPattern = summary.match(/between\s+([^,]+(?:\s+(?:Inc|LLC|Ltd|Corp|Corporation|Company))?)\s+and\s+([^,]+(?:\s+(?:Inc|LLC|Ltd|Corp|Corporation|Company))?)/i);
       if (betweenPattern) {
-        licensorMatch = [null, betweenPattern[1]];
-        // If the second match is "Licensee", then we know the pattern
-        if (betweenPattern[2].toLowerCase().includes('licensee')) {
-          licenseeMatch = [null, 'Premium Plant Distributors Inc']; // fallback
-        }
+        party1 = betweenPattern[1]?.trim();
+        party2 = betweenPattern[2]?.trim();
       }
     }
     
-    // Additional patterns for licensee
-    if (!licenseeMatch) {
-      const licenseePattern = summary.match(/(?:the\s+)?licensee\s+(?:is\s+)?([^,.]+)/i);
-      if (licenseePattern && !licenseePattern[1].toLowerCase().includes('must')) {
-        licenseeMatch = [null, licenseePattern[1]];
+    // Pattern 3: Subcontractor/Service Agreement style
+    if (!party1 || !party2) {
+      const subcontractorPattern = summary.match(/(?:company|client|contractor)?\s*([^,]+(?:\s+(?:Inc|LLC|Ltd|Corp))?)\s+(?:hires|engages|contracts with)\s+([^,]+(?:\s+(?:Inc|LLC|Ltd|Corp))?)/i);
+      if (subcontractorPattern) {
+        party1 = subcontractorPattern[1]?.trim();
+        party2 = subcontractorPattern[2]?.trim();
       }
     }
     
@@ -287,8 +293,8 @@ export default function ContractAnalysis() {
     const amounts = (paymentTerms || financialObligation || '').match(amountPattern) || [];
 
     return {
-      licensor: licensorMatch?.[1]?.trim() || 'Green Thumb Nurseries LLC',
-      licensee: licenseeMatch?.[1]?.trim() || 'Premium Plant Distributors Inc',
+      licensor: party1 || 'Not specified',
+      licensee: party2 || 'Not specified',
       paymentTerms: paymentTerms || null,
       contractValue: amounts?.[0] || null,
       territory: territory || null,

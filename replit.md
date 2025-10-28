@@ -38,6 +38,7 @@ Fixed critical bug where the system was generating phantom payment rules for con
 5. Enhanced UI empty state to explain non-licensing contracts are normal
 6. Added schema mapping to maintain compatibility with existing data model
 7. Made product formula extraction conditional - only runs when hasRoyaltyTerms is true
+8. **Fixed hardcoded party fallbacks** - Removed fake "Green Thumb Nurseries LLC" and "Premium Plant Distributors Inc" fallback values, now extracts actual parties from summary or shows "Not specified"
 
 **Impact:**
 - Subcontractor agreements, service contracts, and other non-licensing documents now correctly show zero rules
