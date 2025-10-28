@@ -186,7 +186,7 @@ export default function RulesManagement() {
     setEditForm({
       ruleName: "",
       description: "",
-      ruleType: "tiered_pricing",
+      ruleType: "rate_structure",
       productCategories: [],
       territories: [],
       containerSizes: [],
