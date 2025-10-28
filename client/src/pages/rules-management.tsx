@@ -367,10 +367,18 @@ export default function RulesManagement() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="percentage">Percentage</SelectItem>
                 <SelectItem value="tiered_pricing">Tiered Pricing</SelectItem>
                 <SelectItem value="minimum_guarantee">Minimum Guarantee</SelectItem>
-                <SelectItem value="seasonal_adjustment">Seasonal Adjustment</SelectItem>
-                <SelectItem value="territory_premium">Territory Premium</SelectItem>
+                <SelectItem value="fixed_fee">Fixed Fee</SelectItem>
+                <SelectItem value="cap">Cap</SelectItem>
+                <SelectItem value="payment_schedule">Payment Schedule</SelectItem>
+                <SelectItem value="payment_method">Payment Method</SelectItem>
+                <SelectItem value="rate_structure">Rate Structure</SelectItem>
+                <SelectItem value="invoice_requirements">Invoice Requirements</SelectItem>
+                <SelectItem value="late_payment_penalty">Late Payment Penalty</SelectItem>
+                <SelectItem value="advance_payment">Advance Payment</SelectItem>
+                <SelectItem value="milestone_payment">Milestone Payment</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -390,38 +398,227 @@ export default function RulesManagement() {
 
       <Separator />
 
-      {/* Rates & Calculations */}
+      {/* Rates & Calculations - DYNAMIC BASED ON RULE TYPE */}
       <div className="space-y-4">
-        <h3 className="font-semibold text-lg">Rates & Calculations</h3>
-        <div className="grid grid-cols-2 gap-4">
+        <h3 className="font-semibold text-lg">
+          {['payment_schedule', 'payment_method', 'rate_structure', 'invoice_requirements', 'late_payment_penalty', 'advance_payment', 'milestone_payment'].includes(editForm.ruleType)
+            ? 'Payment Term Details'
+            : 'Rates & Calculations'}
+        </h3>
+        
+        {/* ROYALTY RULES - Percentage/Fixed Amounts */}
+        {(editForm.ruleType === 'percentage' || editForm.ruleType === 'fixed_fee' || editForm.ruleType === 'minimum_guarantee' || editForm.ruleType === 'cap') && (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="baseRate">Base Rate ($)</Label>
+              <Input
+                id="baseRate"
+                type="number"
+                step="0.01"
+                value={editForm.baseRate}
+                onChange={(e) => setEditForm({ ...editForm, baseRate: e.target.value })}
+                placeholder="1.25"
+                data-testid="input-base-rate"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Per-unit base royalty rate</p>
+            </div>
+            
+            <div>
+              <Label htmlFor="minimumGuarantee">Minimum Guarantee ($)</Label>
+              <Input
+                id="minimumGuarantee"
+                type="number"
+                step="0.01"
+                value={editForm.minimumGuarantee}
+                onChange={(e) => setEditForm({ ...editForm, minimumGuarantee: e.target.value })}
+                placeholder="85000"
+                data-testid="input-minimum-guarantee"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Annual minimum payment</p>
+            </div>
+          </div>
+        )}
+
+        {/* PAYMENT SCHEDULE */}
+        {editForm.ruleType === 'payment_schedule' && (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="payment-terms">Payment Terms</Label>
+              <Input
+                id="payment-terms"
+                value={editForm.baseRate || ''}
+                onChange={(e) => setEditForm({ ...editForm, baseRate: e.target.value })}
+                placeholder="e.g., Net 45, Net 30, Upon receipt"
+                data-testid="input-payment-terms"
+              />
+              <p className="text-xs text-muted-foreground mt-1">When payment is due</p>
+            </div>
+            <div>
+              <Label htmlFor="schedule-type">Schedule Type</Label>
+              <Input
+                id="schedule-type"
+                value={editForm.minimumGuarantee || ''}
+                onChange={(e) => setEditForm({ ...editForm, minimumGuarantee: e.target.value })}
+                placeholder="e.g., Monthly, Quarterly, Milestone-based"
+                data-testid="input-schedule-type"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Frequency of payments</p>
+            </div>
+          </div>
+        )}
+
+        {/* PAYMENT METHOD */}
+        {editForm.ruleType === 'payment_method' && (
           <div>
-            <Label htmlFor="baseRate">Base Rate ($)</Label>
+            <Label htmlFor="payment-method">Payment Method</Label>
             <Input
-              id="baseRate"
-              type="number"
-              step="0.01"
-              value={editForm.baseRate}
+              id="payment-method"
+              value={editForm.baseRate || ''}
               onChange={(e) => setEditForm({ ...editForm, baseRate: e.target.value })}
-              placeholder="1.25"
-              data-testid="input-base-rate"
+              placeholder="e.g., Direct deposit, Wire transfer, ACH, Check"
+              data-testid="input-payment-method"
             />
-            <p className="text-xs text-muted-foreground mt-1">Per-unit base royalty rate</p>
+            <p className="text-xs text-muted-foreground mt-1">How payment will be made</p>
           </div>
-          
+        )}
+
+        {/* RATE STRUCTURE */}
+        {editForm.ruleType === 'rate_structure' && (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="rate-amount">Rate Amount ($)</Label>
+              <Input
+                id="rate-amount"
+                type="number"
+                step="0.01"
+                value={editForm.baseRate}
+                onChange={(e) => setEditForm({ ...editForm, baseRate: e.target.value })}
+                placeholder="e.g., 125.00"
+                data-testid="input-rate-amount"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Dollar amount per unit</p>
+            </div>
+            <div>
+              <Label htmlFor="rate-unit">Rate Unit</Label>
+              <Input
+                id="rate-unit"
+                value={editForm.minimumGuarantee || ''}
+                onChange={(e) => setEditForm({ ...editForm, minimumGuarantee: e.target.value })}
+                placeholder="e.g., per hour, per day, per month"
+                data-testid="input-rate-unit"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Time unit for the rate</p>
+            </div>
+          </div>
+        )}
+
+        {/* INVOICE REQUIREMENTS */}
+        {editForm.ruleType === 'invoice_requirements' && (
           <div>
-            <Label htmlFor="minimumGuarantee">Minimum Guarantee ($)</Label>
-            <Input
-              id="minimumGuarantee"
-              type="number"
-              step="0.01"
-              value={editForm.minimumGuarantee}
-              onChange={(e) => setEditForm({ ...editForm, minimumGuarantee: e.target.value })}
-              placeholder="85000"
-              data-testid="input-minimum-guarantee"
+            <Label htmlFor="invoice-reqs">Invoice Requirements</Label>
+            <Textarea
+              id="invoice-reqs"
+              value={editForm.baseRate || ''}
+              onChange={(e) => setEditForm({ ...editForm, baseRate: e.target.value })}
+              placeholder="e.g., Itemized invoice with timesheets, W-9 form required"
+              rows={3}
+              data-testid="input-invoice-requirements"
             />
-            <p className="text-xs text-muted-foreground mt-1">Annual minimum payment</p>
+            <p className="text-xs text-muted-foreground mt-1">Documentation needed for payment</p>
           </div>
-        </div>
+        )}
+
+        {/* LATE PAYMENT PENALTY */}
+        {editForm.ruleType === 'late_payment_penalty' && (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="penalty-rate">Penalty Rate (%)</Label>
+              <Input
+                id="penalty-rate"
+                type="number"
+                step="0.01"
+                value={editForm.baseRate}
+                onChange={(e) => setEditForm({ ...editForm, baseRate: e.target.value })}
+                placeholder="e.g., 1.5"
+                data-testid="input-penalty-rate"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Interest rate per month</p>
+            </div>
+            <div>
+              <Label htmlFor="penalty-details">Penalty Details</Label>
+              <Input
+                id="penalty-details"
+                value={editForm.minimumGuarantee || ''}
+                onChange={(e) => setEditForm({ ...editForm, minimumGuarantee: e.target.value })}
+                placeholder="e.g., per month after due date"
+                data-testid="input-penalty-details"
+              />
+              <p className="text-xs text-muted-foreground mt-1">When penalty applies</p>
+            </div>
+          </div>
+        )}
+
+        {/* ADVANCE PAYMENT */}
+        {editForm.ruleType === 'advance_payment' && (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="advance-amount">Advance Amount ($)</Label>
+              <Input
+                id="advance-amount"
+                type="number"
+                step="0.01"
+                value={editForm.baseRate}
+                onChange={(e) => setEditForm({ ...editForm, baseRate: e.target.value })}
+                placeholder="e.g., 5000"
+                data-testid="input-advance-amount"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Dollar amount of advance</p>
+            </div>
+            <div>
+              <Label htmlFor="advance-percentage">Percentage (Optional)</Label>
+              <Input
+                id="advance-percentage"
+                type="number"
+                step="0.01"
+                value={editForm.minimumGuarantee}
+                onChange={(e) => setEditForm({ ...editForm, minimumGuarantee: e.target.value })}
+                placeholder="e.g., 25 (for 25% down)"
+                data-testid="input-advance-percentage"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Percentage of total</p>
+            </div>
+          </div>
+        )}
+
+        {/* MILESTONE PAYMENT */}
+        {editForm.ruleType === 'milestone_payment' && (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="milestone-amount">Payment Amount ($)</Label>
+              <Input
+                id="milestone-amount"
+                type="number"
+                step="0.01"
+                value={editForm.baseRate}
+                onChange={(e) => setEditForm({ ...editForm, baseRate: e.target.value })}
+                placeholder="e.g., 15000"
+                data-testid="input-milestone-amount"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Dollar amount for milestone</p>
+            </div>
+            <div>
+              <Label htmlFor="milestone-trigger">Milestone Trigger</Label>
+              <Input
+                id="milestone-trigger"
+                value={editForm.minimumGuarantee || ''}
+                onChange={(e) => setEditForm({ ...editForm, minimumGuarantee: e.target.value })}
+                placeholder="e.g., Upon project completion, Phase 1 delivery"
+                data-testid="input-milestone-trigger"
+              />
+              <p className="text-xs text-muted-foreground mt-1">What triggers this payment</p>
+            </div>
+          </div>
+        )}
       </div>
 
       <Separator />
