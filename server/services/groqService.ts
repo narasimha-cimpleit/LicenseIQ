@@ -36,7 +36,10 @@ interface ContractAnalysisResult {
 interface RoyaltyRule {
   ruleType: 'percentage' | 'tiered' | 'minimum_guarantee' | 'cap' | 'deduction' | 'fixed_fee' | 
              'payment_schedule' | 'payment_method' | 'rate_structure' | 'invoice_requirements' | 
-             'late_payment_penalty' | 'advance_payment' | 'milestone_payment' | 'formula_based';
+             'late_payment_penalty' | 'advance_payment' | 'milestone_payment' | 'formula_based' |
+             'fixed_price' | 'variable_price' | 'per_seat' | 'per_unit' | 'per_time_period' |
+             'auto_renewal' | 'escalation_clause' | 'early_termination' | 'volume_discount' |
+             'license_scope' | 'usage_based';
   ruleName: string;
   description: string;
   conditions: {
@@ -46,6 +49,17 @@ interface RoyaltyRule {
     salesVolumeMax?: number;
     timeperiod?: string;
     currency?: string;
+    licenseScope?: {
+      userLimit?: number;
+      geographic?: string[];
+      termMonths?: number;
+      exclusivity?: boolean;
+    };
+    renewalTerms?: {
+      autoRenew?: boolean;
+      renewalRate?: number;
+      noticeRequiredDays?: number;
+    };
   };
   calculation: {
     rate?: number; // For percentage rules
@@ -56,6 +70,9 @@ interface RoyaltyRule {
     }>; // For tiered rules
     amount?: number; // For fixed amounts
     formula?: string; // For complex calculations
+    escalationRate?: number; // For annual escalation clauses
+    terminationFee?: number; // For early termination penalties
+    discountPercent?: number; // For volume discounts
   };
   priority: number;
   sourceSpan: {
@@ -67,7 +84,9 @@ interface RoyaltyRule {
 }
 
 interface LicenseRuleExtractionResult {
-  documentType: 'license' | 'royalty_agreement' | 'revenue_share' | 'other';
+  documentType: 'sales' | 'service' | 'licensing' | 'distribution' | 'employment' | 
+                'consulting' | 'nda' | 'amendment' | 'saas' | 'subscription' | 'other';
+  contractCategory: 'revenue-generating' | 'service-based' | 'confidentiality' | 'employment' | 'other';
   licenseType: string;
   parties: {
     licensor: string;
@@ -88,6 +107,11 @@ interface LicenseRuleExtractionResult {
     avgConfidence: number;
     processingTime: number;
     ruleComplexity: 'simple' | 'moderate' | 'complex';
+    hasFixedPricing: boolean;
+    hasVariablePricing: boolean;
+    hasTieredPricing: boolean;
+    hasRenewalTerms: boolean;
+    hasTerminationClauses: boolean;
   };
 }
 
@@ -166,9 +190,13 @@ export class GroqService {
       
       // Extract special adjustments
       const adjustmentRules = await this.extractSpecialAdjustments(contractText);
+      await this.delay(2000);
+      
+      // Extract universal pricing structures (renewal, escalation, termination, etc.)
+      const universalPricingRules = await this.extractUniversalPricingRules(contractText);
       
       // Combine all results
-      allRules = [...tierRules, ...paymentRules, ...adjustmentRules];
+      allRules = [...tierRules, ...paymentRules, ...adjustmentRules, ...universalPricingRules];
       
       // Filter out low-confidence or empty rules
       allRules = allRules.filter(rule => 
@@ -183,8 +211,8 @@ export class GroqService {
     }
     
     // Map the flexible AI response to the expected schema format
-    const documentType: 'license' | 'royalty_agreement' | 'revenue_share' | 'other' = 
-      basicInfo.hasRoyaltyTerms === true ? 'license' : 'other';
+    const documentType: 'sales' | 'service' | 'licensing' | 'distribution' | 'employment' | 'consulting' | 'nda' | 'amendment' | 'saas' | 'subscription' | 'other' = 
+      basicInfo.documentType || (basicInfo.hasRoyaltyTerms === true ? 'licensing' : 'other');
     
     // Map dynamic party structure to expected licensor/licensee format
     let parties;
@@ -209,13 +237,19 @@ export class GroqService {
       currency: basicInfo.currency || 'USD',
       paymentTerms: basicInfo.paymentTerms || 'Not specified',
       reportingRequirements: [],
+      contractCategory: this.determineContractCategory(documentType, allRules),
       extractionMetadata: {
         totalRulesFound: allRules.length,
         avgConfidence: allRules.length > 0 
           ? allRules.reduce((sum, rule) => sum + rule.confidence, 0) / allRules.length
           : 0,
         processingTime: basicInfo.hasRoyaltyTerms ? 12 : 2,
-        ruleComplexity: allRules.length > 5 ? 'complex' : allRules.length > 2 ? 'moderate' : 'simple'
+        ruleComplexity: allRules.length > 5 ? 'complex' : allRules.length > 2 ? 'moderate' : 'simple',
+        hasFixedPricing: allRules.some(r => r.ruleType === 'fixed_price' || r.ruleType === 'fixed_fee'),
+        hasVariablePricing: allRules.some(r => r.ruleType === 'variable_price' || r.ruleType === 'percentage' || r.ruleType === 'usage_based'),
+        hasTieredPricing: allRules.some(r => r.ruleType === 'tiered'),
+        hasRenewalTerms: allRules.some(r => r.ruleType === 'auto_renewal'),
+        hasTerminationClauses: allRules.some(r => r.ruleType === 'early_termination')
       }
     };
   }
@@ -224,36 +258,76 @@ export class GroqService {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
+  private determineContractCategory(
+    documentType: string,
+    rules: RoyaltyRule[]
+  ): 'revenue-generating' | 'service-based' | 'confidentiality' | 'employment' | 'other' {
+    if (documentType === 'nda') return 'confidentiality';
+    if (documentType === 'employment' || documentType === 'consulting') return 'employment';
+    if (documentType === 'service') return 'service-based';
+    if (rules.length > 0) return 'revenue-generating';
+    return 'other';
+  }
+
   private async extractBasicContractInfo(contractText: string): Promise<any> {
-    const prompt = `Analyze this contract and identify its type. DO NOT assume it is a license agreement.
+    const prompt = `Analyze this contract and identify its exact type. Be precise and specific.
 
 Contract Text:
 ${contractText.substring(0, 3000)}
 
-Identify the actual contract type (e.g., "License Agreement", "Service Agreement", "Subcontractor Agreement", "Employment Contract", "NDA", etc.) and extract the appropriate parties based on the contract type.
+**Contract Type Classification:**
+Identify which of these categories best describes this contract:
+- **sales**: Sales contracts for goods/services with fixed or variable pricing
+- **service**: Service agreements with scope of work, deliverables, hourly/project rates
+- **licensing**: IP licensing, software licenses, content licensing with royalties or license fees
+- **saas**: SaaS/subscription agreements with per-seat, per-user, or usage-based pricing
+- **distribution**: Distribution/reseller agreements with pricing tiers and territories
+- **consulting**: Consulting/professional services contracts with rate structures
+- **employment**: Employment contracts with compensation terms
+- **nda**: Non-disclosure/confidentiality agreements
+- **amendment**: Amendments to existing contracts
+- **other**: Other contract types
+
+**Payment Terms Detection:**
+Set "hasRoyaltyTerms" to true if the contract explicitly contains ANY of these payment/pricing/renewal structures:
+- Royalty percentages or license fees
+- Revenue-sharing arrangements
+- Fixed or variable pricing (e.g., "One-time fee of $10,000", "Variable rates based on volume")
+- Per-seat, per-user, per-unit pricing (e.g., "$50/user/month", "$100 per license")
+- Tiered pricing based on volume/usage
+- Hourly/daily/monthly rate structures (e.g., "$125/hour", "$5,000/month retainer")
+- Milestone-based payments
+- Subscription/recurring payments
+- Usage-based/consumption-based pricing (e.g., "$0.10 per API call")
+- Auto-renewal terms (e.g., "Automatically renews annually")
+- Price escalation clauses (e.g., "Annual 3% rate increase")
+- Early termination fees or penalties
+- License scope restrictions (user limits, geographic, term)
+- ANY form of monetary compensation, pricing structure, renewal terms, or termination clauses
+
+IMPORTANT: Even if the contract has NO royalty/license fees but DOES have renewal terms, escalation clauses, or termination penalties, set hasRoyaltyTerms to TRUE.
 
 CRITICAL: 
-- If this is NOT a license/royalty agreement, set "hasRoyaltyTerms" to false
-- Only set "hasRoyaltyTerms" to true if the contract explicitly contains royalty, license fees, or revenue-sharing payment terms
-- Do NOT fabricate party information - extract exactly what is in the contract
-- Use appropriate party labels for the contract type (e.g., "contractor" and "client" for service agreements, "employer" and "employee" for employment contracts)
+- Extract ONLY information that exists in the document
+- Use appropriate party labels for the contract type
+- Do NOT fabricate or assume information
 
 Return JSON:
 {
-  "documentType": "actual type (license/service/subcontractor/employment/other)",
+  "documentType": "sales|service|licensing|saas|distribution|consulting|employment|nda|amendment|other",
   "contractTitle": "exact title from document",
-  "hasRoyaltyTerms": true or false,
+  "hasRoyaltyTerms": true or false (based on payment terms detection above),
   "parties": { 
     "party1": {"name": "exact name", "role": "actual role"},
     "party2": {"name": "exact name", "role": "actual role"}
   },
   "effectiveDate": "date or null",
   "expirationDate": "date or null", 
-  "currency": "USD or null",
-  "paymentTerms": "only if found, otherwise null"
+  "currency": "USD|EUR|GBP|etc or null",
+  "paymentTerms": "brief description of payment structure if found, otherwise null"
 }
 
-If no information found, return null for that field. Return only valid JSON.`;
+Return only valid JSON. No explanations.`;
 
     try {
       const response = await this.makeRequest([
@@ -311,7 +385,7 @@ Look for tier structures like:
 - "Volume tier: 0-5000 units = 5%, 5001+ units = 7%"
 - "Product tier 1 rate: $X, Product tier 2 rate: $Y"
 
-ruleType must be one of: "percentage", "tiered", "minimum_guarantee", "cap", "deduction", "fixed_fee"
+ruleType must be one of: "percentage", "tiered", "minimum_guarantee", "cap", "deduction", "fixed_fee", "fixed_price", "variable_price", "per_seat", "per_unit", "per_time_period", "volume_discount", "usage_based"
 
 Return JSON array (empty if no rules found):
 [
@@ -363,7 +437,7 @@ Look for calculation rules like:
 - "Container size multiplier: 1 gallon = $1.00, 5 gallon = $3.50"
 - "Quarterly payment due within 30 days of quarter end"
 
-ruleType must be one of: "percentage", "tiered", "minimum_guarantee", "cap", "deduction", "fixed_fee"
+ruleType must be one of: "percentage", "tiered", "minimum_guarantee", "cap", "deduction", "fixed_fee", "fixed_price", "variable_price", "per_seat", "per_unit", "per_time_period", "volume_discount", "usage_based"
 
 Return JSON array (empty if no rules found):
 [
@@ -442,6 +516,106 @@ If NO special adjustments exist, return: []`;
       return Array.isArray(rules) ? rules : [];
     } catch (error) {
       console.error('Special adjustments extraction failed:', error);
+      return [];
+    }
+  }
+
+  private async extractUniversalPricingRules(contractText: string): Promise<RoyaltyRule[]> {
+    const prompt = `Extract UNIVERSAL PRICING STRUCTURES from this contract. These include renewal terms, escalation clauses, termination penalties, license scope, and usage-based pricing.
+
+Contract Text:
+${contractText}
+
+CRITICAL REQUIREMENTS:
+- ONLY extract rules that explicitly exist in the contract
+- If NO universal pricing rules exist, return an empty array []
+- Do NOT fabricate or assume rules
+- Each rule MUST have actual source text from the contract in sourceSpan.text
+- Set confidence below 0.6 if you're uncertain
+
+**Look for these pricing structures:**
+
+**IMPORTANT: Use these EXACT ruleType values when you find these structures:**
+
+1. **Auto-Renewal Terms** → ruleType: **"auto_renewal"**
+   Examples: "Contract automatically renews for 1-year terms", "Renewal rate increases by 3% annually", "30 days notice required to cancel"
+   → Use ruleType "auto_renewal" and populate conditions.renewalTerms {autoRenew, renewalRate, noticeRequiredDays}
+
+2. **Escalation Clauses** → ruleType: **"escalation_clause"**
+   Examples: "Annual price increase of 2.5%", "Rates escalate 5% per year", "CPI adjustment annually"
+   → Use ruleType "escalation_clause" and populate calculation.escalationRate
+
+3. **Termination Penalties** → ruleType: **"early_termination"**
+   Examples: "Early termination fee: 50% of remaining contract value", "Cancellation penalty: $10,000", "Exit fee if terminated before 24 months"
+   → Use ruleType "early_termination" and populate calculation.terminationFee
+
+4. **License Scope** → ruleType: **"license_scope"**
+   Examples: "Limited to 100 users", "Geographic restriction: North America only", "12-month license term", "Exclusive rights in California"
+   → Use ruleType "license_scope" and populate conditions.licenseScope {userLimit, geographic, termMonths, exclusivity}
+
+5. **Usage-Based Pricing** → ruleType: **"usage_based"**
+   Examples: "$0.10 per API call", "Billed based on monthly active users", "Consumption-based pricing"
+   → Use ruleType "usage_based" and populate calculation.rate
+
+6. **Per-Seat/Unit/Time Pricing** → ruleType: **"per_seat"** or **"per_unit"** or **"per_time_period"**
+   Examples: "$50 per user per month" (per_seat), "$100 per license" (per_unit), "$5,000 per month retainer" (per_time_period)
+   → Use appropriate ruleType and populate calculation.amount and conditions.timeperiod
+
+7. **Fixed Price** → ruleType: **"fixed_price"**
+   Examples: "One-time fee of $10,000", "Flat rate of $5,000 for project"
+   → Use ruleType "fixed_price" and populate calculation.amount
+
+8. **Variable Price** → ruleType: **"variable_price"**
+   Examples: "Price varies based on volume", "Fluctuating rates based on market"
+   → Use ruleType "variable_price" with appropriate calculation structure
+
+**REQUIRED:** ruleType must be EXACTLY one of: "auto_renewal", "escalation_clause", "early_termination", "license_scope", "usage_based", "per_seat", "per_unit", "per_time_period", "fixed_price", "variable_price"
+
+Return JSON array (empty if no rules found):
+[
+  {
+    "ruleType": "auto_renewal|escalation_clause|early_termination|license_scope|usage_based|per_seat|per_unit|per_time_period",
+    "ruleName": "exact name from contract or descriptive name",
+    "description": "exact description",
+    "conditions": {
+      "timeperiod": "monthly|annually|etc",
+      "licenseScope": {
+        "userLimit": number_or_null,
+        "geographic": ["territories"],
+        "termMonths": number_or_null,
+        "exclusivity": true_or_false
+      },
+      "renewalTerms": {
+        "autoRenew": true_or_false,
+        "renewalRate": percentage_increase_or_null,
+        "noticeRequiredDays": number_or_null
+      }
+    },
+    "calculation": {
+      "amount": fixed_amount_or_null,
+      "rate": percentage_or_null,
+      "escalationRate": annual_increase_percentage_or_null,
+      "terminationFee": early_exit_fee_or_null
+    },
+    "priority": 1,
+    "sourceSpan": {"section": "actual section name", "text": "verbatim text from contract"},
+    "confidence": 0.6 to 1.0
+  }
+]
+
+If NO universal pricing rules exist, return: []`;
+
+    try {
+      console.log(`🌐 Extracting universal pricing rules...`);
+      const response = await this.makeRequest([
+        { role: 'system', content: 'Extract ONLY pricing rules that explicitly exist. Do NOT fabricate. Return empty array [] if none found. Return only JSON.' },
+        { role: 'user', content: prompt }
+      ], 0.1, 2000);
+      
+      const rules = this.extractAndRepairJSON(response, []);
+      return Array.isArray(rules) ? rules : [];
+    } catch (error) {
+      console.error('Universal pricing rules extraction failed:', error);
       return [];
     }
   }
@@ -795,13 +969,19 @@ Return empty array [] if contract has NO payment terms.`;
         currency: extractionResult.currency || 'USD',
         paymentTerms: extractionResult.paymentTerms || 'Not specified',
         reportingRequirements: extractionResult.reportingRequirements || [],
+        contractCategory: this.determineContractCategory(extractionResult.documentType || 'other', extractionResult.rules || []),
         extractionMetadata: {
           totalRulesFound: extractionResult.rules?.length || 0,
           avgConfidence: extractionResult.rules?.length > 0 
             ? extractionResult.rules.reduce((sum: number, rule: any) => sum + (rule.confidence || 0.8), 0) / extractionResult.rules.length
             : 0.8,
           processingTime: extractionResult.extractionMetadata?.processingTime || 5,
-          ruleComplexity: (extractionResult.extractionMetadata?.ruleComplexity as 'simple' | 'moderate' | 'complex') || 'moderate'
+          ruleComplexity: (extractionResult.extractionMetadata?.ruleComplexity as 'simple' | 'moderate' | 'complex') || 'moderate',
+          hasFixedPricing: extractionResult.rules?.some((r: any) => r.ruleType === 'fixed_price' || r.ruleType === 'fixed_fee') || false,
+          hasVariablePricing: extractionResult.rules?.some((r: any) => r.ruleType === 'variable_price' || r.ruleType === 'percentage' || r.ruleType === 'usage_based') || false,
+          hasTieredPricing: extractionResult.rules?.some((r: any) => r.ruleType === 'tiered') || false,
+          hasRenewalTerms: extractionResult.rules?.some((r: any) => r.ruleType === 'auto_renewal') || false,
+          hasTerminationClauses: extractionResult.rules?.some((r: any) => r.ruleType === 'early_termination') || false
         }
       };
 
@@ -810,7 +990,8 @@ Return empty array [] if contract has NO payment terms.`;
       
       // Return basic fallback structure if API fails (handles rate limits)
       return {
-        documentType: 'license' as const,
+        documentType: 'licensing' as const,
+        contractCategory: 'other' as const,
         licenseType: 'License Agreement',
         parties: { licensor: 'Not specified', licensee: 'Not specified' },
         effectiveDate: undefined,
@@ -823,7 +1004,12 @@ Return empty array [] if contract has NO payment terms.`;
           totalRulesFound: 0,
           avgConfidence: 0.5,
           processingTime: 0,
-          ruleComplexity: 'moderate' as const
+          ruleComplexity: 'moderate' as const,
+          hasFixedPricing: false,
+          hasVariablePricing: false,
+          hasTieredPricing: false,
+          hasRenewalTerms: false,
+          hasTerminationClauses: false
         }
       };
     }
@@ -1999,6 +2185,7 @@ Return empty array [] if contract has NO payment terms.`;
       // Return a fallback structure if parsing fails
       return {
         documentType: 'other',
+        contractCategory: 'other' as const,
         licenseType: licenseType || 'unknown',
         parties: {
           licensor: 'Unable to extract',
@@ -2012,7 +2199,12 @@ Return empty array [] if contract has NO payment terms.`;
           totalRulesFound: 0,
           avgConfidence: 0,
           processingTime: Date.now() - startTime,
-          ruleComplexity: 'simple'
+          ruleComplexity: 'simple',
+          hasFixedPricing: false,
+          hasVariablePricing: false,
+          hasTieredPricing: false,
+          hasRenewalTerms: false,
+          hasTerminationClauses: false
         }
       };
     }

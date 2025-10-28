@@ -8,6 +8,41 @@ Preferred communication style: Simple, everyday language.
 
 # Recent Updates (October 28, 2025)
 
+## Universal Contract Processing System (October 28, 2025)
+Implemented comprehensive AI-powered extraction for ALL contract types and pricing structures, moving beyond licensing-only focus to universal business contract support:
+
+**Contract Type Detection (10 Types):**
+- Sales, Service, Licensing, SaaS, Distribution, Consulting, Employment, NDA, Amendment, Subscription contracts
+- Each contract categorized by business purpose: revenue-generating, service-based, confidentiality, employment, other
+- Intelligent classification based on actual contract content, not assumptions
+
+**Universal Pricing Structures Extracted:**
+- **Renewal Terms** (auto_renewal): Auto-renew settings, renewal rate changes, notice periods
+- **Escalation Clauses** (escalation_clause): Annual price increases, CPI adjustments, rate escalations
+- **Termination Penalties** (early_termination): Cancellation fees, exit penalties, early termination costs
+- **License Scope** (license_scope): User limits, geographic restrictions, term length, exclusivity
+- **Usage-Based Pricing** (usage_based): Per-API-call, consumption-based, metered billing
+- **Per-Seat/Unit/Time** (per_seat, per_unit, per_time_period): User-based, license-based, hourly/monthly rates
+- **Fixed/Variable Pricing** (fixed_price, variable_price): One-time fees, volume-dependent pricing
+- **Volume Discounts** (volume_discount): Bulk pricing, tier-based discounts
+- Plus existing: Tiered pricing, percentages, minimum guarantees, caps, deductions, fixed fees
+
+**Technical Implementation:**
+- Added `extractUniversalPricingRules()` function with comprehensive AI prompts for all pricing structures
+- Expanded `hasRoyaltyTerms` detection to include renewal/escalation/termination clauses (not just royalties)
+- Updated all extraction prompts to support 22 rule types (expanded from 7)
+- Added 5 metadata flags: hasFixedPricing, hasVariablePricing, hasTieredPricing, hasRenewalTerms, hasTerminationClauses
+- Enhanced TypeScript interfaces with licenseScope and renewalTerms conditions, plus escalationRate/terminationFee/discountPercent calculations
+- Backward compatible - existing royalty extraction unchanged
+
+**Impact:**
+- SaaS contracts: Extracts per-seat pricing, auto-renewal, user limits, escalation clauses
+- Service agreements: Extracts hourly rates, milestone payments, termination fees
+- Subscriptions: Extracts usage-based pricing, renewal terms, license scope
+- Employment/consulting: Extracts per-time-period rates, fixed compensation
+- Distribution: Extracts tiered pricing, volume discounts, territory restrictions
+- Any contract with pricing/renewal/termination structure is now fully analyzable
+
 ## Dynamic Rule Form Implementation (October 28, 2025)
 Transformed the "Add/Edit Rule" form from static royalty-focused fields to a fully dynamic interface that adapts to the rule type being added:
 

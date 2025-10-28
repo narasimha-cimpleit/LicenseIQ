@@ -77,7 +77,7 @@ function extractSeasonalAdjustments(formulaDefinition: any): Record<string, numb
 }
 
 export default function RulesManagement() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const [, navigate] = useLocation();
   const { toast } = useToast();
   
