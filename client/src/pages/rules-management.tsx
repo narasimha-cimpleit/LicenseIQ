@@ -89,7 +89,7 @@ export default function RulesManagement() {
   const [editForm, setEditForm] = useState({
     ruleName: "",
     description: "",
-    ruleType: "tiered_pricing",
+    ruleType: "rate_structure",
     productCategories: [] as string[],
     territories: [] as string[],
     containerSizes: [] as string[],
@@ -621,10 +621,13 @@ export default function RulesManagement() {
         )}
       </div>
 
-      <Separator />
+      {/* Only show royalty-specific sections for royalty rule types */}
+      {!['payment_schedule', 'payment_method', 'rate_structure', 'invoice_requirements', 'late_payment_penalty', 'advance_payment', 'milestone_payment'].includes(editForm.ruleType) && (
+        <>
+          <Separator />
 
-      {/* Volume Tiers */}
-      <div className="space-y-4">
+          {/* Volume Tiers */}
+          <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-lg">Volume Tiers</h3>
           <Button type="button" size="sm" onClick={addVolumeTier} data-testid="button-add-volume-tier">
@@ -800,6 +803,8 @@ export default function RulesManagement() {
           ))}
         </div>
       </div>
+        </>
+      )}
 
       {/* Action Buttons */}
       <div className="flex justify-end gap-2 pt-4">
