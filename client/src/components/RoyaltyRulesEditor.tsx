@@ -515,7 +515,7 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate, onRepr
                     value={currentRule.conditions.timeperiod || ''}
                     onChange={(e) => setLocalEditRule(prev => ({
                       ...(prev || rule),
-                      conditions: { ...(prev || rule).conditions, timeperiod: e.target.value }
+                      conditions: { ...(prev || rule).conditions, timeperiod: e.target.value as any }
                     }))}
                     placeholder="e.g., Monthly, Milestone-based"
                     className="h-10"

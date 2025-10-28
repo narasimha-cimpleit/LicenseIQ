@@ -8,6 +8,34 @@ Preferred communication style: Simple, everyday language.
 
 # Recent Updates (October 28, 2025)
 
+## Dynamic Rule Form Implementation (October 28, 2025)
+Transformed the "Add/Edit Rule" form from static royalty-focused fields to a fully dynamic interface that adapts to the rule type being added:
+
+**Dynamic Form Behavior:**
+- Form fields change based on selected rule type
+- Section header adapts: "Calculation Settings" for royalty rules, "Payment Term Details" for payment terms
+- Only shows relevant fields for each rule type
+
+**Royalty/License Rule Fields:**
+- **Percentage**: Rate (%), Base Field (gross/net revenue, units)
+- **Fixed Fee/Min Guarantee/Cap**: Amount ($)
+- **Tiered**: Volume tier configuration
+
+**Payment Term Rule Fields:**
+- **Payment Schedule**: Payment Terms (Net 45, Net 30, Upon receipt), Schedule Type (Monthly, Milestone-based)
+- **Payment Method**: Payment Method (Direct deposit, Wire transfer, ACH, Check)
+- **Rate Structure**: Rate Amount ($125), Rate Unit (per hour, per day, per month)
+- **Invoice Requirements**: Invoice Requirements (Itemized invoice with timesheets, W-9 required)
+- **Late Payment Penalty**: Penalty Rate (1.5%), Penalty Details (per month after due date)
+- **Advance Payment**: Advance Amount ($5000), Percentage (25% down)
+- **Milestone Payment**: Payment Amount ($15000), Milestone Trigger (Upon project completion)
+
+**User Experience:**
+- Appropriate placeholders guide users on expected input format
+- Description field captures full context for all rule types
+- Priority field always visible for rule ordering
+- Backward compatible with existing royalty rules
+
 ## Expanded Payment Terms Extraction (October 28, 2025)
 Enhanced the dynamic rule extraction system to capture ALL payment-related clauses, not just royalty/licensing terms:
 
