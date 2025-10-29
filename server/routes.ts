@@ -2623,6 +2623,22 @@ async function extractAndSaveRoyaltyRules(contractId: string, contractText: stri
     console.log(`📋 Found ${generalPaymentTerms.length} general payment terms`);
     
     for (const term of generalPaymentTerms) {
+      // Extract base rate from payment terms if possible
+      let extractedBaseRate = null;
+      
+      if (term.paymentTerms) {
+        // Try to extract a simple numeric value from complex payment terms
+        const numericRate = parseNumericValue(term.paymentTerms);
+        if (numericRate !== null) {
+          extractedBaseRate = numericRate.toString();
+        } else {
+          // If payment terms is complex (e.g., tiered pricing), skip this term
+          // These should be handled by the tiered rules extraction instead
+          console.log(`⚠️ Skipping complex payment term: ${term.ruleName} (contains non-numeric data)`);
+          continue;
+        }
+      }
+      
       const termData: any = {
         contractId,
         ruleType: term.ruleType, // payment_schedule, payment_method, rate_structure, etc.
@@ -2632,8 +2648,8 @@ async function extractAndSaveRoyaltyRules(contractId: string, contractText: stri
         territories: [],
         containerSizes: [],
         
-        // Store payment terms data as JSON in the baseRate field (reusing existing schema)
-        baseRate: term.paymentTerms ? JSON.stringify(term.paymentTerms) : null,
+        // Only store simple numeric rates
+        baseRate: extractedBaseRate,
         
         isActive: true,
         priority: 5, // Medium priority

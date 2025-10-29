@@ -379,7 +379,10 @@ Return ONLY valid JSON. No explanations.`;
       const extracted = this.extractAndRepairJSON(response, { basicInfo: {}, rules: [] });
       
       if (!extracted || !extracted.basicInfo) {
-        console.warn('⚠️ Consolidated extraction failed, using fallback');
+        console.error('⚠️ Consolidated extraction failed, using fallback');
+        console.error('📊 AI Response length:', response?.length || 0);
+        console.error('📊 Extracted data:', JSON.stringify(extracted).substring(0, 500));
+        console.error('📊 First 500 chars of raw response:', response?.substring(0, 500));
         return {
           basicInfo: {
             documentType: 'unknown',
