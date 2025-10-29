@@ -2533,8 +2533,8 @@ async function extractRoyaltyRulesData(contractText: string, aiAnalysis: any): P
     
     console.log(`📋 Found ${detailedRules.rules.length} royalty rules from AI`);
     
-    // 🐛 DEBUG: Log rule types to diagnose misclassification
-    console.log(`🐛 [DEBUG] Rule types extracted:`, detailedRules.rules.map((r: any) => r.type));
+    // 🐛 DEBUG: Log rule types to diagnose misclassification (AI returns 'ruleType', not 'type'!)
+    console.log(`🐛 [DEBUG] Rule types extracted:`, detailedRules.rules.map((r: any) => r.ruleType));
     
     // 🚫 ONLY extract product formulas for licensing/royalty contracts (NOT service/consulting contracts)
     // Requires LICENSING-SPECIFIC evidence (container sizes, volume tiers, etc.)
@@ -2544,15 +2544,15 @@ async function extractRoyaltyRulesData(contractText: string, aiAnalysis: any): P
     
     const hasLicensingSpecificFeatures = detailedRules.rules.some((r: any) =>
       // Must have licensing-specific features (not just product categories)
-      (r.containerSizes?.length > 0) ||
-      (r.volumeTiers?.length > 0) ||
-      (r.seasonalAdjustments && Object.keys(r.seasonalAdjustments).length > 0) ||
-      (r.territoryPremiums && Object.keys(r.territoryPremiums).length > 0) ||
-      (licensingRuleTypes.includes(r.type))
+      (r.conditions?.containerSizes?.length > 0) ||
+      (r.calculation?.tiers?.length > 0) ||
+      (r.calculation?.seasonalAdjustments && Object.keys(r.calculation.seasonalAdjustments).length > 0) ||
+      (r.calculation?.territoryPremiums && Object.keys(r.calculation.territoryPremiums).length > 0) ||
+      (licensingRuleTypes.includes(r.ruleType))
     );
     
     const hasOnlyPaymentRules = detailedRules.rules.every((r: any) => 
-      paymentOnlyRuleTypes.includes(r.type)
+      paymentOnlyRuleTypes.includes(r.ruleType)
     );
     
     console.log(`🐛 [DEBUG] hasLicensingSpecificFeatures: ${hasLicensingSpecificFeatures}`);
@@ -2593,32 +2593,34 @@ async function extractRoyaltyRulesData(contractText: string, aiAnalysis: any): P
     const validLegacyRules = detailedRules.rules.filter((rule: any) => {
       // Keep rules that have:
       // 1. A valid name and description
-      // 2. Any meaningful content (productCategories, or seasonal adjustments, or territory premiums, or ANY rule type)
-      return rule.name && rule.description && rule.type;
+      // 2. A valid rule type (AI returns 'ruleType', not 'type'!)
+      return rule.ruleName && rule.description && rule.ruleType;
     });
 
     for (const rule of validLegacyRules) {
       const r = rule as any;
       
+      // AI returns structured data in 'conditions' and 'calculation' objects
+      const conditions = r.conditions || {};
+      const calculation = r.calculation || {};
+      
       // Validate numeric values with defensive parsing
-      const baseRate = parseNumericValue(r.baseRoyaltyRate);
-      const volumeTier = r.volumeTiers?.[0] 
-        ? parseNumericValue(r.volumeTiers[0].rate)
-        : null;
+      const baseRate = parseNumericValue(calculation.rate || calculation.baseRate);
+      const volumeTiers = calculation.tiers || [];
       
       rulesData.push({
-        ruleType: r.type || 'tiered_pricing',
-        ruleName: r.name,
+        ruleType: r.ruleType || 'tiered_pricing',
+        ruleName: r.ruleName,
         description: r.description,
         baseRoyaltyRate: baseRate,
-        productCategories: r.productCategories || [],
-        containerSizes: r.containerSizes || [],
-        territories: r.territories || [],
-        volumeTiers: r.volumeTiers || [],
-        seasonalAdjustments: r.seasonalAdjustments || {},
-        territoryPremiums: r.territoryPremiums || {},
+        productCategories: conditions.productCategories || [],
+        containerSizes: conditions.containerSizes || [],
+        territories: conditions.territories || [],
+        volumeTiers: volumeTiers,
+        seasonalAdjustments: calculation.seasonalAdjustments || {},
+        territoryPremiums: calculation.territoryPremiums || {},
         isActive: true,
-        priority: 1,
+        priority: r.priority || 1,
         confidence: r.confidence ?? 0.85,
         sourceSection: r.sourceSpan?.section || null,
         sourceText: r.sourceSpan?.text || r.description,
