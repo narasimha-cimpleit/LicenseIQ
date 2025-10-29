@@ -2583,10 +2583,12 @@ async function extractRoyaltyRulesData(contractText: string, aiAnalysis: any): P
     }
     
     // Convert AI-extracted rules to database format
+    // Keep ALL valid rules (don't filter out payment rules!)
     const validLegacyRules = detailedRules.rules.filter((rule: any) => {
-      return (rule.productCategories && rule.productCategories.length > 0) ||
-             (rule.seasonalAdjustments && Object.keys(rule.seasonalAdjustments).length > 0) ||
-             (rule.territoryPremiums && Object.keys(rule.territoryPremiums).length > 0);
+      // Keep rules that have:
+      // 1. A valid name and description
+      // 2. Any meaningful content (productCategories, or seasonal adjustments, or territory premiums, or ANY rule type)
+      return rule.name && rule.description && rule.type;
     });
 
     for (const rule of validLegacyRules) {
