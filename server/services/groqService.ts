@@ -168,8 +168,9 @@ export class GroqService {
     try {
       const cleanResponse = response.trim();
       
-      // Try to find JSON array or object
-      let jsonMatch = cleanResponse.match(/\[[\s\S]*\]/) || cleanResponse.match(/\{[\s\S]*\}/);
+      // Try to find JSON object FIRST (to get full response), then array as fallback
+      // CRITICAL: Match object {...} before array [...] to preserve basicInfo!
+      let jsonMatch = cleanResponse.match(/\{[\s\S]*\}/) || cleanResponse.match(/\[[\s\S]*\]/);
       
       if (!jsonMatch) {
         console.warn('⚠️ No JSON found in response, returning fallback');
