@@ -2533,11 +2533,34 @@ async function extractRoyaltyRulesData(contractText: string, aiAnalysis: any): P
     
     console.log(`📋 Found ${detailedRules.rules.length} royalty rules from AI`);
     
-    // Extract product formulas if contract has royalty terms
+    // 🚫 ONLY extract product formulas for licensing/royalty contracts (NOT service/consulting contracts)
+    // Requires LICENSING-SPECIFIC evidence (container sizes, volume tiers, etc.)
+    const paymentOnlyRuleTypes = ['payment_schedule', 'payment_method', 'rate_structure', 
+                                   'invoice_requirements', 'late_payment_penalty', 'advance_payment', 'milestone_payment'];
+    const licensingRuleTypes = ['percentage', 'tiered_pricing', 'formula_based', 'minimum_guarantee', 'cap'];
+    
+    const hasLicensingSpecificFeatures = detailedRules.rules.some((r: any) =>
+      // Must have licensing-specific features (not just product categories)
+      (r.containerSizes?.length > 0) ||
+      (r.volumeTiers?.length > 0) ||
+      (r.seasonalAdjustments && Object.keys(r.seasonalAdjustments).length > 0) ||
+      (r.territoryPremiums && Object.keys(r.territoryPremiums).length > 0) ||
+      (licensingRuleTypes.includes(r.type))
+    );
+    
+    const hasOnlyPaymentRules = detailedRules.rules.every((r: any) => 
+      paymentOnlyRuleTypes.includes(r.type)
+    );
+    
     let productsWithFormulas: any[] = [];
-    if (hasRoyaltyTerms) {
+    if (hasRoyaltyTerms && hasLicensingSpecificFeatures && !hasOnlyPaymentRules) {
+      console.log(`🌱 Product licensing contract detected - extracting product formulas...`);
       productsWithFormulas = await groqService.extractProductsWithFormulas(contractText);
       console.log(`📋 Found ${productsWithFormulas.length} product formulas`);
+    } else if (hasRoyaltyTerms && (hasOnlyPaymentRules || !hasLicensingSpecificFeatures)) {
+      console.log(`ℹ️ Service/consulting contract detected - skipping product formula extraction`);
+    } else {
+      console.log(`ℹ️ No royalty/payment terms detected - skipping product formula extraction`);
       
       // Prepare product formula rules for saving
       for (const product of productsWithFormulas) {
