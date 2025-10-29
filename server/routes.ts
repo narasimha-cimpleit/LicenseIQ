@@ -2398,6 +2398,29 @@ Report ID: ${contractId}
   return createServer(app);
 }
 
+// ⚡ OPTION B: Minimal numeric validator - prevents database crashes
+// Core goal: Extract numbers when possible, safely reject text
+// Philosophy: Simple and defensive, let AI improve extraction quality
+function parseNumericValue(value: any): number | null {
+  if (value === undefined || value === null) return null;
+  if (typeof value === 'number') {
+    return (!isNaN(value) && isFinite(value)) ? value : null;
+  }
+  
+  const str = String(value).trim();
+  
+  // Try direct parse first (handles: "123", "12.34", "-5.6")
+  let num = parseFloat(str);
+  if (!isNaN(num) && isFinite(num)) return num;
+  
+  // Remove common separators and try again (handles: "$1,234.56", "€1.000", "R$500")
+  const cleaned = str.replace(/[$€£¥₹₽¢R$S$C$]/g, '').replace(/[,\s]/g, '');
+  num = parseFloat(cleaned);
+  
+  // Return the number if valid, otherwise null (rejects "standard rate", "Tier 1", etc.)
+  return (!isNaN(num) && isFinite(num)) ? num : null;
+}
+
 // Background contract processing
 async function processContractAnalysis(contractId: string, filePath: string) {
   try {
@@ -2536,11 +2559,17 @@ async function extractAndSaveRoyaltyRules(contractId: string, contractText: stri
       // Extract volume tiers - ensure they're in correct format
       let volumeTiers = rule.calculation?.tiers || [];
       
-      // Extract base rate from multiple possible locations
-      const baseRate = rule.calculation?.rate?.toString() || 
-                      rule.calculation?.baseRate?.toString() || 
-                      rule.baseRate?.toString() || 
-                      null;
+      // ⚡ OPTION B: Fix database type error - validate numeric fields
+      // Extract base rate and ensure it's numeric (handles international formats)
+      const extractedRate = rule.calculation?.rate || 
+                           rule.calculation?.baseRate || 
+                           rule.baseRate;
+      
+      const numericRate = parseNumericValue(extractedRate);
+      const baseRate = numericRate !== null ? numericRate.toString() : null;
+      if (extractedRate !== undefined && extractedRate !== null && baseRate === null) {
+        console.warn(`⚠️ Skipping non-numeric baseRate: "${extractedRate}"`);
+      }
       
       const ruleData: any = {
         contractId,
@@ -2554,7 +2583,17 @@ async function extractAndSaveRoyaltyRules(contractId: string, contractText: stri
         territoryPremiums: territoryPrem,
         volumeTiers: volumeTiers,
         baseRate: baseRate,
-        minimumGuarantee: rule.ruleType === 'minimum_guarantee' ? rule.calculation?.amount?.toString() : null,
+        minimumGuarantee: (() => {
+          if (rule.ruleType === 'minimum_guarantee') {
+            const amount = rule.calculation?.amount || rule.calculation?.minimum;
+            const numericAmount = parseNumericValue(amount);
+            if (numericAmount !== null) {
+              return numericAmount.toString();
+            }
+            console.warn(`⚠️ Skipping non-numeric minimumGuarantee: "${amount}"`);
+          }
+          return null;
+        })(),
         isActive: true,
         priority: rule.priority || 10, // Lower priority than formula-based rules
         confidence: rule.confidence || null,

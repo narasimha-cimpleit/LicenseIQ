@@ -126,7 +126,7 @@ export class GroqService {
     }
   }
 
-  // Helper method to extract and repair malformed JSON from Groq responses
+  // ⚡ OPTION C: Enhanced JSON extraction with better error recovery
   private extractAndRepairJSON(response: string, fallbackValue: any = []): any {
     try {
       const cleanResponse = response.trim();
@@ -141,12 +141,16 @@ export class GroqService {
 
       let jsonStr = jsonMatch[0];
       
-      // Repair common JSON issues
+      // Repair common JSON issues (ENHANCED)
       jsonStr = jsonStr
+        .replace(/&amp;/g, '&')                    // Fix HTML entities
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
         .replace(/:\s*Infinity/g, ': 999999999')  // Fix Infinity
         .replace(/:\s*NaN/g, ': null')             // Fix NaN
         .replace(/,\s*([}\]])/g, '$1')             // Remove trailing commas
-        .replace(/'/g, '"')                         // Fix single quotes
+        // REMOVED: .replace(/'/g, '"') - This broke strings with apostrophes
         .replace(/([{,]\s*)(\w+):/g, '$1"$2":')    // Fix unquoted keys
         .replace(/\n/g, ' ')                        // Remove newlines
         .replace(/\r/g, '')                         // Remove carriage returns
@@ -154,7 +158,34 @@ export class GroqService {
         .replace(/\s+/g, ' ');                      // Normalize whitespace
 
       // Try to parse
-      return JSON.parse(jsonStr);
+      try {
+        return JSON.parse(jsonStr);
+      } catch (parseError: any) {
+        // ⚡ NEW: If parsing fails, try to repair truncated JSON
+        const posMatch = parseError.message.match(/position (\d+)/);
+        if (posMatch) {
+          console.warn(`⚠️ JSON truncated at position ${posMatch[1]}, attempting repair...`);
+          
+          // Add missing closing braces/brackets
+          const openBraces = (jsonStr.match(/{/g) || []).length;
+          const closeBraces = (jsonStr.match(/}/g) || []).length;
+          const openBrackets = (jsonStr.match(/\[/g) || []).length;
+          const closeBrackets = (jsonStr.match(/]/g) || []).length;
+          
+          if (openBraces > closeBraces) {
+            jsonStr += '}'.repeat(openBraces - closeBraces);
+            console.log(`🔧 Added ${openBraces - closeBraces} closing braces`);
+          }
+          if (openBrackets > closeBrackets) {
+            jsonStr += ']'.repeat(openBrackets - closeBrackets);
+            console.log(`🔧 Added ${openBrackets - closeBrackets} closing brackets`);
+          }
+          
+          // Try parsing again
+          return JSON.parse(jsonStr);
+        }
+        throw parseError;
+      }
     } catch (error: any) {
       console.error('❌ JSON extraction/repair failed:', error.message);
       console.error('📄 Response snippet:', response.substring(0, 500));
@@ -167,48 +198,24 @@ export class GroqService {
   // =====================================================
   
   async extractDetailedRoyaltyRules(contractText: string): Promise<LicenseRuleExtractionResult> {
-    console.log(`🚀 Starting contract analysis...`);
+    console.log(`🚀 Starting consolidated contract analysis...`);
     
-    // Step 1: Extract basic contract info and determine if it has royalty terms
-    const basicInfo = await this.extractBasicContractInfo(contractText);
+    // ⚡ OPTIMIZATION: Single comprehensive extraction call instead of 6 sequential calls
+    const comprehensiveResult = await this.extractAllContractDataInOneCall(contractText);
+    
+    const basicInfo = comprehensiveResult.basicInfo;
     console.log(`📄 Contract type detected: ${basicInfo.documentType}, Has royalty terms: ${basicInfo.hasRoyaltyTerms}`);
     
-    let allRules: RoyaltyRule[] = [];
+    let allRules: RoyaltyRule[] = comprehensiveResult.allRules;
     
-    // Step 2: ONLY extract rules if the contract actually contains royalty/payment terms
-    if (basicInfo.hasRoyaltyTerms === true) {
-      console.log(`💰 Royalty terms detected - extracting payment rules...`);
-      await this.delay(2000); // 2 second delay between requests
-      
-      // Extract tier-based rules
-      const tierRules = await this.extractTierBasedRules(contractText);
-      await this.delay(2000);
-      
-      // Extract payment and calculation rules  
-      const paymentRules = await this.extractPaymentCalculationRules(contractText);
-      await this.delay(2000);
-      
-      // Extract special adjustments
-      const adjustmentRules = await this.extractSpecialAdjustments(contractText);
-      await this.delay(2000);
-      
-      // Extract universal pricing structures (renewal, escalation, termination, etc.)
-      const universalPricingRules = await this.extractUniversalPricingRules(contractText);
-      
-      // Combine all results
-      allRules = [...tierRules, ...paymentRules, ...adjustmentRules, ...universalPricingRules];
-      
-      // Filter out low-confidence or empty rules
-      allRules = allRules.filter(rule => 
-        rule.confidence >= 0.6 && 
-        rule.sourceSpan?.text && 
-        rule.sourceSpan.text.trim().length > 0
-      );
-      
-      console.log(`✅ Rule extraction complete: ${allRules.length} valid rules found`);
-    } else {
-      console.log(`ℹ️ No royalty terms detected - skipping rule extraction`);
-    }
+    // Filter out low-confidence or empty rules
+    allRules = allRules.filter(rule => 
+      rule.confidence >= 0.6 && 
+      rule.sourceSpan?.text && 
+      rule.sourceSpan.text.trim().length > 0
+    );
+    
+    console.log(`✅ Rule extraction complete: ${allRules.length} valid rules found (6x faster with consolidated extraction)`)
     
     // Map the flexible AI response to the expected schema format
     const documentType: 'sales' | 'service' | 'licensing' | 'distribution' | 'employment' | 'consulting' | 'nda' | 'amendment' | 'saas' | 'subscription' | 'other' = 
@@ -252,6 +259,160 @@ export class GroqService {
         hasTerminationClauses: allRules.some(r => r.ruleType === 'early_termination')
       }
     };
+  }
+
+  // ⚡ CONSOLIDATED EXTRACTION - Replaces 6 sequential AI calls with 1 comprehensive call
+  private async extractAllContractDataInOneCall(contractText: string): Promise<{
+    basicInfo: any;
+    allRules: RoyaltyRule[];
+  }> {
+    const prompt = `Analyze this contract and extract ALL information in ONE comprehensive response. Extract contract type, parties, dates, AND all pricing/payment rules.
+
+Contract Text:
+${contractText.substring(0, 8000)}
+
+**SECTION 1: Contract Identification**
+Identify which of these categories best describes this contract:
+- **sales**: Sales contracts for goods/services
+- **service**: Service agreements with deliverables
+- **licensing**: IP licensing, software licenses, content licensing
+- **saas**: SaaS/subscription agreements
+- **distribution**: Distribution/reseller agreements
+- **consulting**: Consulting/professional services
+- **employment**: Employment contracts
+- **nda**: Non-disclosure/confidentiality agreements
+- **other**: Other contract types
+
+**SECTION 2: Payment Terms Detection**
+Set "hasRoyaltyTerms" to true if contract contains ANY:
+- Royalty percentages or license fees
+- Fixed/variable pricing
+- Per-seat, per-user, per-unit pricing
+- Tiered pricing
+- Subscription/recurring payments
+- Auto-renewal terms
+- Price escalation clauses
+- Termination fees
+- ANY monetary compensation or pricing structure
+
+**SECTION 3: Extract ALL Pricing Rules** (if hasRoyaltyTerms is true)
+Extract EVERY pricing rule you find. Use these EXACT ruleType values:
+- "tiered" - Volume-based tiers
+- "percentage" - Percentage-based rates
+- "minimum_guarantee" - Minimum payment guarantees
+- "fixed_price" - One-time fixed fees
+- "variable_price" - Variable pricing
+- "per_seat" - Per user/seat pricing
+- "per_unit" - Per unit pricing
+- "per_time_period" - Monthly/annual pricing
+- "usage_based" - Usage/consumption-based
+- "auto_renewal" - Renewal terms
+- "escalation_clause" - Price increases
+- "early_termination" - Termination fees
+- "license_scope" - License restrictions
+- "volume_discount" - Volume discounts
+
+**CRITICAL**: 
+- Extract ONLY rules that explicitly exist
+- Each rule MUST include sourceSpan.text (verbatim contract text)
+- Set confidence 0.6-1.0 based on clarity
+- Return empty rules array if no pricing found
+
+**Return this EXACT JSON structure:**
+{
+  "basicInfo": {
+    "documentType": "sales|service|licensing|saas|distribution|consulting|employment|nda|other",
+    "contractTitle": "exact title or null",
+    "hasRoyaltyTerms": true or false,
+    "parties": {
+      "party1": {"name": "exact name", "role": "role"},
+      "party2": {"name": "exact name", "role": "role"}
+    },
+    "effectiveDate": "date or null",
+    "expirationDate": "date or null",
+    "currency": "USD|EUR|etc or null",
+    "paymentTerms": "brief description or null"
+  },
+  "rules": [
+    {
+      "ruleType": "one of the exact types above",
+      "ruleName": "descriptive name",
+      "description": "clear description",
+      "conditions": {
+        "productCategories": ["category1"],
+        "territories": ["territory1"],
+        "containerSizes": ["size1"],
+        "timeperiod": "monthly|annually|etc",
+        "volumeThreshold": [1000, 5000],
+        "licenseScope": {"userLimit": 100, "geographic": ["NA"], "termMonths": 12, "exclusivity": false},
+        "renewalTerms": {"autoRenew": true, "renewalRate": 3.0, "noticeRequiredDays": 30}
+      },
+      "calculation": {
+        "rate": 5.0,
+        "baseRate": 10.0,
+        "amount": 1000.0,
+        "tiers": [{"min": 0, "max": 1000, "rate": 5.0}],
+        "seasonalAdjustments": {"spring": 1.15},
+        "territoryPremiums": {"california": 0.50},
+        "escalationRate": 2.5,
+        "terminationFee": 5000.0
+      },
+      "priority": 1-10,
+      "sourceSpan": {
+        "section": "section name",
+        "text": "verbatim quote from contract"
+      },
+      "confidence": 0.6 to 1.0
+    }
+  ]
+}
+
+Return ONLY valid JSON. No explanations.`;
+
+    try {
+      console.log(`⚡ Making consolidated extraction call...`);
+      const response = await this.makeRequest([
+        { role: 'system', content: 'You are a precise contract analyzer. Extract ALL information in one comprehensive response. Return only JSON.' },
+        { role: 'user', content: prompt }
+      ], 0.1, 3000);
+      
+      const extracted = this.extractAndRepairJSON(response, { basicInfo: {}, rules: [] });
+      
+      if (!extracted || !extracted.basicInfo) {
+        console.warn('⚠️ Consolidated extraction failed, using fallback');
+        return {
+          basicInfo: {
+            documentType: 'unknown',
+            hasRoyaltyTerms: false,
+            parties: null,
+            effectiveDate: null,
+            expirationDate: null,
+            currency: null,
+            paymentTerms: null
+          },
+          allRules: []
+        };
+      }
+      
+      return {
+        basicInfo: extracted.basicInfo,
+        allRules: Array.isArray(extracted.rules) ? extracted.rules : []
+      };
+    } catch (error) {
+      console.error('❌ Consolidated extraction error:', error);
+      return {
+        basicInfo: {
+          documentType: 'unknown',
+          hasRoyaltyTerms: false,
+          parties: null,
+          effectiveDate: null,
+          expirationDate: null,
+          currency: null,
+          paymentTerms: null
+        },
+        allRules: []
+      };
+    }
   }
 
   private delay(ms: number): Promise<void> {
