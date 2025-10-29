@@ -371,12 +371,30 @@ Return ONLY valid JSON. No explanations.`;
 
     try {
       console.log(`⚡ Making consolidated extraction call...`);
+      // Increase max tokens from 3000 to 8000 to avoid truncation
       const response = await this.makeRequest([
         { role: 'system', content: 'You are a precise contract analyzer. Extract ALL information in one comprehensive response. Return only JSON.' },
         { role: 'user', content: prompt }
-      ], 0.1, 3000);
+      ], 0.1, 8000);
       
-      const extracted = this.extractAndRepairJSON(response, { basicInfo: {}, rules: [] });
+      let extracted = this.extractAndRepairJSON(response, { basicInfo: {}, rules: [] });
+      
+      // Handle case where AI returns just an array of rules instead of full object
+      if (Array.isArray(extracted)) {
+        console.log(`🔄 AI returned array, wrapping in proper structure (${extracted.length} rules)`);
+        extracted = {
+          basicInfo: {
+            documentType: 'unknown',
+            hasRoyaltyTerms: extracted.length > 0,
+            parties: null,
+            effectiveDate: null,
+            expirationDate: null,
+            currency: 'USD',
+            paymentTerms: null
+          },
+          rules: extracted
+        };
+      }
       
       if (!extracted || !extracted.basicInfo) {
         console.error('⚠️ Consolidated extraction failed, using fallback');
