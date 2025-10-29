@@ -312,11 +312,15 @@ Extract EVERY pricing rule you find. Use these EXACT ruleType values:
 - "license_scope" - License restrictions
 - "volume_discount" - Volume discounts
 
-**CRITICAL**: 
-- Extract ONLY rules that explicitly exist
-- Each rule MUST include sourceSpan.text (verbatim contract text)
-- Set confidence 0.6-1.0 based on clarity
-- Return empty rules array if no pricing found
+**CRITICAL - ANTI-HALLUCINATION RULES**: 
+- Extract ONLY rules that EXPLICITLY exist in the contract text provided
+- Each rule MUST include sourceSpan.text with EXACT VERBATIM quote from the contract
+- DO NOT invent, assume, or create rules that are not in the text
+- DO NOT include examples or generic contract terms
+- DO NOT reuse rules from previous contracts
+- If a rule cannot be directly quoted from the contract text, DO NOT include it
+- Set confidence 0.6-1.0 based on how explicit the rule is in the text
+- Return empty rules array if no pricing/payment terms found in the actual contract text
 
 **Return this EXACT JSON structure:**
 {
