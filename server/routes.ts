@@ -2407,6 +2407,18 @@ function parseNumericValue(value: any): number | null {
     return (!isNaN(value) && isFinite(value)) ? value : null;
   }
   
+  // HANDLE OBJECTS: AI sometimes returns {"amount": 5, "currency": "USD"} instead of just 5
+  if (typeof value === 'object' && value !== null) {
+    // Try to extract numeric value from common object keys
+    const extracted = value.amount ?? value.value ?? value.rate ?? value.baseAmount ?? value.number;
+    if (extracted !== undefined && extracted !== null) {
+      // Recursively parse the extracted value
+      return parseNumericValue(extracted);
+    }
+    // Object has no recognizable numeric field
+    return null;
+  }
+  
   const str = String(value).trim();
   
   // Try direct parse first (handles: "123", "12.34", "-5.6")
