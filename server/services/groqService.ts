@@ -126,6 +126,43 @@ export class GroqService {
     }
   }
 
+  // ⚡ Pre-parse sanitizer: Replace AI placeholder values with JSON-safe equivalents
+  private sanitizeAIPlaceholders(jsonStr: string): string {
+    let sanitized = jsonStr;
+    let sanitizationCount = 0;
+    
+    // Replace literal [NA] with empty array []
+    const naArrayRegex = /\[\s*NA\s*\]/gi;
+    const naArrayMatches = sanitized.match(naArrayRegex);
+    if (naArrayMatches) {
+      sanitizationCount += naArrayMatches.length;
+      sanitized = sanitized.replace(naArrayRegex, '[]');
+    }
+    
+    // Replace standalone NA values (not in quotes) with null
+    // Match NA that's preceded by : or [ and followed by , or ] or }
+    const naValueRegex = /([:\[,]\s*)NA(\s*[,\]\}])/gi;
+    const naValueMatches = sanitized.match(naValueRegex);
+    if (naValueMatches) {
+      sanitizationCount += naValueMatches.length;
+      sanitized = sanitized.replace(naValueRegex, '$1null$2');
+    }
+    
+    // Replace quoted "NA" strings in value positions with null (for fields like "territory": "NA")
+    const quotedNARegex = /:\s*"NA"/gi;
+    const quotedNAMatches = sanitized.match(quotedNARegex);
+    if (quotedNAMatches) {
+      sanitizationCount += quotedNAMatches.length;
+      sanitized = sanitized.replace(quotedNARegex, ': null');
+    }
+    
+    if (sanitizationCount > 0) {
+      console.log(`🧹 Sanitized ${sanitizationCount} AI placeholder value(s) (NA → null, [NA] → [])`);
+    }
+    
+    return sanitized;
+  }
+
   // ⚡ OPTION C: Enhanced JSON extraction with better error recovery
   private extractAndRepairJSON(response: string, fallbackValue: any = []): any {
     try {
@@ -140,6 +177,11 @@ export class GroqService {
       }
 
       let jsonStr = jsonMatch[0];
+      
+      // ⚡ CRITICAL FIX: Pre-parse sanitization of AI quirks
+      // Replace literal NA/[NA] values with JSON-safe nulls BEFORE other repairs
+      // Uses a string-walking approach to avoid corrupting quoted strings
+      jsonStr = this.sanitizeAIPlaceholders(jsonStr);
       
       // Repair common JSON issues (ENHANCED)
       jsonStr = jsonStr
