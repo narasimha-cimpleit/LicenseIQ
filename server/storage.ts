@@ -225,6 +225,7 @@ export interface IStorage {
   getRoyaltyRulesByContract(contractId: string): Promise<RoyaltyRule[]>;
   getActiveRoyaltyRulesByContract(contractId: string): Promise<RoyaltyRule[]>;
   deleteRoyaltyRule(ruleId: string): Promise<void>;
+  deleteRoyaltyRulesByContract(contractId: string): Promise<void>;
   updateRoyaltyRule(ruleId: string, updates: Partial<InsertRoyaltyRule>): Promise<RoyaltyRule>;
   
   // Dynamic extraction operations
@@ -1406,6 +1407,10 @@ export class DatabaseStorage implements IStorage {
 
   async deleteRoyaltyRule(ruleId: string): Promise<void> {
     await db.delete(royaltyRules).where(eq(royaltyRules.id, ruleId));
+  }
+
+  async deleteRoyaltyRulesByContract(contractId: string): Promise<void> {
+    await db.delete(royaltyRules).where(eq(royaltyRules.contractId, contractId));
   }
 
   async updateRoyaltyRule(ruleId: string, updates: Partial<InsertRoyaltyRule>): Promise<RoyaltyRule> {

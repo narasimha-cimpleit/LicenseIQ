@@ -312,7 +312,7 @@ Extract EVERY pricing rule you find. Use these EXACT ruleType values:
 - "license_scope" - License restrictions
 - "volume_discount" - Volume discounts
 
-**CRITICAL - ANTI-HALLUCINATION RULES**: 
+**CRITICAL - ANTI-HALLUCINATION & PRODUCT MATCHING RULES**: 
 - Extract ONLY rules that EXPLICITLY exist in the contract text provided
 - Each rule MUST include sourceSpan.text with EXACT VERBATIM quote from the contract
 - DO NOT invent, assume, or create rules that are not in the text
@@ -321,6 +321,13 @@ Extract EVERY pricing rule you find. Use these EXACT ruleType values:
 - If a rule cannot be directly quoted from the contract text, DO NOT include it
 - Set confidence 0.6-1.0 based on how explicit the rule is in the text
 - Return empty rules array if no pricing/payment terms found in the actual contract text
+
+**MANDATORY PRODUCT IDENTIFIERS** (for accurate matching):
+- EVERY rule MUST specify productCategories array with explicit product/service names from the contract
+- Extract EXACT product names, SKUs, product IDs, service descriptions, or category names mentioned in the contract
+- If a rule applies to "all products" or contract doesn't specify products, use ["General"] as category
+- DO NOT leave productCategories empty - this causes calculation errors
+- Examples: ["Aurora Flame Maple"], ["Premium Subscription"], ["API Calls"], ["Consulting Hours"], ["General"]
 
 **Return this EXACT JSON structure:**
 {

@@ -310,11 +310,47 @@ export class RulesEngine {
     conditions: RoyaltyRule['conditions'], 
     input: RoyaltyCalculationInput
   ): boolean {
-    // Check product categories
-    if (conditions.productCategories && conditions.productCategories.length > 0) {
-      if (!input.productCategory || !conditions.productCategories.includes(input.productCategory)) {
-        return false;
+    // 🔒 CONTROLLED PRODUCT MATCHING with wildcard support
+    // Check product matching but continue to validate other conditions (territory, volume, etc.)
+    
+    if (input.productCategory) {
+      // Normalize wildcards (case-insensitive, trim whitespace)
+      const normalizeCategories = (cats: string[] | undefined) => 
+        cats?.map(c => c.trim().toLowerCase()) || [];
+      
+      const normalizedRuleCategories = normalizeCategories(conditions.productCategories);
+      const wildcardMarkers = ['*', 'general', 'all', ''];
+      
+      // Check if rule is a general-purpose rule (applies to ALL products)
+      const isGeneralRule = !conditions.productCategories || 
+                           conditions.productCategories.length === 0 ||
+                           normalizedRuleCategories.some(cat => wildcardMarkers.includes(cat));
+      
+      if (!isGeneralRule) {
+        // Specific product rule - check if input product matches
+        if (!conditions.productCategories.includes(input.productCategory)) {
+          console.log(`⚠️ [RULES] Product mismatch: '${input.productCategory}' not in [${conditions.productCategories.join(', ')}]`);
+          return false; // Product doesn't match - fail immediately
+        }
+        console.log(`✅ [RULES] Product match: '${input.productCategory}' in [${conditions.productCategories.join(', ')}]`);
+      } else {
+        console.log(`✅ [RULES] General rule applies to all products (including '${input.productCategory}')`);
       }
+      // Continue to check other conditions (territory, volume, etc.)
+    } else {
+      // If no product specified in input, only general rules apply
+      const normalizedRuleCategories = conditions.productCategories?.map(c => c.trim().toLowerCase()) || [];
+      const wildcardMarkers = ['*', 'general', 'all', ''];
+      
+      const hasSpecificProducts = conditions.productCategories && 
+                                  conditions.productCategories.length > 0 &&
+                                  !normalizedRuleCategories.some(cat => wildcardMarkers.includes(cat));
+      
+      if (hasSpecificProducts) {
+        console.log(`⚠️ [RULES] No product specified in input, but rule requires: [${conditions.productCategories.join(', ')}]`);
+        return false; // Product-specific rule but no product in input - fail
+      }
+      // General rule - continue to check other conditions
     }
 
     // Check territories

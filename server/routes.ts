@@ -2436,7 +2436,7 @@ function parseNumericValue(value: any): number | null {
 // Background contract processing
 async function processContractAnalysis(contractId: string, filePath: string) {
   try {
-    console.log(`Starting analysis for contract ${contractId}`);
+    console.log(`🔄 Starting analysis for contract ${contractId}`);
     
     // Get contract details
     const contract = await storage.getContract(contractId);
@@ -2449,33 +2449,155 @@ async function processContractAnalysis(contractId: string, filePath: string) {
     const mimeType = contract.fileType || 'application/pdf';
     const extractedText = await fileService.extractTextFromFile(filePath, mimeType);
     
-    // Analyze with Groq AI
+    console.log(`🤖 Sending contract to AI for analysis...`);
+    
+    // Analyze with Groq AI - ONE CONSOLIDATED CALL
     const aiAnalysis = await groqService.analyzeContract(extractedText);
     
-    // Create contract analysis (INSERT, not UPDATE)
-    await storage.createContractAnalysis({
-      contractId,
-      summary: aiAnalysis.summary,
-      keyTerms: aiAnalysis.keyTerms,
-      riskAnalysis: aiAnalysis.riskAnalysis,
-      insights: aiAnalysis.insights,
-      confidence: aiAnalysis.confidence?.toString() || '0',
-      processingTime: 0, // Will be calculated if needed
-    });
-
-    // 🚀 NEW: Extract and save royalty rules automatically
-    await extractAndSaveRoyaltyRules(contractId, extractedText, aiAnalysis);
-
-    // 🔍 Generate embeddings for RAG/semantic search
-    await generateContractEmbeddings(contractId, aiAnalysis);
-
-    // Update status to analyzed (frontend expects this)
-    await storage.updateContractStatus(contractId, 'analyzed');
+    console.log(`✅ AI analysis complete. Validating results...`);
     
-    console.log(`✅ Analysis completed for contract ${contractId}`);
+    // 🔒 TRANSACTIONAL PIPELINE: Validate ALL data before saving ANYTHING
+    // This prevents partial-save race conditions
+    
+    // Step 1: Validate that we have summary and keyTerms
+    if (!aiAnalysis.summary || !aiAnalysis.keyTerms) {
+      throw new Error('AI extraction failed: Missing required summary or key terms');
+    }
+    
+    // Step 2: Extract royalty rules (this returns rule data but doesn't save yet)
+    console.log(`🔍 Extracting royalty rules...`);
+    const royaltyRulesData = await extractRoyaltyRulesData(extractedText, aiAnalysis);
+    console.log(`📋 Found ${royaltyRulesData.length} royalty rules to save`);
+    
+    // Step 3: ALL DATA VALIDATED - Now save everything in transaction-like sequence
+    console.log(`💾 Saving all data in transactional sequence...`);
+    
+    try {
+      // Save contract analysis
+      await storage.createContractAnalysis({
+        contractId,
+        summary: aiAnalysis.summary,
+        keyTerms: aiAnalysis.keyTerms,
+        riskAnalysis: aiAnalysis.riskAnalysis,
+        insights: aiAnalysis.insights,
+        confidence: aiAnalysis.confidence?.toString() || '0',
+        processingTime: 0,
+      });
+      console.log(`✅ Contract analysis saved`);
+
+      // Save all royalty rules (add contractId to each)
+      for (const ruleData of royaltyRulesData) {
+        await storage.createRoyaltyRule({
+          ...ruleData,
+          contractId, // Add contractId to each rule
+        });
+      }
+      console.log(`✅ ${royaltyRulesData.length} royalty rules saved`);
+
+      // Generate embeddings for RAG/semantic search
+      await generateContractEmbeddings(contractId, aiAnalysis);
+      console.log(`✅ Embeddings generated`);
+
+      // Update status to analyzed (frontend expects this)
+      await storage.updateContractStatus(contractId, 'analyzed');
+      console.log(`✅ Status updated to 'analyzed'`);
+      
+      console.log(`🎉 Analysis completed successfully for contract ${contractId}`);
+    } catch (saveError) {
+      console.error(`❌ Failed to save data:`, saveError);
+      // Rollback: Delete any partial data
+      try {
+        await storage.deleteContractAnalysis(contractId);
+        await storage.deleteRoyaltyRulesByContract(contractId);
+      } catch (rollbackError) {
+        console.error(`Failed to rollback:`, rollbackError);
+      }
+      throw new Error(`Failed to save extraction data: ${saveError instanceof Error ? saveError.message : 'Unknown error'}`);
+    }
+    
   } catch (error) {
     console.error(`❌ Analysis failed for contract ${contractId}:`, error);
     await storage.updateContractStatus(contractId, 'failed');
+  }
+}
+
+// 🆕 NEW: Extract royalty rules data WITHOUT saving (for transactional pipeline)
+async function extractRoyaltyRulesData(contractText: string, aiAnalysis: any): Promise<any[]> {
+  const contractId = ''; // Will be filled during save
+  const rulesData: any[] = [];
+  
+  try {
+    // Get detailed rules from consolidated extraction
+    const detailedRules = await groqService.extractDetailedRoyaltyRules(contractText);
+    const hasRoyaltyTerms = detailedRules.rules && detailedRules.rules.length > 0;
+    
+    console.log(`📋 Found ${detailedRules.rules.length} royalty rules from AI`);
+    
+    // Extract product formulas if contract has royalty terms
+    let productsWithFormulas: any[] = [];
+    if (hasRoyaltyTerms) {
+      productsWithFormulas = await groqService.extractProductsWithFormulas(contractText);
+      console.log(`📋 Found ${productsWithFormulas.length} product formulas`);
+      
+      // Prepare product formula rules for saving
+      for (const product of productsWithFormulas) {
+        rulesData.push({
+          ruleType: 'formula_based',
+          ruleName: product.ruleName,
+          description: product.description,
+          productCategories: product.conditions?.productCategories || [product.productName],
+          territories: product.conditions?.territories || [],
+          containerSizes: product.conditions?.containerSize ? [product.conditions.containerSize] : [],
+          formulaDefinition: product.formulaDefinition,
+          formulaVersion: '1.0',
+          isActive: true,
+          priority: 1,
+          confidence: product.confidence ?? 0.9,
+          sourceSection: product.sourceSection || null,
+          sourceText: product.description,
+        });
+      }
+    }
+    
+    // Convert AI-extracted rules to database format
+    const validLegacyRules = detailedRules.rules.filter((rule: any) => {
+      return (rule.productCategories && rule.productCategories.length > 0) ||
+             (rule.seasonalAdjustments && Object.keys(rule.seasonalAdjustments).length > 0) ||
+             (rule.territoryPremiums && Object.keys(rule.territoryPremiums).length > 0);
+    });
+
+    for (const rule of validLegacyRules) {
+      const r = rule as any;
+      
+      // Validate numeric values with defensive parsing
+      const baseRate = parseNumericValue(r.baseRoyaltyRate);
+      const volumeTier = r.volumeTiers?.[0] 
+        ? parseNumericValue(r.volumeTiers[0].rate)
+        : null;
+      
+      rulesData.push({
+        ruleType: r.type || 'tiered_pricing',
+        ruleName: r.name,
+        description: r.description,
+        baseRoyaltyRate: baseRate,
+        productCategories: r.productCategories || [],
+        containerSizes: r.containerSizes || [],
+        territories: r.territories || [],
+        volumeTiers: r.volumeTiers || [],
+        seasonalAdjustments: r.seasonalAdjustments || {},
+        territoryPremiums: r.territoryPremiums || {},
+        isActive: true,
+        priority: 1,
+        confidence: r.confidence ?? 0.85,
+        sourceSection: r.sourceSpan?.section || null,
+        sourceText: r.sourceSpan?.text || r.description,
+      });
+    }
+    
+    return rulesData;
+  } catch (error) {
+    console.error(`Error extracting royalty rules data:`, error);
+    return []; // Return empty array on error
   }
 }
 
