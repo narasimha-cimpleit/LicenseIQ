@@ -164,9 +164,49 @@ export class GroqService {
         // ⚡ NEW: If parsing fails, try to repair truncated JSON
         const posMatch = parseError.message.match(/position (\d+)/);
         if (posMatch) {
-          console.warn(`⚠️ JSON truncated at position ${posMatch[1]}, attempting repair...`);
+          const truncPos = parseInt(posMatch[1]);
+          console.warn(`⚠️ JSON truncated at position ${truncPos}, attempting advanced repair...`);
           
-          // Add missing closing braces/brackets
+          // STRATEGY 1: Try to salvage partial rules array
+          if (jsonStr.includes('"rules"') && jsonStr.includes('[')) {
+            const rulesMatch = jsonStr.match(/"rules"\s*:\s*\[/);
+            if (rulesMatch) {
+              // Find the last complete rule object by looking for complete {...} pairs
+              let salvaged = jsonStr.substring(0, truncPos);
+              
+              // Remove incomplete trailing object
+              const lastCompleteObjEnd = salvaged.lastIndexOf('}');
+              if (lastCompleteObjEnd > 0) {
+                salvaged = jsonStr.substring(0, lastCompleteObjEnd + 1);
+                console.log(`🔧 Truncated at character ${truncPos}, salvaged up to position ${lastCompleteObjEnd}`);
+                
+                // Add missing closing brackets
+                const openBraces = (salvaged.match(/{/g) || []).length;
+                const closeBraces = (salvaged.match(/}/g) || []).length;
+                const openBrackets = (salvaged.match(/\[/g) || []).length;
+                const closeBrackets = (salvaged.match(/]/g) || []).length;
+                
+                if (openBrackets > closeBrackets) {
+                  salvaged += ']'.repeat(openBrackets - closeBrackets);
+                  console.log(`🔧 Added ${openBrackets - closeBrackets} closing brackets`);
+                }
+                if (openBraces > closeBraces) {
+                  salvaged += '}'.repeat(openBraces - closeBraces);
+                  console.log(`🔧 Added ${openBraces - closeBraces} closing braces`);
+                }
+                
+                try {
+                  const parsed = JSON.parse(salvaged);
+                  console.log(`✅ Successfully salvaged partial JSON with ${parsed.rules?.length || 0} rules`);
+                  return parsed;
+                } catch (e) {
+                  console.warn('⚠️ Salvage attempt failed, trying simple repair...');
+                }
+              }
+            }
+          }
+          
+          // STRATEGY 2: Simple brace/bracket addition (original logic)
           const openBraces = (jsonStr.match(/{/g) || []).length;
           const closeBraces = (jsonStr.match(/}/g) || []).length;
           const openBrackets = (jsonStr.match(/\[/g) || []).length;
@@ -198,21 +238,15 @@ export class GroqService {
   // =====================================================
   
   async extractDetailedRoyaltyRules(contractText: string): Promise<LicenseRuleExtractionResult> {
-    console.log(`🚀 Starting two-step contract analysis...`);
+    console.log(`🚀 Starting enhanced contract analysis with improved JSON handling...`);
     
-    // ⚡ STEP 1: Extract basic contract info (small response, low truncation risk)
-    console.log(`📝 Step 1: Extracting basic contract information...`);
-    const basicInfo = await this.extractBasicContractInfo(contractText);
+    // ⚡ Try consolidated extraction with improved truncation handling
+    const comprehensiveResult = await this.extractAllContractDataInOneCall(contractText);
+    
+    const basicInfo = comprehensiveResult.basicInfo;
     console.log(`📄 Contract type detected: ${basicInfo.documentType}, Has royalty terms: ${basicInfo.hasRoyaltyTerms}`);
     
-    // ⚡ STEP 2: Extract rules separately if contract has payment terms (focused extraction, better error handling)
-    let allRules: RoyaltyRule[] = [];
-    if (basicInfo.hasRoyaltyTerms) {
-      console.log(`📋 Step 2: Extracting payment rules separately...`);
-      allRules = await this.extractRulesOnly(contractText, basicInfo.documentType);
-    } else {
-      console.log(`ℹ️ No payment terms detected, skipping rules extraction`);
-    }
+    let allRules: RoyaltyRule[] = comprehensiveResult.allRules;
     
     // Filter out low-confidence or empty rules
     allRules = allRules.filter(rule => 
@@ -221,7 +255,7 @@ export class GroqService {
       rule.sourceSpan.text.trim().length > 0
     );
     
-    console.log(`✅ Rule extraction complete: ${allRules.length} valid rules found (two-step extraction prevents truncation)`)
+    console.log(`✅ Rule extraction complete: ${allRules.length} valid rules found (consolidated extraction with enhanced JSON repair)`)
     
     // Map the flexible AI response to the expected schema format
     const documentType: 'sales' | 'service' | 'licensing' | 'distribution' | 'employment' | 'consulting' | 'nda' | 'amendment' | 'saas' | 'subscription' | 'other' = 
