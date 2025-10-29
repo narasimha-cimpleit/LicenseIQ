@@ -1470,14 +1470,14 @@ Report ID: ${contractId}
               return false;
             }
             
-            // Primary match: bidirectional category matching (requires non-empty sale category)
-            if (saleCategoryLower) {
-              return saleCategoryLower.includes(catLower) || catLower.includes(saleCategoryLower);
+            // PRIORITY 1: Product name exact matching (AI often stores product names in productCategories)
+            if (saleProductLower && (saleProductLower.includes(catLower) || catLower.includes(saleProductLower))) {
+              return true;
             }
             
-            // Fallback: product name matching (only if category is empty, and only exact substring)
-            if (saleProductLower) {
-              return saleProductLower.includes(catLower);
+            // PRIORITY 2: Category matching (for generic rules)
+            if (saleCategoryLower && (saleCategoryLower.includes(catLower) || catLower.includes(saleCategoryLower))) {
+              return true;
             }
             
             return false;

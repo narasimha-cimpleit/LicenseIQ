@@ -144,14 +144,14 @@ export class DynamicRulesEngine {
           return false;
         }
         
-        // Primary match: word-based category matching (requires non-empty sale category)
-        if (saleCategoryLower) {
-          return this.categoriesMatch(saleCategoryLower, catLower);
+        // PRIORITY 1: Product name exact matching (AI often stores product names in productCategories)
+        if (saleProductLower && (saleProductLower.includes(catLower) || catLower.includes(saleProductLower))) {
+          return true;
         }
         
-        // Fallback: product name matching (only if category is empty, and only exact substring)
-        if (saleProductLower) {
-          return saleProductLower.includes(catLower);
+        // PRIORITY 2: Category matching (for generic rules)
+        if (saleCategoryLower) {
+          return this.categoriesMatch(saleCategoryLower, catLower);
         }
         
         return false;
