@@ -354,11 +354,34 @@ export class GroqService {
 Contract Text:
 ${contractText.substring(0, 8000)}
 
-**SECTION 1: Contract Identification**
+**SECTION 1: Contract Parties** (MANDATORY - NEVER return null)
+Extract BOTH contracting parties. Look for:
+- "LICENSOR" and "LICENSEE" (licensing/royalty agreements)
+- "CONTRACTOR" and "CLIENT" or "SUB-CONTRACTOR" (service agreements)
+- "SELLER" and "BUYER" (sales agreements)
+- "EMPLOYER" and "EMPLOYEE" (employment contracts)
+- "VENDOR" and "CUSTOMER" (vendor agreements)
+- Company names at the top of the contract under "CONTRACTING PARTIES" or "PARTIES"
+- Signature blocks at the end with company names
+- "This Agreement is between [Party 1] and [Party 2]"
+
+Return format:
+"parties": {
+  "party1": {"name": "Exact Company/Person Name", "role": "Licensor|Contractor|Seller|etc"},
+  "party2": {"name": "Exact Company/Person Name", "role": "Licensee|Client|Buyer|etc"}
+}
+
+If parties are not explicitly stated, look in:
+1. Header section with corporate information
+2. Signature blocks
+3. First paragraph describing the agreement
+4. Any section titled "PARTIES" or "BETWEEN"
+
+**SECTION 2: Contract Identification**
 Identify which of these categories best describes this contract:
 - **sales**: Sales contracts for goods/services
-- **service**: Service agreements with deliverables
-- **licensing**: IP licensing, software licenses, content licensing
+- **service**: Service agreements with deliverables  
+- **licensing**: IP licensing, software licenses, content licensing, patent licensing
 - **saas**: SaaS/subscription agreements
 - **distribution**: Distribution/reseller agreements
 - **consulting**: Consulting/professional services
@@ -366,19 +389,21 @@ Identify which of these categories best describes this contract:
 - **nda**: Non-disclosure/confidentiality agreements
 - **other**: Other contract types
 
-**SECTION 2: Payment Terms Detection**
+**SECTION 3: Payment Terms Detection**
 Set "hasRoyaltyTerms" to true if contract contains ANY:
 - Royalty percentages or license fees
 - Fixed/variable pricing
 - Per-seat, per-user, per-unit pricing
-- Tiered pricing
+- Tiered pricing or volume discounts
 - Subscription/recurring payments
 - Auto-renewal terms
 - Price escalation clauses
 - Termination fees
+- Minimum guarantees or advance payments
 - ANY monetary compensation or pricing structure
+- Milestone payments or upfront fees
 
-**SECTION 3: Extract ALL Pricing Rules** (if hasRoyaltyTerms is true)
+**SECTION 4: Extract ALL Pricing Rules** (if hasRoyaltyTerms is true)
 Extract EVERY pricing rule you find. Use these EXACT ruleType values:
 - "tiered" - Volume-based tiers
 - "percentage" - Percentage-based rates
@@ -475,12 +500,27 @@ Return ONLY valid JSON. No explanations.`;
       
       // Handle case where AI returns just an array of rules instead of full object
       if (Array.isArray(extracted)) {
+        console.warn(`⚠️ AI returned array instead of object - attempting to extract basicInfo from raw response`);
+        // Try to parse basicInfo from the raw response text
+        const basicInfoMatch = response.match(/"basicInfo"\s*:\s*\{[^}]*"parties"[^}]*\}/);
+        let parties = null;
+        if (basicInfoMatch) {
+          try {
+            const basicInfoStr = '{' + basicInfoMatch[0] + '}';
+            const parsed = JSON.parse(basicInfoStr);
+            parties = parsed.basicInfo?.parties;
+            console.log(`✅ Recovered parties from raw response:`, JSON.stringify(parties));
+          } catch (e) {
+            console.warn(`⚠️ Could not parse parties from raw response`);
+          }
+        }
+        
         console.log(`🔄 AI returned array, wrapping in proper structure (${extracted.length} rules)`);
         extracted = {
           basicInfo: {
             documentType: 'unknown',
             hasRoyaltyTerms: extracted.length > 0,
-            parties: null,
+            parties: parties,
             effectiveDate: null,
             expirationDate: null,
             currency: 'USD',
@@ -494,7 +534,7 @@ Return ONLY valid JSON. No explanations.`;
         console.error('⚠️ Consolidated extraction failed, using fallback');
         console.error('📊 AI Response length:', response?.length || 0);
         console.error('📊 Extracted data:', JSON.stringify(extracted).substring(0, 500));
-        console.error('📊 First 500 chars of raw response:', response?.substring(0, 500));
+        console.error('📊 First 1000 chars of raw response:', response?.substring(0, 1000));
         return {
           basicInfo: {
             documentType: 'unknown',
