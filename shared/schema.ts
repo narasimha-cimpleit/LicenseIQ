@@ -63,7 +63,7 @@ export const contracts = pgTable("contracts", {
 // Contract analysis results
 export const contractAnalysis = pgTable("contract_analysis", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  contractId: varchar("contract_id").notNull().references(() => contracts.id),
+  contractId: varchar("contract_id").notNull().references(() => contracts.id, { onDelete: 'cascade' }),
   summary: text("summary"),
   keyTerms: jsonb("key_terms"), // Array of extracted terms with confidence scores
   riskAnalysis: jsonb("risk_analysis"), // Risk assessment results
@@ -77,7 +77,7 @@ export const contractAnalysis = pgTable("contract_analysis", {
 // Contract embeddings for semantic search (AI-driven matching)
 export const contractEmbeddings = pgTable("contract_embeddings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  contractId: varchar("contract_id").notNull().references(() => contracts.id),
+  contractId: varchar("contract_id").notNull().references(() => contracts.id, { onDelete: 'cascade' }),
   embeddingType: varchar("embedding_type").notNull(), // 'product', 'territory', 'full_contract', 'rule_description'
   sourceText: text("source_text").notNull(), // Original text that was embedded
   embedding: vector("embedding", { dimensions: 384 }), // Hugging Face sentence-transformers/all-MiniLM-L6-v2 produces 384 dimensions
@@ -182,7 +182,7 @@ export type AuditTrail = typeof auditTrail.$inferSelect;
 // Financial Analysis table
 export const financialAnalysis = pgTable("financial_analysis", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  contractId: varchar("contract_id").notNull().references(() => contracts.id),
+  contractId: varchar("contract_id").notNull().references(() => contracts.id, { onDelete: 'cascade' }),
   totalValue: decimal("total_value", { precision: 15, scale: 2 }),
   currency: varchar("currency").default("USD"),
   paymentSchedule: jsonb("payment_schedule"), // Array of payment dates and amounts
@@ -199,7 +199,7 @@ export const financialAnalysis = pgTable("financial_analysis", {
 // Compliance Analysis table
 export const complianceAnalysis = pgTable("compliance_analysis", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  contractId: varchar("contract_id").notNull().references(() => contracts.id),
+  contractId: varchar("contract_id").notNull().references(() => contracts.id, { onDelete: 'cascade' }),
   complianceScore: decimal("compliance_score", { precision: 5, scale: 2 }), // Overall compliance score 0-100
   regulatoryFrameworks: jsonb("regulatory_frameworks"), // GDPR, SOX, HIPAA, etc.
   jurisdictionAnalysis: jsonb("jurisdiction_analysis"), // Governing law analysis
@@ -215,7 +215,7 @@ export const complianceAnalysis = pgTable("compliance_analysis", {
 // Contract Obligations table
 export const contractObligations = pgTable("contract_obligations", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  contractId: varchar("contract_id").notNull().references(() => contracts.id),
+  contractId: varchar("contract_id").notNull().references(() => contracts.id, { onDelete: 'cascade' }),
   obligationType: varchar("obligation_type").notNull(), // payment, delivery, performance, reporting
   description: text("description").notNull(),
   dueDate: timestamp("due_date"),
@@ -231,7 +231,7 @@ export const contractObligations = pgTable("contract_obligations", {
 // Contract Performance Metrics table
 export const performanceMetrics = pgTable("performance_metrics", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  contractId: varchar("contract_id").notNull().references(() => contracts.id),
+  contractId: varchar("contract_id").notNull().references(() => contracts.id, { onDelete: 'cascade' }),
   performanceScore: decimal("performance_score", { precision: 5, scale: 2 }), // 0-100
   milestoneCompletion: decimal("milestone_completion", { precision: 5, scale: 2 }), // % completed
   onTimeDelivery: boolean("on_time_delivery").default(true),
@@ -247,7 +247,7 @@ export const performanceMetrics = pgTable("performance_metrics", {
 // Strategic Analysis table
 export const strategicAnalysis = pgTable("strategic_analysis", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  contractId: varchar("contract_id").notNull().references(() => contracts.id),
+  contractId: varchar("contract_id").notNull().references(() => contracts.id, { onDelete: 'cascade' }),
   strategicValue: decimal("strategic_value", { precision: 5, scale: 2 }), // Strategic importance score
   marketAlignment: decimal("market_alignment", { precision: 5, scale: 2 }), // How well aligned with market
   competitiveAdvantage: jsonb("competitive_advantage"), // Competitive benefits
@@ -263,7 +263,7 @@ export const strategicAnalysis = pgTable("strategic_analysis", {
 // Contract Comparisons table (for similar contract analysis)
 export const contractComparisons = pgTable("contract_comparisons", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  contractId: varchar("contract_id").notNull().references(() => contracts.id),
+  contractId: varchar("contract_id").notNull().references(() => contracts.id, { onDelete: 'cascade' }),
   similarContracts: jsonb("similar_contracts"), // Array of similar contract IDs and similarity scores
   clauseVariations: jsonb("clause_variations"), // Differences in key clauses
   termComparisons: jsonb("term_comparisons"), // Financial and legal term comparisons
@@ -398,7 +398,7 @@ export type ContractWithAnalysis = Contract & {
 // Sales Data (AI-Matched to Contracts)
 export const salesData = pgTable("sales_data", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  matchedContractId: varchar("matched_contract_id").references(() => contracts.id),
+  matchedContractId: varchar("matched_contract_id").references(() => contracts.id, { onDelete: 'set null' }),
   matchConfidence: decimal("match_confidence", { precision: 5, scale: 2 }),
   transactionDate: timestamp("transaction_date").notNull(),
   transactionId: varchar("transaction_id"),
@@ -419,7 +419,7 @@ export const salesData = pgTable("sales_data", {
 // Contract-based Royalty Calculations (AI-Matched Workflow)
 export const contractRoyaltyCalculations = pgTable("contract_royalty_calculations", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  contractId: varchar("contract_id").notNull().references(() => contracts.id),
+  contractId: varchar("contract_id").notNull().references(() => contracts.id, { onDelete: 'cascade' }),
   name: varchar("name").notNull(), // e.g., "Q1 2024 Royalties"
   periodStart: timestamp("period_start"),
   periodEnd: timestamp("period_end"),
@@ -444,7 +444,7 @@ export const contractRoyaltyCalculations = pgTable("contract_royalty_calculation
 // Structured Royalty Rules (Extracted from Contracts)
 export const royaltyRules = pgTable("royalty_rules", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  contractId: varchar("contract_id").notNull().references(() => contracts.id),
+  contractId: varchar("contract_id").notNull().references(() => contracts.id, { onDelete: 'cascade' }),
   ruleType: varchar("rule_type").notNull(), // 'percentage', 'tiered', 'minimum_guarantee', 'cap', 'deduction', 'fixed_fee'
   ruleName: varchar("rule_name").notNull(),
   description: text("description"),
@@ -558,7 +558,7 @@ export type InsertRoyaltyRule = z.infer<typeof insertRoyaltyRuleSchema>;
 // Contract Documents - Raw text segments with metadata
 export const contractDocuments = pgTable("contract_documents", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  contractId: varchar("contract_id").notNull().references(() => contracts.id),
+  contractId: varchar("contract_id").notNull().references(() => contracts.id, { onDelete: 'cascade' }),
   extractionRunId: varchar("extraction_run_id"),
   documentSection: varchar("document_section"), // 'header', 'parties', 'terms', 'payment', 'termination', etc.
   sectionOrder: integer("section_order"), // Order within document
@@ -575,7 +575,7 @@ export const contractDocuments = pgTable("contract_documents", {
 // Contract Graph Nodes - Entities extracted from contracts (people, terms, clauses, etc.)
 export const contractGraphNodes = pgTable("contract_graph_nodes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  contractId: varchar("contract_id").notNull().references(() => contracts.id),
+  contractId: varchar("contract_id").notNull().references(() => contracts.id, { onDelete: 'cascade' }),
   extractionRunId: varchar("extraction_run_id"),
   nodeType: varchar("node_type").notNull(), // 'party', 'product', 'territory', 'clause', 'term', 'obligation', 'royalty_rule'
   label: varchar("label").notNull(), // Human-readable name
@@ -595,7 +595,7 @@ export const contractGraphNodes = pgTable("contract_graph_nodes", {
 // Contract Graph Edges - Relationships between nodes
 export const contractGraphEdges = pgTable("contract_graph_edges", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  contractId: varchar("contract_id").notNull().references(() => contracts.id),
+  contractId: varchar("contract_id").notNull().references(() => contracts.id, { onDelete: 'cascade' }),
   extractionRunId: varchar("extraction_run_id"),
   sourceNodeId: varchar("source_node_id").notNull().references(() => contractGraphNodes.id),
   targetNodeId: varchar("target_node_id").notNull().references(() => contractGraphNodes.id),
@@ -612,7 +612,7 @@ export const contractGraphEdges = pgTable("contract_graph_edges", {
 // Extraction Runs - Track each AI extraction attempt with confidence and validation
 export const extractionRuns = pgTable("extraction_runs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  contractId: varchar("contract_id").notNull().references(() => contracts.id),
+  contractId: varchar("contract_id").notNull().references(() => contracts.id, { onDelete: 'cascade' }),
   runType: varchar("run_type").notNull(), // 'initial', 'reprocess', 'manual_correction'
   status: varchar("status").notNull().default("processing"), // 'processing', 'completed', 'failed', 'pending_review'
   overallConfidence: decimal("overall_confidence", { precision: 5, scale: 2 }),
@@ -634,7 +634,7 @@ export const extractionRuns = pgTable("extraction_runs", {
 // Rule Definitions - Dynamic rule storage with extensible formula types
 export const ruleDefinitions = pgTable("rule_definitions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  contractId: varchar("contract_id").notNull().references(() => contracts.id),
+  contractId: varchar("contract_id").notNull().references(() => contracts.id, { onDelete: 'cascade' }),
   extractionRunId: varchar("extraction_run_id").references(() => extractionRuns.id),
   linkedGraphNodeId: varchar("linked_graph_node_id").references(() => contractGraphNodes.id), // Link to knowledge graph
   ruleType: varchar("rule_type").notNull(), // Can be ANY type, not just predefined ones
@@ -669,7 +669,7 @@ export const ruleNodeDefinitions = pgTable("rule_node_definitions", {
 // Human Review Tasks - Queue for low-confidence extractions
 export const humanReviewTasks = pgTable("human_review_tasks", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  contractId: varchar("contract_id").notNull().references(() => contracts.id),
+  contractId: varchar("contract_id").notNull().references(() => contracts.id, { onDelete: 'cascade' }),
   extractionRunId: varchar("extraction_run_id").references(() => extractionRuns.id),
   taskType: varchar("task_type").notNull(), // 'node_review', 'rule_review', 'relationship_review', 'field_mapping'
   priority: varchar("priority").default("normal"), // 'low', 'normal', 'high', 'critical'
@@ -694,7 +694,7 @@ export const humanReviewTasks = pgTable("human_review_tasks", {
 // Sales Field Mappings - Learned associations between sales data columns and contract terms
 export const salesFieldMappings = pgTable("sales_field_mappings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  contractId: varchar("contract_id").references(() => contracts.id), // Can be contract-specific or global (null)
+  contractId: varchar("contract_id").references(() => contracts.id, { onDelete: 'set null' }), // Can be contract-specific or global (null)
   sourceFieldName: varchar("source_field_name").notNull(), // Field name from sales data (e.g., "Item", "SKU")
   targetFieldType: varchar("target_field_type").notNull(), // Semantic type (e.g., "productName", "territory", "quantity")
   mappingConfidence: decimal("mapping_confidence", { precision: 5, scale: 2 }),
@@ -713,7 +713,7 @@ export const salesFieldMappings = pgTable("sales_field_mappings", {
 // Semantic Index Entries - GraphRAG embeddings for enhanced search
 export const semanticIndexEntries = pgTable("semantic_index_entries", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  contractId: varchar("contract_id").notNull().references(() => contracts.id),
+  contractId: varchar("contract_id").notNull().references(() => contracts.id, { onDelete: 'cascade' }),
   indexType: varchar("index_type").notNull(), // 'graph_node', 'document_chunk', 'rule_description', 'combined'
   sourceId: varchar("source_id"), // ID of source (graph node, document, rule)
   content: text("content").notNull(), // Text content that was embedded

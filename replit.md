@@ -6,135 +6,6 @@ License IQ Research Platform is a SaaS web application for intelligent contract 
 
 Preferred communication style: Simple, everyday language.
 
-# Recent Updates (October 28, 2025)
-
-## Universal Contract Processing System (October 28, 2025)
-Implemented comprehensive AI-powered extraction for ALL contract types and pricing structures, moving beyond licensing-only focus to universal business contract support:
-
-**Contract Type Detection (10 Types):**
-- Sales, Service, Licensing, SaaS, Distribution, Consulting, Employment, NDA, Amendment, Subscription contracts
-- Each contract categorized by business purpose: revenue-generating, service-based, confidentiality, employment, other
-- Intelligent classification based on actual contract content, not assumptions
-
-**Universal Pricing Structures Extracted:**
-- **Renewal Terms** (auto_renewal): Auto-renew settings, renewal rate changes, notice periods
-- **Escalation Clauses** (escalation_clause): Annual price increases, CPI adjustments, rate escalations
-- **Termination Penalties** (early_termination): Cancellation fees, exit penalties, early termination costs
-- **License Scope** (license_scope): User limits, geographic restrictions, term length, exclusivity
-- **Usage-Based Pricing** (usage_based): Per-API-call, consumption-based, metered billing
-- **Per-Seat/Unit/Time** (per_seat, per_unit, per_time_period): User-based, license-based, hourly/monthly rates
-- **Fixed/Variable Pricing** (fixed_price, variable_price): One-time fees, volume-dependent pricing
-- **Volume Discounts** (volume_discount): Bulk pricing, tier-based discounts
-- Plus existing: Tiered pricing, percentages, minimum guarantees, caps, deductions, fixed fees
-
-**Technical Implementation:**
-- Added `extractUniversalPricingRules()` function with comprehensive AI prompts for all pricing structures
-- Expanded `hasRoyaltyTerms` detection to include renewal/escalation/termination clauses (not just royalties)
-- Updated all extraction prompts to support 22 rule types (expanded from 7)
-- Added 5 metadata flags: hasFixedPricing, hasVariablePricing, hasTieredPricing, hasRenewalTerms, hasTerminationClauses
-- Enhanced TypeScript interfaces with licenseScope and renewalTerms conditions, plus escalationRate/terminationFee/discountPercent calculations
-- Backward compatible - existing royalty extraction unchanged
-
-**Impact:**
-- SaaS contracts: Extracts per-seat pricing, auto-renewal, user limits, escalation clauses
-- Service agreements: Extracts hourly rates, milestone payments, termination fees
-- Subscriptions: Extracts usage-based pricing, renewal terms, license scope
-- Employment/consulting: Extracts per-time-period rates, fixed compensation
-- Distribution: Extracts tiered pricing, volume discounts, territory restrictions
-- Any contract with pricing/renewal/termination structure is now fully analyzable
-
-## Dynamic Rule Form Implementation (October 28, 2025)
-Transformed the "Add/Edit Rule" form from static royalty-focused fields to a fully dynamic interface that adapts to the rule type being added:
-
-**Dynamic Form Behavior:**
-- Form fields change based on selected rule type
-- Section header adapts: "Calculation Settings" for royalty rules, "Payment Term Details" for payment terms
-- Only shows relevant fields for each rule type
-
-**Royalty/License Rule Fields:**
-- **Percentage**: Rate (%), Base Field (gross/net revenue, units)
-- **Fixed Fee/Min Guarantee/Cap**: Amount ($)
-- **Tiered**: Volume tier configuration
-
-**Payment Term Rule Fields:**
-- **Payment Schedule**: Payment Terms (Net 45, Net 30, Upon receipt), Schedule Type (Monthly, Milestone-based)
-- **Payment Method**: Payment Method (Direct deposit, Wire transfer, ACH, Check)
-- **Rate Structure**: Rate Amount ($125), Rate Unit (per hour, per day, per month)
-- **Invoice Requirements**: Invoice Requirements (Itemized invoice with timesheets, W-9 required)
-- **Late Payment Penalty**: Penalty Rate (1.5%), Penalty Details (per month after due date)
-- **Advance Payment**: Advance Amount ($5000), Percentage (25% down)
-- **Milestone Payment**: Payment Amount ($15000), Milestone Trigger (Upon project completion)
-
-**User Experience:**
-- Appropriate placeholders guide users on expected input format
-- Description field captures full context for all rule types
-- Priority field always visible for rule ordering
-- Backward compatible with existing royalty rules
-
-## Expanded Payment Terms Extraction (October 28, 2025)
-Enhanced the dynamic rule extraction system to capture ALL payment-related clauses, not just royalty/licensing terms:
-
-**New Payment Term Types Extracted:**
-- `payment_schedule`: Payment timelines (Net 30, Net 45, milestone-based)
-- `payment_method`: How payments are made (wire, direct deposit, ACH, check)
-- `rate_structure`: Pricing models (hourly rate, fixed fee, daily rate, monthly retainer)
-- `invoice_requirements`: Documentation needed for payment (invoice format, supporting docs)
-- `late_payment_penalty`: Fees or interest for overdue payments
-- `advance_payment`: Upfront payments or deposits
-- `milestone_payment`: Payments tied to deliverables or dates
-
-**Implementation:**
-- Added `extractGeneralPaymentTerms()` function in groqService.ts
-- Backend extracts both royalty rules AND general payment terms in parallel
-- Frontend displays all rule types with appropriate labels and icons
-- Quality filters apply to all rule types (confidence >= 0.6, source text validation)
-- Backward compatible - existing royalty extraction unchanged
-
-**Impact:**
-- Subcontractor agreements now show payment schedules, hourly rates, invoice requirements
-- Service agreements show milestone payments, retainer terms, payment methods
-- Licensing agreements continue to show royalty rules as before
-- Truly universal payment term extraction across ALL contract types
-
-# Recent Updates (October 27, 2025)
-
-## Logo and Branding Enhancements
-- Increased landing page navbar logo to h-14 (56px) for better visibility
-- Dashboard sidebar logo: Increased to h-16 (64px), centered, with proper background integration
-- Login page logo: Increased to h-16 size with clean white card container (rounded corners, shadow, border) for professional appearance
-
-## Landing Page Animations
-- Added professional scroll animations to feature cards with staggered fade-in effects
-- Animated pricing cards with delayed entrance timing (700ms duration)
-- Integration icons section: Staggered fade-in and zoom-in effects (8 icons with 50-450ms delays), hover scale effect (10% larger)
-
-## Terminology and Compliance Updates
-- Replaced "royalty/royalties" with professional payment-focused language ("payment calculations", "license fees")
-- Added SOC 2 & GDPR compliance to all pricing plans with blue Shield icon for visual prominence
-
-## Critical Bug Fix: Phantom Royalty Rules Eliminated (October 27, 2025)
-Fixed critical bug where the system was generating phantom payment rules for contracts that don't contain royalty/license terms:
-
-**Root Cause:**
-- AI extraction prompts were biased toward licensing agreements
-- Rule extractors ran unconditionally regardless of contract type
-- Fallback values generated phantom data when extraction failed
-
-**Solution Implemented:**
-1. Rewrote contract analysis prompt to neutrally detect document type (service, subcontractor, employment, license, etc.)
-2. Added `hasRoyaltyTerms` flag - only extracts rules when explicitly true
-3. Implemented confidence threshold filtering (>= 0.6) and source text validation
-4. Updated all rule extraction prompts with strict "Do NOT fabricate" instructions
-5. Enhanced UI empty state to explain non-licensing contracts are normal
-6. Added schema mapping to maintain compatibility with existing data model
-7. Made product formula extraction conditional - only runs when hasRoyaltyTerms is true
-8. **Fixed hardcoded party fallbacks** - Removed fake "Green Thumb Nurseries LLC" and "Premium Plant Distributors Inc" fallback values, now extracts actual parties from summary or shows "Not specified"
-
-**Impact:**
-- Subcontractor agreements, service contracts, and other non-licensing documents now correctly show zero rules
-- Contract party extraction is accurate (no longer forcing licensor/licensee labels)
-- Rules engine is truly dynamic - only creates rules that actually exist in uploaded PDFs
-
 # System Architecture
 
 ## UI/UX Decisions
@@ -144,16 +15,19 @@ The platform features a modern, responsive UI built with React, TailwindCSS, and
 The frontend uses React, TypeScript, Vite, Wouter for routing, TanStack Query for state management, and React Hook Form with Zod for validation. The backend is an Express.js and TypeScript RESTful API server with a layered service architecture. PostgreSQL serves as the primary database with Drizzle ORM and leverages the pgvector extension for vector similarity search. File storage is managed on the server's filesystem using Multer. A dynamic contract processing system utilizes a knowledge graph database schema with 10 new tables for AI-powered zero-shot extraction, supporting human-in-the-loop validation and dynamic rule synthesis.
 
 ## Feature Specifications
--   **AI Contract Reading & Analysis**: Automated term extraction, risk assessment, compliance checking, and insight generation using Groq API.
--   **Multi-Source Contract Ingestion**: Supports PDF, DocuSign, HelloSign, Adobe Sign, PandaDoc, contract management systems, email attachments, and SFTP.
--   **AI-Powered ERP Field Mapping**: Dynamic field mapping with a fine-tuned LLaMA model, offering zero manual mapping and high accuracy for ERP integrations (SAP, Oracle, NetSuite).
--   **Dynamic Rule Engine Management**: Supports AI-extracted and manually-created payment rules using FormulaNode JSON expression trees, with smart parsing for volume tiers and seasonal adjustments.
--   **AI Sales Matching**: Semantic matching of sales data against contract embeddings using Hugging Face embeddings, with LLM validation and confidence scoring.
--   **Payment Calculation Dashboard**: Customizable date range calculations, run history tracking, and professional PDF invoice generation.
--   **RAG-Powered Document Q&A System**: AI-powered chat interface for contract inquiries, providing precise answers with confidence scoring and source citations.
--   **Omnipresent AI Agent**: A global AI Q&A assistant accessible from anywhere in the application, offering context-aware assistance.
--   **Security & Access Control**: Five-tier Role-Based Access Control (RBAC), secure session management, and comprehensive audit logging.
--   **Dynamic Contract Processing**: AI-powered pipeline for zero-shot entity extraction, knowledge graph construction, and dynamic rule synthesis from any contract format, with human-in-the-loop validation.
+- **AI Contract Reading & Analysis**: Automated term extraction, risk assessment, compliance checking, and insight generation using Groq API.
+- **Multi-Source Contract Ingestion**: Supports PDF, DocuSign, HelloSign, Adobe Sign, PandaDoc, contract management systems, email attachments, and SFTP.
+- **AI-Powered ERP Field Mapping**: Dynamic field mapping with a fine-tuned LLaMA model, offering zero manual mapping and high accuracy for ERP integrations (SAP, Oracle, NetSuite).
+- **Dynamic Rule Engine Management**: Supports AI-extracted and manually-created payment rules using FormulaNode JSON expression trees, with smart parsing for volume tiers and seasonal adjustments.
+- **AI Sales Matching**: Semantic matching of sales data against contract embeddings using Hugging Face embeddings, with LLM validation and confidence scoring.
+- **Payment Calculation Dashboard**: Customizable date range calculations, run history tracking, and professional PDF invoice generation.
+- **RAG-Powered Document Q&A System**: AI-powered chat interface for contract inquiries, providing precise answers with confidence scoring and source citations.
+- **Omnipresent AI Agent**: A global AI Q&A assistant accessible from anywhere in the application, offering context-aware assistance.
+- **Security & Access Control**: Five-tier Role-Based Access Control (RBAC), secure session management, and comprehensive audit logging.
+- **Dynamic Contract Processing**: AI-powered pipeline for zero-shot entity extraction, knowledge graph construction, and dynamic rule synthesis from any contract format, with human-in-the-loop validation.
+- **Universal Contract Processing System**: AI-powered extraction for all contract types (e.g., Sales, Service, Licensing, SaaS) and comprehensive pricing structures (e.g., Renewal Terms, Escalation Clauses, Termination Penalties, Usage-Based Pricing, Volume Discounts).
+- **Dynamic Rule Form Implementation**: "Add/Edit Rule" form adapts fields based on selected rule type (e.g., Royalty/License Rule, Payment Term Rule).
+- **Expanded Payment Terms Extraction**: Extracts various payment-related clauses beyond royalties, including `payment_schedule`, `payment_method`, `rate_structure`, `invoice_requirements`, `late_payment_penalty`, `advance_payment`, and `milestone_payment`.
 
 ## System Design Choices
 The architecture emphasizes AI-native design, integrating AI capabilities throughout the platform. Asynchronous AI processing with free APIs is prioritized. A relational data model underpins core entities like Users, Contracts, Sales Data, and Payment Calculations. The platform is designed for enterprise readiness, supporting multi-entity operations, user management, complete audit trails, smart organization, and flexible data import.
@@ -161,33 +35,33 @@ The architecture emphasizes AI-native design, integrating AI capabilities throug
 # External Dependencies
 
 ## Database Services
--   **Neon PostgreSQL**: Serverless PostgreSQL hosting.
--   **Drizzle ORM**: TypeScript-first ORM.
+- **Neon PostgreSQL**: Serverless PostgreSQL hosting.
+- **Drizzle ORM**: TypeScript-first ORM.
 
 ## AI Services
--   **Groq API**: LLaMA model inference for contract analysis.
--   **Hugging Face Embeddings**: For semantic search and vector generation.
+- **Groq API**: LLaMA model inference for contract analysis.
+- **Hugging Face Embeddings**: For semantic search and vector generation.
 
 ## UI Components
--   **Radix UI**: Accessible UI primitives.
--   **shadcn/ui**: Pre-built components with TailwindCSS.
--   **Recharts**: Charting library.
+- **Radix UI**: Accessible UI primitives.
+- **shadcn/ui**: Pre-built components with TailwindCSS.
+- **Recharts**: Charting library.
 
 ## Development Tools
--   **Vite**: Modern build tool.
--   **TypeScript**: Static type checking.
+- **Vite**: Modern build tool.
+- **TypeScript**: Static type checking.
 
 ## Authentication & Session Management
--   **Passport.js**: Authentication middleware.
--   **connect-pg-simple**: PostgreSQL session store.
+- **Passport.js**: Authentication middleware.
+- **connect-pg-simple**: PostgreSQL session store.
 
 ## File Processing
--   **Multer**: File upload middleware.
--   **html-pdf-node**: PDF generation.
+- **Multer**: File upload middleware.
+- **html-pdf-node**: PDF generation.
 
 ## Utility Libraries
--   **date-fns**: Date utility library.
--   **React Hook Form**: Form management.
--   **TanStack Query**: Data synchronization.
--   **Wouter**: Client-side routing.
--   **Zod**: Schema validation.
+- **date-fns**: Date utility library.
+- **React Hook Form**: Form management.
+- **TanStack Query**: Data synchronization.
+- **Wouter**: Client-side routing.
+- **Zod**: Schema validation.
