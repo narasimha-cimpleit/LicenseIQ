@@ -72,7 +72,11 @@ export class DynamicRulesEngine {
     let minimumGuarantee: number | null = null;
     const rulesApplied = new Set<string>();
 
-    const tierRules = rules.filter(r => r.ruleType === 'tiered_pricing' || r.ruleType === 'formula_based');
+    // Accept ANY royalty/payment rule type (AI returns various types like 'tiered', 'percentage', etc.)
+    const validRuleTypes = ['tiered', 'tiered_pricing', 'formula_based', 'percentage', 'minimum_guarantee', 
+                            'cap', 'fixed_fee', 'fixed_price', 'variable_price', 'per_seat', 'per_unit', 
+                            'per_time_period', 'volume_discount', 'license_scope', 'usage_based'];
+    const tierRules = rules.filter(r => validRuleTypes.includes(r.ruleType) && r.ruleType !== 'minimum_guarantee');
     const minimumRule = rules.find(r => r.ruleType === 'minimum_guarantee');
 
     if (minimumRule && minimumRule.minimumGuarantee) {

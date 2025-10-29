@@ -1447,7 +1447,11 @@ Report ID: ${contractId}
 
       // Helper to find matching rule (same logic as DynamicRulesEngine)
       const findMatchingRule = (sale: any) => {
-        const tierRules = rules.filter(r => r.ruleType === 'tiered_pricing' || r.ruleType === 'formula_based');
+        // Accept ANY royalty/payment rule type (AI returns various types)
+        const validRuleTypes = ['tiered', 'tiered_pricing', 'formula_based', 'percentage', 'minimum_guarantee', 
+                                'cap', 'fixed_fee', 'fixed_price', 'variable_price', 'per_seat', 'per_unit', 
+                                'per_time_period', 'volume_discount', 'license_scope', 'usage_based'];
+        const tierRules = rules.filter(r => validRuleTypes.includes(r.ruleType));
         
         // PHASE 1: Try to find specific rules (with product categories)
         for (const rule of tierRules) {
