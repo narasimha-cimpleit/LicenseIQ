@@ -198,15 +198,21 @@ export class GroqService {
   // =====================================================
   
   async extractDetailedRoyaltyRules(contractText: string): Promise<LicenseRuleExtractionResult> {
-    console.log(`🚀 Starting consolidated contract analysis...`);
+    console.log(`🚀 Starting two-step contract analysis...`);
     
-    // ⚡ OPTIMIZATION: Single comprehensive extraction call instead of 6 sequential calls
-    const comprehensiveResult = await this.extractAllContractDataInOneCall(contractText);
-    
-    const basicInfo = comprehensiveResult.basicInfo;
+    // ⚡ STEP 1: Extract basic contract info (small response, low truncation risk)
+    console.log(`📝 Step 1: Extracting basic contract information...`);
+    const basicInfo = await this.extractBasicContractInfo(contractText);
     console.log(`📄 Contract type detected: ${basicInfo.documentType}, Has royalty terms: ${basicInfo.hasRoyaltyTerms}`);
     
-    let allRules: RoyaltyRule[] = comprehensiveResult.allRules;
+    // ⚡ STEP 2: Extract rules separately if contract has payment terms (focused extraction, better error handling)
+    let allRules: RoyaltyRule[] = [];
+    if (basicInfo.hasRoyaltyTerms) {
+      console.log(`📋 Step 2: Extracting payment rules separately...`);
+      allRules = await this.extractRulesOnly(contractText, basicInfo.documentType);
+    } else {
+      console.log(`ℹ️ No payment terms detected, skipping rules extraction`);
+    }
     
     // Filter out low-confidence or empty rules
     allRules = allRules.filter(rule => 
@@ -215,7 +221,7 @@ export class GroqService {
       rule.sourceSpan.text.trim().length > 0
     );
     
-    console.log(`✅ Rule extraction complete: ${allRules.length} valid rules found (6x faster with consolidated extraction)`)
+    console.log(`✅ Rule extraction complete: ${allRules.length} valid rules found (two-step extraction prevents truncation)`)
     
     // Map the flexible AI response to the expected schema format
     const documentType: 'sales' | 'service' | 'licensing' | 'distribution' | 'employment' | 'consulting' | 'nda' | 'amendment' | 'saas' | 'subscription' | 'other' = 
@@ -444,6 +450,96 @@ Return ONLY valid JSON. No explanations.`;
         },
         allRules: []
       };
+    }
+  }
+
+  // ⚡ SEPARATE RULES EXTRACTION - Focused call only for payment/pricing rules
+  private async extractRulesOnly(contractText: string, documentType: string): Promise<RoyaltyRule[]> {
+    const prompt = `Extract ALL pricing and payment rules from this ${documentType} contract.
+
+Contract Text:
+${contractText.substring(0, 10000)}
+
+**Extract EVERY pricing rule you find.** Use these EXACT ruleType values:
+- "tiered" - Volume-based tiers
+- "percentage" - Percentage-based rates
+- "minimum_guarantee" - Minimum payment guarantees
+- "fixed_price" - One-time fixed fees
+- "variable_price" - Variable pricing
+- "per_seat" - Per user/seat pricing
+- "per_unit" - Per unit pricing
+- "per_time_period" - Monthly/annual pricing
+- "usage_based" - Usage/consumption-based
+- "auto_renewal" - Renewal terms
+- "escalation_clause" - Price increases
+- "early_termination" - Termination fees
+- "license_scope" - License restrictions
+- "volume_discount" - Volume discounts
+
+**CRITICAL - ANTI-HALLUCINATION RULES**: 
+- Extract ONLY rules that EXPLICITLY exist in the contract text
+- Each rule MUST include sourceSpan.text with EXACT VERBATIM quote from the contract
+- DO NOT invent, assume, or create rules
+- Set confidence 0.6-1.0 based on how explicit the rule is
+- Return empty array if no pricing/payment terms found
+
+**MANDATORY PRODUCT IDENTIFIERS**:
+- EVERY rule MUST specify productCategories array with explicit product/service names
+- If rule applies to "all products", use ["General"]
+- DO NOT leave productCategories empty
+
+**Return this EXACT JSON array:**
+[
+  {
+    "ruleType": "one of the exact types above",
+    "ruleName": "descriptive name",
+    "description": "clear description",
+    "conditions": {
+      "productCategories": ["category1"],
+      "territories": ["territory1"],
+      "timeperiod": "monthly|annually|etc"
+    },
+    "calculation": {
+      "rate": 5.0,
+      "baseRate": 10.0,
+      "amount": 1000.0,
+      "tiers": [{"min": 0, "max": 1000, "rate": 5.0}]
+    },
+    "priority": 1,
+    "sourceSpan": {
+      "section": "section name",
+      "text": "verbatim quote"
+    },
+    "confidence": 0.9
+  }
+]
+
+Return ONLY valid JSON array. No explanations.`;
+
+    try {
+      console.log(`📋 Making separate rules extraction call...`);
+      const response = await this.makeRequest([
+        { role: 'system', content: 'You are a precise payment terms analyzer. Extract ALL pricing rules. Return only JSON array.' },
+        { role: 'user', content: prompt }
+      ], 0.1, 6000);
+      
+      let extracted = this.extractAndRepairJSON(response, []);
+      
+      // Ensure we have an array
+      if (!Array.isArray(extracted)) {
+        if (extracted && extracted.rules && Array.isArray(extracted.rules)) {
+          extracted = extracted.rules;
+        } else {
+          console.error('⚠️ Rules extraction returned non-array, using empty array');
+          return [];
+        }
+      }
+      
+      console.log(`✅ Rules extraction complete: ${extracted.length} rules found`);
+      return extracted;
+    } catch (error) {
+      console.error('❌ Rules extraction error:', error);
+      return [];
     }
   }
 
