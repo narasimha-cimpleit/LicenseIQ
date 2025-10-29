@@ -2533,6 +2533,9 @@ async function extractRoyaltyRulesData(contractText: string, aiAnalysis: any): P
     
     console.log(`📋 Found ${detailedRules.rules.length} royalty rules from AI`);
     
+    // 🐛 DEBUG: Log rule types to diagnose misclassification
+    console.log(`🐛 [DEBUG] Rule types extracted:`, detailedRules.rules.map((r: any) => r.type));
+    
     // 🚫 ONLY extract product formulas for licensing/royalty contracts (NOT service/consulting contracts)
     // Requires LICENSING-SPECIFIC evidence (container sizes, volume tiers, etc.)
     const paymentOnlyRuleTypes = ['payment_schedule', 'payment_method', 'rate_structure', 
@@ -2551,6 +2554,9 @@ async function extractRoyaltyRulesData(contractText: string, aiAnalysis: any): P
     const hasOnlyPaymentRules = detailedRules.rules.every((r: any) => 
       paymentOnlyRuleTypes.includes(r.type)
     );
+    
+    console.log(`🐛 [DEBUG] hasLicensingSpecificFeatures: ${hasLicensingSpecificFeatures}`);
+    console.log(`🐛 [DEBUG] hasOnlyPaymentRules: ${hasOnlyPaymentRules}`);
     
     let productsWithFormulas: any[] = [];
     if (hasRoyaltyTerms && hasLicensingSpecificFeatures && !hasOnlyPaymentRules) {
