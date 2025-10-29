@@ -76,6 +76,38 @@ function extractSeasonalAdjustments(formulaDefinition: any): Record<string, numb
   return findSeasonalNode(formulaDefinition.formula) || {};
 }
 
+// Helper function to detect contract category from existing rules
+function detectContractCategory(rules: RoyaltyRule[]): 'royalty' | 'payment' | 'service' {
+  if (!rules || rules.length === 0) return 'payment';
+  
+  // Check if contract has royalty-specific features
+  const hasRoyaltyFeatures = rules.some(r => 
+    r.volumeTiers?.length > 0 || 
+    (r.seasonalAdjustments && Object.keys(r.seasonalAdjustments).length > 0) ||
+    (r.territoryPremiums && Object.keys(r.territoryPremiums).length > 0) ||
+    r.containerSizes?.length > 0 ||
+    r.ruleType === 'percentage' ||
+    r.ruleType === 'tiered_pricing' ||
+    r.ruleType === 'formula_based'
+  );
+  
+  if (hasRoyaltyFeatures) return 'royalty';
+  
+  // Check if contract has service/payment features
+  const hasPaymentFeatures = rules.some(r =>
+    r.ruleType === 'payment_schedule' ||
+    r.ruleType === 'payment_method' ||
+    r.ruleType === 'rate_structure' ||
+    r.ruleType === 'invoice_requirements' ||
+    r.ruleType === 'milestone_payment' ||
+    r.ruleType === 'late_payment_penalty'
+  );
+  
+  if (hasPaymentFeatures) return 'payment';
+  
+  return 'service';
+}
+
 export default function RulesManagement() {
   const { id } = useParams<{ id: string }>();
   const [, navigate] = useLocation();
@@ -116,6 +148,9 @@ export default function RulesManagement() {
     queryKey: [`/api/contracts/${id}/rules`],
     enabled: !!id,
   });
+  
+  // Detect contract category from existing rules
+  const contractCategory = detectContractCategory(rulesData?.rules || []);
 
   // Delete rule mutation
   const deleteMutation = useMutation({
@@ -333,6 +368,22 @@ export default function RulesManagement() {
   // Render edit form component
   const renderEditForm = () => (
     <div className="space-y-6 p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border-2 border-violet-200 dark:border-violet-800">
+      {/* Contract Category Indicator */}
+      <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="bg-blue-100 dark:bg-blue-900">
+            {contractCategory === 'royalty' ? 'Royalty/Licensing Contract' : 
+             contractCategory === 'payment' ? 'Service/Payment Contract' : 
+             'General Contract'}
+          </Badge>
+          <p className="text-sm text-muted-foreground">
+            {contractCategory === 'royalty' ? 'Form adapted for licensing agreements (volume tiers, seasonal adjustments, territories)' : 
+             contractCategory === 'payment' ? 'Form adapted for service agreements (payment schedules, milestones, invoicing)' : 
+             'Form adapted for general agreements'}
+          </p>
+        </div>
+      </div>
+      
       {/* Basic Information */}
       <div className="space-y-4">
         <h3 className="font-semibold text-lg">Basic Information</h3>
@@ -621,8 +672,8 @@ export default function RulesManagement() {
         )}
       </div>
 
-      {/* Only show royalty-specific sections for royalty rule types */}
-      {!['payment_schedule', 'payment_method', 'rate_structure', 'invoice_requirements', 'late_payment_penalty', 'advance_payment', 'milestone_payment'].includes(editForm.ruleType) && (
+      {/* Only show royalty-specific sections for royalty/licensing contracts */}
+      {contractCategory === 'royalty' && !['payment_schedule', 'payment_method', 'rate_structure', 'invoice_requirements', 'late_payment_penalty', 'advance_payment', 'milestone_payment'].includes(editForm.ruleType) && (
         <>
           <Separator />
 
