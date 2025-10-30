@@ -249,41 +249,47 @@ export default function ContractAnalysis() {
     // Extract parties from summary with improved pattern matching
     const summary = analysis.summary || '';
     
-    // Try multiple patterns to find parties (contract-type agnostic)
-    let party1: string | null = null;
-    let party2: string | null = null;
+    // ✅ NEW: Get parties directly from keyTerms if available (more reliable than parsing)
+    const keyTermsObj = analysis.keyTerms as any;
+    let party1: string | null = keyTermsObj?.licensor || null;
+    let party2: string | null = keyTermsObj?.licensee || null;
     
-    // Pattern 1: Licensing-style (Licensor/Licensee)
-    const licensorMatch = summary.match(/([^(,]+)\s*\(Licensor\)/i);
-    const licenseeMatch = summary.match(/([^(,]+)\s*\(Licensee\)/i);
-    
-    if (licensorMatch && licenseeMatch) {
-      party1 = licensorMatch[1]?.trim();
-      party2 = licenseeMatch[1]?.trim();
-    }
-    
-    // Pattern 2: Generic "between X and Y" pattern (works for all contract types)
-    if (!party1 || !party2) {
-      const betweenPattern = summary.match(/between\s+([^,]+(?:\s+(?:Inc|LLC|Ltd|Corp|Corporation|Company))?)\s+and\s+([^,]+(?:\s+(?:Inc|LLC|Ltd|Corp|Corporation|Company))?)/i);
-      if (betweenPattern) {
-        party1 = betweenPattern[1]?.trim();
-        party2 = betweenPattern[2]?.trim();
+    // Fallback: Try parsing from summary if not found in keyTerms or marked as "Not specified"
+    if (!party1 || party1 === 'Not specified' || !party2 || party2 === 'Not specified') {
+      // Pattern 1: Licensing-style (Licensor/Licensee)
+      const licensorMatch = summary.match(/([^(,]+)\s*\(Licensor\)/i);
+      const licenseeMatch = summary.match(/([^(,]+)\s*\(Licensee\)/i);
+      
+      if (licensorMatch && licenseeMatch) {
+        party1 = licensorMatch[1]?.trim();
+        party2 = licenseeMatch[1]?.trim();
       }
-    }
-    
-    // Pattern 3: Subcontractor/Service Agreement style
-    if (!party1 || !party2) {
-      const subcontractorPattern = summary.match(/(?:company|client|contractor)?\s*([^,]+(?:\s+(?:Inc|LLC|Ltd|Corp))?)\s+(?:hires|engages|contracts with)\s+([^,]+(?:\s+(?:Inc|LLC|Ltd|Corp))?)/i);
-      if (subcontractorPattern) {
-        party1 = subcontractorPattern[1]?.trim();
-        party2 = subcontractorPattern[2]?.trim();
+      
+      // Pattern 2: Generic "between X and Y" pattern (works for all contract types)
+      if (!party1 || !party2) {
+        const betweenPattern = summary.match(/between\s+([^,]+(?:\s+(?:Inc|LLC|Ltd|Corp|Corporation|Company))?)\s+and\s+([^,]+(?:\s+(?:Inc|LLC|Ltd|Corp|Corporation|Company))?)/i);
+        if (betweenPattern) {
+          party1 = betweenPattern[1]?.trim();
+          party2 = betweenPattern[2]?.trim();
+        }
+      }
+      
+      // Pattern 3: Subcontractor/Service Agreement style
+      if (!party1 || !party2) {
+        const subcontractorPattern = summary.match(/(?:company|client|contractor)?\s*([^,]+(?:\s+(?:Inc|LLC|Ltd|Corp))?)\s+(?:hires|engages|contracts with)\s+([^,]+(?:\s+(?:Inc|LLC|Ltd|Corp))?)/i);
+        if (subcontractorPattern) {
+          party1 = subcontractorPattern[1]?.trim();
+          party2 = subcontractorPattern[2]?.trim();
+        }
       }
     }
     
     // Extract information from keyTerms with safe type checking
-    const paymentTerms = analysis.keyTerms?.find((term: any) => term?.type && term.type.toLowerCase().includes('payment'))?.description;
-    const financialObligation = analysis.keyTerms?.find((term: any) => term?.type && term.type.toLowerCase().includes('financial'))?.description;
-    const territory = analysis.keyTerms?.find((term: any) => term?.type && term.type.toLowerCase().includes('territory'))?.description;
+    // keyTerms can be either an array (old format) or an object with terms array (new format)
+    const keyTermsArray = Array.isArray(analysis.keyTerms) ? analysis.keyTerms : (analysis.keyTerms as any)?.terms || [];
+    const paymentTerms = keyTermsArray.find((term: any) => term?.type && term.type.toLowerCase().includes('payment'))?.description;
+    const financialObligation = keyTermsArray.find((term: any) => term?.type && term.type.toLowerCase().includes('financial'))?.description;
+    const territory = keyTermsArray.find((term: any) => term?.type && term.type.toLowerCase().includes('territory'))?.description;
     
     // Extract dates and amounts using regex patterns
     const datePattern = /(\w+\s+\d{1,2},\s+\d{4})/g;
