@@ -76,13 +76,11 @@ export default function AuthPage() {
           {/* Logo and Title */}
           <div className="text-center space-y-3 animate-in fade-in slide-in-from-top-4 duration-700">
             <div className="flex items-center justify-center mb-6">
-              <div className="bg-white dark:bg-slate-900 rounded-xl px-6 py-3 shadow-md border border-slate-200/50 dark:border-slate-700/50">
-                <img 
-                  src={licenseIQLogo} 
-                  alt="LicenseIQ Logo" 
-                  className="h-16" 
-                />
-              </div>
+              <img 
+                src={licenseIQLogo} 
+                alt="LicenseIQ Logo" 
+                className="h-20" 
+              />
             </div>
             <p className="text-sm text-muted-foreground">
               AI-powered licensing management platform
