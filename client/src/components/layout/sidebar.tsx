@@ -21,7 +21,7 @@ import {
   ClipboardCheck,
   Mail
 } from "lucide-react";
-import licenseIQLogo from "@assets/image_1761594259468.png";
+import licenseIQLogo from "@assets/Original Logo_1761864002264.png";
 
 interface SidebarProps {
   className?: string;
@@ -133,7 +133,7 @@ export default function Sidebar({ className }: SidebarProps) {
       <div className="flex flex-col h-full">
         {/* Logo */}
         <div className="flex items-center justify-center px-6 py-6 border-b border-sidebar-border bg-sidebar">
-          <img src={licenseIQLogo} alt="LicenseIQ Logo" className="h-16 dark:brightness-0 dark:invert" style={{ mixBlendMode: 'multiply' }} />
+          <img src={licenseIQLogo} alt="LicenseIQ Logo" className="h-20" />
         </div>
         
         {/* Navigation */}
