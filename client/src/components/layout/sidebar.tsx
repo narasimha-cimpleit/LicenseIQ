@@ -61,6 +61,12 @@ export default function Sidebar({ className }: SidebarProps) {
       current: location === "/sales-upload",
     },
     {
+      name: "Royalty Calculator",
+      href: "/calculations",
+      icon: Calculator,
+      current: location === "/calculations" || location.startsWith("/royalty-dashboard/"),
+    },
+    {
       name: "Contract Q&A",
       href: "/contract-qna",
       icon: Brain,

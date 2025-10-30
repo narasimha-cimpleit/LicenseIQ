@@ -1882,6 +1882,108 @@ Report ID: ${contractId}
     }
   });
 
+  // Get all royalty calculations across all contracts (for Calculations page)
+  app.get('/api/calculations/all', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      // Get all contracts for the user's organization
+      const contractsResult = await storage.getContracts();
+      const contracts = contractsResult.contracts || [];
+      
+      // Fetch calculations for each contract
+      const allCalculationsPromises = contracts.map(async (contract) => {
+        const calculations = await storage.getContractRoyaltyCalculations(contract.id);
+        return calculations.map(calc => ({
+          ...calc,
+          contractName: contract.originalName,
+          itemsProcessed: calc.salesCount || 0,
+        }));
+      });
+      
+      const calculationsByContract = await Promise.all(allCalculationsPromises);
+      const allCalculations = calculationsByContract.flat();
+      
+      // Sort by creation date (newest first)
+      allCalculations.sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      });
+      
+      res.json({
+        calculations: allCalculations,
+        total: allCalculations.length,
+      });
+    } catch (error: any) {
+      console.error('Error fetching all calculations:', error);
+      res.status(500).json({ message: error.message || 'Failed to fetch calculations' });
+    }
+  });
+
+  // Get detailed calculation data (for Calculation Details dialog)
+  app.get('/api/calculations/:id/details', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const calculationId = req.params.id;
+      
+      // Get calculation
+      const calculation = await storage.getContractRoyaltyCalculation(calculationId);
+      if (!calculation) {
+        return res.status(404).json({ message: 'Calculation not found' });
+      }
+      
+      // Get contract
+      const contract = await storage.getContract(calculation.contractId);
+      if (!contract) {
+        return res.status(404).json({ message: 'Contract not found' });
+      }
+      
+      // Get rules for the contract
+      const rules = await storage.getRoyaltyRulesByContract(calculation.contractId);
+      
+      // Parse breakdown data
+      const breakdown = typeof calculation.breakdown === 'string' 
+        ? JSON.parse(calculation.breakdown) 
+        : calculation.breakdown || [];
+      
+      // Transform breakdown into line items
+      const lineItems = Array.isArray(breakdown) ? breakdown.map((item: any) => ({
+        productName: item.productName || item.product || 'Unknown',
+        quantity: item.quantity || 0,
+        salesAmount: item.saleAmount || item.grossAmount || 0,
+        ruleName: item.ruleApplied || 'Default',
+        royaltyAmount: item.royaltyOwed || item.royalty || 0,
+      })) : [];
+      
+      // Get applied rules info
+      const appliedRules = rules.map(rule => ({
+        ruleName: rule.ruleName,
+        description: rule.description,
+        ruleType: rule.ruleType,
+        rate: rule.rate,
+      }));
+      
+      // Construct response
+      const detailedData = {
+        id: calculation.id,
+        name: calculation.name,
+        contractName: contract.originalName,
+        contractId: contract.id,
+        totalRoyalty: calculation.totalRoyalty,
+        itemsProcessed: calculation.salesCount || 0,
+        createdAt: calculation.createdAt,
+        periodStart: calculation.periodStart,
+        periodEnd: calculation.periodEnd,
+        lineItems,
+        appliedRules,
+        uploadedFile: null
+      };
+      
+      res.json(detailedData);
+    } catch (error: any) {
+      console.error('Error fetching calculation details:', error);
+      res.status(500).json({ message: error.message || 'Failed to fetch calculation details' });
+    }
+  });
+
   // Generate PDF invoice (detailed format)
   app.get('/api/royalty-calculations/:id/invoice/detailed', isAuthenticated, async (req: any, res: Response) => {
     try {

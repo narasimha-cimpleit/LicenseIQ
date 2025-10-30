@@ -25,6 +25,7 @@ import ContractQnA from "@/pages/contract-qna";
 import RAGDashboard from "@/pages/rag-dashboard";
 import HumanReviewQueue from "@/pages/HumanReviewQueue";
 import AdminLeads from "@/pages/admin-leads";
+import CalculationsPage from "@/pages/calculations";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -51,6 +52,7 @@ function Router() {
             <ProtectedRoute path="/audit" component={Audit} />
             {/* Royalty Calculations */}
             <ProtectedRoute path="/sales-upload" component={SalesUpload} />
+            <ProtectedRoute path="/calculations" component={CalculationsPage} />
             <ProtectedRoute path="/royalty-dashboard/:id" component={RoyaltyDashboard} />
             <ProtectedRoute path="/contracts/:id/rules" component={RulesManagement} />
             {/* Contract Q&A */}
