@@ -2473,6 +2473,23 @@ async function processContractAnalysis(contractId: string, filePath: string) {
     const royaltyRulesData = await extractRoyaltyRulesData(extractedText, aiAnalysis);
     console.log(`📋 Found ${royaltyRulesData.length} royalty rules to save`);
     
+    // Step 2.5: Get detailed extraction with parties info
+    const detailedExtraction = await groqService.extractDetailedRoyaltyRules(extractedText);
+    
+    // 🔧 FIX: Add parties data to keyTerms so frontend can access it
+    // keyTerms is an array, but we'll convert it to an object with licensor/licensee
+    const enhancedKeyTerms = {
+      terms: Array.isArray(aiAnalysis.keyTerms) ? aiAnalysis.keyTerms : [],
+      licensor: detailedExtraction.parties?.licensor || 'Not specified',
+      licensee: detailedExtraction.parties?.licensee || 'Not specified',
+      paymentTerms: detailedExtraction.paymentTerms || null,
+      effectiveDate: detailedExtraction.effectiveDate || null,
+      expirationDate: detailedExtraction.expirationDate || null,
+      currency: detailedExtraction.currency || 'USD'
+    };
+    
+    console.log(`👥 Extracted parties: ${enhancedKeyTerms.licensor} → ${enhancedKeyTerms.licensee}`);
+    
     // Step 3: ALL DATA VALIDATED - Now save everything in transaction-like sequence
     console.log(`💾 Saving all data in transactional sequence...`);
     
@@ -2481,7 +2498,7 @@ async function processContractAnalysis(contractId: string, filePath: string) {
       await storage.createContractAnalysis({
         contractId,
         summary: aiAnalysis.summary,
-        keyTerms: aiAnalysis.keyTerms,
+        keyTerms: enhancedKeyTerms, // Use enhanced keyTerms with parties data
         riskAnalysis: aiAnalysis.riskAnalysis,
         insights: aiAnalysis.insights,
         confidence: aiAnalysis.confidence?.toString() || '0',
