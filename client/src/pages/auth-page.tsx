@@ -79,7 +79,7 @@ export default function AuthPage() {
               <img 
                 src={licenseIQLogo} 
                 alt="LicenseIQ Logo" 
-                className="h-32" 
+                className="h-44" 
               />
             </div>
             <p className="text-sm text-muted-foreground">

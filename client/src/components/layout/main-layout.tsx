@@ -29,7 +29,7 @@ export default function MainLayout({ children, title, description }: MainLayoutP
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <img src={licenseIQLogo} alt="LicenseIQ Logo" className="h-9" />
+                <img src={licenseIQLogo} alt="LicenseIQ Logo" className="h-12" />
               </div>
               <span>•</span>
               <p>&copy; 2025 LicenseIQ. All rights reserved.</p>
