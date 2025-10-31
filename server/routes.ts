@@ -1484,12 +1484,22 @@ Report ID: ${contractId}
           });
           if (!categoryMatch) continue;
 
-          // Check territories
+          // Check territories (flexible matching for abstract territory names)
           if (rule.territories && rule.territories.length > 0 && !rule.territories.includes('All')) {
-            const territoryMatch = rule.territories.some((terr: string) =>
-              sale.territory?.toLowerCase().includes(terr.toLowerCase())
-            );
-            if (!territoryMatch) continue;
+            const saleTerritory = (sale.territory || '').toLowerCase().trim();
+            
+            // Skip territory check for abstract/generic territory names commonly used in sales data
+            const abstractTerritories = ['primary', 'secondary', 'tertiary', 'domestic', 'international', 'north', 'south', 'east', 'west'];
+            const isAbstractTerritory = saleTerritory.length > 0 && abstractTerritories.some(abs => saleTerritory === abs);
+            
+            if (!isAbstractTerritory) {
+              // Only enforce territory matching for specific territory names (guard against empty territory)
+              const territoryMatch = saleTerritory.length > 0 && rule.territories.some((terr: string) =>
+                saleTerritory.includes(terr.toLowerCase()) || terr.toLowerCase().includes(saleTerritory)
+              );
+              if (!territoryMatch) continue;
+            }
+            // If abstract territory, skip strict matching and allow product match to succeed
           }
 
           return rule; // Found specific match
@@ -1500,12 +1510,20 @@ Report ID: ${contractId}
           const hasCategories = Array.isArray(rule.productCategories) && rule.productCategories.length > 0;
           if (hasCategories) continue; // Skip specific rules in second pass
           
-          // Check territories for global rules
+          // Check territories for global rules (flexible matching)
           if (rule.territories && rule.territories.length > 0 && !rule.territories.includes('All')) {
-            const territoryMatch = rule.territories.some((terr: string) =>
-              sale.territory?.toLowerCase().includes(terr.toLowerCase())
-            );
-            if (!territoryMatch) continue;
+            const saleTerritory = (sale.territory || '').toLowerCase().trim();
+            
+            // Skip territory check for abstract/generic territory names
+            const abstractTerritories = ['primary', 'secondary', 'tertiary', 'domestic', 'international', 'north', 'south', 'east', 'west'];
+            const isAbstractTerritory = saleTerritory.length > 0 && abstractTerritories.some(abs => saleTerritory === abs);
+            
+            if (!isAbstractTerritory) {
+              const territoryMatch = saleTerritory.length > 0 && rule.territories.some((terr: string) =>
+                saleTerritory.includes(terr.toLowerCase()) || terr.toLowerCase().includes(saleTerritory)
+              );
+              if (!territoryMatch) continue;
+            }
           }
           
           return rule; // Found global fallback

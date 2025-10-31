@@ -36,6 +36,7 @@ The architecture emphasizes AI-native design, integrating AI capabilities throug
 - **Consolidated AI Extraction** (October 2025): Replaced 6 sequential Groq API calls with 1 comprehensive extraction call using `extractAllContractDataInOneCall()` method. Reduces contract processing time from 2+ minutes to ~20 seconds (6x speed improvement).
 - **Defensive Numeric Validation**: Implemented `parseNumericValue()` helper to handle AI extraction edge cases where text values (e.g., "standard rate") are returned instead of numbers, preventing database type errors.
 - **Enhanced JSON Recovery**: Improved `extractAndRepairJSON()` with HTML entity decoding, truncated response repair, and better error handling for malformed AI responses.
+- **Flexible Territory Matching** (October 31, 2025): Enhanced rule matching logic to support abstract territory names ("Primary", "Secondary", "Domestic", etc.) in sales data, allowing proper matching against rules with specific geographic territories. Implemented in both `server/routes.ts` (formula-preview) and `server/services/dynamicRulesEngine.ts` (calculations).
 
 # External Dependencies
 

@@ -160,10 +160,20 @@ export class DynamicRulesEngine {
     }
 
     if (rule.territories && rule.territories.length > 0 && !rule.territories.includes('All')) {
-      const territoryMatch = rule.territories.some((terr: string) =>
-        sale.territory?.toLowerCase().includes(terr.toLowerCase())
-      );
-      if (!territoryMatch) return false;
+      const saleTerritory = (sale.territory || '').toLowerCase().trim();
+      
+      // Skip territory check for abstract/generic territory names commonly used in sales data
+      const abstractTerritories = ['primary', 'secondary', 'tertiary', 'domestic', 'international', 'north', 'south', 'east', 'west'];
+      const isAbstractTerritory = saleTerritory.length > 0 && abstractTerritories.some(abs => saleTerritory === abs);
+      
+      if (!isAbstractTerritory) {
+        // Only enforce territory matching for specific territory names (guard against empty territory)
+        const territoryMatch = saleTerritory.length > 0 && rule.territories.some((terr: string) =>
+          saleTerritory.includes(terr.toLowerCase()) || terr.toLowerCase().includes(saleTerritory)
+        );
+        if (!territoryMatch) return false;
+      }
+      // If abstract territory, skip strict matching and allow product match to succeed
     }
 
     return true;
