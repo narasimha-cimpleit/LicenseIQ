@@ -1950,7 +1950,7 @@ Report ID: ${contractId}
         quantity: item.quantity || 0,
         salesAmount: item.saleAmount || item.grossAmount || 0,
         ruleName: item.ruleApplied || 'Default',
-        royaltyAmount: item.royaltyOwed || item.royalty || 0,
+        royaltyAmount: parseFloat(item.royaltyAmount) || item.royaltyOwed || item.royalty || 0,
       })) : [];
       
       // Get applied rules info
