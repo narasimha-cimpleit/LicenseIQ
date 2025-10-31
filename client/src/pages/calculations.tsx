@@ -2,18 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calculator, FileText, Eye, Download, TrendingUp, Calendar, DollarSign, ArrowLeft } from "lucide-react";
+import { Calculator, FileText, Download, TrendingUp, Calendar, DollarSign, ArrowLeft, ChevronDown, ChevronUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
 import { format } from "date-fns";
-import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -23,6 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import MainLayout from "@/components/layout/main-layout";
+import { Separator } from "@/components/ui/separator";
 
 interface CalculationsResponse {
   calculations: any[];
@@ -30,26 +24,38 @@ interface CalculationsResponse {
 
 export default function CalculationsPage() {
   const [_, setLocation] = useLocation();
-  const [selectedCalculation, setSelectedCalculation] = useState<any>(null);
-  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [expandedCalcId, setExpandedCalcId] = useState<string | null>(null);
+  const [calcDetails, setCalcDetails] = useState<Record<string, any>>({});
 
   // Fetch all calculations across all contracts
   const { data: calculations, isLoading } = useQuery<CalculationsResponse>({
     queryKey: ["/api/calculations/all"],
   });
 
-  const handleViewDetails = async (calculation: any) => {
-    // Fetch detailed calculation data including line items and rules
-    const response = await fetch(`/api/calculations/${calculation.id}/details`);
-    if (response.ok) {
-      const details = await response.json();
-      setSelectedCalculation(details);
-      setDetailsOpen(true);
+  const handleToggleDetails = async (calculation: any) => {
+    const calcId = calculation.id;
+    
+    // If clicking the same card, collapse it
+    if (expandedCalcId === calcId) {
+      setExpandedCalcId(null);
+      return;
     }
+
+    // If we don't have details cached, fetch them
+    if (!calcDetails[calcId]) {
+      const response = await fetch(`/api/calculations/${calcId}/details`);
+      if (response.ok) {
+        const details = await response.json();
+        setCalcDetails(prev => ({ ...prev, [calcId]: details }));
+      }
+    }
+    
+    // Expand this card
+    setExpandedCalcId(calcId);
   };
 
   const handleDownloadReport = async (calcId: string) => {
-    window.open(`/api/calculations/${calcId}/invoice-pdf`, '_blank');
+    window.open(`/api/royalty-calculations/${calcId}/invoice/detailed`, '_blank');
   };
 
   if (isLoading) {
@@ -148,201 +154,166 @@ export default function CalculationsPage() {
             </CardContent>
           </Card>
         ) : (
-          allCalculations.map((calc: any) => (
-            <Card key={calc.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg">{calc.name}</CardTitle>
-                    <CardDescription className="mt-1">{calc.contractName}</CardDescription>
-                  </div>
-                  <Badge variant="outline" className="ml-2">
-                    {calc.itemsProcessed || 0} items
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Calendar className="mr-2 h-4 w-4" />
-                    {calc.createdAt ? format(new Date(calc.createdAt), 'MMM dd, yyyy') : 'N/A'}
-                  </div>
-                </div>
+          allCalculations.map((calc: any) => {
+            const isExpanded = expandedCalcId === calc.id;
+            const details = calcDetails[calc.id];
 
-                <div className="pt-2 border-t">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Total Royalty:</span>
-                    <span className="text-xl font-bold text-green-600">
-                      ${parseFloat(calc.totalRoyalty || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="space-y-2 pt-2">
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => handleViewDetails(calc)}
-                      data-testid={`button-view-details-${calc.id}`}
-                    >
-                      <Eye className="mr-2 h-4 w-4" />
-                      Details
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => handleDownloadReport(calc.id)}
-                      data-testid={`button-download-${calc.id}`}
-                    >
-                      <Download className="mr-2 h-4 w-4" />
-                      Download
-                    </Button>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => setLocation(`/contracts/${calc.contractId}/rules`)}
-                    data-testid={`button-view-rules-${calc.id}`}
-                  >
-                    <FileText className="mr-2 h-4 w-4" />
-                    View Rules
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-        </div>
-
-        {/* Calculation Details Dialog */}
-      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Calculation Details</DialogTitle>
-            <DialogDescription>
-              {selectedCalculation?.name} - {selectedCalculation?.contractName}
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedCalculation && (
-            <div className="space-y-6">
-              {/* Summary */}
-              <Card>
+            return (
+              <Card key={calc.id} className={`hover:shadow-lg transition-all ${isExpanded ? 'col-span-full' : ''}`}>
                 <CardHeader>
-                  <CardTitle className="text-lg">Calculation Summary</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Total Items Processed:</span>
-                    <span className="font-medium">{selectedCalculation.itemsProcessed || 0}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Total Royalty Amount:</span>
-                    <span className="font-bold text-lg text-green-600">
-                      ${parseFloat(selectedCalculation.totalRoyalty || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Calculation Date:</span>
-                    <span className="font-medium">
-                      {selectedCalculation.createdAt ? format(new Date(selectedCalculation.createdAt), 'PPP') : 'N/A'}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Applied Rules */}
-              {selectedCalculation.appliedRules && selectedCalculation.appliedRules.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Applied Royalty Rules</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      {selectedCalculation.appliedRules.map((rule: any, idx: number) => (
-                        <div key={idx} className="p-3 border rounded-lg">
-                          <div className="font-medium">{rule.ruleName}</div>
-                          <div className="text-sm text-muted-foreground mt-1">{rule.description}</div>
-                          <div className="flex gap-2 mt-2">
-                            <Badge variant="secondary">{rule.ruleType}</Badge>
-                            {rule.rate && <Badge variant="outline">{rule.rate}% rate</Badge>}
-                          </div>
-                        </div>
-                      ))}
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="text-lg">{calc.name}</CardTitle>
+                      <CardDescription className="mt-1">{calc.contractName}</CardDescription>
                     </div>
-                  </CardContent>
-                </Card>
-              )}
+                    <Badge variant="outline" className="ml-2">
+                      {calc.itemsProcessed || 0} items
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <Calendar className="mr-2 h-4 w-4" />
+                      {calc.createdAt ? format(new Date(calc.createdAt), 'MMM dd, yyyy') : 'N/A'}
+                    </div>
+                  </div>
 
-              {/* Transaction Breakdown */}
-              {selectedCalculation.lineItems && selectedCalculation.lineItems.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Transaction Breakdown</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Product</TableHead>
-                          <TableHead className="text-right">Quantity</TableHead>
-                          <TableHead className="text-right">Sales Amount</TableHead>
-                          <TableHead>Rule Applied</TableHead>
-                          <TableHead className="text-right">Royalty</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {selectedCalculation.lineItems.map((item: any, idx: number) => (
-                          <TableRow key={idx}>
-                            <TableCell className="font-medium">{item.productName}</TableCell>
-                            <TableCell className="text-right">{item.quantity}</TableCell>
-                            <TableCell className="text-right">
-                              ${parseFloat(item.salesAmount || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline">{item.ruleName || 'Default'}</Badge>
-                            </TableCell>
-                            <TableCell className="text-right font-medium text-green-600">
-                              ${parseFloat(item.royaltyAmount || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Uploaded File Info */}
-              {selectedCalculation.uploadedFile && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Uploaded Transaction File</CardTitle>
-                  </CardHeader>
-                  <CardContent>
+                  <div className="pt-2 border-t">
                     <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">{selectedCalculation.uploadedFile.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {selectedCalculation.uploadedFile.size} • Uploaded {format(new Date(selectedCalculation.uploadedFile.uploadedAt), 'PPP')}
-                        </p>
-                      </div>
-                      <Button variant="outline" size="sm">
+                      <span className="text-sm font-medium">Total Royalty:</span>
+                      <span className="text-xl font-bold text-green-600">
+                        ${parseFloat(calc.totalRoyalty || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 pt-2">
+                    <div className="flex gap-2">
+                      <Button
+                        variant={isExpanded ? "default" : "outline"}
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => handleToggleDetails(calc)}
+                        data-testid={`button-view-details-${calc.id}`}
+                      >
+                        {isExpanded ? <ChevronUp className="mr-2 h-4 w-4" /> : <ChevronDown className="mr-2 h-4 w-4" />}
+                        {isExpanded ? 'Hide Details' : 'View Details'}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => handleDownloadReport(calc.id)}
+                        data-testid={`button-download-${calc.id}`}
+                      >
                         <Download className="mr-2 h-4 w-4" />
                         Download
                       </Button>
                     </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => setLocation(`/contracts/${calc.contractId}/rules`)}
+                      data-testid={`button-view-rules-${calc.id}`}
+                    >
+                      <FileText className="mr-2 h-4 w-4" />
+                      View Rules
+                    </Button>
+                  </div>
+
+                  {/* Inline Details Section */}
+                  {isExpanded && details && (
+                    <div className="pt-4 space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
+                      <Separator />
+                      
+                      {/* Calculation Summary */}
+                      <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg space-y-3">
+                        <h3 className="font-semibold text-lg">Calculation Summary</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <p className="text-sm text-muted-foreground">Total Items</p>
+                            <p className="text-lg font-semibold">{details.itemsProcessed || 0}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">Total Royalty</p>
+                            <p className="text-lg font-semibold text-green-600">
+                              ${parseFloat(details.totalRoyalty || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">Calculation Date</p>
+                            <p className="text-lg font-semibold">
+                              {details.createdAt ? format(new Date(details.createdAt), 'MMM dd, yyyy') : 'N/A'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Applied Rules */}
+                      {details.appliedRules && details.appliedRules.length > 0 && (
+                        <div>
+                          <h3 className="font-semibold text-lg mb-3">Applied Royalty Rules</h3>
+                          <div className="space-y-2">
+                            {details.appliedRules.map((rule: any, idx: number) => (
+                              <div key={idx} className="p-3 border rounded-lg bg-white dark:bg-slate-950">
+                                <div className="font-medium">{rule.ruleName}</div>
+                                <div className="text-sm text-muted-foreground mt-1">{rule.description}</div>
+                                <div className="flex gap-2 mt-2">
+                                  <Badge variant="secondary">{rule.ruleType}</Badge>
+                                  {rule.rate && <Badge variant="outline">{rule.rate}% rate</Badge>}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Transaction Breakdown */}
+                      {details.lineItems && details.lineItems.length > 0 && (
+                        <div>
+                          <h3 className="font-semibold text-lg mb-3">Transaction Processing Details</h3>
+                          <div className="border rounded-lg overflow-hidden">
+                            <Table>
+                              <TableHeader>
+                                <TableRow className="bg-slate-50 dark:bg-slate-900">
+                                  <TableHead className="font-semibold">Product</TableHead>
+                                  <TableHead className="text-right font-semibold">Quantity</TableHead>
+                                  <TableHead className="text-right font-semibold">Sales Amount</TableHead>
+                                  <TableHead className="font-semibold">Rule Applied</TableHead>
+                                  <TableHead className="text-right font-semibold">Royalty</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {details.lineItems.map((item: any, idx: number) => (
+                                  <TableRow key={idx}>
+                                    <TableCell className="font-medium">{item.productName}</TableCell>
+                                    <TableCell className="text-right">{item.quantity}</TableCell>
+                                    <TableCell className="text-right">
+                                      ${parseFloat(item.salesAmount || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                    </TableCell>
+                                    <TableCell>
+                                      <Badge variant="outline">{item.ruleName || 'Default'}</Badge>
+                                    </TableCell>
+                                    <TableCell className="text-right font-medium text-green-600">
+                                      ${parseFloat(item.royaltyAmount || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })
+        )}
+        </div>
       </div>
     </MainLayout>
   );
