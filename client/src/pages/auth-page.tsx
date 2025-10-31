@@ -344,10 +344,10 @@ export default function AuthPage() {
               <span className="text-sm font-medium text-white">AI-Powered Platform</span>
             </div>
             <h2 className="text-4xl lg:text-5xl font-bold leading-tight bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              Reads contracts like a lawyer, calculates like an accountant
+              Enterprise Contract Intelligence with Financial Precision
             </h2>
             <p className="text-lg text-slate-700 leading-relaxed">
-              LicenseIQ transforms how manufacturing companies manage their licensing agreements and payment calculations. Our AI agent eliminates manual errors, ensures audit compliance, and automates complex royalty and licensing fee calculations with lawyer-level contract reading and accountant-level precision.
+              Transform complex licensing agreements into actionable insights. LicenseIQ delivers AI-powered contract analysis, automated payment calculations, and audit-ready compliance—eliminating manual errors while ensuring financial accuracy at enterprise scale.
             </p>
           </div>
 
