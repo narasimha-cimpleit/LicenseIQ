@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calculator, FileText, Eye, Download, TrendingUp, Calendar, DollarSign } from "lucide-react";
+import { Calculator, FileText, Eye, Download, TrendingUp, Calendar, DollarSign, ArrowLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
 import { format } from "date-fns";
@@ -22,6 +22,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import MainLayout from "@/components/layout/main-layout";
+
+interface CalculationsResponse {
+  calculations: any[];
+}
 
 export default function CalculationsPage() {
   const [_, setLocation] = useLocation();
@@ -29,7 +34,7 @@ export default function CalculationsPage() {
   const [detailsOpen, setDetailsOpen] = useState(false);
 
   // Fetch all calculations across all contracts
-  const { data: calculations, isLoading } = useQuery({
+  const { data: calculations, isLoading } = useQuery<CalculationsResponse>({
     queryKey: ["/api/calculations/all"],
   });
 
@@ -49,73 +54,87 @@ export default function CalculationsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex-1 space-y-4 p-8 pt-6">
-        <div className="flex items-center justify-between space-y-2">
-          <Skeleton className="h-10 w-64" />
+      <MainLayout title="Royalty Calculator" description="Loading...">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between space-y-2">
+            <Skeleton className="h-10 w-64" />
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-48" />
+            ))}
+          </div>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-48" />
-          ))}
-        </div>
-      </div>
+      </MainLayout>
     );
   }
 
   const allCalculations = calculations?.calculations || [];
 
   return (
-    <div className="flex-1 space-y-4 p-8 pt-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Royalty Calculator</h2>
-          <p className="text-muted-foreground">
-            View and manage all royalty calculations across your contracts
-          </p>
+    <MainLayout 
+      title="Royalty Calculator" 
+      description="View and manage all royalty calculations across your contracts"
+    >
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <Button 
+            variant="outline" 
+            onClick={() => setLocation("/")}
+            data-testid="button-back-dashboard"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Dashboard
+          </Button>
+          <Button 
+            onClick={() => setLocation("/contracts")}
+            data-testid="button-view-contracts"
+          >
+            <FileText className="mr-2 h-4 w-4" />
+            View Contracts
+          </Button>
         </div>
-        <Button onClick={() => setLocation("/contracts")}>
-          <FileText className="mr-2 h-4 w-4" />
-          View Contracts
-        </Button>
-      </div>
 
-      {/* Summary Stats */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Calculations</CardTitle>
-            <Calculator className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{allCalculations.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Amount</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              ${allCalculations.reduce((sum: number, calc: any) => sum + (parseFloat(calc.totalRoyalty) || 0), 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Calculation</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              ${allCalculations.length > 0 ? (allCalculations.reduce((sum: number, calc: any) => sum + (parseFloat(calc.totalRoyalty) || 0), 0) / allCalculations.length).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+        {/* Summary Stats */}
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-blue-200 dark:border-blue-800">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-blue-900 dark:text-blue-100">Total Calculations</CardTitle>
+              <Calculator className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-blue-900 dark:text-blue-100">{allCalculations.length}</div>
+              <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Completed royalty runs</p>
+            </CardContent>
+          </Card>
+          <Card className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border-green-200 dark:border-green-800">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-green-900 dark:text-green-100">Total Amount</CardTitle>
+              <DollarSign className="h-5 w-5 text-green-600 dark:text-green-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-green-900 dark:text-green-100">
+                ${allCalculations.reduce((sum: number, calc: any) => sum + (parseFloat(calc.totalRoyalty) || 0), 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </div>
+              <p className="text-xs text-green-600 dark:text-green-400 mt-1">Total royalties calculated</p>
+            </CardContent>
+          </Card>
+          <Card className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 border-purple-200 dark:border-purple-800">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-purple-900 dark:text-purple-100">Avg Calculation</CardTitle>
+              <TrendingUp className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-purple-900 dark:text-purple-100">
+                ${allCalculations.length > 0 ? (allCalculations.reduce((sum: number, calc: any) => sum + (parseFloat(calc.totalRoyalty) || 0), 0) / allCalculations.length).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
+              </div>
+              <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">Per calculation average</p>
+            </CardContent>
+          </Card>
+        </div>
 
-      {/* Calculations List */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {/* Calculations List */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {allCalculations.length === 0 ? (
           <Card className="col-span-full">
             <CardContent className="flex flex-col items-center justify-center py-12">
@@ -197,9 +216,9 @@ export default function CalculationsPage() {
             </Card>
           ))
         )}
-      </div>
+        </div>
 
-      {/* Calculation Details Dialog */}
+        {/* Calculation Details Dialog */}
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
@@ -324,6 +343,7 @@ export default function CalculationsPage() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </MainLayout>
   );
 }
