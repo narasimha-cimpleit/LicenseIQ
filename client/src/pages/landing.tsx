@@ -168,11 +168,11 @@ export default function Landing() {
         }`}
       >
         <div className="container mx-auto px-6">
-          <div className="flex items-center justify-between h-20">
+          <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <div className="flex items-center gap-3">
-              <img src={logoSymbol} alt="LicenseIQ" className="h-12 w-12" />
-              <span className="text-2xl font-bold text-slate-900 dark:text-white">LicenseIQ</span>
+            <div className="flex items-center gap-2.5">
+              <img src={logoSymbol} alt="LicenseIQ" className="h-10 w-10" />
+              <span className="text-xl font-bold text-slate-900 dark:text-white">LicenseIQ</span>
             </div>
             
             {/* Login Button */}
