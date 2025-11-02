@@ -123,10 +123,10 @@ export default function Landing() {
       {/* Navigation Bar - Compact DualEntry-style Header */}
       <nav className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 sticky top-0 z-50">
         <div className="container mx-auto px-6">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-20">
             {/* Logo */}
             <div className="flex items-center">
-              <img src={licenseIQLogo} alt="LicenseIQ" className="h-10" />
+              <img src={licenseIQLogo} alt="LicenseIQ" className="h-14" />
             </div>
             
             {/* Login Button */}
