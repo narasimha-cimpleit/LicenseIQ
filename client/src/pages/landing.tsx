@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import licenseIQLogo from "@assets/Transparent Logo_1761867914841.png";
 import logoSymbol from "@assets/Original Logo Symbol_1762113838183.png";
+import heroLogo from "@assets/Transparent Logo_1762114208325.png";
 import { 
   Brain, Shield, FileText, BarChart3, 
   CheckCircle, ArrowRight, Sparkles, 
@@ -198,6 +199,11 @@ export default function Landing() {
 
         <div className="container mx-auto px-4 py-20 md:py-32 relative z-10">
           <div className="max-w-4xl mx-auto text-center space-y-8">
+            {/* Big Hero Logo */}
+            <div className="flex justify-center animate-in fade-in slide-in-from-top-2 duration-700">
+              <img src={heroLogo} alt="LicenseIQ" className="h-48 md:h-64 w-auto" />
+            </div>
+
             {/* Badge */}
             <div className="inline-flex items-center space-x-2 bg-blue-600 px-4 py-2 rounded-full shadow-lg animate-in fade-in slide-in-from-top-4 duration-700">
               <Sparkles className="h-4 w-4 text-white" />
