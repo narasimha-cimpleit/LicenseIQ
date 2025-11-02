@@ -1277,8 +1277,9 @@ export default function Landing() {
       <footer className="bg-slate-900 text-slate-300 py-6">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-3">
-            <div className="flex items-center">
-              <img src={heroLogo} alt="LicenseIQ" className="h-10 w-auto opacity-90" />
+            <div className="flex items-center gap-3">
+              <img src={logoSymbol} alt="LicenseIQ" className="h-12 w-12" />
+              <span className="text-2xl font-bold text-white">LicenseIQ</span>
             </div>
             <div className="text-center md:text-right text-sm">
               <p className="text-slate-400">&copy; 2025 LicenseIQ. All rights reserved.</p>
