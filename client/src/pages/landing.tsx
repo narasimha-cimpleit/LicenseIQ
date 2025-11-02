@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import licenseIQLogo from "@assets/Transparent Logo_1761867914841.png";
+import logoSymbol from "@assets/Original Logo Symbol_1762113838183.png";
 import { 
   Brain, Shield, FileText, BarChart3, 
   CheckCircle, ArrowRight, Sparkles, 
@@ -168,8 +169,9 @@ export default function Landing() {
         <div className="container mx-auto px-6">
           <div className="flex items-center justify-between h-20">
             {/* Logo */}
-            <div className="flex items-center">
-              <img src={licenseIQLogo} alt="LicenseIQ" className="h-14" />
+            <div className="flex items-center gap-3">
+              <img src={logoSymbol} alt="LicenseIQ" className="h-12 w-12" />
+              <span className="text-2xl font-bold text-slate-900 dark:text-white">LicenseIQ</span>
             </div>
             
             {/* Login Button */}
@@ -1270,7 +1272,7 @@ export default function Landing() {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center space-x-3">
-              <FileText className="h-6 w-6 text-blue-500" />
+              <img src={logoSymbol} alt="LicenseIQ" className="h-8 w-8" />
               <span className="text-xl font-bold text-white">LicenseIQ</span>
             </div>
             <div className="text-center md:text-right text-sm">
