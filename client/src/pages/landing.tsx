@@ -35,22 +35,40 @@ export default function Landing() {
   const [lastScrollY, setLastScrollY] = useState(0);
 
   useEffect(() => {
+    let scrollTimeout: NodeJS.Timeout;
+
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
 
+      // Always show header at the top
       if (currentScrollY < 10) {
         setIsHeaderVisible(true);
-      } else if (currentScrollY > lastScrollY) {
+      } 
+      // Hide when scrolling down
+      else if (currentScrollY > lastScrollY) {
         setIsHeaderVisible(false);
-      } else {
+      } 
+      // Show when scrolling up
+      else {
         setIsHeaderVisible(true);
       }
 
       setLastScrollY(currentScrollY);
+
+      // Clear existing timeout
+      clearTimeout(scrollTimeout);
+
+      // Show header after scrolling stops (200ms delay)
+      scrollTimeout = setTimeout(() => {
+        setIsHeaderVisible(true);
+      }, 200);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      clearTimeout(scrollTimeout);
+    };
   }, [lastScrollY]);
 
   const handleEarlyAccessSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
