@@ -120,17 +120,20 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950">
-      {/* Navigation Bar */}
-      <nav className="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+      {/* Navigation Bar - Compact DualEntry-style Header */}
+      <nav className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 sticky top-0 z-50">
+        <div className="container mx-auto px-6">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo */}
             <div className="flex items-center">
-              <img src={licenseIQLogo} alt="LicenseIQ" className="h-56" />
+              <img src={licenseIQLogo} alt="LicenseIQ" className="h-10" />
             </div>
+            
+            {/* Login Button */}
             <Link href="/auth">
               <Button 
-                variant="default" 
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg"
+                variant="outline" 
+                className="border-slate-900 dark:border-white text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 font-medium px-6"
                 data-testid="button-login-nav"
               >
                 Login
