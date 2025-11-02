@@ -201,7 +201,7 @@ export default function Landing() {
           <div className="max-w-4xl mx-auto text-center space-y-8">
             {/* Big Hero Logo */}
             <div className="flex justify-center animate-in fade-in slide-in-from-top-2 duration-700">
-              <img src={heroLogo} alt="LicenseIQ" className="h-48 md:h-64 w-auto" />
+              <img src={heroLogo} alt="LicenseIQ" className="h-64 md:h-80 lg:h-96 w-auto" />
             </div>
 
             {/* Badge */}
