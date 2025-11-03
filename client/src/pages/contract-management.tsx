@@ -246,157 +246,239 @@ export default function ContractManagement() {
   };
 
   return (
-    <div className="space-y-6" data-testid="contract-management-page">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate("/contracts")}
-            data-testid="button-back"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold" data-testid="text-page-title">Contract Management</h1>
-            <p className="text-muted-foreground" data-testid="text-contract-number">
-              {contract.contractNumber || contract.id}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center space-x-2">
-          {getApprovalBadge(contract.approvalState)}
-          <Badge variant="outline" data-testid="badge-version">
-            Version {contract.currentVersion || 1}
-          </Badge>
-        </div>
+    <div className="container mx-auto py-8 px-4 max-w-7xl space-y-6" data-testid="contract-management-page">
+      {/* Header with Back Button */}
+      <div className="flex items-center space-x-4 mb-6">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate("/contracts")}
+          className="gap-2"
+          data-testid="button-back"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Contracts
+        </Button>
       </div>
 
+      {/* Contract Info Card */}
+      <Card className="border-2 shadow-lg bg-gradient-to-r from-background to-muted/20">
+        <CardContent className="pt-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <FileText className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-bold tracking-tight" data-testid="text-page-title">
+                    {contract.displayName || contract.originalName || "Contract Management"}
+                  </h1>
+                  <p className="text-sm text-muted-foreground" data-testid="text-contract-number">
+                    Contract ID: {contract.contractNumber || contract.id?.substring(0, 8)}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {getApprovalBadge(contract.approvalState)}
+              <Badge variant="outline" className="text-sm" data-testid="badge-version">
+                Version {contract.currentVersion || 1}
+              </Badge>
+              {contract.contractType && (
+                <Badge variant="secondary" className="text-sm">
+                  {contract.contractType}
+                </Badge>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <Tabs defaultValue="metadata" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="metadata" data-testid="tab-metadata">
+        <TabsList className="grid w-full grid-cols-2 h-12">
+          <TabsTrigger value="metadata" className="text-base" data-testid="tab-metadata">
             <FileText className="h-4 w-4 mr-2" />
             Metadata
           </TabsTrigger>
-          <TabsTrigger value="versions" data-testid="tab-versions">
+          <TabsTrigger value="versions" className="text-base" data-testid="tab-versions">
             <History className="h-4 w-4 mr-2" />
             Version History
           </TabsTrigger>
         </TabsList>
 
         {/* Metadata Tab */}
-        <TabsContent value="metadata" className="space-y-6">
-          <Card data-testid="card-metadata">
-            <CardHeader>
-              <CardTitle>Contract Metadata</CardTitle>
-              <CardDescription>
-                Edit contract details and metadata. Changes will create a new version.
-              </CardDescription>
+        <TabsContent value="metadata" className="space-y-6 mt-6">
+          <Card className="shadow-md" data-testid="card-metadata">
+            <CardHeader className="bg-muted/50 border-b">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-xl">Basic Information</CardTitle>
+                  <CardDescription className="mt-1">
+                    Core contract details and identifying information
+                  </CardDescription>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CardContent className="pt-6 space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="displayName">Contract Name *</Label>
+                  <Label htmlFor="displayName" className="text-sm font-semibold">
+                    Contract Name <span className="text-destructive">*</span>
+                  </Label>
                   <Input
                     id="displayName"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     placeholder="Enter contract name"
+                    className="h-11"
                     data-testid="input-display-name"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="counterpartyName">Counterparty Name</Label>
+                  <Label htmlFor="counterpartyName" className="text-sm font-semibold">
+                    Counterparty Name
+                  </Label>
                   <Input
                     id="counterpartyName"
                     value={counterpartyName}
                     onChange={(e) => setCounterpartyName(e.target.value)}
                     placeholder="Other party in the contract"
+                    className="h-11"
                     data-testid="input-counterparty"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="effectiveStart">Effective Start Date</Label>
-                  <Input
-                    id="effectiveStart"
-                    type="date"
-                    value={effectiveStart}
-                    onChange={(e) => setEffectiveStart(e.target.value)}
-                    data-testid="input-effective-start"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="effectiveEnd">Effective End Date</Label>
-                  <Input
-                    id="effectiveEnd"
-                    type="date"
-                    value={effectiveEnd}
-                    onChange={(e) => setEffectiveEnd(e.target.value)}
-                    data-testid="input-effective-end"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="contractType">Contract Type</Label>
+                  <Label htmlFor="contractType" className="text-sm font-semibold">
+                    Contract Type
+                  </Label>
                   <Input
                     id="contractType"
                     value={contractType}
                     onChange={(e) => setContractType(e.target.value)}
                     placeholder="e.g., License, Service, Partnership"
+                    className="h-11"
                     data-testid="input-contract-type"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="governingLaw">Governing Law</Label>
+                  <Label htmlFor="governingLaw" className="text-sm font-semibold">
+                    Governing Law
+                  </Label>
                   <Input
                     id="governingLaw"
                     value={governingLaw}
                     onChange={(e) => setGoverningLaw(e.target.value)}
                     placeholder="Jurisdiction"
+                    className="h-11"
                     data-testid="input-governing-law"
                   />
                 </div>
               </div>
+            </CardContent>
+          </Card>
 
+          <Card className="shadow-md" data-testid="card-dates">
+            <CardHeader className="bg-muted/50 border-b">
+              <CardTitle className="text-xl">Contract Timeline</CardTitle>
+              <CardDescription className="mt-1">
+                Effective dates and contract duration
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="effectiveStart" className="text-sm font-semibold">
+                    Effective Start Date
+                  </Label>
+                  <Input
+                    id="effectiveStart"
+                    type="date"
+                    value={effectiveStart}
+                    onChange={(e) => setEffectiveStart(e.target.value)}
+                    className="h-11"
+                    data-testid="input-effective-start"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="effectiveEnd" className="text-sm font-semibold">
+                    Effective End Date
+                  </Label>
+                  <Input
+                    id="effectiveEnd"
+                    type="date"
+                    value={effectiveEnd}
+                    onChange={(e) => setEffectiveEnd(e.target.value)}
+                    className="h-11"
+                    data-testid="input-effective-end"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-md" data-testid="card-terms">
+            <CardHeader className="bg-muted/50 border-b">
+              <CardTitle className="text-xl">Terms & Additional Details</CardTitle>
+              <CardDescription className="mt-1">
+                Renewal terms, notes, and supplementary information
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="renewalTerms">Renewal Terms</Label>
+                <Label htmlFor="renewalTerms" className="text-sm font-semibold">
+                  Renewal Terms
+                </Label>
                 <Textarea
                   id="renewalTerms"
                   value={renewalTerms}
                   onChange={(e) => setRenewalTerms(e.target.value)}
                   placeholder="Describe renewal terms and conditions"
-                  rows={3}
+                  rows={4}
+                  className="resize-none"
                   data-testid="textarea-renewal-terms"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="notes">Notes</Label>
+                <Label htmlFor="notes" className="text-sm font-semibold">
+                  Notes
+                </Label>
                 <Textarea
                   id="notes"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Additional notes or comments"
-                  rows={3}
+                  rows={4}
+                  className="resize-none"
                   data-testid="textarea-notes"
                 />
               </div>
+            </CardContent>
+          </Card>
 
-              <Separator />
-
+          <Card className="shadow-md border-2 border-primary/20" data-testid="card-submit">
+            <CardHeader className="bg-primary/5 border-b border-primary/20">
+              <CardTitle className="text-xl">Save Changes</CardTitle>
+              <CardDescription className="mt-1">
+                Document your changes before saving
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="changeSummary">Change Summary *</Label>
+                <Label htmlFor="changeSummary" className="text-sm font-semibold">
+                  Change Summary <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   id="changeSummary"
                   value={changeSummary}
                   onChange={(e) => setChangeSummary(e.target.value)}
                   placeholder="Briefly describe what changed"
+                  className="h-11"
                   data-testid="input-change-summary"
                 />
                 <p className="text-sm text-muted-foreground">
@@ -404,23 +486,27 @@ export default function ContractManagement() {
                 </p>
               </div>
 
-              <div className="flex justify-end space-x-2">
+              <div className="flex flex-col sm:flex-row justify-end gap-3 pt-2">
                 <Button
                   onClick={() => updateMutation.mutate()}
                   disabled={updateMutation.isPending || !changeSummary.trim()}
+                  size="lg"
+                  className="gap-2"
                   data-testid="button-save-changes"
                 >
-                  <Save className="h-4 w-4 mr-2" />
+                  <Save className="h-4 w-4" />
                   {updateMutation.isPending ? "Saving..." : "Save Changes"}
                 </Button>
                 {contract.approvalState === "draft" && (
                   <Button
                     variant="secondary"
+                    size="lg"
                     onClick={() => submitApprovalMutation.mutate()}
                     disabled={submitApprovalMutation.isPending}
+                    className="gap-2"
                     data-testid="button-submit-approval"
                   >
-                    <Send className="h-4 w-4 mr-2" />
+                    <Send className="h-4 w-4" />
                     Submit for Approval
                   </Button>
                 )}
@@ -430,77 +516,137 @@ export default function ContractManagement() {
         </TabsContent>
 
         {/* Version History Tab */}
-        <TabsContent value="versions" className="space-y-4">
-          <Card data-testid="card-version-history">
-            <CardHeader>
-              <CardTitle>Version History</CardTitle>
-              <CardDescription>
-                View all versions of this contract and their changes
+        <TabsContent value="versions" className="space-y-4 mt-6">
+          <Card className="shadow-md" data-testid="card-version-history">
+            <CardHeader className="bg-muted/50 border-b">
+              <CardTitle className="text-xl">Version History</CardTitle>
+              <CardDescription className="mt-1">
+                Complete timeline of all contract versions and approval decisions
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               {versions.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8" data-testid="text-no-versions">
-                  No version history available
-                </p>
+                <div className="text-center py-12">
+                  <History className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
+                  <p className="text-muted-foreground font-medium" data-testid="text-no-versions">
+                    No version history available yet
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Changes to contract metadata will appear here
+                  </p>
+                </div>
               ) : (
-                <div className="space-y-4">
-                  {versions.map((version: any) => (
+                <div className="space-y-6">
+                  {versions.map((version: any, index: number) => (
                     <div
                       key={version.id}
-                      className="border rounded-lg p-4 space-y-3"
+                      className="relative"
                       data-testid={`version-${version.versionNumber}`}
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Badge variant="outline" data-testid={`badge-version-${version.versionNumber}`}>
-                            Version {version.versionNumber}
-                          </Badge>
-                          {getApprovalBadge(version.approvalState)}
-                        </div>
-                        <span className="text-sm text-muted-foreground" data-testid={`text-version-date-${version.versionNumber}`}>
-                          {format(new Date(version.createdAt), "MMM d, yyyy 'at' h:mm a")}
-                        </span>
-                      </div>
-                      <p className="text-sm font-medium" data-testid={`text-change-summary-${version.versionNumber}`}>
-                        {version.changeSummary || "No summary provided"}
-                      </p>
-                      <div className="text-sm text-muted-foreground">
-                        <span data-testid={`text-editor-${version.versionNumber}`}>
-                          Edited by: User ID {version.editorId}
-                        </span>
-                      </div>
-                      
-                      {/* Approval Actions - Only show for admins when version is pending */}
-                      {canApprove && version.approvalState === 'pending_approval' && user?.id !== version.editorId && (
-                        <div className="flex items-center space-x-2 pt-2 border-t">
-                          <Button
-                            size="sm"
-                            onClick={() => handleApprovalAction('approve', version.id)}
-                            className="bg-green-600 hover:bg-green-700"
-                            data-testid={`button-approve-${version.versionNumber}`}
-                          >
-                            <ThumbsUp className="h-4 w-4 mr-2" />
-                            Approve
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleApprovalAction('reject', version.id)}
-                            data-testid={`button-reject-${version.versionNumber}`}
-                          >
-                            <ThumbsDown className="h-4 w-4 mr-2" />
-                            Reject
-                          </Button>
-                        </div>
+                      {/* Timeline line - only show if not last item */}
+                      {index < versions.length - 1 && (
+                        <div className="absolute left-5 top-12 bottom-0 w-0.5 bg-border" />
                       )}
                       
-                      {/* Show if user can't approve their own version */}
-                      {canApprove && version.approvalState === 'pending_approval' && user?.id === version.editorId && (
-                        <p className="text-sm text-muted-foreground italic pt-2 border-t">
-                          You cannot approve your own changes
-                        </p>
-                      )}
+                      <div className="flex gap-4">
+                        {/* Timeline dot */}
+                        <div className="flex flex-col items-center">
+                          <div className={`flex items-center justify-center h-10 w-10 rounded-full border-2 ${
+                            version.approvalState === 'approved' 
+                              ? 'bg-green-100 border-green-500 dark:bg-green-950' 
+                              : version.approvalState === 'rejected'
+                              ? 'bg-red-100 border-red-500 dark:bg-red-950'
+                              : version.approvalState === 'pending_approval'
+                              ? 'bg-yellow-100 border-yellow-500 dark:bg-yellow-950'
+                              : 'bg-gray-100 border-gray-400 dark:bg-gray-900'
+                          }`}>
+                            {version.approvalState === 'approved' ? (
+                              <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+                            ) : version.approvalState === 'rejected' ? (
+                              <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                            ) : version.approvalState === 'pending_approval' ? (
+                              <Clock className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                            ) : (
+                              <FileText className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Version card */}
+                        <div className="flex-1 pb-6">
+                          <Card className={`shadow-sm ${
+                            version.approvalState === 'pending_approval' 
+                              ? 'border-2 border-yellow-500/50 bg-yellow-50/50 dark:bg-yellow-950/20'
+                              : ''
+                          }`}>
+                            <CardContent className="p-5">
+                              <div className="space-y-3">
+                                {/* Header */}
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <Badge variant="outline" className="font-semibold" data-testid={`badge-version-${version.versionNumber}`}>
+                                      Version {version.versionNumber}
+                                    </Badge>
+                                    {getApprovalBadge(version.approvalState)}
+                                  </div>
+                                  <span className="text-sm text-muted-foreground" data-testid={`text-version-date-${version.versionNumber}`}>
+                                    {format(new Date(version.createdAt), "MMM d, yyyy 'at' h:mm a")}
+                                  </span>
+                                </div>
+
+                                {/* Change summary */}
+                                <div className="bg-muted/50 dark:bg-muted/20 rounded-md p-3">
+                                  <p className="text-sm font-medium text-foreground" data-testid={`text-change-summary-${version.versionNumber}`}>
+                                    {version.changeSummary || "No summary provided"}
+                                  </p>
+                                </div>
+
+                                {/* Metadata */}
+                                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                  <span data-testid={`text-editor-${version.versionNumber}`}>
+                                    Edited by: User ID {version.editorId?.substring(0, 8)}
+                                  </span>
+                                </div>
+                                
+                                {/* Approval Actions - Only show for admins when version is pending */}
+                                {canApprove && version.approvalState === 'pending_approval' && user?.id !== version.editorId && (
+                                  <div className="flex items-center gap-2 pt-3 border-t">
+                                    <Button
+                                      size="sm"
+                                      onClick={() => handleApprovalAction('approve', version.id)}
+                                      className="bg-green-600 hover:bg-green-700 gap-2"
+                                      data-testid={`button-approve-${version.versionNumber}`}
+                                    >
+                                      <ThumbsUp className="h-4 w-4" />
+                                      Approve
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="destructive"
+                                      onClick={() => handleApprovalAction('reject', version.id)}
+                                      className="gap-2"
+                                      data-testid={`button-reject-${version.versionNumber}`}
+                                    >
+                                      <ThumbsDown className="h-4 w-4" />
+                                      Reject
+                                    </Button>
+                                  </div>
+                                )}
+                                
+                                {/* Show if user can't approve their own version */}
+                                {canApprove && version.approvalState === 'pending_approval' && user?.id === version.editorId && (
+                                  <div className="flex items-center gap-2 pt-3 border-t text-sm text-amber-600 dark:text-amber-400">
+                                    <Clock className="h-4 w-4" />
+                                    <span className="italic">
+                                      You cannot approve your own changes
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
