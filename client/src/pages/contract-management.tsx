@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Save, Send, CheckCircle, XCircle, Clock, FileText, History, ThumbsUp, ThumbsDown } from "lucide-react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -365,14 +366,27 @@ export default function ContractManagement() {
                   <Label htmlFor="contractType" className="text-sm font-semibold">
                     Contract Type
                   </Label>
-                  <Input
-                    id="contractType"
-                    value={contractType}
-                    onChange={(e) => setContractType(e.target.value)}
-                    placeholder="e.g., License, Service, Partnership"
-                    className="h-11"
-                    data-testid="input-contract-type"
-                  />
+                  <Select value={contractType} onValueChange={setContractType}>
+                    <SelectTrigger className="h-11" data-testid="select-contract-type">
+                      <SelectValue placeholder="Select contract type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Licensing Agreement">Licensing Agreement</SelectItem>
+                      <SelectItem value="Royalty Agreement">Royalty Agreement</SelectItem>
+                      <SelectItem value="Service Agreement">Service Agreement</SelectItem>
+                      <SelectItem value="Sales Agreement">Sales Agreement</SelectItem>
+                      <SelectItem value="SaaS Agreement">SaaS Agreement</SelectItem>
+                      <SelectItem value="Partnership Agreement">Partnership Agreement</SelectItem>
+                      <SelectItem value="Employment Agreement">Employment Agreement</SelectItem>
+                      <SelectItem value="Consulting Agreement">Consulting Agreement</SelectItem>
+                      <SelectItem value="NDA">Non-Disclosure Agreement (NDA)</SelectItem>
+                      <SelectItem value="Master Service Agreement">Master Service Agreement (MSA)</SelectItem>
+                      <SelectItem value="Subscription Agreement">Subscription Agreement</SelectItem>
+                      <SelectItem value="Distribution Agreement">Distribution Agreement</SelectItem>
+                      <SelectItem value="Reseller Agreement">Reseller Agreement</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-2">
