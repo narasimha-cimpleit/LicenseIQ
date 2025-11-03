@@ -704,6 +704,185 @@ Report ID: ${contractId}
     }
   });
 
+  // Update contract metadata
+  app.patch('/api/contracts/:id/metadata', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const contractId = req.params.id;
+      const userId = req.user.id;
+      
+      // Validate metadata with Zod
+      const { updateContractMetadataSchema } = await import("@shared/schema");
+      const metadata = updateContractMetadataSchema.parse(req.body);
+
+      // Get contract and check permissions
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+
+      const user = await storage.getUser(userId);
+      const canEdit = user?.role === 'admin' || user?.role === 'owner' || user?.role === 'editor' || contract.uploadedBy === userId;
+      
+      if (!canEdit) {
+        return res.status(403).json({ error: 'You do not have permission to edit this contract' });
+      }
+
+      // Update metadata and create version
+      const updatedContract = await storage.updateContractMetadata(contractId, metadata, userId);
+
+      // Create audit log
+      await createAuditLog(req, 'update_contract_metadata', 'contract', contractId, {
+        changes: metadata.changeSummary,
+      });
+
+      res.json(updatedContract);
+    } catch (error: any) {
+      console.error('Update metadata error:', error);
+      res.status(500).json({ error: error.message || 'Failed to update contract metadata' });
+    }
+  });
+
+  // Submit contract for approval
+  app.post('/api/contracts/:id/submit-approval', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const contractId = req.params.id;
+      const userId = req.user.id;
+
+      // Get contract and check permissions
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+
+      const user = await storage.getUser(userId);
+      const canSubmit = user?.role === 'admin' || user?.role === 'owner' || user?.role === 'editor' || contract.uploadedBy === userId;
+      
+      if (!canSubmit) {
+        return res.status(403).json({ error: 'You do not have permission to submit this contract for approval' });
+      }
+
+      // Submit for approval
+      const updatedContract = await storage.submitContractForApproval(contractId, userId);
+
+      // Create audit log
+      await createAuditLog(req, 'submit_contract_approval', 'contract', contractId);
+
+      res.json(updatedContract);
+    } catch (error: any) {
+      console.error('Submit approval error:', error);
+      res.status(500).json({ error: error.message || 'Failed to submit contract for approval' });
+    }
+  });
+
+  // Get contract versions
+  app.get('/api/contracts/:id/versions', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const contractId = req.params.id;
+
+      // Get contract and check permissions
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      const canView = user?.role === 'admin' || user?.role === 'owner' || contract.uploadedBy === userId;
+      
+      if (!canView) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      // Get versions
+      const versions = await storage.getContractVersions(contractId);
+
+      res.json({ versions });
+    } catch (error: any) {
+      console.error('Get versions error:', error);
+      res.status(500).json({ error: error.message || 'Failed to fetch contract versions' });
+    }
+  });
+
+  // Approve or reject a contract version
+  app.post('/api/contracts/versions/:versionId/approve', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const versionId = req.params.versionId;
+      const userId = req.user.id;
+      const { status, decisionNotes } = req.body; // status: 'approved' or 'rejected'
+
+      // Validate status
+      if (status !== 'approved' && status !== 'rejected') {
+        return res.status(400).json({ error: 'Status must be either "approved" or "rejected"' });
+      }
+
+      // Get version
+      const version = await storage.getContractVersion(versionId);
+      if (!version) {
+        return res.status(404).json({ error: 'Version not found' });
+      }
+
+      // Check if user is an approver (admin or owner only)
+      const user = await storage.getUser(userId);
+      const canApprove = user?.role === 'admin' || user?.role === 'owner';
+      
+      if (!canApprove) {
+        return res.status(403).json({ error: 'Only admins and owners can approve contracts' });
+      }
+
+      // Prevent self-approval: check if approver is also the editor
+      if (version.editorId === userId) {
+        return res.status(403).json({ error: 'You cannot approve your own changes' });
+      }
+
+      // Check if version is in pending_approval state
+      if (version.approvalState !== 'pending_approval') {
+        return res.status(400).json({ error: 'This version is not pending approval' });
+      }
+
+      // Create approval record
+      const approval = await storage.createContractApproval({
+        contractVersionId: versionId,
+        approverId: userId,
+        status,
+        decisionNotes,
+      });
+
+      // Create audit log
+      await createAuditLog(req, `contract_${status}`, 'contract_version', versionId, {
+        notes: decisionNotes,
+        approver: user?.username,
+      });
+
+      res.json(approval);
+    } catch (error: any) {
+      console.error('Approval error:', error);
+      res.status(500).json({ error: error.message || 'Failed to process approval' });
+    }
+  });
+
+  // Get pending approvals for the current user
+  app.get('/api/approvals/pending', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+
+      // Check if user is an approver
+      const user = await storage.getUser(userId);
+      const canApprove = user?.role === 'admin' || user?.role === 'owner';
+      
+      if (!canApprove) {
+        return res.json({ approvals: [] }); // Return empty array if user can't approve
+      }
+
+      // Get pending approvals
+      const approvals = await storage.getPendingApprovals(userId);
+
+      res.json({ approvals });
+    } catch (error: any) {
+      console.error('Get pending approvals error:', error);
+      res.status(500).json({ error: error.message || 'Failed to fetch pending approvals' });
+    }
+  });
+
   // Reprocess contract endpoint for testing
   app.post('/api/contracts/:id/reprocess', isAuthenticated, async (req: any, res: Response) => {
     try {

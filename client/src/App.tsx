@@ -26,6 +26,7 @@ import RAGDashboard from "@/pages/rag-dashboard";
 import HumanReviewQueue from "@/pages/HumanReviewQueue";
 import AdminLeads from "@/pages/admin-leads";
 import CalculationsPage from "@/pages/calculations";
+import ContractManagement from "@/pages/contract-management";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -62,6 +63,8 @@ function Router() {
             <ProtectedRoute path="/review-queue" component={HumanReviewQueue} />
             {/* Admin */}
             <ProtectedRoute path="/admin/leads" component={AdminLeads} />
+            {/* Contract Management - must come before /contracts/:id */}
+            <ProtectedRoute path="/contracts/:id/manage" component={ContractManagement} />
             <ProtectedRoute path="/contracts/:id" component={ContractAnalysis} />
           </>
         )}

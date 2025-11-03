@@ -900,6 +900,15 @@ export default function ContractAnalysis() {
                     <Button
                       variant="outline"
                       className="w-full justify-start"
+                      onClick={() => setLocation(`/contracts/${id}/manage`)}
+                      data-testid="button-manage-metadata"
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Manage Metadata
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
                       onClick={handleViewOriginal}
                       data-testid="button-view-original"
                     >

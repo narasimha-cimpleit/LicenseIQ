@@ -3,6 +3,8 @@ import {
   contracts,
   contractAnalysis,
   contractEmbeddings,
+  contractVersions,
+  contractApprovals,
   auditTrail,
   financialAnalysis,
   complianceAnalysis,
@@ -55,6 +57,10 @@ import {
   type InsertEarlyAccessSignup,
   type DemoRequest,
   type InsertDemoRequest,
+  type ContractVersion,
+  type InsertContractVersion,
+  type ContractApproval,
+  type InsertContractApproval,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, ilike, count, gte, sql } from "drizzle-orm";
@@ -80,6 +86,18 @@ export interface IStorage {
   searchContracts(query: string, userId?: string): Promise<ContractWithAnalysis[]>;
   getContractsByUser(userId: string): Promise<Contract[]>;
   deleteContract(id: string): Promise<void>;
+  updateContractMetadata(id: string, metadata: any, userId: string): Promise<Contract>;
+  submitContractForApproval(id: string, userId: string): Promise<Contract>;
+  
+  // Contract versioning operations
+  createContractVersion(version: any): Promise<any>;
+  getContractVersions(contractId: string): Promise<any[]>;
+  getContractVersion(versionId: string): Promise<any | undefined>;
+  
+  // Contract approval operations
+  createContractApproval(approval: any): Promise<any>;
+  getContractApprovals(versionId: string): Promise<any[]>;
+  getPendingApprovals(userId: string): Promise<any[]>;
 
   // Contract analysis operations
   createContractAnalysis(analysis: InsertContractAnalysis): Promise<ContractAnalysis>;
@@ -495,6 +513,167 @@ export class DatabaseStorage implements IStorage {
     
     // 6. Finally delete the contract itself
     await db.delete(contracts).where(eq(contracts.id, id));
+  }
+
+  async updateContractMetadata(id: string, metadata: any, userId: string): Promise<Contract> {
+    // Get current contract to capture current state
+    const [currentContract] = await db.select().from(contracts).where(eq(contracts.id, id));
+    
+    if (!currentContract) {
+      throw new Error("Contract not found");
+    }
+
+    // Create metadata snapshot of ALL editable fields (including undefined to preserve schema)
+    const metadataSnapshot = {
+      displayName: metadata.displayName !== undefined ? metadata.displayName : currentContract.displayName,
+      effectiveStart: metadata.effectiveStart !== undefined ? metadata.effectiveStart : currentContract.effectiveStart,
+      effectiveEnd: metadata.effectiveEnd !== undefined ? metadata.effectiveEnd : currentContract.effectiveEnd,
+      renewalTerms: metadata.renewalTerms !== undefined ? metadata.renewalTerms : currentContract.renewalTerms,
+      governingLaw: metadata.governingLaw !== undefined ? metadata.governingLaw : currentContract.governingLaw,
+      counterpartyName: metadata.counterpartyName !== undefined ? metadata.counterpartyName : currentContract.counterpartyName,
+      contractOwnerId: metadata.contractOwnerId !== undefined ? metadata.contractOwnerId : currentContract.contractOwnerId,
+      contractType: metadata.contractType !== undefined ? metadata.contractType : currentContract.contractType,
+      priority: metadata.priority !== undefined ? metadata.priority : currentContract.priority,
+      notes: metadata.notes !== undefined ? metadata.notes : currentContract.notes,
+      changeSummary: metadata.changeSummary || 'Metadata updated',
+    };
+
+    // Update contract with new metadata and increment version (handle null currentVersion)
+    const currentVersion = currentContract.currentVersion ?? 0;
+    const newVersion = currentVersion + 1;
+    
+    const [updatedContract] = await db
+      .update(contracts)
+      .set({
+        displayName: metadataSnapshot.displayName,
+        effectiveStart: metadataSnapshot.effectiveStart,
+        effectiveEnd: metadataSnapshot.effectiveEnd,
+        renewalTerms: metadataSnapshot.renewalTerms,
+        governingLaw: metadataSnapshot.governingLaw,
+        counterpartyName: metadataSnapshot.counterpartyName,
+        contractOwnerId: metadataSnapshot.contractOwnerId,
+        contractType: metadataSnapshot.contractType,
+        priority: metadataSnapshot.priority,
+        notes: metadataSnapshot.notes,
+        currentVersion: newVersion,
+        approvalState: 'draft', // Reset to draft when editing
+        updatedAt: new Date(),
+      })
+      .where(eq(contracts.id, id))
+      .returning();
+
+    // Create version record
+    await db.insert(contractVersions).values({
+      contractId: id,
+      versionNumber: newVersion,
+      editorId: userId,
+      changeSummary: metadataSnapshot.changeSummary,
+      metadataSnapshot,
+      approvalState: 'draft',
+    });
+
+    return updatedContract;
+  }
+
+  async submitContractForApproval(id: string, userId: string): Promise<Contract> {
+    const [contract] = await db
+      .update(contracts)
+      .set({
+        approvalState: 'pending_approval',
+        updatedAt: new Date(),
+      })
+      .where(eq(contracts.id, id))
+      .returning();
+
+    // Update the latest version to pending_approval
+    await db
+      .update(contractVersions)
+      .set({ approvalState: 'pending_approval' })
+      .where(
+        and(
+          eq(contractVersions.contractId, id),
+          eq(contractVersions.versionNumber, contract.currentVersion)
+        )
+      );
+
+    return contract;
+  }
+
+  async createContractVersion(version: any): Promise<any> {
+    const [newVersion] = await db.insert(contractVersions).values(version).returning();
+    return newVersion;
+  }
+
+  async getContractVersions(contractId: string): Promise<any[]> {
+    return await db
+      .select()
+      .from(contractVersions)
+      .where(eq(contractVersions.contractId, contractId))
+      .orderBy(desc(contractVersions.versionNumber));
+  }
+
+  async getContractVersion(versionId: string): Promise<any | undefined> {
+    const [version] = await db
+      .select()
+      .from(contractVersions)
+      .where(eq(contractVersions.id, versionId));
+    return version;
+  }
+
+  async createContractApproval(approval: any): Promise<any> {
+    const [newApproval] = await db.insert(contractApprovals).values(approval).returning();
+    
+    // Update the version approval state
+    await db
+      .update(contractVersions)
+      .set({ approvalState: approval.status })
+      .where(eq(contractVersions.id, approval.contractVersionId));
+
+    // If approved, update the contract approval state
+    if (approval.status === 'approved') {
+      const [version] = await db
+        .select()
+        .from(contractVersions)
+        .where(eq(contractVersions.id, approval.contractVersionId));
+      
+      if (version) {
+        await db
+          .update(contracts)
+          .set({ approvalState: 'approved' })
+          .where(eq(contracts.id, version.contractId));
+      }
+    }
+
+    return newApproval;
+  }
+
+  async getContractApprovals(versionId: string): Promise<any[]> {
+    return await db
+      .select()
+      .from(contractApprovals)
+      .where(eq(contractApprovals.contractVersionId, versionId))
+      .orderBy(desc(contractApprovals.decidedAt));
+  }
+
+  async getPendingApprovals(userId: string): Promise<any[]> {
+    // Get all pending versions with contract info
+    const pendingVersions = await db
+      .select({
+        version: contractVersions,
+        contract: contracts,
+        editor: users,
+      })
+      .from(contractVersions)
+      .innerJoin(contracts, eq(contractVersions.contractId, contracts.id))
+      .leftJoin(users, eq(contractVersions.editorId, users.id))
+      .where(eq(contractVersions.approvalState, 'pending_approval'))
+      .orderBy(desc(contractVersions.createdAt));
+
+    return pendingVersions.map(({ version, contract, editor }) => ({
+      ...version,
+      contract,
+      editor,
+    }));
   }
 
   // Contract analysis operations

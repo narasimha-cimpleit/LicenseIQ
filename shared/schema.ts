@@ -58,6 +58,17 @@ export const contracts = pgTable("contracts", {
   processingCompletedAt: timestamp("processing_completed_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  
+  // Editable metadata fields for contract management
+  displayName: varchar("display_name"), // User-friendly contract name
+  effectiveStart: timestamp("effective_start"), // Contract effective start date
+  effectiveEnd: timestamp("effective_end"), // Contract expiration/end date
+  renewalTerms: text("renewal_terms"), // Renewal terms and conditions
+  governingLaw: varchar("governing_law"), // Jurisdiction/governing law
+  counterpartyName: varchar("counterparty_name"), // Other party in the contract
+  contractOwnerId: varchar("contract_owner_id").references(() => users.id), // Internal contract owner
+  approvalState: varchar("approval_state").notNull().default("draft"), // draft, pending_approval, approved, rejected
+  currentVersion: integer("current_version").notNull().default(1), // Current version number
 });
 
 // Contract analysis results
@@ -86,6 +97,35 @@ export const contractEmbeddings = pgTable("contract_embeddings", {
 }, (table) => [
   index("contract_embeddings_contract_idx").on(table.contractId),
   index("contract_embeddings_type_idx").on(table.embeddingType),
+]);
+
+// Contract Versions - Full snapshot versioning for contract metadata
+export const contractVersions = pgTable("contract_versions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  contractId: varchar("contract_id").notNull().references(() => contracts.id, { onDelete: 'cascade' }),
+  versionNumber: integer("version_number").notNull(),
+  editorId: varchar("editor_id").notNull().references(() => users.id),
+  changeSummary: text("change_summary"), // Brief description of what changed
+  metadataSnapshot: jsonb("metadata_snapshot").notNull(), // Full snapshot of editable metadata fields
+  fileReference: varchar("file_reference"), // Reference to file if file was changed
+  approvalState: varchar("approval_state").notNull().default("draft"), // draft, pending_approval, approved, rejected
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("contract_versions_contract_idx").on(table.contractId),
+  index("contract_versions_state_idx").on(table.approvalState),
+]);
+
+// Contract Approvals - Approval decisions for contract versions
+export const contractApprovals = pgTable("contract_approvals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  contractVersionId: varchar("contract_version_id").notNull().references(() => contractVersions.id, { onDelete: 'cascade' }),
+  approverId: varchar("approver_id").notNull().references(() => users.id),
+  status: varchar("status").notNull(), // approved, rejected
+  decisionNotes: text("decision_notes"), // Reason for approval/rejection
+  decidedAt: timestamp("decided_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("contract_approvals_version_idx").on(table.contractVersionId),
 ]);
 
 // Audit trail
@@ -167,6 +207,38 @@ export const insertAuditTrailSchema = createInsertSchema(auditTrail).pick({
   userAgent: true,
 });
 
+export const insertContractVersionSchema = createInsertSchema(contractVersions).pick({
+  contractId: true,
+  versionNumber: true,
+  editorId: true,
+  changeSummary: true,
+  metadataSnapshot: true,
+  fileReference: true,
+  approvalState: true,
+});
+
+export const insertContractApprovalSchema = createInsertSchema(contractApprovals).pick({
+  contractVersionId: true,
+  approverId: true,
+  status: true,
+  decisionNotes: true,
+});
+
+// Schema for updating contract metadata (editable fields only)
+export const updateContractMetadataSchema = z.object({
+  displayName: z.string().optional(),
+  effectiveStart: z.string().optional(), // ISO date string
+  effectiveEnd: z.string().optional(), // ISO date string
+  renewalTerms: z.string().optional(),
+  governingLaw: z.string().optional(),
+  counterpartyName: z.string().optional(),
+  contractOwnerId: z.string().optional(),
+  contractType: z.string().optional(),
+  priority: z.string().optional(),
+  notes: z.string().optional(),
+  changeSummary: z.string().min(1, "Please describe what changed"),
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -178,6 +250,11 @@ export type InsertContractAnalysis = z.infer<typeof insertContractAnalysisSchema
 export type ContractAnalysis = typeof contractAnalysis.$inferSelect;
 export type InsertAuditTrail = z.infer<typeof insertAuditTrailSchema>;
 export type AuditTrail = typeof auditTrail.$inferSelect;
+export type InsertContractVersion = z.infer<typeof insertContractVersionSchema>;
+export type ContractVersion = typeof contractVersions.$inferSelect;
+export type InsertContractApproval = z.infer<typeof insertContractApprovalSchema>;
+export type ContractApproval = typeof contractApprovals.$inferSelect;
+export type UpdateContractMetadata = z.infer<typeof updateContractMetadataSchema>;
 
 // Financial Analysis table
 export const financialAnalysis = pgTable("financial_analysis", {
