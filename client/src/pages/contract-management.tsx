@@ -9,8 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Send, CheckCircle, XCircle, Clock, FileText, History } from "lucide-react";
+import { ArrowLeft, Save, Send, CheckCircle, XCircle, Clock, FileText, History, ThumbsUp, ThumbsDown } from "lucide-react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
 
@@ -31,6 +32,17 @@ export default function ContractManagement() {
   const [priority, setPriority] = useState("normal");
   const [notes, setNotes] = useState("");
   const [changeSummary, setChangeSummary] = useState("");
+  
+  // Approval dialog state
+  const [approvalDialogOpen, setApprovalDialogOpen] = useState(false);
+  const [approvalAction, setApprovalAction] = useState<'approve' | 'reject' | null>(null);
+  const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
+  const [approvalNotes, setApprovalNotes] = useState("");
+
+  // Fetch current user
+  const { data: user } = useQuery({
+    queryKey: ["/api/user"],
+  });
 
   // Fetch contract data
   const { data: contract, isLoading } = useQuery({
@@ -45,6 +57,9 @@ export default function ContractManagement() {
   });
 
   const versions = versionsData?.versions || [];
+  
+  // Check if current user can approve (admin or owner)
+  const canApprove = user?.role === 'admin' || user?.role === 'owner';
 
   // Initialize form with contract data
   useEffect(() => {
@@ -108,6 +123,7 @@ export default function ContractManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/contracts/${contractId}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/contracts/${contractId}/versions`] });
       toast({
         title: "Success",
         description: "Contract submitted for approval",
@@ -121,6 +137,77 @@ export default function ContractManagement() {
       });
     },
   });
+
+  // Approve version mutation
+  const approveMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedVersionId) throw new Error("No version selected");
+      return await apiRequest("POST", `/api/contracts/versions/${selectedVersionId}/approve`, {
+        notes: approvalNotes.trim() || undefined,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/contracts/${contractId}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/contracts/${contractId}/versions`] });
+      toast({
+        title: "Approved",
+        description: "Contract version approved successfully",
+      });
+      setApprovalDialogOpen(false);
+      setApprovalNotes("");
+      setSelectedVersionId(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to approve version",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Reject version mutation
+  const rejectMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedVersionId) throw new Error("No version selected");
+      if (!approvalNotes.trim()) throw new Error("Please provide a reason for rejection");
+      return await apiRequest("POST", `/api/contracts/versions/${selectedVersionId}/reject`, {
+        notes: approvalNotes.trim(),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/contracts/${contractId}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/contracts/${contractId}/versions`] });
+      toast({
+        title: "Rejected",
+        description: "Contract version rejected",
+      });
+      setApprovalDialogOpen(false);
+      setApprovalNotes("");
+      setSelectedVersionId(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to reject version",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleApprovalAction = (action: 'approve' | 'reject', versionId: string) => {
+    setApprovalAction(action);
+    setSelectedVersionId(versionId);
+    setApprovalDialogOpen(true);
+  };
+
+  const handleConfirmApproval = () => {
+    if (approvalAction === 'approve') {
+      approveMutation.mutate();
+    } else if (approvalAction === 'reject') {
+      rejectMutation.mutate();
+    }
+  };
 
   if (isLoading) {
     return (
@@ -361,7 +448,7 @@ export default function ContractManagement() {
                   {versions.map((version: any) => (
                     <div
                       key={version.id}
-                      className="border rounded-lg p-4 space-y-2"
+                      className="border rounded-lg p-4 space-y-3"
                       data-testid={`version-${version.versionNumber}`}
                     >
                       <div className="flex items-center justify-between">
@@ -383,6 +470,37 @@ export default function ContractManagement() {
                           Edited by: User ID {version.editorId}
                         </span>
                       </div>
+                      
+                      {/* Approval Actions - Only show for admins when version is pending */}
+                      {canApprove && version.approvalState === 'pending_approval' && user?.id !== version.editorId && (
+                        <div className="flex items-center space-x-2 pt-2 border-t">
+                          <Button
+                            size="sm"
+                            onClick={() => handleApprovalAction('approve', version.id)}
+                            className="bg-green-600 hover:bg-green-700"
+                            data-testid={`button-approve-${version.versionNumber}`}
+                          >
+                            <ThumbsUp className="h-4 w-4 mr-2" />
+                            Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleApprovalAction('reject', version.id)}
+                            data-testid={`button-reject-${version.versionNumber}`}
+                          >
+                            <ThumbsDown className="h-4 w-4 mr-2" />
+                            Reject
+                          </Button>
+                        </div>
+                      )}
+                      
+                      {/* Show if user can't approve their own version */}
+                      {canApprove && version.approvalState === 'pending_approval' && user?.id === version.editorId && (
+                        <p className="text-sm text-muted-foreground italic pt-2 border-t">
+                          You cannot approve your own changes
+                        </p>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -391,6 +509,76 @@ export default function ContractManagement() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Approval Dialog */}
+      <Dialog open={approvalDialogOpen} onOpenChange={setApprovalDialogOpen}>
+        <DialogContent data-testid="dialog-approval">
+          <DialogHeader>
+            <DialogTitle>
+              {approvalAction === 'approve' ? 'Approve Contract Version' : 'Reject Contract Version'}
+            </DialogTitle>
+            <DialogDescription>
+              {approvalAction === 'approve' 
+                ? 'You can add optional notes about this approval.'
+                : 'Please explain why this version is being rejected.'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="approvalNotes">
+                {approvalAction === 'approve' ? 'Notes (Optional)' : 'Rejection Reason (Required)'}
+              </Label>
+              <Textarea
+                id="approvalNotes"
+                value={approvalNotes}
+                onChange={(e) => setApprovalNotes(e.target.value)}
+                placeholder={approvalAction === 'approve' 
+                  ? 'Add any notes about this approval...'
+                  : 'Explain what needs to be changed...'}
+                rows={4}
+                data-testid="textarea-approval-notes"
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setApprovalDialogOpen(false);
+                setApprovalNotes("");
+              }}
+              data-testid="button-cancel-approval"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmApproval}
+              disabled={
+                (approvalAction === 'reject' && !approvalNotes.trim()) ||
+                approveMutation.isPending ||
+                rejectMutation.isPending
+              }
+              className={approvalAction === 'approve' ? 'bg-green-600 hover:bg-green-700' : ''}
+              variant={approvalAction === 'approve' ? 'default' : 'destructive'}
+              data-testid="button-confirm-approval"
+            >
+              {approveMutation.isPending || rejectMutation.isPending ? (
+                <>Processing...</>
+              ) : (
+                <>
+                  {approvalAction === 'approve' ? (
+                    <><ThumbsUp className="h-4 w-4 mr-2" />Approve</>
+                  ) : (
+                    <><ThumbsDown className="h-4 w-4 mr-2" />Reject</>
+                  )}
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
