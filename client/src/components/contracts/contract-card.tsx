@@ -26,7 +26,8 @@ import {
   User,
   Zap,
   AlertTriangle,
-  Trash2
+  Trash2,
+  Edit
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -269,18 +270,32 @@ export default function ContractCard({ contract, className }: ContractCardProps)
 
           {/* Actions */}
           <div className="flex items-center justify-between pt-2 border-t border-border">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleView();
-              }}
-              data-testid={`button-view-${contract.id}`}
-            >
-              <Eye className="h-4 w-4 mr-1" />
-              View
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleView();
+                }}
+                data-testid={`button-view-${contract.id}`}
+              >
+                <Eye className="h-4 w-4 mr-1" />
+                View
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLocation(`/contracts/${contract.id}/manage`);
+                }}
+                data-testid={`button-edit-metadata-${contract.id}`}
+              >
+                <Edit className="h-4 w-4 mr-1" />
+                Edit
+              </Button>
+            </div>
             
             <div className="flex items-center space-x-1">
               <Button
