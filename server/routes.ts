@@ -808,7 +808,7 @@ Report ID: ${contractId}
     try {
       const versionId = req.params.versionId;
       const userId = req.user.id;
-      const { status, decisionNotes } = req.body; // status: 'approved' or 'rejected'
+      const { status, decisionNotes, adminOverride } = req.body; // status: 'approved' or 'rejected', adminOverride: boolean
 
       // Validate status
       if (status !== 'approved' && status !== 'rejected') {
@@ -829,9 +829,14 @@ Report ID: ${contractId}
         return res.status(403).json({ error: 'Only admins and owners can approve contracts' });
       }
 
-      // Prevent self-approval: check if approver is also the editor
+      // Prevent self-approval unless admin override is enabled
       if (version.editorId === userId) {
-        return res.status(403).json({ error: 'You cannot approve your own changes' });
+        // Allow admin override for admins only
+        if (adminOverride && user?.role === 'admin') {
+          console.log(`⚠️ Admin override: ${user.username} is force-approving their own changes for version ${versionId}`);
+        } else {
+          return res.status(403).json({ error: 'You cannot approve your own changes' });
+        }
       }
 
       // Check if version is in pending_approval state

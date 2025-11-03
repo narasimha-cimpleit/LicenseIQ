@@ -36,6 +36,7 @@ export default function ContractManagement() {
   const [expandedVersionId, setExpandedVersionId] = useState<string | null>(null);
   const [approvalAction, setApprovalAction] = useState<'approve' | 'reject' | null>(null);
   const [approvalNotes, setApprovalNotes] = useState("");
+  const [isAdminOverride, setIsAdminOverride] = useState(false);
 
   // Fetch current user
   const { data: user } = useQuery({
@@ -142,6 +143,7 @@ export default function ContractManagement() {
       return await apiRequest("POST", `/api/contracts/versions/${versionId}/approve`, {
         status: 'approved',
         decisionNotes: approvalNotes.trim() || undefined,
+        adminOverride: isAdminOverride,
       });
     },
     onSuccess: () => {
@@ -154,6 +156,7 @@ export default function ContractManagement() {
       setExpandedVersionId(null);
       setApprovalNotes("");
       setApprovalAction(null);
+      setIsAdminOverride(false);
     },
     onError: (error: any) => {
       toast({
@@ -171,6 +174,7 @@ export default function ContractManagement() {
       return await apiRequest("POST", `/api/contracts/versions/${versionId}/approve`, {
         status: 'rejected',
         decisionNotes: approvalNotes.trim(),
+        adminOverride: isAdminOverride,
       });
     },
     onSuccess: () => {
@@ -183,6 +187,7 @@ export default function ContractManagement() {
       setExpandedVersionId(null);
       setApprovalNotes("");
       setApprovalAction(null);
+      setIsAdminOverride(false);
     },
     onError: (error: any) => {
       toast({
@@ -193,10 +198,11 @@ export default function ContractManagement() {
     },
   });
 
-  const handleApprovalAction = (action: 'approve' | 'reject', versionId: string) => {
+  const handleApprovalAction = (action: 'approve' | 'reject', versionId: string, adminOverride = false) => {
     setApprovalAction(action);
     setExpandedVersionId(versionId);
     setApprovalNotes(""); // Reset notes when opening
+    setIsAdminOverride(adminOverride); // Set admin override flag
   };
 
   const handleConfirmApproval = (versionId: string) => {
@@ -211,6 +217,7 @@ export default function ContractManagement() {
     setExpandedVersionId(null);
     setApprovalAction(null);
     setApprovalNotes("");
+    setIsAdminOverride(false);
   };
 
   if (isLoading) {
@@ -721,7 +728,7 @@ export default function ContractManagement() {
                                             <div className="flex items-center gap-2">
                                               <Button
                                                 size="sm"
-                                                onClick={() => handleApprovalAction('approve', version.id)}
+                                                onClick={() => handleApprovalAction('approve', version.id, true)}
                                                 variant="outline"
                                                 className="border-amber-500 text-amber-700 hover:bg-amber-100 dark:text-amber-400 dark:hover:bg-amber-950 gap-2"
                                                 data-testid={`button-force-approve-${version.versionNumber}`}
@@ -732,7 +739,7 @@ export default function ContractManagement() {
                                               <Button
                                                 size="sm"
                                                 variant="outline"
-                                                onClick={() => handleApprovalAction('reject', version.id)}
+                                                onClick={() => handleApprovalAction('reject', version.id, true)}
                                                 className="border-red-500 text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950 gap-2"
                                                 data-testid={`button-force-reject-${version.versionNumber}`}
                                               >
