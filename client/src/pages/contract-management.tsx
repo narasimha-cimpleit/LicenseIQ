@@ -615,7 +615,7 @@ export default function ContractManagement() {
                                 {/* Metadata */}
                                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                   <span data-testid={`text-editor-${version.versionNumber}`}>
-                                    Edited by: User ID {version.editorId?.substring(0, 8)}
+                                    Edited by: {version.editorUsername || 'Unknown'} (ID: {version.editorId?.substring(0, 8)})
                                   </span>
                                 </div>
                                 

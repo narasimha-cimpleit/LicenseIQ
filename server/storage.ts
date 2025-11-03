@@ -619,11 +619,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getContractVersions(contractId: string): Promise<any[]> {
-    return await db
-      .select()
+    const versions = await db
+      .select({
+        id: contractVersions.id,
+        contractId: contractVersions.contractId,
+        versionNumber: contractVersions.versionNumber,
+        changeSummary: contractVersions.changeSummary,
+        metadataSnapshot: contractVersions.metadataSnapshot,
+        editorId: contractVersions.editorId,
+        editorUsername: users.username,
+        createdAt: contractVersions.createdAt,
+        approvalState: contractVersions.approvalState,
+      })
       .from(contractVersions)
+      .leftJoin(users, eq(contractVersions.editorId, users.id))
       .where(eq(contractVersions.contractId, contractId))
       .orderBy(desc(contractVersions.versionNumber));
+    return versions;
   }
 
   async getContractVersion(versionId: string): Promise<any | undefined> {
