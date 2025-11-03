@@ -1298,7 +1298,7 @@ export default function Landing() {
                   info@licenseiq.ai
                 </a>
                 <p className="text-slate-600 dark:text-slate-400 mt-4">
-                  We typically respond within 24 hours
+                  Our team will be in touch shortly
                 </p>
               </div>
             </div>
