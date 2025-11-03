@@ -633,13 +633,44 @@ export default function ContractManagement() {
                                   </div>
                                 )}
                                 
-                                {/* Show if user can't approve their own version */}
+                                {/* Show if user can't approve their own version - with admin override */}
                                 {canApprove && version.approvalState === 'pending_approval' && user?.id === version.editorId && (
-                                  <div className="flex items-center gap-2 pt-3 border-t text-sm text-amber-600 dark:text-amber-400">
-                                    <Clock className="h-4 w-4" />
-                                    <span className="italic">
-                                      You cannot approve your own changes
-                                    </span>
+                                  <div className="pt-3 border-t space-y-3">
+                                    <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
+                                      <Clock className="h-4 w-4" />
+                                      <span className="italic">
+                                        You cannot approve your own changes
+                                      </span>
+                                    </div>
+                                    {user?.role === 'admin' && (
+                                      <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-md p-3">
+                                        <p className="text-xs text-amber-700 dark:text-amber-400 mb-2">
+                                          <strong>Admin Override:</strong> As an admin, you can force-approve this version for testing purposes. This bypasses the self-approval restriction.
+                                        </p>
+                                        <div className="flex items-center gap-2">
+                                          <Button
+                                            size="sm"
+                                            onClick={() => handleApprovalAction('approve', version.id)}
+                                            variant="outline"
+                                            className="border-amber-500 text-amber-700 hover:bg-amber-100 dark:text-amber-400 dark:hover:bg-amber-950 gap-2"
+                                            data-testid={`button-force-approve-${version.versionNumber}`}
+                                          >
+                                            <ThumbsUp className="h-4 w-4" />
+                                            Force Approve (Override)
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => handleApprovalAction('reject', version.id)}
+                                            className="border-red-500 text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950 gap-2"
+                                            data-testid={`button-force-reject-${version.versionNumber}`}
+                                          >
+                                            <ThumbsDown className="h-4 w-4" />
+                                            Force Reject (Override)
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    )}
                                   </div>
                                 )}
                               </div>
