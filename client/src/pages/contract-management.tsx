@@ -140,7 +140,8 @@ export default function ContractManagement() {
   const approveMutation = useMutation({
     mutationFn: async (versionId: string) => {
       return await apiRequest("POST", `/api/contracts/versions/${versionId}/approve`, {
-        notes: approvalNotes.trim() || undefined,
+        status: 'approved',
+        decisionNotes: approvalNotes.trim() || undefined,
       });
     },
     onSuccess: () => {
@@ -167,8 +168,9 @@ export default function ContractManagement() {
   const rejectMutation = useMutation({
     mutationFn: async (versionId: string) => {
       if (!approvalNotes.trim()) throw new Error("Please provide a reason for rejection");
-      return await apiRequest("POST", `/api/contracts/versions/${versionId}/reject`, {
-        notes: approvalNotes.trim(),
+      return await apiRequest("POST", `/api/contracts/versions/${versionId}/approve`, {
+        status: 'rejected',
+        decisionNotes: approvalNotes.trim(),
       });
     },
     onSuccess: () => {
