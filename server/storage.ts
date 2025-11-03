@@ -667,13 +667,28 @@ export class DatabaseStorage implements IStorage {
       if (version && version.metadataSnapshot) {
         const snapshot: any = version.metadataSnapshot;
         
+        // Helper to safely convert date values from JSONB
+        const parseSnapshotDate = (value: any): Date | null | undefined => {
+          if (!value) return value === null ? null : undefined;
+          if (value instanceof Date) return value;
+          if (typeof value === 'string') {
+            try {
+              const parsed = new Date(value);
+              return isNaN(parsed.getTime()) ? null : parsed;
+            } catch {
+              return null;
+            }
+          }
+          return null;
+        };
+        
         await db
           .update(contracts)
           .set({ 
             approvalState: 'approved',
             displayName: snapshot.displayName,
-            effectiveStart: snapshot.effectiveStart,
-            effectiveEnd: snapshot.effectiveEnd,
+            effectiveStart: parseSnapshotDate(snapshot.effectiveStart),
+            effectiveEnd: parseSnapshotDate(snapshot.effectiveEnd),
             renewalTerms: snapshot.renewalTerms,
             governingLaw: snapshot.governingLaw,
             organizationName: snapshot.organizationName,
