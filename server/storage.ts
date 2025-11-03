@@ -544,6 +544,7 @@ export class DatabaseStorage implements IStorage {
       effectiveEnd: metadata.effectiveEnd !== undefined ? parseDate(metadata.effectiveEnd) : currentContract.effectiveEnd,
       renewalTerms: metadata.renewalTerms !== undefined ? metadata.renewalTerms : currentContract.renewalTerms,
       governingLaw: metadata.governingLaw !== undefined ? metadata.governingLaw : currentContract.governingLaw,
+      organizationName: metadata.organizationName !== undefined ? metadata.organizationName : currentContract.organizationName,
       counterpartyName: metadata.counterpartyName !== undefined ? metadata.counterpartyName : currentContract.counterpartyName,
       contractOwnerId: metadata.contractOwnerId !== undefined ? metadata.contractOwnerId : currentContract.contractOwnerId,
       contractType: metadata.contractType !== undefined ? metadata.contractType : currentContract.contractType,
@@ -564,6 +565,7 @@ export class DatabaseStorage implements IStorage {
         effectiveEnd: metadataSnapshot.effectiveEnd,
         renewalTerms: metadataSnapshot.renewalTerms,
         governingLaw: metadataSnapshot.governingLaw,
+        organizationName: metadataSnapshot.organizationName,
         counterpartyName: metadataSnapshot.counterpartyName,
         contractOwnerId: metadataSnapshot.contractOwnerId,
         contractType: metadataSnapshot.contractType,
@@ -655,17 +657,33 @@ export class DatabaseStorage implements IStorage {
       .set({ approvalState: approval.status })
       .where(eq(contractVersions.id, approval.contractVersionId));
 
-    // If approved, update the contract approval state
+    // If approved, update the contract with the approved version's metadata
     if (approval.status === 'approved') {
       const [version] = await db
         .select()
         .from(contractVersions)
         .where(eq(contractVersions.id, approval.contractVersionId));
       
-      if (version) {
+      if (version && version.metadataSnapshot) {
+        const snapshot: any = version.metadataSnapshot;
+        
         await db
           .update(contracts)
-          .set({ approvalState: 'approved' })
+          .set({ 
+            approvalState: 'approved',
+            displayName: snapshot.displayName,
+            effectiveStart: snapshot.effectiveStart,
+            effectiveEnd: snapshot.effectiveEnd,
+            renewalTerms: snapshot.renewalTerms,
+            governingLaw: snapshot.governingLaw,
+            organizationName: snapshot.organizationName,
+            counterpartyName: snapshot.counterpartyName,
+            contractOwnerId: snapshot.contractOwnerId,
+            contractType: snapshot.contractType,
+            priority: snapshot.priority,
+            notes: snapshot.notes,
+            currentVersion: version.versionNumber,
+          })
           .where(eq(contracts.id, version.contractId));
       }
     }

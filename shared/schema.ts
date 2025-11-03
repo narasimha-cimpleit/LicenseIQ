@@ -65,7 +65,8 @@ export const contracts = pgTable("contracts", {
   effectiveEnd: timestamp("effective_end"), // Contract expiration/end date
   renewalTerms: text("renewal_terms"), // Renewal terms and conditions
   governingLaw: varchar("governing_law"), // Jurisdiction/governing law
-  counterpartyName: varchar("counterparty_name"), // Other party in the contract
+  organizationName: varchar("organization_name"), // Your organization/company (the party using this platform)
+  counterpartyName: varchar("counterparty_name"), // Other party in the contract (vendor, customer, partner, etc.)
   contractOwnerId: varchar("contract_owner_id").references(() => users.id), // Internal contract owner
   approvalState: varchar("approval_state").notNull().default("draft"), // draft, pending_approval, approved, rejected
   currentVersion: integer("current_version").notNull().default(1), // Current version number
@@ -231,6 +232,7 @@ export const updateContractMetadataSchema = z.object({
   effectiveEnd: z.string().optional(), // ISO date string
   renewalTerms: z.string().optional(),
   governingLaw: z.string().optional(),
+  organizationName: z.string().optional(),
   counterpartyName: z.string().optional(),
   contractOwnerId: z.string().optional(),
   contractType: z.string().optional(),

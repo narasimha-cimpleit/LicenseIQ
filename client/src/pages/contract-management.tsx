@@ -27,6 +27,7 @@ export default function ContractManagement() {
   const [effectiveEnd, setEffectiveEnd] = useState("");
   const [renewalTerms, setRenewalTerms] = useState("");
   const [governingLaw, setGoverningLaw] = useState("");
+  const [organizationName, setOrganizationName] = useState("");
   const [counterpartyName, setCounterpartyName] = useState("");
   const [contractType, setContractType] = useState("");
   const [priority, setPriority] = useState("normal");
@@ -69,6 +70,7 @@ export default function ContractManagement() {
       setEffectiveEnd(contract.effectiveEnd ? format(new Date(contract.effectiveEnd), "yyyy-MM-dd") : "");
       setRenewalTerms(contract.renewalTerms || "");
       setGoverningLaw(contract.governingLaw || "");
+      setOrganizationName(contract.organizationName || "");
       setCounterpartyName(contract.counterpartyName || "");
       setContractType(contract.contractType || "");
       setPriority(contract.priority || "normal");
@@ -89,6 +91,7 @@ export default function ContractManagement() {
         effectiveEnd: effectiveEnd || undefined,
         renewalTerms,
         governingLaw,
+        organizationName,
         counterpartyName,
         contractType,
         priority,
@@ -349,20 +352,6 @@ export default function ContractManagement() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="counterpartyName" className="text-sm font-semibold">
-                    Counterparty Name
-                  </Label>
-                  <Input
-                    id="counterpartyName"
-                    value={counterpartyName}
-                    onChange={(e) => setCounterpartyName(e.target.value)}
-                    placeholder="Other party in the contract"
-                    className="h-11"
-                    data-testid="input-counterparty"
-                  />
-                </div>
-
-                <div className="space-y-2">
                   <Label htmlFor="contractType" className="text-sm font-semibold">
                     Contract Type
                   </Label>
@@ -387,6 +376,34 @@ export default function ContractManagement() {
                       <SelectItem value="Other">Other</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="organizationName" className="text-sm font-semibold">
+                    Your Organization
+                  </Label>
+                  <Input
+                    id="organizationName"
+                    value={organizationName}
+                    onChange={(e) => setOrganizationName(e.target.value)}
+                    placeholder="Your company/organization name"
+                    className="h-11"
+                    data-testid="input-organization"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="counterpartyName" className="text-sm font-semibold">
+                    Counterparty
+                  </Label>
+                  <Input
+                    id="counterpartyName"
+                    value={counterpartyName}
+                    onChange={(e) => setCounterpartyName(e.target.value)}
+                    placeholder="Other party (vendor, customer, partner, etc.)"
+                    className="h-11"
+                    data-testid="input-counterparty"
+                  />
                 </div>
 
                 <div className="space-y-2">
