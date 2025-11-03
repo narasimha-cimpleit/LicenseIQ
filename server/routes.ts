@@ -2822,6 +2822,46 @@ async function processContractAnalysis(contractId: string, filePath: string) {
       await storage.updateContractStatus(contractId, 'analyzed');
       console.log(`✅ Status updated to 'analyzed'`);
       
+      // Auto-populate contract metadata from AI analysis (only if fields are currently empty)
+      // This preserves any existing user-edited metadata
+      const currentContract = await storage.getContract(contractId);
+      const metadataUpdate: any = {};
+      
+      // Only update fields that are currently null/empty AND AI extracted a value
+      if (!currentContract.displayName && detailedExtraction.parties?.licensor) {
+        metadataUpdate.displayName = `${detailedExtraction.parties.licensor} - ${detailedExtraction.licenseType || 'Agreement'}`;
+      }
+      if (!currentContract.counterpartyName && detailedExtraction.parties?.licensor) {
+        metadataUpdate.counterpartyName = detailedExtraction.parties.licensor;
+      }
+      if (!currentContract.effectiveStart && detailedExtraction.effectiveDate) {
+        metadataUpdate.effectiveStart = detailedExtraction.effectiveDate;
+      }
+      if (!currentContract.effectiveEnd && detailedExtraction.expirationDate) {
+        metadataUpdate.effectiveEnd = detailedExtraction.expirationDate;
+      }
+      if (!currentContract.contractType && detailedExtraction.documentType) {
+        metadataUpdate.contractType = detailedExtraction.documentType;
+      }
+      // Initialize version only if null (don't override existing versions)
+      if (currentContract.currentVersion === null) {
+        metadataUpdate.currentVersion = 0;
+      }
+      
+      // Only update if we have fields to populate
+      if (Object.keys(metadataUpdate).length > 0) {
+        await db.update(contracts)
+          .set(metadataUpdate)
+          .where(eq(contracts.id, contractId));
+        
+        console.log(`✅ Auto-populated metadata fields:`, Object.keys(metadataUpdate).join(', '));
+        if (metadataUpdate.displayName) console.log(`   Display Name: ${metadataUpdate.displayName}`);
+        if (metadataUpdate.counterpartyName) console.log(`   Counterparty: ${metadataUpdate.counterpartyName}`);
+        if (metadataUpdate.effectiveStart) console.log(`   Effective: ${metadataUpdate.effectiveStart} to ${metadataUpdate.effectiveEnd || 'N/A'}`);
+      } else {
+        console.log(`ℹ️ No metadata auto-population needed (fields already populated or no AI data)`);
+      }
+      
       console.log(`🎉 Analysis completed successfully for contract ${contractId}`);
     } catch (saveError) {
       console.error(`❌ Failed to save data:`, saveError);
