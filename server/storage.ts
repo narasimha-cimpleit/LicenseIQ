@@ -523,11 +523,25 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Contract not found");
     }
 
+    // Helper function to parse date strings to Date objects
+    const parseDate = (dateValue: any): Date | null => {
+      if (!dateValue) return null;
+      // If already a Date object, return it
+      if (dateValue instanceof Date) return dateValue;
+      // Try parsing string to Date
+      try {
+        const parsed = new Date(dateValue);
+        return isNaN(parsed.getTime()) ? null : parsed;
+      } catch {
+        return null;
+      }
+    };
+
     // Create metadata snapshot of ALL editable fields (including undefined to preserve schema)
     const metadataSnapshot = {
       displayName: metadata.displayName !== undefined ? metadata.displayName : currentContract.displayName,
-      effectiveStart: metadata.effectiveStart !== undefined ? metadata.effectiveStart : currentContract.effectiveStart,
-      effectiveEnd: metadata.effectiveEnd !== undefined ? metadata.effectiveEnd : currentContract.effectiveEnd,
+      effectiveStart: metadata.effectiveStart !== undefined ? parseDate(metadata.effectiveStart) : currentContract.effectiveStart,
+      effectiveEnd: metadata.effectiveEnd !== undefined ? parseDate(metadata.effectiveEnd) : currentContract.effectiveEnd,
       renewalTerms: metadata.renewalTerms !== undefined ? metadata.renewalTerms : currentContract.renewalTerms,
       governingLaw: metadata.governingLaw !== undefined ? metadata.governingLaw : currentContract.governingLaw,
       counterpartyName: metadata.counterpartyName !== undefined ? metadata.counterpartyName : currentContract.counterpartyName,
