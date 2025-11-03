@@ -17,7 +17,7 @@ import {
   Users, Lock, FileSpreadsheet, MessageSquare,
   DollarSign, Target, Building2, Settings,
   Layers, PieChart, Receipt, FileOutput,
-  ChevronRight, ChevronDown, Star, Award, Rocket
+  ChevronRight, ChevronDown, Star, Award, Rocket, Mail
 } from "lucide-react";
 import { 
   SiSap, SiOracle, SiSalesforce, SiQuickbooks,
@@ -1267,6 +1267,39 @@ export default function Landing() {
                     {!isSubmittingEarlyAccess && <ChevronRight className="ml-2 h-5 w-5" />}
                   </Button>
                 </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Contact Us Section */}
+      <section className="py-20 bg-white dark:bg-slate-950">
+        <div className="container mx-auto px-4">
+          <div className="max-w-3xl mx-auto text-center space-y-8">
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white">
+              Get in Touch
+            </h2>
+            <p className="text-xl text-slate-600 dark:text-slate-300">
+              Have questions or want to learn more about LicenseIQ? We'd love to hear from you.
+            </p>
+            
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-900 rounded-2xl p-8 md:p-12 shadow-xl">
+              <div className="flex flex-col items-center space-y-4">
+                <Mail className="h-12 w-12 text-blue-600 dark:text-blue-400" />
+                <h3 className="text-2xl font-semibold text-slate-900 dark:text-white">
+                  Email Us
+                </h3>
+                <a 
+                  href="mailto:info@licenseiq.ai"
+                  className="text-2xl md:text-3xl font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors duration-200"
+                  data-testid="link-contact-email"
+                >
+                  info@licenseiq.ai
+                </a>
+                <p className="text-slate-600 dark:text-slate-400 mt-4">
+                  We typically respond within 24 hours
+                </p>
               </div>
             </div>
           </div>
