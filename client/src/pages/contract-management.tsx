@@ -9,7 +9,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Save, Send, CheckCircle, XCircle, Clock, FileText, History, ThumbsUp, ThumbsDown } from "lucide-react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -33,10 +32,9 @@ export default function ContractManagement() {
   const [notes, setNotes] = useState("");
   const [changeSummary, setChangeSummary] = useState("");
   
-  // Approval dialog state
-  const [approvalDialogOpen, setApprovalDialogOpen] = useState(false);
+  // Approval inline state
+  const [expandedVersionId, setExpandedVersionId] = useState<string | null>(null);
   const [approvalAction, setApprovalAction] = useState<'approve' | 'reject' | null>(null);
-  const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
   const [approvalNotes, setApprovalNotes] = useState("");
 
   // Fetch current user
@@ -140,9 +138,8 @@ export default function ContractManagement() {
 
   // Approve version mutation
   const approveMutation = useMutation({
-    mutationFn: async () => {
-      if (!selectedVersionId) throw new Error("No version selected");
-      return await apiRequest("POST", `/api/contracts/versions/${selectedVersionId}/approve`, {
+    mutationFn: async (versionId: string) => {
+      return await apiRequest("POST", `/api/contracts/versions/${versionId}/approve`, {
         notes: approvalNotes.trim() || undefined,
       });
     },
@@ -153,9 +150,9 @@ export default function ContractManagement() {
         title: "Approved",
         description: "Contract version approved successfully",
       });
-      setApprovalDialogOpen(false);
+      setExpandedVersionId(null);
       setApprovalNotes("");
-      setSelectedVersionId(null);
+      setApprovalAction(null);
     },
     onError: (error: any) => {
       toast({
@@ -168,10 +165,9 @@ export default function ContractManagement() {
 
   // Reject version mutation
   const rejectMutation = useMutation({
-    mutationFn: async () => {
-      if (!selectedVersionId) throw new Error("No version selected");
+    mutationFn: async (versionId: string) => {
       if (!approvalNotes.trim()) throw new Error("Please provide a reason for rejection");
-      return await apiRequest("POST", `/api/contracts/versions/${selectedVersionId}/reject`, {
+      return await apiRequest("POST", `/api/contracts/versions/${versionId}/reject`, {
         notes: approvalNotes.trim(),
       });
     },
@@ -182,9 +178,9 @@ export default function ContractManagement() {
         title: "Rejected",
         description: "Contract version rejected",
       });
-      setApprovalDialogOpen(false);
+      setExpandedVersionId(null);
       setApprovalNotes("");
-      setSelectedVersionId(null);
+      setApprovalAction(null);
     },
     onError: (error: any) => {
       toast({
@@ -197,16 +193,22 @@ export default function ContractManagement() {
 
   const handleApprovalAction = (action: 'approve' | 'reject', versionId: string) => {
     setApprovalAction(action);
-    setSelectedVersionId(versionId);
-    setApprovalDialogOpen(true);
+    setExpandedVersionId(versionId);
+    setApprovalNotes(""); // Reset notes when opening
   };
 
-  const handleConfirmApproval = () => {
+  const handleConfirmApproval = (versionId: string) => {
     if (approvalAction === 'approve') {
-      approveMutation.mutate();
+      approveMutation.mutate(versionId);
     } else if (approvalAction === 'reject') {
-      rejectMutation.mutate();
+      rejectMutation.mutate(versionId);
     }
+  };
+
+  const handleCancelApproval = () => {
+    setExpandedVersionId(null);
+    setApprovalAction(null);
+    setApprovalNotes("");
   };
 
   if (isLoading) {
@@ -610,63 +612,193 @@ export default function ContractManagement() {
                                 
                                 {/* Approval Actions - Only show for admins when version is pending */}
                                 {canApprove && version.approvalState === 'pending_approval' && user?.id !== version.editorId && (
-                                  <div className="flex items-center gap-2 pt-3 border-t">
-                                    <Button
-                                      size="sm"
-                                      onClick={() => handleApprovalAction('approve', version.id)}
-                                      className="bg-green-600 hover:bg-green-700 gap-2"
-                                      data-testid={`button-approve-${version.versionNumber}`}
-                                    >
-                                      <ThumbsUp className="h-4 w-4" />
-                                      Approve
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="destructive"
-                                      onClick={() => handleApprovalAction('reject', version.id)}
-                                      className="gap-2"
-                                      data-testid={`button-reject-${version.versionNumber}`}
-                                    >
-                                      <ThumbsDown className="h-4 w-4" />
-                                      Reject
-                                    </Button>
+                                  <div className="pt-3 border-t space-y-3">
+                                    {expandedVersionId !== version.id ? (
+                                      <div className="flex items-center gap-2">
+                                        <Button
+                                          size="sm"
+                                          onClick={() => handleApprovalAction('approve', version.id)}
+                                          className="bg-green-600 hover:bg-green-700 gap-2"
+                                          data-testid={`button-approve-${version.versionNumber}`}
+                                        >
+                                          <ThumbsUp className="h-4 w-4" />
+                                          Approve
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="destructive"
+                                          onClick={() => handleApprovalAction('reject', version.id)}
+                                          className="gap-2"
+                                          data-testid={`button-reject-${version.versionNumber}`}
+                                        >
+                                          <ThumbsDown className="h-4 w-4" />
+                                          Reject
+                                        </Button>
+                                      </div>
+                                    ) : (
+                                      <div className="bg-muted/50 dark:bg-muted/20 rounded-md p-4 space-y-3">
+                                        <div className="flex items-center gap-2 text-sm font-semibold">
+                                          {approvalAction === 'approve' ? (
+                                            <>
+                                              <ThumbsUp className="h-4 w-4 text-green-600" />
+                                              <span>Approve Version {version.versionNumber}</span>
+                                            </>
+                                          ) : (
+                                            <>
+                                              <ThumbsDown className="h-4 w-4 text-red-600" />
+                                              <span>Reject Version {version.versionNumber}</span>
+                                            </>
+                                          )}
+                                        </div>
+                                        <div className="space-y-2">
+                                          <Label htmlFor={`notes-${version.id}`} className="text-sm">
+                                            {approvalAction === 'approve' ? 'Notes (Optional)' : 'Rejection Reason (Required)'}
+                                          </Label>
+                                          <Textarea
+                                            id={`notes-${version.id}`}
+                                            value={approvalNotes}
+                                            onChange={(e) => setApprovalNotes(e.target.value)}
+                                            placeholder={approvalAction === 'approve' 
+                                              ? 'Add any notes about this approval...'
+                                              : 'Explain what needs to be changed...'}
+                                            rows={3}
+                                            className="resize-none"
+                                            data-testid={`textarea-approval-notes-${version.versionNumber}`}
+                                          />
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <Button
+                                            size="sm"
+                                            onClick={() => handleConfirmApproval(version.id)}
+                                            disabled={
+                                              (approvalAction === 'reject' && !approvalNotes.trim()) ||
+                                              approveMutation.isPending ||
+                                              rejectMutation.isPending
+                                            }
+                                            className={approvalAction === 'approve' ? 'bg-green-600 hover:bg-green-700' : ''}
+                                            variant={approvalAction === 'approve' ? 'default' : 'destructive'}
+                                            data-testid={`button-confirm-approval-${version.versionNumber}`}
+                                          >
+                                            {approveMutation.isPending || rejectMutation.isPending ? (
+                                              'Processing...'
+                                            ) : (
+                                              approvalAction === 'approve' ? 'Confirm Approval' : 'Confirm Rejection'
+                                            )}
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={handleCancelApproval}
+                                            disabled={approveMutation.isPending || rejectMutation.isPending}
+                                            data-testid={`button-cancel-approval-${version.versionNumber}`}
+                                          >
+                                            Cancel
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    )}
                                   </div>
                                 )}
                                 
                                 {/* Show if user can't approve their own version - with admin override */}
                                 {canApprove && version.approvalState === 'pending_approval' && user?.id === version.editorId && (
                                   <div className="pt-3 border-t space-y-3">
-                                    <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
-                                      <Clock className="h-4 w-4" />
-                                      <span className="italic">
-                                        You cannot approve your own changes
-                                      </span>
-                                    </div>
-                                    {user?.role === 'admin' && (
-                                      <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-md p-3">
-                                        <p className="text-xs text-amber-700 dark:text-amber-400 mb-2">
-                                          <strong>Admin Override:</strong> As an admin, you can force-approve this version for testing purposes. This bypasses the self-approval restriction.
-                                        </p>
+                                    {expandedVersionId !== version.id ? (
+                                      <>
+                                        <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
+                                          <Clock className="h-4 w-4" />
+                                          <span className="italic">
+                                            You cannot approve your own changes
+                                          </span>
+                                        </div>
+                                        {user?.role === 'admin' && (
+                                          <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-md p-3">
+                                            <p className="text-xs text-amber-700 dark:text-amber-400 mb-2">
+                                              <strong>Admin Override:</strong> As an admin, you can force-approve this version for testing purposes. This bypasses the self-approval restriction.
+                                            </p>
+                                            <div className="flex items-center gap-2">
+                                              <Button
+                                                size="sm"
+                                                onClick={() => handleApprovalAction('approve', version.id)}
+                                                variant="outline"
+                                                className="border-amber-500 text-amber-700 hover:bg-amber-100 dark:text-amber-400 dark:hover:bg-amber-950 gap-2"
+                                                data-testid={`button-force-approve-${version.versionNumber}`}
+                                              >
+                                                <ThumbsUp className="h-4 w-4" />
+                                                Force Approve (Override)
+                                              </Button>
+                                              <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => handleApprovalAction('reject', version.id)}
+                                                className="border-red-500 text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950 gap-2"
+                                                data-testid={`button-force-reject-${version.versionNumber}`}
+                                              >
+                                                <ThumbsDown className="h-4 w-4" />
+                                                Force Reject (Override)
+                                              </Button>
+                                            </div>
+                                          </div>
+                                        )}
+                                      </>
+                                    ) : (
+                                      <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-md p-4 space-y-3">
+                                        <div className="flex items-center gap-2 text-sm font-semibold text-amber-700 dark:text-amber-400">
+                                          {approvalAction === 'approve' ? (
+                                            <>
+                                              <ThumbsUp className="h-4 w-4" />
+                                              <span>Force Approve Version {version.versionNumber} (Admin Override)</span>
+                                            </>
+                                          ) : (
+                                            <>
+                                              <ThumbsDown className="h-4 w-4" />
+                                              <span>Force Reject Version {version.versionNumber} (Admin Override)</span>
+                                            </>
+                                          )}
+                                        </div>
+                                        <div className="space-y-2">
+                                          <Label htmlFor={`notes-${version.id}`} className="text-sm text-amber-700 dark:text-amber-400">
+                                            {approvalAction === 'approve' ? 'Notes (Optional)' : 'Rejection Reason (Required)'}
+                                          </Label>
+                                          <Textarea
+                                            id={`notes-${version.id}`}
+                                            value={approvalNotes}
+                                            onChange={(e) => setApprovalNotes(e.target.value)}
+                                            placeholder={approvalAction === 'approve' 
+                                              ? 'Add any notes about this override approval...'
+                                              : 'Explain what needs to be changed...'}
+                                            rows={3}
+                                            className="resize-none border-amber-300 dark:border-amber-700"
+                                            data-testid={`textarea-approval-notes-${version.versionNumber}`}
+                                          />
+                                        </div>
                                         <div className="flex items-center gap-2">
                                           <Button
                                             size="sm"
-                                            onClick={() => handleApprovalAction('approve', version.id)}
-                                            variant="outline"
-                                            className="border-amber-500 text-amber-700 hover:bg-amber-100 dark:text-amber-400 dark:hover:bg-amber-950 gap-2"
-                                            data-testid={`button-force-approve-${version.versionNumber}`}
+                                            onClick={() => handleConfirmApproval(version.id)}
+                                            disabled={
+                                              (approvalAction === 'reject' && !approvalNotes.trim()) ||
+                                              approveMutation.isPending ||
+                                              rejectMutation.isPending
+                                            }
+                                            className={approvalAction === 'approve' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-red-600 hover:bg-red-700'}
+                                            data-testid={`button-confirm-approval-${version.versionNumber}`}
                                           >
-                                            <ThumbsUp className="h-4 w-4" />
-                                            Force Approve (Override)
+                                            {approveMutation.isPending || rejectMutation.isPending ? (
+                                              'Processing...'
+                                            ) : (
+                                              approvalAction === 'approve' ? 'Confirm Override Approval' : 'Confirm Rejection'
+                                            )}
                                           </Button>
                                           <Button
                                             size="sm"
                                             variant="outline"
-                                            onClick={() => handleApprovalAction('reject', version.id)}
-                                            className="border-red-500 text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950 gap-2"
-                                            data-testid={`button-force-reject-${version.versionNumber}`}
+                                            onClick={handleCancelApproval}
+                                            disabled={approveMutation.isPending || rejectMutation.isPending}
+                                            className="border-amber-500"
+                                            data-testid={`button-cancel-approval-${version.versionNumber}`}
                                           >
-                                            <ThumbsDown className="h-4 w-4" />
-                                            Force Reject (Override)
+                                            Cancel
                                           </Button>
                                         </div>
                                       </div>
@@ -686,76 +818,6 @@ export default function ContractManagement() {
           </Card>
         </TabsContent>
       </Tabs>
-
-      {/* Approval Dialog */}
-      <Dialog open={approvalDialogOpen} onOpenChange={setApprovalDialogOpen}>
-        <DialogContent data-testid="dialog-approval">
-          <DialogHeader>
-            <DialogTitle>
-              {approvalAction === 'approve' ? 'Approve Contract Version' : 'Reject Contract Version'}
-            </DialogTitle>
-            <DialogDescription>
-              {approvalAction === 'approve' 
-                ? 'You can add optional notes about this approval.'
-                : 'Please explain why this version is being rejected.'}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="approvalNotes">
-                {approvalAction === 'approve' ? 'Notes (Optional)' : 'Rejection Reason (Required)'}
-              </Label>
-              <Textarea
-                id="approvalNotes"
-                value={approvalNotes}
-                onChange={(e) => setApprovalNotes(e.target.value)}
-                placeholder={approvalAction === 'approve' 
-                  ? 'Add any notes about this approval...'
-                  : 'Explain what needs to be changed...'}
-                rows={4}
-                data-testid="textarea-approval-notes"
-              />
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setApprovalDialogOpen(false);
-                setApprovalNotes("");
-              }}
-              data-testid="button-cancel-approval"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleConfirmApproval}
-              disabled={
-                (approvalAction === 'reject' && !approvalNotes.trim()) ||
-                approveMutation.isPending ||
-                rejectMutation.isPending
-              }
-              className={approvalAction === 'approve' ? 'bg-green-600 hover:bg-green-700' : ''}
-              variant={approvalAction === 'approve' ? 'default' : 'destructive'}
-              data-testid="button-confirm-approval"
-            >
-              {approveMutation.isPending || rejectMutation.isPending ? (
-                <>Processing...</>
-              ) : (
-                <>
-                  {approvalAction === 'approve' ? (
-                    <><ThumbsUp className="h-4 w-4 mr-2" />Approve</>
-                  ) : (
-                    <><ThumbsDown className="h-4 w-4 mr-2" />Reject</>
-                  )}
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
