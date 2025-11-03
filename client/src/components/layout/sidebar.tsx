@@ -25,9 +25,11 @@ import licenseIQLogo from "@assets/Transparent Logo_1761867914841.png";
 
 interface SidebarProps {
   className?: string;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
-export default function Sidebar({ className }: SidebarProps) {
+export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
   const [location, setLocation] = useLocation();
   const { user, logoutMutation } = useAuth();
 
@@ -128,8 +130,31 @@ export default function Sidebar({ className }: SidebarProps) {
     ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
     : user?.email?.[0]?.toUpperCase() || 'U';
 
+  const handleNavClick = (href: string) => {
+    setLocation(href);
+    if (onClose) {
+      onClose();
+    }
+  };
+
   return (
-    <aside className={cn("fixed inset-y-0 left-0 w-64 bg-sidebar border-r border-sidebar-border sidebar-transition", className)}>
+    <>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={onClose}
+          data-testid="sidebar-overlay"
+        />
+      )}
+      
+      {/* Sidebar */}
+      <aside className={cn(
+        "fixed inset-y-0 left-0 w-64 bg-sidebar border-r border-sidebar-border sidebar-transition z-50 transform transition-transform duration-300 ease-in-out",
+        "md:translate-x-0",
+        isOpen ? "translate-x-0" : "-translate-x-full",
+        className
+      )}>
       <div className="flex flex-col h-full">
         {/* Logo */}
         <div className="flex items-center justify-center px-6 py-5 border-b border-sidebar-border bg-sidebar">
@@ -148,7 +173,7 @@ export default function Sidebar({ className }: SidebarProps) {
                   "w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                   item.current && "bg-sidebar-accent text-sidebar-accent-foreground"
                 )}
-                onClick={() => setLocation(item.href)}
+                onClick={() => handleNavClick(item.href)}
                 data-testid={`nav-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
               >
                 <Icon className="mr-3 h-4 w-4 text-blue-400" />
@@ -190,5 +215,6 @@ export default function Sidebar({ className }: SidebarProps) {
         </div>
       </div>
     </aside>
+    </>
   );
 }

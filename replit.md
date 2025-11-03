@@ -9,7 +9,16 @@ Preferred communication style: Simple, everyday language.
 # System Architecture
 
 ## UI/UX Decisions
-The platform features a modern, responsive UI built with React, TailwindCSS, and shadcn/ui. Key design elements include animated gradient backgrounds, sticky navigation, dual CTAs, and a comprehensive navigation menu. An omnipresent AI assistant is available via a floating button and slide-out chat panel across all authenticated pages. The design incorporates DualEntry.com-inspired aesthetics, dark mode support, and interactive charts for analytics. Recent updates include industry-agnostic branding, professional LicenseIQ logo integration, refined payment-focused terminology, enhanced early access section styling with professional scroll animations, streamlined Royalty Calculator access (October 2025), and compact DualEntry-style landing page header with 64px height and 40px logo (November 2025).
+The platform features a modern, responsive UI built with React, TailwindCSS, and shadcn/ui. Key design elements include animated gradient backgrounds, sticky navigation, dual CTAs, and a comprehensive navigation menu. An omnipresent AI assistant is available via a floating button and slide-out chat panel across all authenticated pages. The design incorporates DualEntry.com-inspired aesthetics, dark mode support, and interactive charts for analytics. Recent updates include industry-agnostic branding, professional LicenseIQ logo integration, refined payment-focused terminology, enhanced early access section styling with professional scroll animations, streamlined Royalty Calculator access (October 2025), compact DualEntry-style landing page header with 64px height and 40px logo (November 2025), and complete mobile responsiveness for authenticated app (November 2025).
+
+### Mobile Responsiveness (November 2025)
+- **Responsive Sidebar**: Hidden on mobile by default, slides in from left with overlay when menu button is clicked
+- **Mobile Menu Toggle**: Hamburger menu button in header (visible only on mobile/tablet)
+- **Adaptive Layout**: Main content area removes left margin on mobile, uses full screen width
+- **Responsive Header**: Compact design on mobile with icon-only buttons, full text on desktop
+- **Flexible Footer**: Stacks vertically on mobile, horizontal layout on desktop with smaller logo
+- **Touch-Friendly**: Appropriate spacing and button sizes for mobile interaction
+- **Smooth Transitions**: Sidebar slides with 300ms animation and backdrop overlay for better UX
 
 ## Technical Implementations
 The frontend uses React, TypeScript, Vite, Wouter for routing, TanStack Query for state management, and React Hook Form with Zod for validation. The backend is an Express.js and TypeScript RESTful API server with a layered service architecture. PostgreSQL serves as the primary database with Drizzle ORM and leverages the pgvector extension for vector similarity search. File storage is managed on the server's filesystem using Multer. A dynamic contract processing system utilizes a knowledge graph database schema with 10 new tables for AI-powered zero-shot extraction, supporting human-in-the-loop validation and dynamic rule synthesis.
