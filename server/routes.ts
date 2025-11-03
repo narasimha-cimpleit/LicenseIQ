@@ -2827,6 +2827,17 @@ async function processContractAnalysis(contractId: string, filePath: string) {
       const currentContract = await storage.getContract(contractId);
       const metadataUpdate: any = {};
       
+      // Helper function to parse date strings to Date objects
+      const parseDate = (dateStr: string | null | undefined): Date | null => {
+        if (!dateStr) return null;
+        try {
+          const parsed = new Date(dateStr);
+          return isNaN(parsed.getTime()) ? null : parsed;
+        } catch {
+          return null;
+        }
+      };
+      
       // Only update fields that are currently null/empty AND AI extracted a value
       if (!currentContract.displayName && detailedExtraction.parties?.licensor) {
         metadataUpdate.displayName = `${detailedExtraction.parties.licensor} - ${detailedExtraction.licenseType || 'Agreement'}`;
@@ -2835,10 +2846,16 @@ async function processContractAnalysis(contractId: string, filePath: string) {
         metadataUpdate.counterpartyName = detailedExtraction.parties.licensor;
       }
       if (!currentContract.effectiveStart && detailedExtraction.effectiveDate) {
-        metadataUpdate.effectiveStart = detailedExtraction.effectiveDate;
+        const parsedDate = parseDate(detailedExtraction.effectiveDate);
+        if (parsedDate) {
+          metadataUpdate.effectiveStart = parsedDate;
+        }
       }
       if (!currentContract.effectiveEnd && detailedExtraction.expirationDate) {
-        metadataUpdate.effectiveEnd = detailedExtraction.expirationDate;
+        const parsedDate = parseDate(detailedExtraction.expirationDate);
+        if (parsedDate) {
+          metadataUpdate.effectiveEnd = parsedDate;
+        }
       }
       if (!currentContract.contractType && detailedExtraction.documentType) {
         metadataUpdate.contractType = detailedExtraction.documentType;

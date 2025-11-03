@@ -11,7 +11,8 @@ export interface EmbeddingResult {
 
 export class HuggingFaceEmbeddingService {
   // Using BAAI/bge-small-en-v1.5 which is optimized for embedding generation (384 dimensions)
-  private static readonly API_URL = 'https://api-inference.huggingface.co/models/BAAI/bge-small-en-v1.5';
+  // Updated to new HuggingFace router endpoint (November 2025)
+  private static readonly API_URL = 'https://router.huggingface.co/hf-inference/models/BAAI/bge-small-en-v1.5';
   private static readonly MODEL_DIMENSIONS = 384;
 
   /**
