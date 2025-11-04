@@ -126,35 +126,36 @@ async createContractApproval(approval: any): Promise<any> {
 
 ### Symptoms
 - Contract Q&A system shows error 410
-- RAG/embedding generation fails
-- Error message: "HuggingFace API error: 410"
+- RAG/embedding generation fails during contract upload
+- Embeddings not created, causing Q&A to fail
+- Error message: "HuggingFace API error: 410 - api-inference.huggingface.co is no longer supported"
 
 ### Root Cause
-The old HuggingFace router endpoint (`router.huggingface.co`) has been deprecated. The correct endpoint is `api-inference.huggingface.co`.
+HuggingFace deprecated the `api-inference.huggingface.co` endpoint. The error message explicitly says to use `router.huggingface.co/hf-inference` instead.
 
 ### Fix Location
 **File**: `server/services/huggingFaceEmbedding.ts`  
-**Line**: ~15
+**Line**: ~18
 
 ### Code Changes
 
 **Change the API_URL constant:**
 
 ```typescript
-// OLD CODE:
-private static readonly API_URL = 'https://router.huggingface.co/hf-inference/models/BAAI/bge-small-en-v1.5';
-
-// NEW CODE:
+// OLD CODE (WRONG):
 private static readonly API_URL = 'https://api-inference.huggingface.co/models/BAAI/bge-small-en-v1.5';
+
+// NEW CODE (CORRECT):
+private static readonly API_URL = 'https://router.huggingface.co/hf-inference/models/BAAI/bge-small-en-v1.5';
 ```
 
-### Complete Context (Lines 12-19 in server/services/huggingFaceEmbedding.ts)
+### Complete Context (Lines 15-19 in server/services/huggingFaceEmbedding.ts)
 
 ```typescript
 export class HuggingFaceEmbeddingService {
   // Using BAAI/bge-small-en-v1.5 which is optimized for embedding generation (384 dimensions)
-  // Updated to correct HuggingFace Inference API endpoint (November 2025)
-  private static readonly API_URL = 'https://api-inference.huggingface.co/models/BAAI/bge-small-en-v1.5';
+  // Updated to HuggingFace router endpoint per API deprecation notice (November 2025)
+  private static readonly API_URL = 'https://router.huggingface.co/hf-inference/models/BAAI/bge-small-en-v1.5';
   private static readonly MODEL_DIMENSIONS = 384;
 ```
 
