@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,25 +13,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Sparkles, Upload, Download, Save, Trash2, Eye, FileJson, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { Sparkles, Upload, Download, Save, Trash2, Eye, FileJson, AlertCircle, CheckCircle2, Loader2, Settings } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-
-const ORACLE_ERP_ENTITIES = [
-  { value: 'customers', label: 'AR_CUSTOMERS (Customer Master)' },
-  { value: 'items', label: 'INV_ITEMS (Item/Product Master)' },
-  { value: 'suppliers', label: 'AP_SUPPLIERS (Supplier Master)' },
-  { value: 'payment_terms', label: 'AP_PAYMENT_TERMS (Payment Terms)' },
-  { value: 'employees', label: 'HR_EMPLOYEES (Employee Master)' },
-  { value: 'gl_accounts', label: 'GL_CODE_COMBINATIONS (GL Accounts)' },
-  { value: 'locations', label: 'HR_LOCATIONS (Location Master)' },
-  { value: 'units_of_measure', label: 'MTL_UNITS_OF_MEASURE (UOM)' },
-  { value: 'currencies', label: 'FND_CURRENCIES (Currency Codes)' },
-  { value: 'sales_orders', label: 'OE_ORDER_HEADERS (Sales Orders)' },
-  { value: 'invoices', label: 'AR_INVOICES (Invoices)' },
-  { value: 'purchase_orders', label: 'PO_HEADERS (Purchase Orders)' },
-  { value: 'inventory_transactions', label: 'MTL_MATERIAL_TRANSACTIONS (Inventory)' },
-  { value: 'journal_entries', label: 'GL_JE_HEADERS (Journal Entries)' },
-];
+import type { ErpSystem, ErpEntity } from '@shared/schema';
 
 interface FieldMapping {
   source_field: string | null;
@@ -64,21 +49,37 @@ interface SavedMapping {
 }
 
 export default function MasterDataMapping() {
+  const [, navigate] = useLocation();
   const { toast } = useToast();
   const [sourceSchema, setSourceSchema] = useState('');
   const [targetSchema, setTargetSchema] = useState('');
-  const [erpSystem, setErpSystem] = useState('Oracle ERP');
-  const [entityType, setEntityType] = useState('');
+  const [selectedSystemId, setSelectedSystemId] = useState('');
+  const [selectedEntityId, setSelectedEntityId] = useState('');
   const [mappingResult, setMappingResult] = useState<MappingResult | null>(null);
   const [saveMappingName, setSaveMappingName] = useState('');
   const [saveNotes, setSaveNotes] = useState('');
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [viewMapping, setViewMapping] = useState<SavedMapping | null>(null);
 
+  // Fetch ERP systems from catalog
+  const { data: erpSystemsData } = useQuery<{ systems: ErpSystem[] }>({
+    queryKey: ['/api/erp-systems'],
+  });
+
+  // Fetch entities for selected ERP system
+  const { data: erpEntitiesData } = useQuery<{ entities: ErpEntity[] }>({
+    queryKey: ['/api/erp-entities', selectedSystemId],
+    enabled: !!selectedSystemId,
+    queryFn: () => fetch(`/api/erp-entities?systemId=${selectedSystemId}`).then(res => res.json()),
+  });
+
   // Fetch saved mappings
   const { data: savedMappings = { mappings: [] }, refetch: refetchMappings } = useQuery<{ mappings: SavedMapping[] }>({
     queryKey: ['/api/mapping'],
   });
+
+  const selectedSystem = erpSystemsData?.systems?.find(s => s.id === selectedSystemId);
+  const selectedEntity = erpEntitiesData?.entities?.find(e => e.id === selectedEntityId);
 
   // Generate mapping mutation
   const generateMutation = useMutation({
@@ -165,10 +166,19 @@ export default function MasterDataMapping() {
       return;
     }
 
-    if (!entityType) {
+    if (!selectedSystemId) {
       toast({
-        title: 'Missing Entity Type',
-        description: 'Please select an Oracle ERP entity type.',
+        title: 'Missing ERP System',
+        description: 'Please select an ERP system.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!selectedEntityId) {
+      toast({
+        title: 'Missing Entity',
+        description: 'Please select an entity type.',
         variant: 'destructive',
       });
       return;
@@ -177,8 +187,8 @@ export default function MasterDataMapping() {
     generateMutation.mutate({
       sourceSchema: parsedSource,
       targetSchema: parsedTarget,
-      entityType,
-      erpSystem,
+      entityType: selectedEntity?.name || 'unknown',
+      erpSystem: selectedSystem?.name || 'unknown',
     });
   };
 
@@ -236,9 +246,17 @@ export default function MasterDataMapping() {
             AI Master Data Mapping
           </h1>
           <p className="text-muted-foreground mt-1">
-            Generate intelligent field mappings between LicenseIQ and Oracle ERP using AI
+            Generate intelligent field mappings between LicenseIQ and any ERP system using AI
           </p>
         </div>
+        <Button
+          variant="outline"
+          onClick={() => navigate('/erp-catalog')}
+          data-testid="button-configure-erp"
+        >
+          <Settings className="h-4 w-4 mr-2" />
+          Configure ERP Catalog
+        </Button>
       </div>
 
       <Tabs defaultValue="generate" className="w-full">
@@ -300,37 +318,72 @@ export default function MasterDataMapping() {
               <CardTitle>Mapping Configuration</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="erp-system">ERP System</Label>
-                  <Input
-                    id="erp-system"
-                    value={erpSystem}
-                    onChange={(e) => setErpSystem(e.target.value)}
-                    placeholder="Oracle ERP"
-                    data-testid="input-erp-system"
-                  />
+              {!erpSystemsData?.systems?.length ? (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>No ERP Systems Configured</AlertTitle>
+                  <AlertDescription>
+                    Please configure ERP systems in the catalog first.{' '}
+                    <Button 
+                      variant="link" 
+                      className="p-0 h-auto" 
+                      onClick={() => navigate('/erp-catalog')}
+                    >
+                      Go to ERP Catalog
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="erp-system">ERP System *</Label>
+                    <Select value={selectedSystemId} onValueChange={(value) => {
+                      setSelectedSystemId(value);
+                      setSelectedEntityId(''); // Reset entity when system changes
+                    }}>
+                      <SelectTrigger id="erp-system" data-testid="select-erp-system">
+                        <SelectValue placeholder="Select ERP system..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {erpSystemsData.systems.map((system) => (
+                          <SelectItem key={system.id} value={system.id}>
+                            {system.name} ({system.vendor})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="entity-type">Entity Type *</Label>
+                    <Select 
+                      value={selectedEntityId} 
+                      onValueChange={setSelectedEntityId}
+                      disabled={!selectedSystemId || !erpEntitiesData?.entities?.length}
+                    >
+                      <SelectTrigger id="entity-type" data-testid="select-entity-type">
+                        <SelectValue placeholder={
+                          !selectedSystemId 
+                            ? "Select ERP system first..." 
+                            : !erpEntitiesData?.entities?.length
+                              ? "No entities configured"
+                              : "Select entity..."
+                        } />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {erpEntitiesData?.entities?.map((entity) => (
+                          <SelectItem key={entity.id} value={entity.id}>
+                            {entity.name} ({entity.technicalName})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="entity-type">Oracle ERP Entity Type *</Label>
-                  <Select value={entityType} onValueChange={setEntityType}>
-                    <SelectTrigger id="entity-type" data-testid="select-entity-type">
-                      <SelectValue placeholder="Select entity type..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ORACLE_ERP_ENTITIES.map((entity) => (
-                        <SelectItem key={entity.value} value={entity.value}>
-                          {entity.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+              )}
 
               <Button
                 onClick={handleGenerateMapping}
-                disabled={generateMutation.isPending || !sourceSchema || !targetSchema || !entityType}
+                disabled={generateMutation.isPending || !sourceSchema || !targetSchema || !selectedSystemId || !selectedEntityId}
                 className="w-full"
                 size="lg"
                 data-testid="button-generate-mapping"
