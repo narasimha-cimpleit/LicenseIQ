@@ -1,0 +1,632 @@
+import { useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Sparkles, Upload, Download, Save, Trash2, Eye, FileJson, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+
+const ORACLE_ERP_ENTITIES = [
+  { value: 'customers', label: 'AR_CUSTOMERS (Customer Master)' },
+  { value: 'items', label: 'INV_ITEMS (Item/Product Master)' },
+  { value: 'suppliers', label: 'AP_SUPPLIERS (Supplier Master)' },
+  { value: 'payment_terms', label: 'AP_PAYMENT_TERMS (Payment Terms)' },
+  { value: 'employees', label: 'HR_EMPLOYEES (Employee Master)' },
+  { value: 'gl_accounts', label: 'GL_CODE_COMBINATIONS (GL Accounts)' },
+  { value: 'locations', label: 'HR_LOCATIONS (Location Master)' },
+  { value: 'units_of_measure', label: 'MTL_UNITS_OF_MEASURE (UOM)' },
+  { value: 'currencies', label: 'FND_CURRENCIES (Currency Codes)' },
+  { value: 'sales_orders', label: 'OE_ORDER_HEADERS (Sales Orders)' },
+  { value: 'invoices', label: 'AR_INVOICES (Invoices)' },
+  { value: 'purchase_orders', label: 'PO_HEADERS (Purchase Orders)' },
+  { value: 'inventory_transactions', label: 'MTL_MATERIAL_TRANSACTIONS (Inventory)' },
+  { value: 'journal_entries', label: 'GL_JE_HEADERS (Journal Entries)' },
+];
+
+interface FieldMapping {
+  source_field: string | null;
+  target_field: string;
+  transformation_rule: string;
+  confidence: number;
+}
+
+interface MappingResult {
+  mappingResults: FieldMapping[];
+  sourceSchema: any;
+  targetSchema: any;
+  entityType: string;
+  erpSystem: string;
+}
+
+interface SavedMapping {
+  id: string;
+  mappingName: string;
+  erpSystem: string;
+  entityType: string;
+  sourceSchema: any;
+  targetSchema: any;
+  mappingResults: FieldMapping[];
+  status: string;
+  aiModel: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  notes?: string;
+}
+
+export default function MasterDataMapping() {
+  const { toast } = useToast();
+  const [sourceSchema, setSourceSchema] = useState('');
+  const [targetSchema, setTargetSchema] = useState('');
+  const [erpSystem, setErpSystem] = useState('Oracle ERP');
+  const [entityType, setEntityType] = useState('');
+  const [mappingResult, setMappingResult] = useState<MappingResult | null>(null);
+  const [saveMappingName, setSaveMappingName] = useState('');
+  const [saveNotes, setSaveNotes] = useState('');
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [viewMapping, setViewMapping] = useState<SavedMapping | null>(null);
+
+  // Fetch saved mappings
+  const { data: savedMappings = { mappings: [] }, refetch: refetchMappings } = useQuery<{ mappings: SavedMapping[] }>({
+    queryKey: ['/api/mapping'],
+  });
+
+  // Generate mapping mutation
+  const generateMutation = useMutation({
+    mutationFn: async (data: { sourceSchema: any; targetSchema: any; entityType: string; erpSystem: string }) => {
+      const response = await apiRequest('POST', '/api/mapping/generate', JSON.stringify(data));
+      return response.json();
+    },
+    onSuccess: (data: MappingResult) => {
+      setMappingResult(data);
+      toast({
+        title: 'Mapping Generated',
+        description: `Successfully generated ${data.mappingResults.length} field mappings using AI.`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Generation Failed',
+        description: error.message || 'Failed to generate mapping',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Save mapping mutation
+  const saveMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await apiRequest('POST', '/api/mapping/save', JSON.stringify(data));
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Mapping Saved',
+        description: 'Mapping configuration has been saved successfully.',
+      });
+      setShowSaveDialog(false);
+      setSaveMappingName('');
+      setSaveNotes('');
+      refetchMappings();
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Save Failed',
+        description: error.message || 'Failed to save mapping',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Delete mapping mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiRequest('DELETE', `/api/mapping/${id}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Mapping Deleted',
+        description: 'Mapping has been removed successfully.',
+      });
+      refetchMappings();
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Delete Failed',
+        description: error.message || 'Failed to delete mapping',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const handleGenerateMapping = () => {
+    let parsedSource, parsedTarget;
+    
+    try {
+      parsedSource = JSON.parse(sourceSchema);
+      parsedTarget = JSON.parse(targetSchema);
+    } catch (error) {
+      toast({
+        title: 'Invalid JSON',
+        description: 'Please provide valid JSON schemas.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!entityType) {
+      toast({
+        title: 'Missing Entity Type',
+        description: 'Please select an Oracle ERP entity type.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    generateMutation.mutate({
+      sourceSchema: parsedSource,
+      targetSchema: parsedTarget,
+      entityType,
+      erpSystem,
+    });
+  };
+
+  const handleSaveMapping = () => {
+    if (!saveMappingName || !mappingResult) {
+      toast({
+        title: 'Invalid Data',
+        description: 'Please provide a mapping name.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    saveMutation.mutate({
+      mappingName: saveMappingName,
+      erpSystem: mappingResult.erpSystem,
+      entityType: mappingResult.entityType,
+      sourceSchema: mappingResult.sourceSchema,
+      targetSchema: mappingResult.targetSchema,
+      mappingResults: mappingResult.mappingResults,
+      notes: saveNotes || null,
+    });
+  };
+
+  const handleLoadMapping = (mapping: SavedMapping) => {
+    setSourceSchema(JSON.stringify(mapping.sourceSchema, null, 2));
+    setTargetSchema(JSON.stringify(mapping.targetSchema, null, 2));
+    setErpSystem(mapping.erpSystem);
+    setEntityType(mapping.entityType);
+    setMappingResult({
+      mappingResults: mapping.mappingResults,
+      sourceSchema: mapping.sourceSchema,
+      targetSchema: mapping.targetSchema,
+      entityType: mapping.entityType,
+      erpSystem: mapping.erpSystem,
+    });
+    toast({
+      title: 'Mapping Loaded',
+      description: `Loaded mapping: ${mapping.mappingName}`,
+    });
+  };
+
+  const getConfidenceBadge = (confidence: number) => {
+    if (confidence >= 90) return <Badge className="bg-green-500">High ({confidence}%)</Badge>;
+    if (confidence >= 70) return <Badge className="bg-yellow-500">Medium ({confidence}%)</Badge>;
+    return <Badge className="bg-red-500">Low ({confidence}%)</Badge>;
+  };
+
+  return (
+    <div className="container mx-auto p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <Sparkles className="h-8 w-8 text-purple-500" />
+            AI Master Data Mapping
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Generate intelligent field mappings between LicenseIQ and Oracle ERP using AI
+          </p>
+        </div>
+      </div>
+
+      <Tabs defaultValue="generate" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="generate" data-testid="tab-generate">Generate Mapping</TabsTrigger>
+          <TabsTrigger value="saved" data-testid="tab-saved">Saved Mappings ({savedMappings.mappings.length})</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="generate" className="space-y-6">
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Source Schema Input */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileJson className="h-5 w-5 text-blue-500" />
+                  Source Schema (LicenseIQ)
+                </CardTitle>
+                <CardDescription>
+                  Paste your LicenseIQ data schema as JSON
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Textarea
+                  value={sourceSchema}
+                  onChange={(e) => setSourceSchema(e.target.value)}
+                  placeholder={'{\n  "contractId": "string",\n  "partyName": "string",\n  "effectiveDate": "date"\n}'}
+                  className="font-mono text-sm min-h-[300px]"
+                  data-testid="input-source-schema"
+                />
+              </CardContent>
+            </Card>
+
+            {/* Target Schema Input */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileJson className="h-5 w-5 text-orange-500" />
+                  Target Schema (Oracle ERP)
+                </CardTitle>
+                <CardDescription>
+                  Paste Oracle ERP table schema as JSON
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Textarea
+                  value={targetSchema}
+                  onChange={(e) => setTargetSchema(e.target.value)}
+                  placeholder={'{\n  "CUSTOMER_ID": "number",\n  "CUSTOMER_NAME": "varchar(240)",\n  "CREATION_DATE": "date"\n}'}
+                  className="font-mono text-sm min-h-[300px]"
+                  data-testid="input-target-schema"
+                />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Configuration */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Mapping Configuration</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="erp-system">ERP System</Label>
+                  <Input
+                    id="erp-system"
+                    value={erpSystem}
+                    onChange={(e) => setErpSystem(e.target.value)}
+                    placeholder="Oracle ERP"
+                    data-testid="input-erp-system"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="entity-type">Oracle ERP Entity Type *</Label>
+                  <Select value={entityType} onValueChange={setEntityType}>
+                    <SelectTrigger id="entity-type" data-testid="select-entity-type">
+                      <SelectValue placeholder="Select entity type..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ORACLE_ERP_ENTITIES.map((entity) => (
+                        <SelectItem key={entity.value} value={entity.value}>
+                          {entity.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <Button
+                onClick={handleGenerateMapping}
+                disabled={generateMutation.isPending || !sourceSchema || !targetSchema || !entityType}
+                className="w-full"
+                size="lg"
+                data-testid="button-generate-mapping"
+              >
+                {generateMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating AI Mapping...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Generate AI Mapping
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Mapping Results */}
+          {mappingResult && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <CheckCircle2 className="h-5 w-5 text-green-500" />
+                      Mapping Results
+                    </CardTitle>
+                    <CardDescription>
+                      {mappingResult.mappingResults.length} field mappings generated for {mappingResult.entityType}
+                    </CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        const dataStr = JSON.stringify(mappingResult, null, 2);
+                        const blob = new Blob([dataStr], { type: 'application/json' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `mapping-${mappingResult.entityType}-${Date.now()}.json`;
+                        a.click();
+                      }}
+                      data-testid="button-export-json"
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      Export JSON
+                    </Button>
+                    <Button onClick={() => setShowSaveDialog(true)} data-testid="button-save-mapping">
+                      <Save className="mr-2 h-4 w-4" />
+                      Save Mapping
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-lg border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Source Field (LicenseIQ)</TableHead>
+                        <TableHead>Target Field (Oracle)</TableHead>
+                        <TableHead>Transformation Rule</TableHead>
+                        <TableHead>Confidence</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {mappingResult.mappingResults.map((mapping, idx) => (
+                        <TableRow key={idx} data-testid={`row-mapping-${idx}`}>
+                          <TableCell className="font-mono text-sm">
+                            {mapping.source_field || <span className="text-muted-foreground italic">No match</span>}
+                          </TableCell>
+                          <TableCell className="font-mono text-sm font-semibold">
+                            {mapping.target_field}
+                          </TableCell>
+                          <TableCell className="text-sm">{mapping.transformation_rule}</TableCell>
+                          <TableCell>{getConfidenceBadge(mapping.confidence)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Statistics */}
+                <div className="mt-4 grid gap-4 md:grid-cols-3">
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>High Confidence</AlertTitle>
+                    <AlertDescription>
+                      {mappingResult.mappingResults.filter(m => m.confidence >= 90).length} mappings (≥90%)
+                    </AlertDescription>
+                  </Alert>
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Medium Confidence</AlertTitle>
+                    <AlertDescription>
+                      {mappingResult.mappingResults.filter(m => m.confidence >= 70 && m.confidence < 90).length} mappings (70-89%)
+                    </AlertDescription>
+                  </Alert>
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Requires Review</AlertTitle>
+                    <AlertDescription>
+                      {mappingResult.mappingResults.filter(m => m.confidence < 70).length} mappings (&lt;70%)
+                    </AlertDescription>
+                  </Alert>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="saved">
+          <Card>
+            <CardHeader>
+              <CardTitle>Saved Mapping Configurations</CardTitle>
+              <CardDescription>
+                Previously saved mapping configurations for Oracle ERP integration
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {savedMappings.mappings.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <FileJson className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No saved mappings yet. Generate and save your first mapping!</p>
+                </div>
+              ) : (
+                <div className="rounded-lg border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Mapping Name</TableHead>
+                        <TableHead>Entity Type</TableHead>
+                        <TableHead>ERP System</TableHead>
+                        <TableHead>Field Count</TableHead>
+                        <TableHead>Created</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {savedMappings.mappings.map((mapping) => (
+                        <TableRow key={mapping.id} data-testid={`row-saved-mapping-${mapping.id}`}>
+                          <TableCell className="font-semibold">{mapping.mappingName}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{mapping.entityType}</Badge>
+                          </TableCell>
+                          <TableCell>{mapping.erpSystem}</TableCell>
+                          <TableCell>{mapping.mappingResults.length} fields</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {new Date(mapping.createdAt).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setViewMapping(mapping)}
+                                data-testid={`button-view-${mapping.id}`}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleLoadMapping(mapping)}
+                                data-testid={`button-load-${mapping.id}`}
+                              >
+                                <Upload className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => deleteMutation.mutate(mapping.id)}
+                                data-testid={`button-delete-${mapping.id}`}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Save Dialog */}
+      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+        <DialogContent data-testid="dialog-save-mapping">
+          <DialogHeader>
+            <DialogTitle>Save Mapping Configuration</DialogTitle>
+            <DialogDescription>
+              Provide a name and optional notes for this mapping configuration.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="mapping-name">Mapping Name *</Label>
+              <Input
+                id="mapping-name"
+                value={saveMappingName}
+                onChange={(e) => setSaveMappingName(e.target.value)}
+                placeholder="e.g., Customer Master Mapping v1"
+                data-testid="input-mapping-name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes (Optional)</Label>
+              <Textarea
+                id="notes"
+                value={saveNotes}
+                onChange={(e) => setSaveNotes(e.target.value)}
+                placeholder="Add any notes about this mapping configuration..."
+                data-testid="input-mapping-notes"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSaveDialog(false)} data-testid="button-cancel-save">
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveMapping}
+              disabled={saveMutation.isPending || !saveMappingName}
+              data-testid="button-confirm-save"
+            >
+              {saveMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Save Mapping
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Dialog */}
+      {viewMapping && (
+        <Dialog open={!!viewMapping} onOpenChange={() => setViewMapping(null)}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto" data-testid="dialog-view-mapping">
+            <DialogHeader>
+              <DialogTitle>{viewMapping.mappingName}</DialogTitle>
+              <DialogDescription>
+                {viewMapping.erpSystem} - {viewMapping.entityType} | {viewMapping.mappingResults.length} field mappings
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              {viewMapping.notes && (
+                <div className="rounded-lg bg-muted p-4">
+                  <p className="text-sm"><strong>Notes:</strong> {viewMapping.notes}</p>
+                </div>
+              )}
+              <div className="rounded-lg border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Source Field</TableHead>
+                      <TableHead>Target Field</TableHead>
+                      <TableHead>Transformation</TableHead>
+                      <TableHead>Confidence</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {viewMapping.mappingResults.map((mapping, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell className="font-mono text-sm">
+                          {mapping.source_field || <span className="text-muted-foreground italic">No match</span>}
+                        </TableCell>
+                        <TableCell className="font-mono text-sm font-semibold">
+                          {mapping.target_field}
+                        </TableCell>
+                        <TableCell className="text-sm">{mapping.transformation_rule}</TableCell>
+                        <TableCell>{getConfidenceBadge(mapping.confidence)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={() => setViewMapping(null)} data-testid="button-close-view">Close</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
+  );
+}

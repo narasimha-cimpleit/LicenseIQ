@@ -69,6 +69,12 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
       current: location === "/calculations" || location.startsWith("/royalty-dashboard/"),
     },
     {
+      name: "Master Data Mapping",
+      href: "/master-data-mapping",
+      icon: Database,
+      current: location === "/master-data-mapping",
+    },
+    {
       name: "Contract Q&A",
       href: "/contract-qna",
       icon: Brain,
