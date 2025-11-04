@@ -100,6 +100,7 @@ export interface IStorage {
   deleteContract(id: string): Promise<void>;
   updateContractMetadata(id: string, metadata: any, userId: string): Promise<Contract>;
   submitContractForApproval(id: string, userId: string): Promise<Contract>;
+  updateContractErpMatching(id: string, enabled: boolean): Promise<Contract>;
   
   // Contract versioning operations
   createContractVersion(version: any): Promise<any>;
@@ -651,6 +652,23 @@ export class DatabaseStorage implements IStorage {
           eq(contractVersions.versionNumber, contract.currentVersion)
         )
       );
+
+    return contract;
+  }
+
+  async updateContractErpMatching(id: string, enabled: boolean): Promise<Contract> {
+    const [contract] = await db
+      .update(contracts)
+      .set({
+        useErpMatching: enabled,
+        updatedAt: new Date(),
+      })
+      .where(eq(contracts.id, id))
+      .returning();
+
+    if (!contract) {
+      throw new Error("Contract not found");
+    }
 
     return contract;
   }

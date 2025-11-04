@@ -742,6 +742,48 @@ Report ID: ${contractId}
     }
   });
 
+  // Update ERP matching setting for a contract
+  app.patch('/api/contracts/:id/erp-matching', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const contractId = req.params.id;
+      const { enabled } = req.body;
+
+      if (typeof enabled !== 'boolean') {
+        return res.status(400).json({ error: 'enabled must be a boolean value' });
+      }
+
+      // Get contract and check permissions
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+
+      const user = await storage.getUser(req.user.id);
+      const canEdit = user?.role === 'admin' || user?.role === 'owner' || user?.role === 'editor' || contract.uploadedBy === req.user.id;
+      
+      if (!canEdit) {
+        return res.status(403).json({ error: 'You do not have permission to edit this contract' });
+      }
+
+      // Update ERP matching setting
+      const updatedContract = await storage.updateContractErpMatching(contractId, enabled);
+
+      // Create audit log
+      await createAuditLog(req, 'update_erp_matching', 'contract', contractId, {
+        enabled,
+        message: enabled ? 'ERP semantic matching enabled' : 'ERP semantic matching disabled',
+      });
+
+      res.json({ 
+        id: updatedContract.id,
+        enabled: updatedContract.useErpMatching,
+      });
+    } catch (error: any) {
+      console.error('Update ERP matching error:', error);
+      res.status(500).json({ error: error.message || 'Failed to update ERP matching setting' });
+    }
+  });
+
   // Submit contract for approval
   app.post('/api/contracts/:id/submit-approval', isAuthenticated, async (req: any, res: Response) => {
     try {
