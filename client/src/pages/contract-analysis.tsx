@@ -125,7 +125,10 @@ export default function ContractAnalysis() {
       return response.json();
     },
     onSuccess: (data) => {
+      // Invalidate both detail and list queries so sales upload page updates
       queryClient.invalidateQueries({ queryKey: ["/api/contracts", id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
+      
       toast({
         title: data.enabled ? "ERP Matching Enabled" : "ERP Matching Disabled",
         description: data.enabled 
