@@ -972,6 +972,31 @@ export const demoRequests = pgTable("demo_requests", {
   index("demo_requests_plan_idx").on(table.planTier),
 ]);
 
+// ======================
+// MASTER DATA MAPPING (ERP INTEGRATION)
+// ======================
+
+// AI-driven master data mapping for ERP integrations (Oracle, SAP, NetSuite, etc.)
+export const masterDataMappings = pgTable("master_data_mappings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  mappingName: varchar("mapping_name").notNull(), // e.g., "Oracle ERP - Customers"
+  erpSystem: varchar("erp_system").notNull(), // oracle, sap, netsuite, custom
+  entityType: varchar("entity_type").notNull(), // customers, items, suppliers, payment_terms, etc.
+  sourceSchema: jsonb("source_schema").notNull(), // Your app's schema structure
+  targetSchema: jsonb("target_schema").notNull(), // Oracle/ERP schema structure
+  mappingResults: jsonb("mapping_results").notNull(), // Array of {source_field, target_field, transformation_rule, confidence}
+  status: varchar("status").notNull().default("active"), // active, archived, draft
+  aiModel: varchar("ai_model").default("llama-3.3-70b-versatile"), // Track which AI model was used
+  createdBy: varchar("created_by").notNull().references(() => users.id),
+  notes: text("notes"), // Additional mapping notes or transformation logic
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("master_data_mappings_erp_idx").on(table.erpSystem),
+  index("master_data_mappings_entity_idx").on(table.entityType),
+  index("master_data_mappings_status_idx").on(table.status),
+]);
+
 // Insert schemas for lead capture
 export const insertEarlyAccessSignupSchema = createInsertSchema(earlyAccessSignups).pick({
   email: true,
@@ -984,6 +1009,13 @@ export const insertDemoRequestSchema = createInsertSchema(demoRequests).pick({
   email: true,
   planTier: true,
   source: true,
+});
+
+// Insert schema for master data mappings
+export const insertMasterDataMappingSchema = createInsertSchema(masterDataMappings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 // ======================
@@ -1014,3 +1046,5 @@ export type EarlyAccessSignup = typeof earlyAccessSignups.$inferSelect;
 export type InsertEarlyAccessSignup = z.infer<typeof insertEarlyAccessSignupSchema>;
 export type DemoRequest = typeof demoRequests.$inferSelect;
 export type InsertDemoRequest = z.infer<typeof insertDemoRequestSchema>;
+export type MasterDataMapping = typeof masterDataMappings.$inferSelect;
+export type InsertMasterDataMapping = z.infer<typeof insertMasterDataMappingSchema>;
