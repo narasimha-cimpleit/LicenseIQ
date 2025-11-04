@@ -1038,6 +1038,7 @@ export const masterDataMappings = pgTable("master_data_mappings", {
   mappingName: varchar("mapping_name").notNull(), // e.g., "Oracle ERP - Customers"
   erpSystem: varchar("erp_system").notNull(), // ERP system name (e.g., "Oracle EBS 12.2")
   entityType: varchar("entity_type").notNull(), // Entity type name (e.g., "Customers", "Items")
+  customerId: varchar("customer_id").references(() => contracts.id), // Optional: Link to specific customer contract
   sourceSchema: jsonb("source_schema").notNull(), // Your app's schema structure
   targetSchema: jsonb("target_schema").notNull(), // ERP schema structure
   mappingResults: jsonb("mapping_results").notNull(), // Array of {source_field, target_field, transformation_rule, confidence}
@@ -1048,9 +1049,50 @@ export const masterDataMappings = pgTable("master_data_mappings", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
+  index("master_data_mappings_customer_idx").on(table.customerId),
   index("master_data_mappings_erp_idx").on(table.erpSystem),
   index("master_data_mappings_entity_idx").on(table.entityType),
   index("master_data_mappings_status_idx").on(table.status),
+]);
+
+// Data import jobs - Track ERP data import operations
+export const dataImportJobs = pgTable("data_import_jobs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  mappingId: varchar("mapping_id").notNull().references(() => masterDataMappings.id, { onDelete: 'cascade' }),
+  customerId: varchar("customer_id").references(() => contracts.id), // Customer/contract context
+  jobName: varchar("job_name").notNull(), // e.g., "Oracle Customers Import - 2025-11-04"
+  uploadMeta: jsonb("upload_meta"), // { fileName, fileSize, recordCount, etc. }
+  status: varchar("status").notNull().default("pending"), // pending, processing, completed, failed
+  recordsTotal: integer("records_total").default(0),
+  recordsProcessed: integer("records_processed").default(0),
+  recordsFailed: integer("records_failed").default(0),
+  errorLog: jsonb("error_log"), // Array of error messages
+  createdBy: varchar("created_by").notNull().references(() => users.id),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("data_import_jobs_mapping_idx").on(table.mappingId),
+  index("data_import_jobs_customer_idx").on(table.customerId),
+  index("data_import_jobs_status_idx").on(table.status),
+]);
+
+// Imported ERP records - Stores actual imported data with vector embeddings
+export const importedErpRecords = pgTable("imported_erp_records", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  jobId: varchar("job_id").notNull().references(() => dataImportJobs.id, { onDelete: 'cascade' }),
+  mappingId: varchar("mapping_id").notNull().references(() => masterDataMappings.id),
+  customerId: varchar("customer_id").references(() => contracts.id), // Customer context for scoped search
+  sourceRecord: jsonb("source_record").notNull(), // Transformed data in your app's format
+  targetRecord: jsonb("target_record").notNull(), // Original ERP data
+  embedding: vector("embedding", { dimensions: 384 }), // HuggingFace MiniLM embeddings
+  metadata: jsonb("metadata"), // { primaryKey, recordType, tags, etc. }
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("imported_records_job_idx").on(table.jobId),
+  index("imported_records_mapping_idx").on(table.mappingId),
+  index("imported_records_customer_idx").on(table.customerId),
+  index("imported_records_embedding_idx").using("hnsw", table.embedding.op("vector_cosine_ops")),
 ]);
 
 // Insert schemas for lead capture
@@ -1093,6 +1135,18 @@ export const insertMasterDataMappingSchema = createInsertSchema(masterDataMappin
   updatedAt: true,
 });
 
+// Insert schema for data import jobs
+export const insertDataImportJobSchema = createInsertSchema(dataImportJobs).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Insert schema for imported ERP records
+export const insertImportedErpRecordSchema = createInsertSchema(importedErpRecords).omit({
+  id: true,
+  createdAt: true,
+});
+
 // ======================
 // TYPES FOR NEW TABLES
 // ======================
@@ -1129,3 +1183,7 @@ export type ErpField = typeof erpFields.$inferSelect;
 export type InsertErpField = z.infer<typeof insertErpFieldSchema>;
 export type MasterDataMapping = typeof masterDataMappings.$inferSelect;
 export type InsertMasterDataMapping = z.infer<typeof insertMasterDataMappingSchema>;
+export type DataImportJob = typeof dataImportJobs.$inferSelect;
+export type InsertDataImportJob = z.infer<typeof insertDataImportJobSchema>;
+export type ImportedErpRecord = typeof importedErpRecords.$inferSelect;
+export type InsertImportedErpRecord = z.infer<typeof insertImportedErpRecordSchema>;
