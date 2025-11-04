@@ -2879,6 +2879,165 @@ Return ONLY valid JSON array, no other text.`;
     }
   });
 
+  // ======================
+  // ERP CATALOG API
+  // ======================
+
+  // ERP Systems endpoints
+  app.get('/api/erp-systems', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { status } = req.query;
+      const systems = await storage.getAllErpSystems(status as string);
+      res.json({ systems });
+    } catch (error) {
+      console.error('❌ [ERP SYSTEMS] Get error:', error);
+      res.status(500).json({ error: 'Failed to retrieve ERP systems' });
+    }
+  });
+
+  app.post('/api/erp-systems', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const systemData = {
+        ...req.body,
+        createdBy: req.user.id,
+      };
+      const system = await storage.createErpSystem(systemData);
+      console.log(`✅ [ERP SYSTEMS] Created: ${system.name}`);
+      res.json(system);
+    } catch (error) {
+      console.error('❌ [ERP SYSTEMS] Create error:', error);
+      res.status(500).json({ error: 'Failed to create ERP system' });
+    }
+  });
+
+  app.patch('/api/erp-systems/:id', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const system = await storage.updateErpSystem(id, req.body);
+      console.log(`✏️ [ERP SYSTEMS] Updated: ${system.name}`);
+      res.json(system);
+    } catch (error) {
+      console.error('❌ [ERP SYSTEMS] Update error:', error);
+      res.status(500).json({ error: 'Failed to update ERP system' });
+    }
+  });
+
+  app.delete('/api/erp-systems/:id', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteErpSystem(id);
+      console.log(`🗑️ [ERP SYSTEMS] Deleted: ${id}`);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('❌ [ERP SYSTEMS] Delete error:', error);
+      res.status(500).json({ error: 'Failed to delete ERP system' });
+    }
+  });
+
+  // ERP Entities endpoints
+  app.get('/api/erp-entities', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { systemId, entityType } = req.query;
+      if (!systemId) {
+        return res.status(400).json({ error: 'systemId is required' });
+      }
+      const entities = await storage.getErpEntitiesBySystem(systemId as string, entityType as string);
+      res.json({ entities });
+    } catch (error) {
+      console.error('❌ [ERP ENTITIES] Get error:', error);
+      res.status(500).json({ error: 'Failed to retrieve ERP entities' });
+    }
+  });
+
+  app.post('/api/erp-entities', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const entityData = {
+        ...req.body,
+        createdBy: req.user.id,
+      };
+      const entity = await storage.createErpEntity(entityData);
+      console.log(`✅ [ERP ENTITIES] Created: ${entity.name}`);
+      res.json(entity);
+    } catch (error) {
+      console.error('❌ [ERP ENTITIES] Create error:', error);
+      res.status(500).json({ error: 'Failed to create ERP entity' });
+    }
+  });
+
+  app.patch('/api/erp-entities/:id', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const entity = await storage.updateErpEntity(id, req.body);
+      console.log(`✏️ [ERP ENTITIES] Updated: ${entity.name}`);
+      res.json(entity);
+    } catch (error) {
+      console.error('❌ [ERP ENTITIES] Update error:', error);
+      res.status(500).json({ error: 'Failed to update ERP entity' });
+    }
+  });
+
+  app.delete('/api/erp-entities/:id', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteErpEntity(id);
+      console.log(`🗑️ [ERP ENTITIES] Deleted: ${id}`);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('❌ [ERP ENTITIES] Delete error:', error);
+      res.status(500).json({ error: 'Failed to delete ERP entity' });
+    }
+  });
+
+  // ERP Fields endpoints
+  app.get('/api/erp-fields', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { entityId } = req.query;
+      if (!entityId) {
+        return res.status(400).json({ error: 'entityId is required' });
+      }
+      const fields = await storage.getErpFieldsByEntity(entityId as string);
+      res.json({ fields });
+    } catch (error) {
+      console.error('❌ [ERP FIELDS] Get error:', error);
+      res.status(500).json({ error: 'Failed to retrieve ERP fields' });
+    }
+  });
+
+  app.post('/api/erp-fields', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const field = await storage.createErpField(req.body);
+      console.log(`✅ [ERP FIELDS] Created: ${field.fieldName}`);
+      res.json(field);
+    } catch (error) {
+      console.error('❌ [ERP FIELDS] Create error:', error);
+      res.status(500).json({ error: 'Failed to create ERP field' });
+    }
+  });
+
+  app.patch('/api/erp-fields/:id', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const field = await storage.updateErpField(id, req.body);
+      console.log(`✏️ [ERP FIELDS] Updated: ${field.fieldName}`);
+      res.json(field);
+    } catch (error) {
+      console.error('❌ [ERP FIELDS] Update error:', error);
+      res.status(500).json({ error: 'Failed to update ERP field' });
+    }
+  });
+
+  app.delete('/api/erp-fields/:id', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteErpField(id);
+      console.log(`🗑️ [ERP FIELDS] Deleted: ${id}`);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('❌ [ERP FIELDS] Delete error:', error);
+      res.status(500).json({ error: 'Failed to delete ERP field' });
+    }
+  });
+
   // Return the configured app - server will be started in index.ts
   return createServer(app);
 }

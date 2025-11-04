@@ -25,6 +25,9 @@ import {
   earlyAccessSignups,
   demoRequests,
   masterDataMappings,
+  erpSystems,
+  erpEntities,
+  erpFields,
   type User,
   type InsertUser,
   type Contract,
@@ -62,6 +65,14 @@ import {
   type InsertContractVersion,
   type ContractApproval,
   type InsertContractApproval,
+  type ErpSystem,
+  type InsertErpSystem,
+  type ErpEntity,
+  type InsertErpEntity,
+  type ErpField,
+  type InsertErpField,
+  type MasterDataMapping,
+  type InsertMasterDataMapping,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, ilike, count, gte, sql } from "drizzle-orm";
@@ -266,11 +277,32 @@ export interface IStorage {
   updateDemoRequestStatus(id: string, status: string, notes?: string): Promise<DemoRequest>;
   
   // Master data mapping operations
-  createMasterDataMapping(mapping: any): Promise<any>;
-  getMasterDataMapping(id: string): Promise<any | undefined>;
-  getAllMasterDataMappings(filters?: { erpSystem?: string; entityType?: string; status?: string }): Promise<any[]>;
-  updateMasterDataMapping(id: string, updates: Partial<any>): Promise<any>;
+  createMasterDataMapping(mapping: InsertMasterDataMapping): Promise<MasterDataMapping>;
+  getMasterDataMapping(id: string): Promise<MasterDataMapping | undefined>;
+  getAllMasterDataMappings(filters?: { erpSystem?: string; entityType?: string; status?: string }): Promise<MasterDataMapping[]>;
+  updateMasterDataMapping(id: string, updates: Partial<InsertMasterDataMapping>): Promise<MasterDataMapping>;
   deleteMasterDataMapping(id: string): Promise<void>;
+  
+  // ERP Systems operations
+  createErpSystem(system: InsertErpSystem): Promise<ErpSystem>;
+  getErpSystem(id: string): Promise<ErpSystem | undefined>;
+  getAllErpSystems(status?: string): Promise<ErpSystem[]>;
+  updateErpSystem(id: string, updates: Partial<InsertErpSystem>): Promise<ErpSystem>;
+  deleteErpSystem(id: string): Promise<void>;
+  
+  // ERP Entities operations
+  createErpEntity(entity: InsertErpEntity): Promise<ErpEntity>;
+  getErpEntity(id: string): Promise<ErpEntity | undefined>;
+  getErpEntitiesBySystem(systemId: string, entityType?: string): Promise<ErpEntity[]>;
+  updateErpEntity(id: string, updates: Partial<InsertErpEntity>): Promise<ErpEntity>;
+  deleteErpEntity(id: string): Promise<void>;
+  
+  // ERP Fields operations
+  createErpField(field: InsertErpField): Promise<ErpField>;
+  getErpField(id: string): Promise<ErpField | undefined>;
+  getErpFieldsByEntity(entityId: string): Promise<ErpField[]>;
+  updateErpField(id: string, updates: Partial<InsertErpField>): Promise<ErpField>;
+  deleteErpField(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1889,6 +1921,134 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(masterDataMappings)
       .where(eq(masterDataMappings.id, id));
+  }
+
+  // ERP Systems operations
+  async createErpSystem(system: InsertErpSystem): Promise<ErpSystem> {
+    const [result] = await db
+      .insert(erpSystems)
+      .values(system)
+      .returning();
+    return result;
+  }
+
+  async getErpSystem(id: string): Promise<ErpSystem | undefined> {
+    const [result] = await db
+      .select()
+      .from(erpSystems)
+      .where(eq(erpSystems.id, id));
+    return result;
+  }
+
+  async getAllErpSystems(status?: string): Promise<ErpSystem[]> {
+    const conditions = status ? eq(erpSystems.status, status) : undefined;
+    const results = await db
+      .select()
+      .from(erpSystems)
+      .where(conditions)
+      .orderBy(desc(erpSystems.createdAt));
+    return results;
+  }
+
+  async updateErpSystem(id: string, updates: Partial<InsertErpSystem>): Promise<ErpSystem> {
+    const [result] = await db
+      .update(erpSystems)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(erpSystems.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteErpSystem(id: string): Promise<void> {
+    await db
+      .delete(erpSystems)
+      .where(eq(erpSystems.id, id));
+  }
+
+  // ERP Entities operations
+  async createErpEntity(entity: InsertErpEntity): Promise<ErpEntity> {
+    const [result] = await db
+      .insert(erpEntities)
+      .values(entity)
+      .returning();
+    return result;
+  }
+
+  async getErpEntity(id: string): Promise<ErpEntity | undefined> {
+    const [result] = await db
+      .select()
+      .from(erpEntities)
+      .where(eq(erpEntities.id, id));
+    return result;
+  }
+
+  async getErpEntitiesBySystem(systemId: string, entityType?: string): Promise<ErpEntity[]> {
+    const conditions = entityType
+      ? and(eq(erpEntities.systemId, systemId), eq(erpEntities.entityType, entityType))
+      : eq(erpEntities.systemId, systemId);
+    
+    const results = await db
+      .select()
+      .from(erpEntities)
+      .where(conditions)
+      .orderBy(erpEntities.name);
+    return results;
+  }
+
+  async updateErpEntity(id: string, updates: Partial<InsertErpEntity>): Promise<ErpEntity> {
+    const [result] = await db
+      .update(erpEntities)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(erpEntities.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteErpEntity(id: string): Promise<void> {
+    await db
+      .delete(erpEntities)
+      .where(eq(erpEntities.id, id));
+  }
+
+  // ERP Fields operations
+  async createErpField(field: InsertErpField): Promise<ErpField> {
+    const [result] = await db
+      .insert(erpFields)
+      .values(field)
+      .returning();
+    return result;
+  }
+
+  async getErpField(id: string): Promise<ErpField | undefined> {
+    const [result] = await db
+      .select()
+      .from(erpFields)
+      .where(eq(erpFields.id, id));
+    return result;
+  }
+
+  async getErpFieldsByEntity(entityId: string): Promise<ErpField[]> {
+    const results = await db
+      .select()
+      .from(erpFields)
+      .where(eq(erpFields.entityId, entityId))
+      .orderBy(erpFields.fieldName);
+    return results;
+  }
+
+  async updateErpField(id: string, updates: Partial<InsertErpField>): Promise<ErpField> {
+    const [result] = await db
+      .update(erpFields)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(erpFields.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteErpField(id: string): Promise<void> {
+    await db
+      .delete(erpFields)
+      .where(eq(erpFields.id, id));
   }
 
 }
