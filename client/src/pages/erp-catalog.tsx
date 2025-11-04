@@ -57,7 +57,8 @@ export default function ErpCatalogPage() {
   const deleteEntityMutation = useMutation({
     mutationFn: async (id: string) => apiRequest(`/api/erp-entities/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/erp-entities'] });
+      // Invalidate all entity queries for all systems
+      queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] === '/api/erp-entities' });
       toast({ title: "Success", description: "Entity deleted successfully" });
     },
   });
@@ -65,7 +66,8 @@ export default function ErpCatalogPage() {
   const deleteFieldMutation = useMutation({
     mutationFn: async (id: string) => apiRequest(`/api/erp-fields/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/erp-fields'] });
+      // Invalidate all field queries for all entities
+      queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] === '/api/erp-fields' });
       toast({ title: "Success", description: "Field deleted successfully" });
     },
   });
@@ -519,7 +521,8 @@ function AddEntityDialog({ children, open, onOpenChange, systemId }: { children:
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => apiRequest('/api/erp-entities', { method: 'POST', body: data }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/erp-entities'] });
+      // Invalidate all entity queries for all systems
+      queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] === '/api/erp-entities' });
       toast({ title: "Success", description: "Entity created successfully" });
       onOpenChange(false);
       setFormData({ systemId, name: '', technicalName: '', entityType: 'master_data', description: '', status: 'active' });
@@ -609,7 +612,8 @@ function AddFieldDialog({ children, open, onOpenChange, entityId }: { children: 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => apiRequest('/api/erp-fields', { method: 'POST', body: data }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/erp-fields'] });
+      // Invalidate all field queries for all entities
+      queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] === '/api/erp-fields' });
       toast({ title: "Success", description: "Field created successfully" });
       onOpenChange(false);
       setFormData({ entityId, fieldName: '', dataType: 'VARCHAR2', description: '', isPrimaryKey: false, isRequired: false, sampleValues: '' });

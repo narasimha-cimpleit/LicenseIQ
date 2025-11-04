@@ -216,8 +216,7 @@ export default function MasterDataMapping() {
   const handleLoadMapping = (mapping: SavedMapping) => {
     setSourceSchema(JSON.stringify(mapping.sourceSchema, null, 2));
     setTargetSchema(JSON.stringify(mapping.targetSchema, null, 2));
-    setErpSystem(mapping.erpSystem);
-    setEntityType(mapping.entityType);
+    // Note: Can't restore system/entity selection from names alone - would need IDs
     setMappingResult({
       mappingResults: mapping.mappingResults,
       sourceSchema: mapping.sourceSchema,
