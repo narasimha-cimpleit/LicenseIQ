@@ -47,6 +47,8 @@ The architecture emphasizes AI-native design, integrating AI capabilities throug
 - **Defensive Numeric Validation**: Implemented `parseNumericValue()` helper to handle AI extraction edge cases where text values (e.g., "standard rate") are returned instead of numbers, preventing database type errors.
 - **Enhanced JSON Recovery**: Improved `extractAndRepairJSON()` with HTML entity decoding, truncated response repair, and better error handling for malformed AI responses.
 - **Flexible Territory Matching** (October 31, 2025): Enhanced rule matching logic to support abstract territory names ("Primary", "Secondary", "Domestic", etc.) in sales data, allowing proper matching against rules with specific geographic territories. Implemented in both `server/routes.ts` (formula-preview) and `server/services/dynamicRulesEngine.ts` (calculations).
+- **Date Parsing Safety** (November 4, 2025): Added `parseSnapshotDate()` helper in approval workflow to safely handle JSONB date conversion, preventing "value.toISOString is not a function" errors during version approval. Properly handles Date objects, ISO strings, and null/undefined values.
+- **HuggingFace API Update** (November 4, 2025): Updated HuggingFace Inference API endpoint from deprecated `router.huggingface.co` to `api-inference.huggingface.co` to fix error 410 in RAG/embedding generation system.
 
 # External Dependencies
 
