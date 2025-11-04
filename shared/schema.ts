@@ -70,6 +70,9 @@ export const contracts = pgTable("contracts", {
   contractOwnerId: varchar("contract_owner_id").references(() => users.id), // Internal contract owner
   approvalState: varchar("approval_state").notNull().default("draft"), // draft, pending_approval, approved, rejected
   currentVersion: integer("current_version").notNull().default(1), // Current version number
+  
+  // ERP Integration Configuration
+  useErpMatching: boolean("use_erp_matching").notNull().default(false), // Toggle: Use ERP data matching vs traditional approach
 });
 
 // Contract analysis results
