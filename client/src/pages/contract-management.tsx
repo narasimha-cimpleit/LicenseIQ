@@ -845,6 +845,33 @@ export default function ContractManagement() {
                                     )}
                                   </div>
                                 )}
+
+                                {/* Submit Draft for Approval - Only show for creator when version is draft */}
+                                {version.approvalState === 'draft' && user?.id === version.editorId && (
+                                  <div className="pt-3 border-t space-y-3">
+                                    <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md p-3">
+                                      <div className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-400 mb-2">
+                                        <Clock className="h-4 w-4" />
+                                        <span className="font-medium">
+                                          Draft version - Not yet submitted for approval
+                                        </span>
+                                      </div>
+                                      <p className="text-xs text-blue-600 dark:text-blue-400 mb-3">
+                                        Submit this version for approval to make it the active contract metadata.
+                                      </p>
+                                      <Button
+                                        size="sm"
+                                        onClick={() => submitApprovalMutation.mutate()}
+                                        disabled={submitApprovalMutation.isPending}
+                                        className="bg-blue-600 hover:bg-blue-700 gap-2"
+                                        data-testid={`button-submit-draft-${version.versionNumber}`}
+                                      >
+                                        <Send className="h-4 w-4" />
+                                        {submitApprovalMutation.isPending ? 'Submitting...' : 'Submit for Approval'}
+                                      </Button>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             </CardContent>
                           </Card>
