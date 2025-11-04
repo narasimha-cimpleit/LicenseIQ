@@ -973,17 +973,72 @@ export const demoRequests = pgTable("demo_requests", {
 ]);
 
 // ======================
+// ERP CATALOG SYSTEM (Universal ERP Support)
+// ======================
+
+// ERP Systems - Define supported ERP vendors (Oracle, SAP, NetSuite, custom, etc.)
+export const erpSystems = pgTable("erp_systems", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(), // e.g., "Oracle ERP Cloud", "SAP S/4HANA", "Custom ERP"
+  vendor: varchar("vendor").notNull(), // oracle, sap, microsoft, netsuite, workday, custom
+  version: varchar("version"), // e.g., "21D", "2023", "v2.1"
+  description: text("description"),
+  category: varchar("category").default("enterprise"), // enterprise, sme, custom
+  status: varchar("status").notNull().default("active"), // active, archived
+  createdBy: varchar("created_by").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("erp_systems_vendor_idx").on(table.vendor),
+  index("erp_systems_status_idx").on(table.status),
+]);
+
+// ERP Entities - Tables/objects within each ERP system (AR_CUSTOMERS, INV_ITEMS, etc.)
+export const erpEntities = pgTable("erp_entities", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  systemId: varchar("system_id").notNull().references(() => erpSystems.id, { onDelete: 'cascade' }),
+  name: varchar("name").notNull(), // Display name: "Customer Master", "Item Master"
+  technicalName: varchar("technical_name").notNull(), // e.g., "AR_CUSTOMERS", "INV_ITEMS"
+  entityType: varchar("entity_type").notNull(), // customers, items, suppliers, invoices, etc.
+  description: text("description"),
+  sampleData: jsonb("sample_data"), // Example records for reference
+  status: varchar("status").notNull().default("active"), // active, archived
+  createdBy: varchar("created_by").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("erp_entities_system_idx").on(table.systemId),
+  index("erp_entities_type_idx").on(table.entityType),
+]);
+
+// ERP Fields - Field definitions for each entity
+export const erpFields = pgTable("erp_fields", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  entityId: varchar("entity_id").notNull().references(() => erpEntities.id, { onDelete: 'cascade' }),
+  fieldName: varchar("field_name").notNull(), // e.g., "CUSTOMER_ID", "ITEM_NUMBER"
+  dataType: varchar("data_type").notNull(), // varchar, number, date, boolean, json
+  constraints: jsonb("constraints"), // { maxLength: 240, required: true, pattern: "..." }
+  sampleValues: text("sample_values"), // Example values: "100001, 100002, 100003"
+  description: text("description"),
+  isPrimaryKey: boolean("is_primary_key").default(false),
+  isRequired: boolean("is_required").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("erp_fields_entity_idx").on(table.entityId),
+]);
+
+// ======================
 // MASTER DATA MAPPING (ERP INTEGRATION)
 // ======================
 
-// AI-driven master data mapping for ERP integrations (Oracle, SAP, NetSuite, etc.)
+// AI-driven master data mapping for ERP integrations
 export const masterDataMappings = pgTable("master_data_mappings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   mappingName: varchar("mapping_name").notNull(), // e.g., "Oracle ERP - Customers"
-  erpSystem: varchar("erp_system").notNull(), // oracle, sap, netsuite, custom
-  entityType: varchar("entity_type").notNull(), // customers, items, suppliers, payment_terms, etc.
+  entityId: varchar("entity_id").notNull().references(() => erpEntities.id), // Reference to ERP entity
   sourceSchema: jsonb("source_schema").notNull(), // Your app's schema structure
-  targetSchema: jsonb("target_schema").notNull(), // Oracle/ERP schema structure
+  targetSchema: jsonb("target_schema").notNull(), // ERP schema structure
   mappingResults: jsonb("mapping_results").notNull(), // Array of {source_field, target_field, transformation_rule, confidence}
   status: varchar("status").notNull().default("active"), // active, archived, draft
   aiModel: varchar("ai_model").default("llama-3.3-70b-versatile"), // Track which AI model was used
@@ -992,8 +1047,7 @@ export const masterDataMappings = pgTable("master_data_mappings", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
-  index("master_data_mappings_erp_idx").on(table.erpSystem),
-  index("master_data_mappings_entity_idx").on(table.entityType),
+  index("master_data_mappings_entity_idx").on(table.entityId),
   index("master_data_mappings_status_idx").on(table.status),
 ]);
 
@@ -1009,6 +1063,25 @@ export const insertDemoRequestSchema = createInsertSchema(demoRequests).pick({
   email: true,
   planTier: true,
   source: true,
+});
+
+// Insert schemas for ERP Catalog
+export const insertErpSystemSchema = createInsertSchema(erpSystems).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertErpEntitySchema = createInsertSchema(erpEntities).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertErpFieldSchema = createInsertSchema(erpFields).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 // Insert schema for master data mappings
@@ -1046,5 +1119,11 @@ export type EarlyAccessSignup = typeof earlyAccessSignups.$inferSelect;
 export type InsertEarlyAccessSignup = z.infer<typeof insertEarlyAccessSignupSchema>;
 export type DemoRequest = typeof demoRequests.$inferSelect;
 export type InsertDemoRequest = z.infer<typeof insertDemoRequestSchema>;
+export type ErpSystem = typeof erpSystems.$inferSelect;
+export type InsertErpSystem = z.infer<typeof insertErpSystemSchema>;
+export type ErpEntity = typeof erpEntities.$inferSelect;
+export type InsertErpEntity = z.infer<typeof insertErpEntitySchema>;
+export type ErpField = typeof erpFields.$inferSelect;
+export type InsertErpField = z.infer<typeof insertErpFieldSchema>;
 export type MasterDataMapping = typeof masterDataMappings.$inferSelect;
 export type InsertMasterDataMapping = z.infer<typeof insertMasterDataMappingSchema>;
