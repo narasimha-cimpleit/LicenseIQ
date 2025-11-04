@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Sparkles, Upload, Download, Save, Trash2, Eye, FileJson, AlertCircle, CheckCircle2, Loader2, Settings } from 'lucide-react';
+import { Sparkles, Upload, Download, Save, Trash2, Eye, FileJson, AlertCircle, CheckCircle2, Loader2, Settings, ArrowLeft } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { ErpSystem, ErpEntity } from '@shared/schema';
 
@@ -238,6 +238,19 @@ export default function MasterDataMapping() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      {/* Breadcrumb Navigation */}
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <button 
+          onClick={() => navigate('/contracts')} 
+          className="hover:text-foreground transition-colors"
+          data-testid="breadcrumb-home"
+        >
+          Home
+        </button>
+        <span>/</span>
+        <span className="text-foreground font-medium">AI Master Data Mapping</span>
+      </div>
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
@@ -248,14 +261,24 @@ export default function MasterDataMapping() {
             Generate intelligent field mappings between LicenseIQ and any ERP system using AI
           </p>
         </div>
-        <Button
-          variant="outline"
-          onClick={() => navigate('/erp-catalog')}
-          data-testid="button-configure-erp"
-        >
-          <Settings className="h-4 w-4 mr-2" />
-          Configure ERP Catalog
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => navigate('/contracts')}
+            data-testid="button-back-home"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => navigate('/erp-catalog')}
+            data-testid="button-configure-erp"
+          >
+            <Settings className="h-4 w-4 mr-2" />
+            Configure ERP Catalog
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="generate" className="w-full">

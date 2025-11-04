@@ -1036,7 +1036,8 @@ export const erpFields = pgTable("erp_fields", {
 export const masterDataMappings = pgTable("master_data_mappings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   mappingName: varchar("mapping_name").notNull(), // e.g., "Oracle ERP - Customers"
-  entityId: varchar("entity_id").notNull().references(() => erpEntities.id), // Reference to ERP entity
+  erpSystem: varchar("erp_system").notNull(), // ERP system name (e.g., "Oracle EBS 12.2")
+  entityType: varchar("entity_type").notNull(), // Entity type name (e.g., "Customers", "Items")
   sourceSchema: jsonb("source_schema").notNull(), // Your app's schema structure
   targetSchema: jsonb("target_schema").notNull(), // ERP schema structure
   mappingResults: jsonb("mapping_results").notNull(), // Array of {source_field, target_field, transformation_rule, confidence}
@@ -1047,7 +1048,8 @@ export const masterDataMappings = pgTable("master_data_mappings", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
-  index("master_data_mappings_entity_idx").on(table.entityId),
+  index("master_data_mappings_erp_idx").on(table.erpSystem),
+  index("master_data_mappings_entity_idx").on(table.entityType),
   index("master_data_mappings_status_idx").on(table.status),
 ]);
 
