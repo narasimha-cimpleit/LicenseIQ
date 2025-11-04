@@ -75,6 +75,12 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
       current: location === "/master-data-mapping",
     },
     {
+      name: "ERP Catalog",
+      href: "/erp-catalog",
+      icon: Database,
+      current: location === "/erp-catalog",
+    },
+    {
       name: "Contract Q&A",
       href: "/contract-qna",
       icon: Brain,
