@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, FileSpreadsheet, AlertCircle, CheckCircle, Download, Calculator } from "lucide-react";
+import { Upload, FileSpreadsheet, AlertCircle, CheckCircle, Download, Calculator, Network, FileUp } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { apiRequest } from "@/lib/queryClient";
 
 export default function SalesUpload() {
@@ -24,6 +25,10 @@ export default function SalesUpload() {
   });
 
   const contracts = contractsData?.contracts || [];
+
+  // Get selected contract details
+  const selectedContract = contracts.find((c: any) => c.id === selectedContractId);
+  const isErpMatchingEnabled = selectedContract?.useErpMatching || false;
 
   const uploadMutation = useMutation({
     mutationFn: async () => {
@@ -137,12 +142,53 @@ export default function SalesUpload() {
             <CardTitle className="flex items-center gap-2">
               <FileSpreadsheet className="h-5 w-5" />
               Upload Sales Data
+              {selectedContract && (
+                <Badge 
+                  variant={isErpMatchingEnabled ? "default" : "outline"}
+                  className={isErpMatchingEnabled ? "bg-purple-600" : ""}
+                >
+                  {isErpMatchingEnabled ? (
+                    <>
+                      <Network className="h-3 w-3 mr-1" />
+                      ERP Matching
+                    </>
+                  ) : (
+                    <>
+                      <FileUp className="h-3 w-3 mr-1" />
+                      Traditional
+                    </>
+                  )}
+                </Badge>
+              )}
             </CardTitle>
             <CardDescription>
-              Upload a CSV or Excel file containing sales transactions. The system will automatically match each sale to contracts using AI.
+              {isErpMatchingEnabled 
+                ? "Upload sales data to match against imported ERP records using AI-powered semantic search. Sales will be automatically linked to contract terms."
+                : "Upload a CSV or Excel file containing sales transactions. The system will automatically match each sale to contracts using AI."
+              }
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* ERP Matching Info Banner */}
+            {isErpMatchingEnabled && (
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/50 dark:to-pink-950/50 border-2 border-purple-300 dark:border-purple-700 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <Network className="h-5 w-5 text-purple-600 dark:text-purple-400 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-purple-900 dark:text-purple-100 mb-1">
+                      🔮 ERP Semantic Matching Active
+                    </h4>
+                    <p className="text-sm text-purple-800 dark:text-purple-200 mb-2">
+                      This contract is configured for advanced ERP integration. Sales data will be matched against imported ERP records using AI-powered semantic search for enhanced accuracy.
+                    </p>
+                    <p className="text-xs text-purple-700 dark:text-purple-300 italic">
+                      💡 Tip: Import your ERP master data first for best results, or toggle off ERP matching in the contract settings to use traditional upload mode.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             {/* Required Columns Info */}
             <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
               <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Required Columns:</h4>
