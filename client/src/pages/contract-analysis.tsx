@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -112,6 +114,29 @@ export default function ContractAnalysis() {
       toast({
         title: "Action Failed",
         description: error.message || "Failed to update flag status.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateErpMatchingMutation = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      const response = await apiRequest("PATCH", `/api/contracts/${id}/erp-matching`, { enabled });
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/contracts", id] });
+      toast({
+        title: data.enabled ? "ERP Matching Enabled" : "ERP Matching Disabled",
+        description: data.enabled 
+          ? "Sales data will now use semantic matching with imported ERP records."
+          : "Sales data will use the traditional direct upload approach.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Update Failed",
+        description: error.message || "Failed to update ERP matching setting.",
         variant: "destructive",
       });
     },
@@ -652,6 +677,37 @@ export default function ContractAnalysis() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* ERP Integration Toggle */}
+            <Card className="border-purple-200 dark:border-purple-800 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20">
+              <CardHeader>
+                <CardTitle className="text-base font-medium flex items-center gap-2">
+                  <Network className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  ERP Integration Mode
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex items-center justify-between">
+                <div className="space-y-1 flex-1">
+                  <Label htmlFor="erp-matching-toggle" className="text-sm font-medium cursor-pointer">
+                    {contract?.useErpMatching ? "✅ ERP Semantic Matching Enabled" : "Traditional Sales Upload"}
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    {contract?.useErpMatching 
+                      ? "Sales will be matched against imported ERP records using AI-powered semantic search"
+                      : "Sales data will be uploaded directly using CSV/Excel files (classic mode)"
+                    }
+                  </p>
+                </div>
+                <Switch
+                  id="erp-matching-toggle"
+                  checked={contract?.useErpMatching || false}
+                  onCheckedChange={(checked) => updateErpMatchingMutation.mutate(checked)}
+                  disabled={updateErpMatchingMutation.isPending}
+                  data-testid="switch-erp-matching"
+                  className="data-[state=checked]:bg-purple-600"
+                />
+              </CardContent>
+            </Card>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Main Analysis Panel */}
