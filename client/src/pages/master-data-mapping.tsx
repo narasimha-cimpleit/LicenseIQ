@@ -83,7 +83,7 @@ export default function MasterDataMapping() {
   // Generate mapping mutation
   const generateMutation = useMutation({
     mutationFn: async (data: { sourceSchema: any; targetSchema: any; entityType: string; erpSystem: string }) => {
-      const response = await apiRequest('POST', '/api/mapping/generate', JSON.stringify(data));
+      const response = await apiRequest('POST', '/api/mapping/generate', data);
       return response.json();
     },
     onSuccess: (data: MappingResult) => {
@@ -105,7 +105,7 @@ export default function MasterDataMapping() {
   // Save mapping mutation
   const saveMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await apiRequest('POST', '/api/mapping/save', JSON.stringify(data));
+      const response = await apiRequest('POST', '/api/mapping/save', data);
       return response.json();
     },
     onSuccess: () => {
@@ -131,6 +131,7 @@ export default function MasterDataMapping() {
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await apiRequest('DELETE', `/api/mapping/${id}`);
+      if (response.status === 204) return { success: true };
       return response.json();
     },
     onSuccess: () => {
