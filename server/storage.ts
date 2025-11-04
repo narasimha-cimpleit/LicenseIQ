@@ -24,6 +24,7 @@ import {
   ruleValidationEvents,
   earlyAccessSignups,
   demoRequests,
+  masterDataMappings,
   type User,
   type InsertUser,
   type Contract,
@@ -263,6 +264,13 @@ export interface IStorage {
   createDemoRequest(request: InsertDemoRequest): Promise<DemoRequest>;
   getAllDemoRequests(status?: string, planTier?: string): Promise<DemoRequest[]>;
   updateDemoRequestStatus(id: string, status: string, notes?: string): Promise<DemoRequest>;
+  
+  // Master data mapping operations
+  createMasterDataMapping(mapping: any): Promise<any>;
+  getMasterDataMapping(id: string): Promise<any | undefined>;
+  getAllMasterDataMappings(filters?: { erpSystem?: string; entityType?: string; status?: string }): Promise<any[]>;
+  updateMasterDataMapping(id: string, updates: Partial<any>): Promise<any>;
+  deleteMasterDataMapping(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1823,6 +1831,64 @@ export class DatabaseStorage implements IStorage {
       .where(eq(demoRequests.id, id))
       .returning();
     return result;
+  }
+
+  // Master data mapping operations
+  async createMasterDataMapping(mapping: any): Promise<any> {
+    const [result] = await db
+      .insert(masterDataMappings)
+      .values(mapping)
+      .returning();
+    return result;
+  }
+
+  async getMasterDataMapping(id: string): Promise<any | undefined> {
+    const [mapping] = await db
+      .select()
+      .from(masterDataMappings)
+      .where(eq(masterDataMappings.id, id));
+    return mapping;
+  }
+
+  async getAllMasterDataMappings(filters?: { erpSystem?: string; entityType?: string; status?: string }): Promise<any[]> {
+    let query = db.select().from(masterDataMappings);
+    
+    const conditions = [];
+    if (filters?.erpSystem) {
+      conditions.push(eq(masterDataMappings.erpSystem, filters.erpSystem));
+    }
+    if (filters?.entityType) {
+      conditions.push(eq(masterDataMappings.entityType, filters.entityType));
+    }
+    if (filters?.status) {
+      conditions.push(eq(masterDataMappings.status, filters.status));
+    }
+    
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+    
+    return await query.orderBy(desc(masterDataMappings.createdAt));
+  }
+
+  async updateMasterDataMapping(id: string, updates: Partial<any>): Promise<any> {
+    const updateData = {
+      ...updates,
+      updatedAt: new Date(),
+    };
+    
+    const [result] = await db
+      .update(masterDataMappings)
+      .set(updateData)
+      .where(eq(masterDataMappings.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteMasterDataMapping(id: string): Promise<void> {
+    await db
+      .delete(masterDataMappings)
+      .where(eq(masterDataMappings.id, id));
   }
 
 }

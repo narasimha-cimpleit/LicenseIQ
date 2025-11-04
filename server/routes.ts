@@ -2686,7 +2686,7 @@ Report ID: ${contractId}
         return res.status(403).json({ error: 'Access denied. Admin privileges required.' });
       }
 
-      const { id } = req.params;
+      const { id} = req.params;
       const { status, notes } = req.body;
 
       if (!status) {
@@ -2699,6 +2699,183 @@ Report ID: ${contractId}
     } catch (error) {
       console.error('Update demo request error:', error);
       res.status(500).json({ error: 'Failed to update demo request' });
+    }
+  });
+
+  // ======================
+  // MASTER DATA MAPPING API (ERP INTEGRATION)
+  // ======================
+
+  // Generate AI-driven schema mapping
+  app.post('/api/mapping/generate', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { sourceSchema, targetSchema, entityType, erpSystem } = req.body;
+
+      if (!sourceSchema || !targetSchema) {
+        return res.status(400).json({ error: 'Source and target schemas are required' });
+      }
+
+      console.log(`🤖 [MAPPING] Generating AI mapping for ${erpSystem} - ${entityType}...`);
+
+      // Use Groq LLaMA to generate intelligent field mappings
+      const prompt = `You are an expert ERP integration specialist. Analyze these schemas and create precise field mappings.
+
+SOURCE SCHEMA (LicenseIQ Platform):
+${JSON.stringify(sourceSchema, null, 2)}
+
+TARGET SCHEMA (${erpSystem || 'ERP System'} - ${entityType || 'Entity'}):
+${JSON.stringify(targetSchema, null, 2)}
+
+TASK: Generate a comprehensive field mapping between source and target schemas.
+
+For each target field, identify:
+1. The corresponding source field (or null if no match)
+2. Any data transformation needed (e.g., "lowercase", "date format YYYY-MM-DD", "concatenate first_name + last_name")
+3. Confidence score (0-100) indicating mapping accuracy
+
+RULES:
+- Match by semantic meaning, not just field names
+- Consider data types and formats
+- Suggest transformations when needed (date formats, case changes, concatenation, etc.)
+- If no good match exists, set source_field to null
+- Be precise and professional
+
+OUTPUT FORMAT (JSON array):
+[
+  {
+    "source_field": "string or null",
+    "target_field": "string",
+    "transformation_rule": "string describing transformation or 'direct' if none needed",
+    "confidence": number (0-100)
+  }
+]
+
+Return ONLY valid JSON array, no other text.`;
+
+      const response = await groqService.makeRequest([
+        { role: 'system', content: 'You are an expert ERP integration specialist. Return only valid JSON.' },
+        { role: 'user', content: prompt }
+      ], 0.1, 3000);
+
+      // Parse the AI response
+      let mappingResults = [];
+      try {
+        const cleanedResponse = response.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        mappingResults = JSON.parse(cleanedResponse);
+      } catch (parseError) {
+        console.error('❌ [MAPPING] Failed to parse AI response:', parseError);
+        return res.status(500).json({ error: 'Failed to parse AI mapping results' });
+      }
+
+      console.log(`✅ [MAPPING] Generated ${mappingResults.length} field mappings`);
+
+      res.json({
+        mappingResults,
+        sourceSchema,
+        targetSchema,
+        entityType,
+        erpSystem,
+      });
+    } catch (error) {
+      console.error('❌ [MAPPING] Generation error:', error);
+      res.status(500).json({ error: 'Failed to generate mapping' });
+    }
+  });
+
+  // Save mapping to database
+  app.post('/api/mapping/save', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { mappingName, erpSystem, entityType, sourceSchema, targetSchema, mappingResults, notes } = req.body;
+
+      if (!mappingName || !erpSystem || !entityType || !sourceSchema || !targetSchema || !mappingResults) {
+        return res.status(400).json({ error: 'All required fields must be provided' });
+      }
+
+      const mapping = await storage.createMasterDataMapping({
+        mappingName,
+        erpSystem,
+        entityType,
+        sourceSchema,
+        targetSchema,
+        mappingResults,
+        status: 'active',
+        aiModel: 'llama-3.3-70b-versatile',
+        createdBy: req.user.id,
+        notes: notes || null,
+      });
+
+      console.log(`💾 [MAPPING] Saved mapping: ${mappingName} (ID: ${mapping.id})`);
+
+      res.json(mapping);
+    } catch (error) {
+      console.error('❌ [MAPPING] Save error:', error);
+      res.status(500).json({ error: 'Failed to save mapping' });
+    }
+  });
+
+  // Get all mappings
+  app.get('/api/mapping', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { erpSystem, entityType, status } = req.query;
+      const mappings = await storage.getAllMasterDataMappings({
+        erpSystem: erpSystem as string,
+        entityType: entityType as string,
+        status: status as string,
+      });
+
+      res.json({ mappings });
+    } catch (error) {
+      console.error('❌ [MAPPING] List error:', error);
+      res.status(500).json({ error: 'Failed to retrieve mappings' });
+    }
+  });
+
+  // Get single mapping by ID
+  app.get('/api/mapping/:id', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const mapping = await storage.getMasterDataMapping(id);
+
+      if (!mapping) {
+        return res.status(404).json({ error: 'Mapping not found' });
+      }
+
+      res.json(mapping);
+    } catch (error) {
+      console.error('❌ [MAPPING] Get error:', error);
+      res.status(500).json({ error: 'Failed to retrieve mapping' });
+    }
+  });
+
+  // Update mapping
+  app.patch('/api/mapping/:id', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+
+      const mapping = await storage.updateMasterDataMapping(id, updates);
+
+      console.log(`✏️ [MAPPING] Updated mapping: ${id}`);
+
+      res.json(mapping);
+    } catch (error) {
+      console.error('❌ [MAPPING] Update error:', error);
+      res.status(500).json({ error: 'Failed to update mapping' });
+    }
+  });
+
+  // Delete mapping
+  app.delete('/api/mapping/:id', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteMasterDataMapping(id);
+
+      console.log(`🗑️ [MAPPING] Deleted mapping: ${id}`);
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('❌ [MAPPING] Delete error:', error);
+      res.status(500).json({ error: 'Failed to delete mapping' });
     }
   });
 
