@@ -3118,10 +3118,13 @@ Return ONLY valid JSON array, no other text.`;
   app.get('/api/erp-fields', isAuthenticated, async (req: any, res: Response) => {
     try {
       const { entityId } = req.query;
+      console.log('🔍 [ERP FIELDS] Request received - entityId:', entityId);
       if (!entityId) {
+        console.log('⚠️ [ERP FIELDS] No entityId provided in query');
         return res.status(400).json({ error: 'entityId is required' });
       }
       const fields = await storage.getErpFieldsByEntity(entityId as string);
+      console.log(`✅ [ERP FIELDS] Found ${fields.length} fields for entity ${entityId}`);
       res.json({ fields });
     } catch (error) {
       console.error('❌ [ERP FIELDS] Get error:', error);
