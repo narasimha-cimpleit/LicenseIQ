@@ -258,7 +258,7 @@ export default function MasterDataMapping() {
             AI Master Data Mapping
           </h1>
           <p className="text-muted-foreground mt-1">
-            Generate intelligent field mappings between LicenseIQ and any ERP system using AI
+            Map your ERP field names to LicenseIQ standard fields using AI - Create reusable mapping templates
           </p>
         </div>
         <div className="flex gap-2">
@@ -293,18 +293,18 @@ export default function MasterDataMapping() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <FileJson className="h-5 w-5 text-blue-500" />
-                  Source Schema (LicenseIQ)
+                  <FileJson className="h-5 w-5 text-orange-500" />
+                  Source Schema (Your ERP System)
                 </CardTitle>
                 <CardDescription>
-                  Paste your LicenseIQ data schema as JSON
+                  Paste your ERP data schema as JSON (Oracle, SAP, NetSuite, etc.)
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <Textarea
                   value={sourceSchema}
                   onChange={(e) => setSourceSchema(e.target.value)}
-                  placeholder={'{\n  "contractId": "string",\n  "partyName": "string",\n  "effectiveDate": "date"\n}'}
+                  placeholder={'{\n  "CUSTOMER_ID": "number",\n  "CUSTOMER_NAME": "varchar(240)",\n  "CREATION_DATE": "date"\n}'}
                   className="font-mono text-sm min-h-[300px]"
                   data-testid="input-source-schema"
                 />
@@ -315,18 +315,18 @@ export default function MasterDataMapping() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <FileJson className="h-5 w-5 text-orange-500" />
-                  Target Schema (Oracle ERP)
+                  <FileJson className="h-5 w-5 text-blue-500" />
+                  Target Schema (LicenseIQ)
                 </CardTitle>
                 <CardDescription>
-                  Paste Oracle ERP table schema as JSON
+                  Paste LicenseIQ standard field schema as JSON
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <Textarea
                   value={targetSchema}
                   onChange={(e) => setTargetSchema(e.target.value)}
-                  placeholder={'{\n  "CUSTOMER_ID": "number",\n  "CUSTOMER_NAME": "varchar(240)",\n  "CREATION_DATE": "date"\n}'}
+                  placeholder={'{\n  "contractId": "string",\n  "partyName": "string",\n  "effectiveDate": "date"\n}'}
                   className="font-mono text-sm min-h-[300px]"
                   data-testid="input-target-schema"
                 />
@@ -468,8 +468,8 @@ export default function MasterDataMapping() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Source Field (LicenseIQ)</TableHead>
-                        <TableHead>Target Field (Oracle)</TableHead>
+                        <TableHead>Source Field (Your ERP)</TableHead>
+                        <TableHead>Target Field (LicenseIQ)</TableHead>
                         <TableHead>Transformation Rule</TableHead>
                         <TableHead>Confidence</TableHead>
                       </TableRow>
