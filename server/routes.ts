@@ -2423,7 +2423,7 @@ Report ID: ${contractId}
       }
 
       // Fetch contract to check ERP matching settings
-      const contract = await storage.getContractById(contractId);
+      const contract = await storage.getContract(contractId);
       if (!contract) {
         return res.status(404).json({ error: 'Contract not found' });
       }
