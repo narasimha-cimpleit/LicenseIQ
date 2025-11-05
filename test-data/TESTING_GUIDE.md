@@ -153,7 +153,7 @@ This comprehensive guide walks you through **EVERY major feature** of the Licens
 ```
 ✅ ERP Catalog page loads
 ✅ 5 pre-configured ERP systems visible
-✅ System details displayed
+✅ System details displayed (Oracle, SAP, NetSuite)
 ✅ No errors
 ```
 
@@ -208,12 +208,16 @@ This comprehensive guide walks you through **EVERY major feature** of the Licens
 **Expected Results:**
 ```
 ✅ Fields tab shows all configured fields
-✅ 10+ customer fields visible
+✅ 30 pre-seeded fields across 3 entities:
+   - Customers: 10 fields (PARTY_ID, PARTY_NAME, EMAIL_ADDRESS, etc.)
+   - Suppliers: 10 fields (VENDOR_ID, VENDOR_NAME, TAX_ID, etc.)
+   - Items: 10 fields (INVENTORY_ITEM_ID, ITEM_NUMBER, DESCRIPTION, etc.)
 ✅ Each field shows:
    - Field name
    - Data type
    - Entity it belongs to
    - ERP system link
+   - Primary key indicator
 ```
 
 ---
