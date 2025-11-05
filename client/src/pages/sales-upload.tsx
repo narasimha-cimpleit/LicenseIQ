@@ -20,7 +20,7 @@ export default function SalesUpload() {
   const [uploadResult, setUploadResult] = useState<any>(null);
 
   // Fetch contracts
-  const { data: contractsData } = useQuery({
+  const { data: contractsData } = useQuery<{ contracts: any[] }>({
     queryKey: ['/api/contracts'],
   });
 
@@ -320,19 +320,56 @@ export default function SalesUpload() {
                   <p className="text-2xl font-bold text-green-600">{uploadResult.validRows || 0}</p>
                 </div>
                 <div className="bg-orange-50 dark:bg-orange-950 p-4 rounded-lg">
-                  <p className="text-sm text-muted-foreground">Invalid</p>
-                  <p className="text-2xl font-bold text-orange-600">{uploadResult.invalidRows || 0}</p>
+                  <p className="text-sm text-muted-foreground">Errors</p>
+                  <p className="text-2xl font-bold text-orange-600">{uploadResult.errors || 0}</p>
                 </div>
               </div>
 
-              {uploadResult.errors && uploadResult.errors.length > 0 && (
-                <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg p-4">
-                  <h4 className="font-semibold text-red-900 dark:text-red-100 mb-2">Errors:</h4>
-                  <ul className="text-sm text-red-800 dark:text-red-200 space-y-1">
-                    {uploadResult.errors.map((error: string, idx: number) => (
-                      <li key={idx}>• {error}</li>
-                    ))}
-                  </ul>
+              {/* Semantic Matching Statistics */}
+              {uploadResult.erpMatchingEnabled && (
+                <div className="bg-purple-50 dark:bg-purple-950 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+                  <h4 className="font-semibold text-purple-900 dark:text-purple-100 mb-3 flex items-center gap-2">
+                    <Network className="h-4 w-4" />
+                    ERP Semantic Matching Results
+                  </h4>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center">
+                      <p className="text-sm text-purple-800 dark:text-purple-200 mb-1">Matched</p>
+                      <p className="text-2xl font-bold text-green-600">{uploadResult.matchedRecords || 0}</p>
+                      <Badge className="mt-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
+                        ≥70% confidence
+                      </Badge>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm text-purple-800 dark:text-purple-200 mb-1">Unmatched</p>
+                      <p className="text-2xl font-bold text-orange-600">{uploadResult.unmatchedRecords || 0}</p>
+                      <Badge className="mt-1 bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-100">
+                        &lt;70% confidence
+                      </Badge>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm text-purple-800 dark:text-purple-200 mb-1">Avg Confidence</p>
+                      <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                        {uploadResult.avgConfidence ? `${(parseFloat(uploadResult.avgConfidence) * 100).toFixed(0)}%` : '0%'}
+                      </p>
+                      <Badge className="mt-1 bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100">
+                        AI-powered
+                      </Badge>
+                    </div>
+                  </div>
+                  <p className="text-xs text-purple-700 dark:text-purple-300 mt-3 italic">
+                    💡 Sales records were matched against imported ERP master data using semantic similarity search
+                  </p>
+                </div>
+              )}
+
+              {uploadResult.errors > 0 && (
+                <div className="bg-orange-50 dark:bg-orange-950 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
+                  <h4 className="font-semibold text-orange-900 dark:text-orange-100 mb-2">⚠️ Validation Errors</h4>
+                  <p className="text-sm text-orange-800 dark:text-orange-200">
+                    {uploadResult.errors} row(s) failed validation and were skipped during import. 
+                    Common issues include missing required fields (transactionDate, grossAmount) or invalid data types.
+                  </p>
                 </div>
               )}
 

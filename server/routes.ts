@@ -2410,11 +2410,22 @@ Report ID: ${contractId}
     }
   });
 
-  // Upload sales data (with AI-driven contract matching)
+  // Upload sales data (with ERP semantic matching support)
   app.post('/api/sales/upload', isAuthenticated, dataUpload.single('file'), async (req: any, res: Response) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const contractId = req.body.contractId;
+      if (!contractId) {
+        return res.status(400).json({ error: 'Contract ID is required' });
+      }
+
+      // Fetch contract to check ERP matching settings
+      const contract = await storage.getContractById(contractId);
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
       }
 
       // Parse file
@@ -2423,10 +2434,69 @@ Report ID: ${contractId}
       const parseResult = await SalesDataParser.parseFile(fileBuffer, req.file.originalname);
 
       const validRows = parseResult.rows.filter(r => r.validationStatus === 'valid');
-      const contractId = req.body.contractId; // Optional - if not provided, AI will match
+      
+      let matchedRecords = 0;
+      let unmatchedRecords = 0;
+      let totalConfidence = 0;
 
-      // Store sales data (for now, without AI matching - will be enhanced later)
-      if (contractId) {
+      // Check if ERP semantic matching is enabled for this contract
+      if (contract.useErpMatching) {
+        // Import HuggingFace embedding service
+        const { HuggingFaceEmbeddingService } = await import('./services/huggingFaceEmbedding');
+        
+        // Process each sales record with semantic matching
+        for (const row of validRows) {
+          const salesData = row.rowData as any;
+          
+          // Build a text representation for embedding (product-focused)
+          const searchText = [
+            salesData.productCode,
+            salesData.productName,
+            salesData.category,
+            salesData.territory
+          ].filter(Boolean).join(' ');
+          
+          // Generate embedding for the sales record
+          const embedding = await HuggingFaceEmbeddingService.generateEmbedding(searchText);
+          
+          // Search for semantic matches in imported ERP records
+          const matches = await storage.searchSemanticMatches(
+            contractId,
+            embedding,
+            5, // Top 5 matches
+            0.3 // Minimum similarity threshold (30%)
+          );
+          
+          // Use the best match confidence, or 0 if no matches
+          const matchConfidence = matches.length > 0 ? matches[0].similarity : 0;
+          
+          // Store sales data with match confidence
+          await storage.createSalesData({
+            matchedContractId: contractId,
+            transactionId: salesData.transactionId || `TXN-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            transactionDate: salesData.transactionDate ? new Date(salesData.transactionDate) : new Date(),
+            productCode: salesData.productCode,
+            productName: salesData.productName,
+            category: salesData.category,
+            territory: salesData.territory,
+            currency: salesData.currency || 'USD',
+            grossAmount: String(parseFloat(salesData.grossAmount) || 0),
+            netAmount: String(parseFloat(salesData.netAmount) || 0),
+            quantity: String(parseInt(salesData.quantity) || 0),
+            unitPrice: String(parseFloat(salesData.unitPrice) || 0),
+            matchConfidence: String(matchConfidence)
+          });
+          
+          // Track matching statistics
+          if (matchConfidence >= 0.7) {
+            matchedRecords++;
+          } else {
+            unmatchedRecords++;
+          }
+          totalConfidence += matchConfidence;
+        }
+      } else {
+        // Traditional upload without ERP matching
         for (const row of validRows) {
           const salesData = row.rowData as any;
           await storage.createSalesData({
@@ -2453,17 +2523,31 @@ Report ID: ${contractId}
       await createAuditLog(req, 'upload_sales_data', 'sales', undefined, {
         fileName: req.file.originalname,
         rowsImported: validRows.length,
-        contractId: contractId || 'AI-matched'
+        contractId,
+        erpMatchingEnabled: contract.useErpMatching,
+        ...(contract.useErpMatching && {
+          matchedRecords,
+          unmatchedRecords,
+          avgConfidence: validRows.length > 0 ? (totalConfidence / validRows.length).toFixed(2) : 0
+        })
       });
+
+      const message = contract.useErpMatching
+        ? `${validRows.length} sales transactions imported with ERP semantic matching (${matchedRecords} matched, ${unmatchedRecords} unmatched)`
+        : `${validRows.length} sales transactions imported successfully`;
 
       res.json({
         success: true,
         validRows: validRows.length,
         totalRows: parseResult.rows.length,
         errors: parseResult.rows.filter(r => r.validationStatus === 'invalid').length,
-        message: contractId 
-          ? `${validRows.length} sales transactions imported successfully` 
-          : `${validRows.length} sales transactions parsed. AI matching will be available soon.`
+        erpMatchingEnabled: contract.useErpMatching,
+        ...(contract.useErpMatching && {
+          matchedRecords,
+          unmatchedRecords,
+          avgConfidence: validRows.length > 0 ? (totalConfidence / validRows.length).toFixed(2) : 0
+        }),
+        message
       });
 
     } catch (error: any) {
