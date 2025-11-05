@@ -3080,6 +3080,196 @@ Return ONLY valid JSON array, no other text.`;
     }
   });
 
+  // ==========================================
+  // ERP DATA IMPORT ROUTES
+  // ==========================================
+
+  // Upload and import ERP master data with vector embeddings
+  app.post('/api/erp-import', isAuthenticated, dataUpload.single('file'), async (req: any, res: Response) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const { contractId, mappingId } = req.body;
+
+      if (!contractId || !mappingId) {
+        return res.status(400).json({ error: 'Contract ID and Mapping ID are required' });
+      }
+
+      // Get the mapping details
+      const mapping = await storage.getMasterDataMapping(mappingId);
+      if (!mapping) {
+        return res.status(404).json({ error: 'Mapping not found' });
+      }
+
+      // Create import job
+      const jobName = `${mapping.erpSystem} - ${mapping.entityType} Import - ${new Date().toISOString().split('T')[0]}`;
+      const importJob = await storage.createDataImportJob({
+        mappingId,
+        customerId: contractId,
+        jobName,
+        uploadMeta: {
+          fileName: req.file.originalname,
+          fileSize: req.file.size,
+          uploadedAt: new Date().toISOString()
+        },
+        status: 'processing',
+        recordsTotal: 0,
+        recordsProcessed: 0,
+        recordsFailed: 0,
+        createdBy: req.user.id,
+        startedAt: new Date()
+      });
+
+      console.log(`🚀 [ERP IMPORT] Job created: ${importJob.id}`);
+
+      // Parse file asynchronously
+      (async () => {
+        try {
+          const fs = await import('fs');
+          const fileBuffer = fs.readFileSync(req.file.path);
+          
+          // Parse CSV or Excel
+          let parsedData: any[] = [];
+          if (req.file.originalname.endsWith('.csv')) {
+            const Papa = (await import('papaparse')).default;
+            const fileContent = fileBuffer.toString('utf-8');
+            const result = await new Promise<any>((resolve) => {
+              Papa.parse(fileContent, {
+                header: true,
+                skipEmptyLines: true,
+                dynamicTyping: true,
+                complete: (results) => resolve(results)
+              });
+            });
+            parsedData = result.data;
+          } else {
+            const XLSX = await import('xlsx');
+            const workbook = XLSX.read(fileBuffer, { type: 'buffer' });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            parsedData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+          }
+
+          console.log(`📊 [ERP IMPORT] Parsed ${parsedData.length} records`);
+
+          // Update total count
+          await storage.updateDataImportJob(importJob.id, {
+            recordsTotal: parsedData.length
+          });
+
+          // Import HuggingFace embedding service
+          const { HuggingFaceEmbeddingService } = await import('./services/huggingFaceEmbedding');
+
+          // Process records with embeddings
+          const records = [];
+          let processed = 0;
+          let failed = 0;
+
+          for (const row of parsedData) {
+            try {
+              // Create searchable text from all fields
+              const searchText = Object.entries(row)
+                .filter(([key, value]) => value)
+                .map(([key, value]) => `${key}: ${value}`)
+                .join('. ');
+
+              // Generate embedding
+              const { embedding } = await HuggingFaceEmbeddingService.generateEmbedding(searchText);
+
+              records.push({
+                jobId: importJob.id,
+                mappingId,
+                customerId: contractId,
+                sourceRecord: row,
+                targetRecord: row,
+                embedding,
+                metadata: {
+                  erpSystem: mapping.erpSystem,
+                  entityType: mapping.entityType,
+                  importedAt: new Date().toISOString()
+                }
+              });
+
+              processed++;
+
+              // Update progress every 10 records
+              if (processed % 10 === 0) {
+                await storage.updateDataImportJob(importJob.id, {
+                  recordsProcessed: processed
+                });
+                console.log(`📈 [ERP IMPORT] Progress: ${processed}/${parsedData.length}`);
+              }
+
+            } catch (error) {
+              console.error(`❌ [ERP IMPORT] Failed to process record:`, error);
+              failed++;
+            }
+          }
+
+          // Save all records in batch
+          if (records.length > 0) {
+            await storage.createImportedErpRecords(records);
+          }
+
+          // Mark job as completed
+          await storage.updateDataImportJob(importJob.id, {
+            status: 'completed',
+            recordsProcessed: processed,
+            recordsFailed: failed,
+            completedAt: new Date()
+          });
+
+          console.log(`✅ [ERP IMPORT] Job completed: ${processed} processed, ${failed} failed`);
+
+          // Log the import
+          await createAuditLog(req, 'import_erp_data', 'data_import_job', importJob.id, {
+            fileName: req.file.originalname,
+            totalRows: parsedData.length,
+            processedRows: processed,
+            failedRows: failed,
+            erpSystem: mapping.erpSystem,
+            entityType: mapping.entityType
+          });
+
+        } catch (error) {
+          console.error('❌ [ERP IMPORT] Processing error:', error);
+          await storage.updateDataImportJob(importJob.id, {
+            status: 'failed',
+            errorLog: { message: (error as Error).message }
+          });
+        }
+      })();
+
+      // Return immediately with job info
+      res.json({
+        success: true,
+        job: importJob,
+        message: 'Import job started. Processing in background.'
+      });
+
+    } catch (error) {
+      console.error('❌ [ERP IMPORT] Error:', error);
+      res.status(500).json({ error: 'Failed to start import job' });
+    }
+  });
+
+  // Get all ERP import jobs
+  app.get('/api/erp-import-jobs', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { contractId, status } = req.query;
+      const jobs = await storage.getDataImportJobs(
+        contractId as string | undefined,
+        status as string | undefined
+      );
+      res.json(jobs);
+    } catch (error) {
+      console.error('❌ [ERP IMPORT JOBS] Error:', error);
+      res.status(500).json({ error: 'Failed to fetch import jobs' });
+    }
+  });
+
   // Return the configured app - server will be started in index.ts
   return createServer(app);
 }

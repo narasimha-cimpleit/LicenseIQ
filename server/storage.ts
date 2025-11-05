@@ -28,6 +28,8 @@ import {
   erpSystems,
   erpEntities,
   erpFields,
+  dataImportJobs,
+  importedErpRecords,
   type User,
   type InsertUser,
   type Contract,
@@ -304,6 +306,17 @@ export interface IStorage {
   getErpFieldsByEntity(entityId: string): Promise<ErpField[]>;
   updateErpField(id: string, updates: Partial<InsertErpField>): Promise<ErpField>;
   deleteErpField(id: string): Promise<void>;
+  
+  // Data import jobs operations
+  createDataImportJob(job: any): Promise<any>;
+  getDataImportJobs(contractId?: string, status?: string): Promise<any[]>;
+  getDataImportJob(id: string): Promise<any | undefined>;
+  updateDataImportJob(id: string, updates: any): Promise<any>;
+  
+  // Imported ERP records operations
+  createImportedErpRecords(records: any[]): Promise<void>;
+  getImportedErpRecords(contractId?: string, jobId?: string): Promise<any[]>;
+  searchSemanticMatches(embedding: number[], contractId?: string, limit?: number): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2067,6 +2080,108 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(erpFields)
       .where(eq(erpFields.id, id));
+  }
+
+  // Data import jobs operations
+  async createDataImportJob(job: any): Promise<any> {
+    const [result] = await db
+      .insert(dataImportJobs)
+      .values(job)
+      .returning();
+    return result;
+  }
+
+  async getDataImportJobs(contractId?: string, status?: string): Promise<any[]> {
+    let query = db.select().from(dataImportJobs);
+    
+    const conditions = [];
+    if (contractId) {
+      conditions.push(eq(dataImportJobs.customerId, contractId));
+    }
+    if (status) {
+      conditions.push(eq(dataImportJobs.status, status));
+    }
+    
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)) as any;
+    }
+    
+    const results = await query.orderBy(desc(dataImportJobs.createdAt));
+    return results;
+  }
+
+  async getDataImportJob(id: string): Promise<any | undefined> {
+    const [result] = await db
+      .select()
+      .from(dataImportJobs)
+      .where(eq(dataImportJobs.id, id));
+    return result;
+  }
+
+  async updateDataImportJob(id: string, updates: any): Promise<any> {
+    const [result] = await db
+      .update(dataImportJobs)
+      .set(updates)
+      .where(eq(dataImportJobs.id, id))
+      .returning();
+    return result;
+  }
+
+  // Imported ERP records operations
+  async createImportedErpRecords(records: any[]): Promise<void> {
+    if (records.length === 0) return;
+    
+    await db.insert(importedErpRecords).values(records);
+  }
+
+  async getImportedErpRecords(contractId?: string, jobId?: string): Promise<any[]> {
+    let query = db.select().from(importedErpRecords);
+    
+    const conditions = [];
+    if (contractId) {
+      conditions.push(eq(importedErpRecords.customerId, contractId));
+    }
+    if (jobId) {
+      conditions.push(eq(importedErpRecords.jobId, jobId));
+    }
+    
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)) as any;
+    }
+    
+    const results = await query.orderBy(desc(importedErpRecords.createdAt));
+    return results;
+  }
+
+  async searchSemanticMatches(embedding: number[], contractId?: string, limit: number = 10): Promise<any[]> {
+    const embeddingStr = JSON.stringify(embedding);
+    
+    let query = `
+      SELECT 
+        id,
+        job_id,
+        mapping_id,
+        customer_id,
+        source_record,
+        target_record,
+        metadata,
+        created_at,
+        1 - (embedding <=> $1::vector) as similarity
+      FROM imported_erp_records
+    `;
+    
+    const params: any[] = [embeddingStr];
+    
+    if (contractId) {
+      query += ' WHERE customer_id = $2';
+      params.push(contractId);
+    }
+    
+    query += ' ORDER BY embedding <=> $1::vector';
+    query += ` LIMIT ${limit}`;
+    
+    const result = await db.execute(sql.raw(query, ...params));
+    return result.rows as any[];
   }
 
 }

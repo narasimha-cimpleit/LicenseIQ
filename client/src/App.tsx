@@ -29,6 +29,7 @@ import CalculationsPage from "@/pages/calculations";
 import ContractManagement from "@/pages/contract-management";
 import MasterDataMapping from "@/pages/master-data-mapping";
 import ErpCatalog from "@/pages/erp-catalog";
+import ErpDataImport from "@/pages/erp-data-import";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -68,6 +69,7 @@ function Router() {
             {/* ERP Integration */}
             <ProtectedRoute path="/master-data-mapping" component={MasterDataMapping} />
             <ProtectedRoute path="/erp-catalog" component={ErpCatalog} />
+            <ProtectedRoute path="/erp-import" component={ErpDataImport} />
             {/* Contract Management - must come before /contracts/:id */}
             <ProtectedRoute path="/contracts/:id/manage" component={ContractManagement} />
             <ProtectedRoute path="/contracts/:id" component={ContractAnalysis} />

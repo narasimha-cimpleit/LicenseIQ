@@ -81,6 +81,12 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
       current: location === "/erp-catalog",
     },
     {
+      name: "ERP Data Import",
+      href: "/erp-import",
+      icon: Upload,
+      current: location === "/erp-import",
+    },
+    {
       name: "Contract Q&A",
       href: "/contract-qna",
       icon: Brain,
