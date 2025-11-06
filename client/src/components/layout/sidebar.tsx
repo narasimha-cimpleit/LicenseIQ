@@ -11,7 +11,6 @@ import {
   FileText, 
   Users, 
   History,
-  LogOut,
   Building2,
   Receipt,
   Calculator,
@@ -56,11 +55,7 @@ const iconMap: Record<string, LucideIcon> = {
 
 export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
   const [location, setLocation] = useLocation();
-  const { user, logoutMutation } = useAuth();
-
-  const handleLogout = () => {
-    logoutMutation.mutate();
-  };
+  const { user } = useAuth();
 
   // Fetch dynamic navigation permissions from database
   const { data: navData } = useQuery<{ items: any[] }>({
@@ -141,8 +136,8 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
         {/* User Profile */}
         <div className="px-3 py-4 border-t border-sidebar-border">
           <div className="flex items-center">
-            <div className="h-8 w-8 bg-secondary rounded-full flex items-center justify-center">
-              <span className="text-sm font-medium text-secondary-foreground">
+            <div className="h-8 w-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+              <span className="text-sm font-medium text-white">
                 {userInitials}
               </span>
             </div>
@@ -157,15 +152,6 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
                 {user?.role || 'User'}
               </p>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLogout}
-              className="text-sidebar-foreground hover:text-sidebar-foreground"
-              data-testid="button-logout"
-            >
-              <LogOut className="h-4 w-4 text-red-400" />
-            </Button>
           </div>
         </div>
       </div>

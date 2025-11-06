@@ -1,6 +1,15 @@
 import { Button } from "@/components/ui/button";
-import { Bell, Plus, Menu } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Bell, Plus, Menu, User, LogOut, Settings } from "lucide-react";
 import { useLocation } from "wouter";
+import { useAuth } from "@/hooks/useAuth";
 
 interface HeaderProps {
   title: string;
@@ -10,13 +19,26 @@ interface HeaderProps {
 
 export default function Header({ title, description, onMenuClick }: HeaderProps) {
   const [, setLocation] = useLocation();
+  const { user, logoutMutation } = useAuth();
 
   const handleNewContract = () => {
     setLocation("/upload");
   };
 
+  const handleLogout = () => {
+    logoutMutation.mutate();
+  };
+
+  const handleSettings = () => {
+    setLocation("/configuration");
+  };
+
   // Hide New Contract button on Analytics page since it's already in main dashboard
   const showNewContractButton = title !== "Enterprise Analytics";
+
+  const userInitials = user?.firstName && user?.lastName 
+    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+    : user?.email?.[0]?.toUpperCase() || 'U';
 
   return (
     <header className="bg-card border-b border-border px-4 md:px-6 py-4">
@@ -56,6 +78,53 @@ export default function Header({ title, description, onMenuClick }: HeaderProps)
               <span className="hidden md:inline">New Contract</span>
             </Button>
           )}
+          
+          {/* User Profile Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="relative h-9 w-9 rounded-full"
+                data-testid="button-user-profile"
+              >
+                <div className="h-8 w-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-medium text-white">
+                    {userInitials}
+                  </span>
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">
+                    {user?.firstName && user?.lastName 
+                      ? `${user.firstName} ${user.lastName}`
+                      : user?.email
+                    }
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {user?.email}
+                  </p>
+                  <p className="text-xs text-muted-foreground capitalize">
+                    {user?.role || 'User'}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {(user?.role === 'admin' || user?.role === 'owner') && (
+                <DropdownMenuItem onClick={handleSettings} data-testid="menu-settings">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onClick={handleLogout} data-testid="menu-logout">
+                <LogOut className="mr-2 h-4 w-4 text-red-500" />
+                <span>Log out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>
