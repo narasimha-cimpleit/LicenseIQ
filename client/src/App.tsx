@@ -32,6 +32,7 @@ import ErpCatalog from "@/pages/erp-catalog";
 import ErpDataImport from "@/pages/erp-data-import";
 import LicenseiqSchema from "@/pages/licenseiq-schema";
 import DataManagement from "@/pages/data-management";
+import Configuration from "@/pages/configuration";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -74,6 +75,7 @@ function Router() {
             <ProtectedRoute path="/erp-import" component={ErpDataImport} />
             <ProtectedRoute path="/licenseiq-schema" component={LicenseiqSchema} />
             <ProtectedRoute path="/data-management" component={DataManagement} />
+            <ProtectedRoute path="/configuration" component={Configuration} />
             {/* Contract Management - must come before /contracts/:id */}
             <ProtectedRoute path="/contracts/:id/manage" component={ContractManagement} />
             <ProtectedRoute path="/contracts/:id" component={ContractAnalysis} />

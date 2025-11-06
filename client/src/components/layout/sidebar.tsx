@@ -158,6 +158,16 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
     });
   }
 
+  // Add configuration for admin/owner
+  if (user?.role === 'admin' || user?.role === 'owner') {
+    navigation.push({
+      name: "Configuration",
+      href: "/configuration",
+      icon: Building2,
+      current: location === "/configuration",
+    });
+  }
+
   const userInitials = user?.firstName && user?.lastName 
     ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
     : user?.email?.[0]?.toUpperCase() || 'U';

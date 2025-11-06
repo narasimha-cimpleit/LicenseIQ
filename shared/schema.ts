@@ -1258,3 +1258,73 @@ export type LicenseiqField = typeof licenseiqFields.$inferSelect;
 export type InsertLicenseiqField = z.infer<typeof insertLicenseiqFieldSchema>;
 export type LicenseiqEntityRecord = typeof licenseiqEntityRecords.$inferSelect;
 export type InsertLicenseiqEntityRecord = z.infer<typeof insertLicenseiqEntityRecordSchema>;
+
+// ======================
+// NAVIGATION PERMISSIONS
+// ======================
+
+export const navigationPermissions = pgTable("navigation_permissions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  itemKey: varchar("item_key").notNull(), // Unique identifier for nav item (e.g., 'dashboard', 'contracts')
+  itemName: varchar("item_name").notNull(), // Display name
+  href: varchar("href").notNull(), // Route path
+  iconName: varchar("icon_name"), // Icon identifier
+  defaultRoles: jsonb("default_roles").$type<string[]>().default([]), // Default roles that can see this item
+  isActive: boolean("is_active").default(true),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("nav_perm_item_key_idx").on(table.itemKey),
+]);
+
+export const roleNavigationPermissions = pgTable("role_navigation_permissions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  role: varchar("role").notNull(), // Role name (admin, owner, user, etc.)
+  navItemKey: varchar("nav_item_key").notNull().references(() => navigationPermissions.itemKey, { onDelete: 'cascade' }),
+  isEnabled: boolean("is_enabled").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("role_nav_perm_role_idx").on(table.role),
+  index("role_nav_perm_item_idx").on(table.navItemKey),
+]);
+
+export const userNavigationOverrides = pgTable("user_navigation_overrides", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  navItemKey: varchar("nav_item_key").notNull().references(() => navigationPermissions.itemKey, { onDelete: 'cascade' }),
+  isEnabled: boolean("is_enabled").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("user_nav_override_user_idx").on(table.userId),
+  index("user_nav_override_item_idx").on(table.navItemKey),
+]);
+
+// Insert schemas for navigation permissions
+export const insertNavigationPermissionSchema = createInsertSchema(navigationPermissions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertRoleNavigationPermissionSchema = createInsertSchema(roleNavigationPermissions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertUserNavigationOverrideSchema = createInsertSchema(userNavigationOverrides).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Types for navigation permissions
+export type NavigationPermission = typeof navigationPermissions.$inferSelect;
+export type InsertNavigationPermission = z.infer<typeof insertNavigationPermissionSchema>;
+export type RoleNavigationPermission = typeof roleNavigationPermissions.$inferSelect;
+export type InsertRoleNavigationPermission = z.infer<typeof insertRoleNavigationPermissionSchema>;
+export type UserNavigationOverride = typeof userNavigationOverrides.$inferSelect;
+export type InsertUserNavigationOverride = z.infer<typeof insertUserNavigationOverrideSchema>;

@@ -14,7 +14,7 @@ import { PDFInvoiceService } from "./services/pdfInvoiceService";
 import { HuggingFaceEmbeddingService } from "./services/huggingFaceEmbedding";
 import { RAGService } from "./services/ragService";
 import { db } from "./db";
-import { contracts, contractEmbeddings, royaltyRules } from "@shared/schema";
+import { contracts, contractEmbeddings, royaltyRules, navigationPermissions, roleNavigationPermissions, userNavigationOverrides } from "@shared/schema";
 import { 
   insertContractSchema, 
   insertContractAnalysisSchema, 
@@ -3612,6 +3612,281 @@ Return ONLY valid JSON array, no other text.`;
     } catch (error) {
       console.error('❌ [LICENSEIQ SEED] Error:', error);
       res.status(500).json({ error: 'Failed to seed entities' });
+    }
+  });
+
+  // Seed sample records for all entities
+  app.post('/api/licenseiq-sample-data/seed', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      // Admin/owner authorization check
+      if (req.user.role !== 'admin' && req.user.role !== 'owner') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      const entities = await storage.getAllLicenseiqEntities();
+      const sampleData: Record<string, any[]> = {
+        // Master Data entities (17)
+        customers_parties: [
+          { code: 'CUST001', name: 'Acme Corporation', type: 'Customer', status: 'Active', city: 'New York', creditLimit: 100000 },
+          { code: 'CUST002', name: 'Tech Solutions Inc', type: 'Customer', status: 'Active', city: 'San Francisco', creditLimit: 150000 },
+          { code: 'CUST003', name: 'Global Enterprises', type: 'Customer', status: 'Inactive', city: 'London', creditLimit: 200000 }
+        ],
+        items: [
+          { code: 'ITEM001', name: 'Software License', type: 'Service', category: 'Licensing', unitPrice: 99.99, uom: 'Each' },
+          { code: 'ITEM002', name: 'Hardware Device', type: 'Product', category: 'Electronics', unitPrice: 299.99, uom: 'Each' },
+          { code: 'ITEM003', name: 'Consulting Service', type: 'Service', category: 'Professional Services', unitPrice: 150.00, uom: 'Hour' }
+        ],
+        item_category: [
+          { code: 'CAT001', name: 'Licensing', description: 'Software and IP licensing', isActive: true },
+          { code: 'CAT002', name: 'Electronics', description: 'Electronic devices and equipment', isActive: true },
+          { code: 'CAT003', name: 'Professional Services', description: 'Consulting and advisory services', isActive: true }
+        ],
+        item_class: [
+          { code: 'CLASS001', name: 'Digital Products', description: 'Software and digital goods', parentClass: null },
+          { code: 'CLASS002', name: 'Physical Products', description: 'Tangible goods', parentClass: null },
+          { code: 'CLASS003', name: 'Services', description: 'Professional and managed services', parentClass: null }
+        ],
+        item_catalog: [
+          { catalogCode: 'CATALOG001', catalogName: 'Standard Product Catalog', effectiveDate: '2024-01-01', status: 'Active' },
+          { catalogCode: 'CATALOG002', catalogName: 'Premium Services Catalog', effectiveDate: '2024-02-01', status: 'Active' },
+          { catalogCode: 'CATALOG003', catalogName: 'Enterprise Solutions Catalog', effectiveDate: '2024-03-01', status: 'Draft' }
+        ],
+        item_structures: [
+          { structureId: 'STR001', parentItem: 'ITEM001', childItem: 'ITEM002', quantity: 1, effectiveDate: '2024-01-01' },
+          { structureId: 'STR002', parentItem: 'ITEM002', childItem: 'ITEM003', quantity: 2, effectiveDate: '2024-01-15' },
+          { structureId: 'STR003', parentItem: 'ITEM001', childItem: 'ITEM003', quantity: 5, effectiveDate: '2024-02-01' }
+        ],
+        customer_sites: [
+          { siteCode: 'SITE001', customerCode: 'CUST001', siteName: 'HQ Office', address: '123 Main St', city: 'New York', country: 'USA' },
+          { siteCode: 'SITE002', customerCode: 'CUST002', siteName: 'Tech Campus', address: '456 Innovation Dr', city: 'San Francisco', country: 'USA' },
+          { siteCode: 'SITE003', customerCode: 'CUST003', siteName: 'London Office', address: '789 Thames Rd', city: 'London', country: 'UK' }
+        ],
+        customer_site_uses: [
+          { siteUseId: 'USE001', siteCode: 'SITE001', useType: 'Bill To', isPrimary: true, isActive: true },
+          { siteUseId: 'USE002', siteCode: 'SITE002', useType: 'Ship To', isPrimary: true, isActive: true },
+          { siteUseId: 'USE003', siteCode: 'SITE003', useType: 'Bill To', isPrimary: false, isActive: true }
+        ],
+        suppliers_vendors: [
+          { code: 'SUPP001', name: 'ABC Supplies Inc', type: 'Supplier', status: 'Approved', paymentTerms: 'Net 30' },
+          { code: 'SUPP002', name: 'XYZ Manufacturing', type: 'Manufacturer', status: 'Approved', paymentTerms: 'Net 60' },
+          { code: 'SUPP003', name: 'Global Logistics Ltd', type: 'Vendor', status: 'Pending', paymentTerms: 'Net 45' }
+        ],
+        supplier_sites: [
+          { siteCode: 'SUPPSITE001', supplierCode: 'SUPP001', siteName: 'Main Warehouse', city: 'Chicago', country: 'USA' },
+          { siteCode: 'SUPPSITE002', supplierCode: 'SUPP002', siteName: 'Factory', city: 'Detroit', country: 'USA' },
+          { siteCode: 'SUPPSITE003', supplierCode: 'SUPP003', siteName: 'Distribution Center', city: 'Miami', country: 'USA' }
+        ],
+        payment_terms: [
+          { code: 'NET30', name: 'Net 30 Days', dueDays: 30, discountPercent: 0, isActive: true },
+          { code: 'NET60', name: 'Net 60 Days', dueDays: 60, discountPercent: 0, isActive: true },
+          { code: '2/10NET30', name: '2% 10, Net 30', dueDays: 30, discountPercent: 2, isActive: true }
+        ],
+        organizations: [
+          { orgCode: 'ORG001', orgName: 'Corporate HQ', parentOrg: null, level: 1, isActive: true },
+          { orgCode: 'ORG002', orgName: 'North America Division', parentOrg: 'ORG001', level: 2, isActive: true },
+          { orgCode: 'ORG003', orgName: 'EMEA Division', parentOrg: 'ORG001', level: 2, isActive: true }
+        ],
+        business_units: [
+          { buCode: 'BU001', buName: 'Sales', orgCode: 'ORG001', manager: 'John Doe', isActive: true },
+          { buCode: 'BU002', buName: 'Engineering', orgCode: 'ORG002', manager: 'Jane Smith', isActive: true },
+          { buCode: 'BU003', buName: 'Operations', orgCode: 'ORG003', manager: 'Bob Johnson', isActive: true }
+        ],
+        chart_of_accounts: [
+          { accountCode: '1000', accountName: 'Cash', accountType: 'Asset', isActive: true },
+          { accountCode: '4000', accountName: 'Revenue', accountType: 'Revenue', isActive: true },
+          { accountCode: '5000', accountName: 'Cost of Goods Sold', accountType: 'Expense', isActive: true }
+        ],
+        sales_reps: [
+          { repCode: 'REP001', repName: 'Alice Williams', email: 'alice@example.com', territory: 'East Coast', isActive: true },
+          { repCode: 'REP002', repName: 'Bob Davis', email: 'bob@example.com', territory: 'West Coast', isActive: true },
+          { repCode: 'REP003', repName: 'Carol Brown', email: 'carol@example.com', territory: 'Central', isActive: true }
+        ],
+        employee_master: [
+          { empCode: 'EMP001', empName: 'Michael Chen', department: 'Engineering', position: 'Senior Engineer', hireDate: '2020-03-15' },
+          { empCode: 'EMP002', empName: 'Sarah Martinez', department: 'Sales', position: 'Sales Manager', hireDate: '2019-07-22' },
+          { empCode: 'EMP003', empName: 'David Lee', department: 'Operations', position: 'Operations Analyst', hireDate: '2021-01-10' }
+        ],
+        // Transaction entities (9)
+        sales_orders: [
+          { orderNumber: 'SO-001', customerCode: 'CUST001', orderDate: '2024-01-15', totalAmount: 5000, status: 'Completed', salesRep: 'REP001' },
+          { orderNumber: 'SO-002', customerCode: 'CUST002', orderDate: '2024-02-20', totalAmount: 7500, status: 'Processing', salesRep: 'REP002' },
+          { orderNumber: 'SO-003', customerCode: 'CUST003', orderDate: '2024-03-10', totalAmount: 3200, status: 'Pending', salesRep: 'REP003' }
+        ],
+        sales_order_lines: [
+          { lineNumber: 1, orderNumber: 'SO-001', itemCode: 'ITEM001', quantity: 50, unitPrice: 99.99, lineTotal: 4999.50 },
+          { lineNumber: 1, orderNumber: 'SO-002', itemCode: 'ITEM002', quantity: 25, unitPrice: 299.99, lineTotal: 7499.75 },
+          { lineNumber: 1, orderNumber: 'SO-003', itemCode: 'ITEM003', quantity: 20, unitPrice: 150.00, lineTotal: 3000.00 }
+        ],
+        ar_invoices: [
+          { invoiceNumber: 'INV-2024-001', customerCode: 'CUST001', invoiceDate: '2024-01-20', amount: 5000, status: 'Paid', dueDate: '2024-02-19' },
+          { invoiceNumber: 'INV-2024-002', customerCode: 'CUST002', invoiceDate: '2024-02-25', amount: 7500, status: 'Outstanding', dueDate: '2024-03-26' },
+          { invoiceNumber: 'INV-2024-003', customerCode: 'CUST003', invoiceDate: '2024-03-15', amount: 3200, status: 'Overdue', dueDate: '2024-04-14' }
+        ],
+        ar_invoice_lines: [
+          { lineNumber: 1, invoiceNumber: 'INV-2024-001', description: 'Software License', amount: 5000, quantity: 50 },
+          { lineNumber: 1, invoiceNumber: 'INV-2024-002', description: 'Hardware Device', amount: 7500, quantity: 25 },
+          { lineNumber: 1, invoiceNumber: 'INV-2024-003', description: 'Consulting Service', amount: 3000, quantity: 20 }
+        ],
+        ap_invoices: [
+          { invoiceNumber: 'AP-2024-001', supplierCode: 'SUPP001', invoiceDate: '2024-01-10', amount: 2500, status: 'Paid', dueDate: '2024-02-09' },
+          { invoiceNumber: 'AP-2024-002', supplierCode: 'SUPP002', invoiceDate: '2024-02-15', amount: 4800, status: 'Pending', dueDate: '2024-04-15' },
+          { invoiceNumber: 'AP-2024-003', supplierCode: 'SUPP003', invoiceDate: '2024-03-05', amount: 3100, status: 'Approved', dueDate: '2024-04-19' }
+        ],
+        ap_invoice_lines: [
+          { lineNumber: 1, invoiceNumber: 'AP-2024-001', description: 'Office Supplies', amount: 2500, quantity: 100 },
+          { lineNumber: 1, invoiceNumber: 'AP-2024-002', description: 'Manufacturing Parts', amount: 4800, quantity: 200 },
+          { lineNumber: 1, invoiceNumber: 'AP-2024-003', description: 'Shipping Services', amount: 3100, quantity: 50 }
+        ],
+        ap_invoice_payments: [
+          { paymentNumber: 'PAY-001', invoiceNumber: 'AP-2024-001', paymentDate: '2024-02-09', paymentAmount: 2500, paymentMethod: 'Wire Transfer' },
+          { paymentNumber: 'PAY-002', invoiceNumber: 'AP-2024-002', paymentDate: '2024-03-15', paymentAmount: 2400, paymentMethod: 'Check' },
+          { paymentNumber: 'PAY-003', invoiceNumber: 'AP-2024-003', paymentDate: '2024-03-20', paymentAmount: 3100, paymentMethod: 'ACH' }
+        ],
+        purchase_orders: [
+          { poNumber: 'PO-001', supplierCode: 'SUPP001', orderDate: '2024-01-05', totalAmount: 2500, status: 'Received' },
+          { poNumber: 'PO-002', supplierCode: 'SUPP002', orderDate: '2024-02-10', totalAmount: 4800, status: 'In Transit' },
+          { poNumber: 'PO-003', supplierCode: 'SUPP003', orderDate: '2024-03-01', totalAmount: 3100, status: 'Approved' }
+        ],
+        purchase_order_lines: [
+          { lineNumber: 1, poNumber: 'PO-001', itemCode: 'ITEM001', quantity: 25, unitPrice: 100, lineTotal: 2500 },
+          { lineNumber: 1, poNumber: 'PO-002', itemCode: 'ITEM002', quantity: 16, unitPrice: 300, lineTotal: 4800 },
+          { lineNumber: 1, poNumber: 'PO-003', itemCode: 'ITEM003', quantity: 20, unitPrice: 155, lineTotal: 3100 }
+        ]
+      };
+
+      let totalCreated = 0;
+      for (const entity of entities) {
+        const records = sampleData[entity.technicalName] || [];
+        for (const recordData of records) {
+          try {
+            await storage.createLicenseiqEntityRecord({
+              entityId: entity.id,
+              recordData,
+              createdBy: req.user.id
+            });
+            totalCreated++;
+          } catch (err) {
+            console.log(`⚠️ Failed to create record for ${entity.name}`);
+          }
+        }
+      }
+
+      console.log(`🌱 [SAMPLE DATA] Created ${totalCreated} sample records`);
+      res.json({ created: totalCreated });
+    } catch (error) {
+      console.error('❌ [SAMPLE DATA] Error:', error);
+      res.status(500).json({ error: 'Failed to seed sample data' });
+    }
+  });
+
+  // ==========================================
+  // NAVIGATION PERMISSIONS ROUTES
+  // ==========================================
+
+  // Seed navigation items
+  app.post('/api/config/navigation/seed', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      if (req.user.role !== 'admin' && req.user.role !== 'owner') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      const navItems = [
+        { itemKey: 'dashboard', itemName: 'Dashboard', href: '/', iconName: 'BarChart3', defaultRoles: ['user', 'analyst', 'admin', 'owner'], sortOrder: 1 },
+        { itemKey: 'contracts', itemName: 'Contracts', href: '/contracts', iconName: 'File', defaultRoles: ['user', 'analyst', 'admin', 'owner'], sortOrder: 2 },
+        { itemKey: 'upload', itemName: 'Upload', href: '/upload', iconName: 'Upload', defaultRoles: ['user', 'analyst', 'admin', 'owner'], sortOrder: 3 },
+        { itemKey: 'sales-data', itemName: 'Sales Data', href: '/sales-upload', iconName: 'Receipt', defaultRoles: ['analyst', 'admin', 'owner'], sortOrder: 4 },
+        { itemKey: 'royalty-calculator', itemName: 'Royalty Calculator', href: '/calculations', iconName: 'Calculator', defaultRoles: ['analyst', 'admin', 'owner'], sortOrder: 5 },
+        { itemKey: 'master-data-mapping', itemName: 'Master Data Mapping', href: '/master-data-mapping', iconName: 'Database', defaultRoles: ['admin', 'owner'], sortOrder: 6 },
+        { itemKey: 'erp-catalog', itemName: 'ERP Catalog', href: '/erp-catalog', iconName: 'Database', defaultRoles: ['admin', 'owner'], sortOrder: 7 },
+        { itemKey: 'licenseiq-schema', itemName: 'LicenseIQ Schema', href: '/licenseiq-schema', iconName: 'Layers', defaultRoles: ['admin', 'owner'], sortOrder: 8 },
+        { itemKey: 'data-management', itemName: 'Data Management', href: '/data-management', iconName: 'Table', defaultRoles: ['analyst', 'admin', 'owner'], sortOrder: 9 },
+        { itemKey: 'erp-import', itemName: 'ERP Data Import', href: '/erp-import', iconName: 'Upload', defaultRoles: ['admin', 'owner'], sortOrder: 10 },
+        { itemKey: 'contract-qna', itemName: 'Contract Q&A', href: '/contract-qna', iconName: 'Brain', defaultRoles: ['user', 'analyst', 'admin', 'owner'], sortOrder: 11 },
+        { itemKey: 'rag-dashboard', itemName: 'RAG Dashboard', href: '/rag-dashboard', iconName: 'Sparkles', defaultRoles: ['admin', 'owner'], sortOrder: 12 },
+        { itemKey: 'analytics', itemName: 'Analytics', href: '/analytics', iconName: 'TrendingUp', defaultRoles: ['analyst', 'admin', 'owner'], sortOrder: 13 },
+        { itemKey: 'reports', itemName: 'Reports', href: '/reports', iconName: 'FileText', defaultRoles: ['analyst', 'admin', 'owner'], sortOrder: 14 },
+        { itemKey: 'lead-management', itemName: 'Lead Management', href: '/admin/leads', iconName: 'Mail', defaultRoles: ['admin', 'owner'], sortOrder: 15 },
+        { itemKey: 'review-queue', itemName: 'Review Queue', href: '/review-queue', iconName: 'ClipboardCheck', defaultRoles: ['admin', 'owner'], sortOrder: 16 },
+        { itemKey: 'user-management', itemName: 'User Management', href: '/users', iconName: 'Users', defaultRoles: ['admin', 'owner'], sortOrder: 17 },
+        { itemKey: 'audit-trail', itemName: 'Audit Trail', href: '/audit', iconName: 'History', defaultRoles: ['auditor', 'admin', 'owner'], sortOrder: 18 },
+      ];
+
+      const created = [];
+      for (const item of navItems) {
+        try {
+          const result = await db.insert(navigationPermissions).values(item).onConflictDoUpdate({
+            target: navigationPermissions.itemKey,
+            set: { itemName: item.itemName, href: item.href, defaultRoles: item.defaultRoles, sortOrder: item.sortOrder, updatedAt: new Date() }
+          }).returning();
+          created.push(result[0]);
+        } catch (err) {
+          console.error(`Error seeding nav item ${item.itemKey}:`, err);
+        }
+      }
+
+      console.log(`🌱 [NAV PERMISSIONS] Seeded ${created.length} navigation items`);
+      res.json({ created: created.length, items: created });
+    } catch (error) {
+      console.error('❌ [NAV PERMISSIONS] Seed error:', error);
+      res.status(500).json({ error: 'Failed to seed navigation items' });
+    }
+  });
+
+  // Get all navigation items
+  app.get('/api/config/navigation', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const items = await db.select().from(navigationPermissions).orderBy(navigationPermissions.sortOrder);
+      res.json({ items });
+    } catch (error) {
+      console.error('❌ [NAV PERMISSIONS] Get error:', error);
+      res.status(500).json({ error: 'Failed to get navigation items' });
+    }
+  });
+
+  // Get role permissions for navigation
+  app.get('/api/config/navigation/roles', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const permissions = await db.select().from(roleNavigationPermissions);
+      res.json({ permissions });
+    } catch (error) {
+      console.error('❌ [NAV PERMISSIONS] Get roles error:', error);
+      res.status(500).json({ error: 'Failed to get role permissions' });
+    }
+  });
+
+  // Update role permission for navigation item
+  app.post('/api/config/navigation/roles', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      if (req.user.role !== 'admin' && req.user.role !== 'owner') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      const { role, navItemKey, isEnabled } = req.body;
+      
+      const existing = await db.select().from(roleNavigationPermissions)
+        .where(and(
+          eq(roleNavigationPermissions.role, role),
+          eq(roleNavigationPermissions.navItemKey, navItemKey)
+        ));
+
+      if (existing.length > 0) {
+        const updated = await db.update(roleNavigationPermissions)
+          .set({ isEnabled, updatedAt: new Date() })
+          .where(and(
+            eq(roleNavigationPermissions.role, role),
+            eq(roleNavigationPermissions.navItemKey, navItemKey)
+          ))
+          .returning();
+        res.json(updated[0]);
+      } else {
+        const created = await db.insert(roleNavigationPermissions)
+          .values({ role, navItemKey, isEnabled })
+          .returning();
+        res.json(created[0]);
+      }
+    } catch (error) {
+      console.error('❌ [NAV PERMISSIONS] Update role error:', error);
+      res.status(400).json({ error: error instanceof Error ? error.message : 'Failed to update role permission' });
     }
   });
 
