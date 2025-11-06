@@ -63,7 +63,7 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
   };
 
   // Fetch dynamic navigation permissions from database
-  const { data: navData } = useQuery({
+  const { data: navData } = useQuery<{ items: any[] }>({
     queryKey: ['/api/navigation/allowed'],
     enabled: !!user,
   });
