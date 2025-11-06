@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Edit2, Trash2, Database, FolderOpen, Receipt, Save, X, RefreshCw } from "lucide-react";
+import { Plus, Edit2, Trash2, Database, FolderOpen, Receipt, Save, X, RefreshCw, ArrowLeft } from "lucide-react";
 
 type LicenseiqEntity = {
   id: string;
@@ -44,6 +45,7 @@ type EntityRecord = {
 
 export default function DataManagement() {
   const { toast } = useToast();
+  const [, navigate] = useLocation();
   const [selectedCategory, setSelectedCategory] = useState<string>("Master Data");
   const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null);
   const [showRecordForm, setShowRecordForm] = useState(false);
@@ -226,6 +228,14 @@ export default function DataManagement() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => navigate("/")}
+            data-testid="button-back-dashboard"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
           <Button
             onClick={() => seedMutation.mutate()}
             disabled={seedMutation.isPending}
