@@ -74,6 +74,13 @@ export default function MasterDataMapping() {
     queryFn: () => fetch(`/api/erp-entities?systemId=${selectedSystemId}`).then(res => res.json()),
   });
 
+  // Fetch fields for selected ERP entity
+  const { data: erpFieldsData } = useQuery<{ fields: any[] }>({
+    queryKey: ['/api/erp-fields', selectedEntityId],
+    enabled: !!selectedEntityId,
+    queryFn: () => fetch(`/api/erp-fields?entityId=${selectedEntityId}`).then(res => res.json()),
+  });
+
   // Fetch LicenseIQ entities
   const { data: licenseiqEntitiesData } = useQuery<{ entities: LicenseiqEntity[] }>({
     queryKey: ['/api/licenseiq-entities'],
@@ -95,7 +102,18 @@ export default function MasterDataMapping() {
   const selectedEntity = erpEntitiesData?.entities?.find(e => e.id === selectedEntityId);
   const selectedLicenseiqEntity = licenseiqEntitiesData?.entities?.find(e => e.id === selectedLicenseiqEntityId);
 
-  // Auto-populate target schema when LicenseIQ entity is selected
+  // Auto-populate SOURCE schema when ERP entity is selected
+  useEffect(() => {
+    if (erpFieldsData?.fields) {
+      const schema: Record<string, string> = {};
+      erpFieldsData.fields.forEach(field => {
+        schema[field.fieldName] = field.dataType;
+      });
+      setSourceSchema(JSON.stringify(schema, null, 2));
+    }
+  }, [erpFieldsData]);
+
+  // Auto-populate TARGET schema when LicenseIQ entity is selected
   useEffect(() => {
     if (licenseiqFieldsData?.fields) {
       const schema: Record<string, string> = {};
@@ -318,21 +336,60 @@ export default function MasterDataMapping() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <FileJson className="h-5 w-5 text-orange-500" />
+                  <Database className="h-5 w-5 text-orange-500" />
                   Source Schema (Your ERP System)
                 </CardTitle>
                 <CardDescription>
-                  Paste your ERP data schema as JSON (Oracle, SAP, NetSuite, etc.)
+                  Select from your ERP catalog or paste JSON manually
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <Textarea
-                  value={sourceSchema}
-                  onChange={(e) => setSourceSchema(e.target.value)}
-                  placeholder={'{\n  "CUSTOMER_ID": "number",\n  "CUSTOMER_NAME": "varchar(240)",\n  "CREATION_DATE": "date"\n}'}
-                  className="font-mono text-sm min-h-[300px]"
-                  data-testid="input-source-schema"
-                />
+              <CardContent className="space-y-4">
+                {/* ERP Entity Selector - shown only if system is selected */}
+                {selectedSystemId && erpEntitiesData?.entities && (
+                  <div className="space-y-2">
+                    <Label htmlFor="erp-entity-schema">ERP Entity (for schema auto-fill)</Label>
+                    <Select 
+                      value={selectedEntityId} 
+                      onValueChange={(value) => {
+                        setSelectedEntityId(value);
+                      }}
+                    >
+                      <SelectTrigger id="erp-entity-schema" data-testid="select-erp-entity-schema">
+                        <SelectValue placeholder="Select ERP entity to auto-fill schema..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {erpEntitiesData.entities.map((entity) => (
+                          <SelectItem key={entity.id} value={entity.id}>
+                            {entity.name} ({entity.entityType})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {selectedEntity && (
+                      <p className="text-sm text-muted-foreground">
+                        {selectedEntity.description || `${selectedEntity.entityType} entity from ${selectedSystem?.name}`}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Schema JSON Textarea */}
+                <div className="space-y-2">
+                  <Label htmlFor="source-schema">Schema JSON {selectedEntityId ? '(Auto-populated)' : ''}</Label>
+                  <Textarea
+                    id="source-schema"
+                    value={sourceSchema}
+                    onChange={(e) => setSourceSchema(e.target.value)}
+                    placeholder={'{\n  "ITEM_NUMBER": "string",\n  "ITEM_DESCRIPTION": "string",\n  "ORDERED_QUANTITY": "number"\n}'}
+                    className="font-mono text-sm min-h-[200px]"
+                    data-testid="input-source-schema"
+                  />
+                  {selectedEntityId && erpFieldsData?.fields && (
+                    <p className="text-xs text-green-600 dark:text-green-500">
+                      ✓ Auto-populated with {erpFieldsData.fields.length} fields from {selectedEntity?.name}
+                    </p>
+                  )}
+                </div>
               </CardContent>
             </Card>
 

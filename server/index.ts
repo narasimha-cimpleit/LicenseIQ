@@ -54,6 +54,10 @@ async function initializeDatabase() {
       USING hnsw (embedding vector_cosine_ops);
     `);
     log('✓ HNSW index created for vector similarity search');
+    
+    // Seed LicenseIQ Schema Catalog with standard entities
+    const { seedLicenseIQSchema } = await import("./seed-licenseiq-schema");
+    await seedLicenseIQSchema();
   } catch (error: any) {
     log(`⚠ Database initialization warning: ${error.message}`);
     // Don't fail server startup if index creation fails
