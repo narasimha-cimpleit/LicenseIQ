@@ -10,7 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Shield, RefreshCw, Check, X, Settings, Users, Database } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { ArrowLeft, Shield, RefreshCw, Check, X, Settings, Users, Database, Plus, Save, Trash2, Edit2, XCircle, UserCog } from "lucide-react";
 
 type NavItem = {
   id: string;
@@ -30,12 +32,28 @@ type RolePermission = {
   isEnabled: boolean;
 };
 
+type Role = {
+  id: string;
+  roleName: string;
+  displayName: string;
+  description: string | null;
+  isSystemRole: boolean;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
 const AVAILABLE_ROLES = ['user', 'analyst', 'auditor', 'admin', 'owner'];
 
 export default function Configuration() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const [selectedRole, setSelectedRole] = useState<string>('user');
+  
+  // Role management state
+  const [editingRoleId, setEditingRoleId] = useState<string | null>(null);
+  const [newRole, setNewRole] = useState({ roleName: '', displayName: '', description: '' });
+  const [isAddingRole, setIsAddingRole] = useState(false);
 
   // Fetch navigation items
   const { data: navData, isLoading: navLoading } = useQuery<{ items: NavItem[] }>({
@@ -45,6 +63,11 @@ export default function Configuration() {
   // Fetch role permissions
   const { data: permData, isLoading: permLoading } = useQuery<{ permissions: RolePermission[] }>({
     queryKey: ['/api/config/navigation/roles'],
+  });
+
+  // Fetch roles
+  const { data: rolesData, isLoading: rolesLoading } = useQuery<{ roles: Role[] }>({
+    queryKey: ['/api/roles'],
   });
 
   // Seed navigation items mutation
@@ -109,6 +132,93 @@ export default function Configuration() {
     },
   });
 
+  // Create role mutation
+  const createRoleMutation = useMutation({
+    mutationFn: async (roleData: { roleName: string; displayName: string; description: string }) => {
+      return await apiRequest('POST', '/api/roles', roleData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/roles'] });
+      setIsAddingRole(false);
+      setNewRole({ roleName: '', displayName: '', description: '' });
+      toast({
+        title: "Success",
+        description: "Role created successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create role",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Update role mutation
+  const updateRoleMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<Role> }) => {
+      return await apiRequest('PUT', `/api/roles/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/roles'] });
+      setEditingRoleId(null);
+      toast({
+        title: "Success",
+        description: "Role updated successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update role",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete role mutation
+  const deleteRoleMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return await apiRequest('DELETE', `/api/roles/${id}`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/roles'] });
+      toast({
+        title: "Success",
+        description: "Role deleted successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete role",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Seed roles mutation
+  const seedRolesMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest('POST', '/api/roles/seed', {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/roles'] });
+      toast({
+        title: "Success",
+        description: "System roles seeded successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to seed roles",
+        variant: "destructive",
+      });
+    },
+  });
+
   const navItems = navData?.items || [];
   const permissions = permData?.permissions || [];
 
@@ -133,7 +243,7 @@ export default function Configuration() {
             Configuration
           </h1>
           <p className="text-muted-foreground mt-2">
-            Manage system settings, navigation permissions, and sample data
+            Manage roles, navigation permissions, sample data, and system settings
           </p>
         </div>
         <div className="flex gap-2">
@@ -149,10 +259,14 @@ export default function Configuration() {
       </div>
 
       <Tabs defaultValue="navigation" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="navigation" data-testid="tab-navigation">
             <Shield className="h-4 w-4 mr-2" />
             Navigation Permissions
+          </TabsTrigger>
+          <TabsTrigger value="roles" data-testid="tab-roles">
+            <UserCog className="h-4 w-4 mr-2" />
+            Role Management
           </TabsTrigger>
           <TabsTrigger value="data" data-testid="tab-data">
             <Database className="h-4 w-4 mr-2" />
@@ -276,6 +390,235 @@ export default function Configuration() {
                   </Card>
                 )}
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Role Management Tab */}
+        <TabsContent value="roles" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <UserCog className="h-5 w-5" />
+                    Role Management
+                  </CardTitle>
+                  <CardDescription className="mt-2">
+                    Create and manage user roles with custom permissions
+                  </CardDescription>
+                </div>
+                <Button
+                  onClick={() => seedRolesMutation.mutate()}
+                  disabled={seedRolesMutation.isPending}
+                  variant="outline"
+                  data-testid="button-seed-roles"
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${seedRolesMutation.isPending ? 'animate-spin' : ''}`} />
+                  {seedRolesMutation.isPending ? 'Seeding...' : 'Seed System Roles'}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {rolesLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Add New Role Form */}
+                  {!isAddingRole && (
+                    <Button
+                      onClick={() => setIsAddingRole(true)}
+                      className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                      data-testid="button-add-role"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add New Role
+                    </Button>
+                  )}
+
+                  {isAddingRole && (
+                    <Card className="border-2 border-purple-500/50 bg-purple-50 dark:bg-purple-950/20">
+                      <CardContent className="pt-6">
+                        <div className="grid gap-4">
+                          <div>
+                            <label className="text-sm font-medium">Role Name (Identifier)</label>
+                            <Input
+                              value={newRole.roleName}
+                              onChange={(e) => setNewRole({ ...newRole, roleName: e.target.value })}
+                              placeholder="e.g., contract_analyst"
+                              className="mt-1"
+                              data-testid="input-new-role-name"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-sm font-medium">Display Name</label>
+                            <Input
+                              value={newRole.displayName}
+                              onChange={(e) => setNewRole({ ...newRole, displayName: e.target.value })}
+                              placeholder="e.g., Contract Analyst"
+                              className="mt-1"
+                              data-testid="input-new-display-name"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-sm font-medium">Description</label>
+                            <Textarea
+                              value={newRole.description}
+                              onChange={(e) => setNewRole({ ...newRole, description: e.target.value })}
+                              placeholder="Brief description of this role"
+                              className="mt-1"
+                              data-testid="textarea-new-description"
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={() => createRoleMutation.mutate(newRole)}
+                              disabled={!newRole.roleName || !newRole.displayName || createRoleMutation.isPending}
+                              className="bg-green-600 hover:bg-green-700"
+                              data-testid="button-save-new-role"
+                            >
+                              <Save className="h-4 w-4 mr-2" />
+                              Save Role
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                setIsAddingRole(false);
+                                setNewRole({ roleName: '', displayName: '', description: '' });
+                              }}
+                              variant="outline"
+                              data-testid="button-cancel-new-role"
+                            >
+                              <XCircle className="h-4 w-4 mr-2" />
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Roles Table */}
+                  <ScrollArea className="h-[500px]">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Role Name</TableHead>
+                          <TableHead>Display Name</TableHead>
+                          <TableHead>Description</TableHead>
+                          <TableHead className="text-center">Type</TableHead>
+                          <TableHead className="text-center">Status</TableHead>
+                          <TableHead className="text-center">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {rolesData?.roles.map((role) => (
+                          <TableRow key={role.id} data-testid={`row-role-${role.roleName}`}>
+                            <TableCell className="font-mono text-sm">{role.roleName}</TableCell>
+                            <TableCell>
+                              {editingRoleId === role.id ? (
+                                <Input
+                                  defaultValue={role.displayName}
+                                  onBlur={(e) => {
+                                    if (e.target.value !== role.displayName) {
+                                      updateRoleMutation.mutate({
+                                        id: role.id,
+                                        data: { displayName: e.target.value }
+                                      });
+                                    } else {
+                                      setEditingRoleId(null);
+                                    }
+                                  }}
+                                  autoFocus
+                                  data-testid={`input-edit-display-${role.id}`}
+                                />
+                              ) : (
+                                <span>{role.displayName}</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {editingRoleId === role.id ? (
+                                <Textarea
+                                  defaultValue={role.description || ''}
+                                  onBlur={(e) => {
+                                    if (e.target.value !== role.description) {
+                                      updateRoleMutation.mutate({
+                                        id: role.id,
+                                        data: { description: e.target.value }
+                                      });
+                                    } else {
+                                      setEditingRoleId(null);
+                                    }
+                                  }}
+                                  className="min-h-[60px]"
+                                  data-testid={`textarea-edit-desc-${role.id}`}
+                                />
+                              ) : (
+                                <span className="text-sm text-muted-foreground">
+                                  {role.description || 'No description'}
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {role.isSystemRole ? (
+                                <Badge variant="secondary" className="bg-blue-100 dark:bg-blue-900">
+                                  System
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline">Custom</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {role.isActive ? (
+                                <Badge variant="secondary" className="bg-green-100 dark:bg-green-900">
+                                  <Check className="h-3 w-3 mr-1" />
+                                  Active
+                                </Badge>
+                              ) : (
+                                <Badge variant="secondary" className="bg-gray-100 dark:bg-gray-800">
+                                  <X className="h-3 w-3 mr-1" />
+                                  Inactive
+                                </Badge>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <div className="flex items-center justify-center gap-2">
+                                {editingRoleId !== role.id && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setEditingRoleId(role.id)}
+                                    data-testid={`button-edit-${role.id}`}
+                                  >
+                                    <Edit2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                {!role.isSystemRole && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      if (confirm(`Are you sure you want to delete the role "${role.displayName}"?`)) {
+                                        deleteRoleMutation.mutate(role.id);
+                                      }
+                                    }}
+                                    disabled={deleteRoleMutation.isPending}
+                                    className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+                                    data-testid={`button-delete-${role.id}`}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </ScrollArea>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
