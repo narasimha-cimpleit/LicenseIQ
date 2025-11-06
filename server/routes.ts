@@ -3890,6 +3890,50 @@ Return ONLY valid JSON array, no other text.`;
     }
   });
 
+  // Get user's allowed navigation items (dynamic permissions)
+  app.get('/api/navigation/allowed', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const userRole = req.user.role;
+
+      // Get all active navigation items
+      const allItems = await db.select().from(navigationPermissions)
+        .where(eq(navigationPermissions.isActive, true))
+        .orderBy(navigationPermissions.sortOrder);
+
+      // Get role permissions for this user's role
+      const rolePermissions = await db.select().from(roleNavigationPermissions)
+        .where(and(
+          eq(roleNavigationPermissions.role, userRole),
+          eq(roleNavigationPermissions.isEnabled, true)
+        ));
+
+      // Get user-specific overrides
+      const userOverrides = await db.select().from(userNavigationOverrides)
+        .where(eq(userNavigationOverrides.userId, userId));
+
+      // Build a map of allowed items
+      const rolePermissionKeys = new Set(rolePermissions.map(p => p.navItemKey));
+      const userOverrideMap = new Map(userOverrides.map(o => [o.navItemKey, o.isEnabled]));
+
+      // Filter items based on permissions
+      const allowedItems = allItems.filter(item => {
+        // Check if user has a specific override
+        if (userOverrideMap.has(item.itemKey)) {
+          return userOverrideMap.get(item.itemKey);
+        }
+        
+        // Otherwise, check role permission
+        return rolePermissionKeys.has(item.itemKey);
+      });
+
+      res.json({ items: allowedItems });
+    } catch (error) {
+      console.error('❌ [NAV PERMISSIONS] Get allowed items error:', error);
+      res.status(500).json({ error: 'Failed to get allowed navigation items' });
+    }
+  });
+
   // ==========================================
   // ERP DATA IMPORT ROUTES
   // ==========================================

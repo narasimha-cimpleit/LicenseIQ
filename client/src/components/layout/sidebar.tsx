@@ -2,6 +2,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
 import { 
   File, 
   BarChart3, 
@@ -21,7 +22,8 @@ import {
   ClipboardCheck,
   Mail,
   Layers,
-  Table
+  Table,
+  LucideIcon
 } from "lucide-react";
 import licenseIQLogo from "@assets/Transparent Logo_1761867914841.png";
 
@@ -31,6 +33,27 @@ interface SidebarProps {
   onClose?: () => void;
 }
 
+// Icon mapping from database icon names to actual icon components
+const iconMap: Record<string, LucideIcon> = {
+  'BarChart3': BarChart3,
+  'File': File,
+  'Upload': Upload,
+  'Receipt': Receipt,
+  'Calculator': Calculator,
+  'Database': Database,
+  'Layers': Layers,
+  'Table': Table,
+  'Brain': Brain,
+  'Sparkles': Sparkles,
+  'TrendingUp': TrendingUp,
+  'FileText': FileText,
+  'Mail': Mail,
+  'ClipboardCheck': ClipboardCheck,
+  'Users': Users,
+  'History': History,
+  'Building2': Building2,
+};
+
 export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
   const [location, setLocation] = useLocation();
   const { user, logoutMutation } = useAuth();
@@ -39,134 +62,24 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
     logoutMutation.mutate();
   };
 
-  const navigation = [
-    {
-      name: "Dashboard",
-      href: "/",
-      icon: BarChart3,
-      current: location === "/",
-    },
-    {
-      name: "Contracts",
-      href: "/contracts",
-      icon: File,
-      current: location === "/contracts" || location.startsWith("/contracts/"),
-    },
-    {
-      name: "Upload",
-      href: "/upload",
-      icon: Upload,
-      current: location === "/upload",
-    },
-    {
-      name: "Sales Data",
-      href: "/sales-upload",
-      icon: Receipt,
-      current: location === "/sales-upload",
-    },
-    {
-      name: "Royalty Calculator",
-      href: "/calculations",
-      icon: Calculator,
-      current: location === "/calculations" || location.startsWith("/royalty-dashboard/"),
-    },
-    {
-      name: "Master Data Mapping",
-      href: "/master-data-mapping",
-      icon: Database,
-      current: location === "/master-data-mapping",
-    },
-    {
-      name: "ERP Catalog",
-      href: "/erp-catalog",
-      icon: Database,
-      current: location === "/erp-catalog",
-    },
-    {
-      name: "LicenseIQ Schema",
-      href: "/licenseiq-schema",
-      icon: Layers,
-      current: location === "/licenseiq-schema",
-    },
-    {
-      name: "Data Management",
-      href: "/data-management",
-      icon: Table,
-      current: location === "/data-management",
-    },
-    {
-      name: "ERP Data Import",
-      href: "/erp-import",
-      icon: Upload,
-      current: location === "/erp-import",
-    },
-    {
-      name: "Contract Q&A",
-      href: "/contract-qna",
-      icon: Brain,
-      current: location === "/contract-qna",
-    },
-    {
-      name: "RAG Dashboard",
-      href: "/rag-dashboard",
-      icon: Sparkles,
-      current: location === "/rag-dashboard",
-    },
-    {
-      name: "Analytics",
-      href: "/analytics",
-      icon: TrendingUp,
-      current: location === "/analytics",
-    },
-    {
-      name: "Reports",
-      href: "/reports",
-      icon: FileText,
-      current: location === "/reports",
-    },
-  ];
+  // Fetch dynamic navigation permissions from database
+  const { data: navData } = useQuery({
+    queryKey: ['/api/navigation/allowed'],
+    enabled: !!user,
+  });
 
-  // Add admin-only navigation items
-  if (user?.role === 'admin' || user?.role === 'owner') {
-    navigation.push({
-      name: "Lead Management",
-      href: "/admin/leads",
-      icon: Mail,
-      current: location === "/admin/leads",
-    });
-    navigation.push({
-      name: "Review Queue",
-      href: "/review-queue",
-      icon: ClipboardCheck,
-      current: location === "/review-queue",
-    });
-    navigation.push({
-      name: "User Management",
-      href: "/users",
-      icon: Users,
-      current: location === "/users",
-    });
-  }
-
-  // Add audit trail for authorized users
-  if (user?.role === 'admin' || user?.role === 'owner' || user?.role === 'auditor') {
-    navigation.push({
-      name: "Audit Trail",
-      href: "/audit",
-      icon: History,
-      current: location === "/audit",
-    });
-  }
-
-  // Add configuration for admin/owner
-  if (user?.role === 'admin' || user?.role === 'owner') {
-    navigation.push({
-      name: "Configuration",
-      href: "/configuration",
-      icon: Building2,
-      current: location === "/configuration",
-    });
-  }
+  // Build navigation from database permissions
+  const navigation = (navData?.items || []).map((item: any) => {
+    const Icon = item.iconName ? iconMap[item.iconName] || BarChart3 : BarChart3;
+    return {
+      name: item.itemName,
+      href: item.href,
+      icon: Icon,
+      current: location === item.href || 
+               (item.href !== "/" && location.startsWith(item.href)) ||
+               (item.href === "/calculations" && location.startsWith("/royalty-dashboard/")),
+    };
+  });
 
   const userInitials = user?.firstName && user?.lastName 
     ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
