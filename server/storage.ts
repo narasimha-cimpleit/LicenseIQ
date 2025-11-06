@@ -32,6 +32,7 @@ import {
   importedErpRecords,
   licenseiqEntities,
   licenseiqFields,
+  licenseiqEntityRecords,
   type User,
   type InsertUser,
   type Contract,
@@ -81,6 +82,8 @@ import {
   type InsertLicenseiqEntity,
   type LicenseiqField,
   type InsertLicenseiqField,
+  type LicenseiqEntityRecord,
+  type InsertLicenseiqEntityRecord,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, ilike, count, gte, sql } from "drizzle-orm";
@@ -326,6 +329,13 @@ export interface IStorage {
   getLicenseiqFieldsByEntity(entityId: string): Promise<LicenseiqField[]>;
   updateLicenseiqField(id: string, updates: Partial<InsertLicenseiqField>): Promise<LicenseiqField>;
   deleteLicenseiqField(id: string): Promise<void>;
+  
+  // LicenseIQ Entity Records operations
+  createLicenseiqEntityRecord(record: InsertLicenseiqEntityRecord): Promise<LicenseiqEntityRecord>;
+  getLicenseiqEntityRecord(id: string): Promise<LicenseiqEntityRecord | undefined>;
+  getLicenseiqEntityRecordsByEntity(entityId: string): Promise<LicenseiqEntityRecord[]>;
+  updateLicenseiqEntityRecord(id: string, updates: Partial<InsertLicenseiqEntityRecord>): Promise<LicenseiqEntityRecord>;
+  deleteLicenseiqEntityRecord(id: string): Promise<void>;
   
   // Data import jobs operations
   createDataImportJob(job: any): Promise<any>;
@@ -2183,6 +2193,47 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(licenseiqFields)
       .where(eq(licenseiqFields.id, id));
+  }
+
+  // LicenseIQ Entity Records operations
+  async createLicenseiqEntityRecord(record: InsertLicenseiqEntityRecord): Promise<LicenseiqEntityRecord> {
+    const [result] = await db
+      .insert(licenseiqEntityRecords)
+      .values(record)
+      .returning();
+    return result;
+  }
+
+  async getLicenseiqEntityRecord(id: string): Promise<LicenseiqEntityRecord | undefined> {
+    const [result] = await db
+      .select()
+      .from(licenseiqEntityRecords)
+      .where(eq(licenseiqEntityRecords.id, id));
+    return result;
+  }
+
+  async getLicenseiqEntityRecordsByEntity(entityId: string): Promise<LicenseiqEntityRecord[]> {
+    const results = await db
+      .select()
+      .from(licenseiqEntityRecords)
+      .where(eq(licenseiqEntityRecords.entityId, entityId))
+      .orderBy(desc(licenseiqEntityRecords.createdAt));
+    return results;
+  }
+
+  async updateLicenseiqEntityRecord(id: string, updates: Partial<InsertLicenseiqEntityRecord>): Promise<LicenseiqEntityRecord> {
+    const [result] = await db
+      .update(licenseiqEntityRecords)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(licenseiqEntityRecords.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteLicenseiqEntityRecord(id: string): Promise<void> {
+    await db
+      .delete(licenseiqEntityRecords)
+      .where(eq(licenseiqEntityRecords.id, id));
   }
 
   // Data import jobs operations

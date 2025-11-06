@@ -1129,6 +1129,18 @@ export const licenseiqFields = pgTable("licenseiq_fields", {
   index("licenseiq_fields_entity_idx").on(table.entityId),
 ]);
 
+// LicenseIQ Entity Records - Stores actual data for each entity (flexible schema)
+export const licenseiqEntityRecords = pgTable("licenseiq_entity_records", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  entityId: varchar("entity_id").notNull().references(() => licenseiqEntities.id, { onDelete: 'cascade' }),
+  recordData: jsonb("record_data").notNull(), // Flexible JSON data matching the entity's fields
+  createdBy: varchar("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("licenseiq_records_entity_idx").on(table.entityId),
+]);
+
 // Insert schemas for lead capture
 export const insertEarlyAccessSignupSchema = createInsertSchema(earlyAccessSignups).pick({
   email: true,
@@ -1194,6 +1206,12 @@ export const insertLicenseiqFieldSchema = createInsertSchema(licenseiqFields).om
   updatedAt: true,
 });
 
+export const insertLicenseiqEntityRecordSchema = createInsertSchema(licenseiqEntityRecords).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // ======================
 // TYPES FOR NEW TABLES
 // ======================
@@ -1238,3 +1256,5 @@ export type LicenseiqEntity = typeof licenseiqEntities.$inferSelect;
 export type InsertLicenseiqEntity = z.infer<typeof insertLicenseiqEntitySchema>;
 export type LicenseiqField = typeof licenseiqFields.$inferSelect;
 export type InsertLicenseiqField = z.infer<typeof insertLicenseiqFieldSchema>;
+export type LicenseiqEntityRecord = typeof licenseiqEntityRecords.$inferSelect;
+export type InsertLicenseiqEntityRecord = z.infer<typeof insertLicenseiqEntityRecordSchema>;
