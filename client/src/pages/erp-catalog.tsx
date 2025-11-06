@@ -47,7 +47,7 @@ export default function ErpCatalogPage() {
 
   // Delete mutations
   const deleteSystemMutation = useMutation({
-    mutationFn: async (id: string) => apiRequest(`/api/erp-systems/${id}`, { method: 'DELETE' }),
+    mutationFn: async (id: string) => apiRequest('DELETE', `/api/erp-systems/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/erp-systems'] });
       toast({ title: "Success", description: "ERP system deleted successfully" });
@@ -55,7 +55,7 @@ export default function ErpCatalogPage() {
   });
 
   const deleteEntityMutation = useMutation({
-    mutationFn: async (id: string) => apiRequest(`/api/erp-entities/${id}`, { method: 'DELETE' }),
+    mutationFn: async (id: string) => apiRequest('DELETE', `/api/erp-entities/${id}`),
     onSuccess: () => {
       // Invalidate all entity queries for all systems
       queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] === '/api/erp-entities' });
@@ -64,7 +64,7 @@ export default function ErpCatalogPage() {
   });
 
   const deleteFieldMutation = useMutation({
-    mutationFn: async (id: string) => apiRequest(`/api/erp-fields/${id}`, { method: 'DELETE' }),
+    mutationFn: async (id: string) => apiRequest('DELETE', `/api/erp-fields/${id}`),
     onSuccess: () => {
       // Invalidate all field queries for all entities
       queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] === '/api/erp-fields' });
@@ -420,7 +420,7 @@ function AddSystemDialog({ children, open, onOpenChange }: { children: React.Rea
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: typeof formData) => apiRequest('/api/erp-systems', { method: 'POST', body: data }),
+    mutationFn: async (data: typeof formData) => apiRequest('POST', '/api/erp-systems', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/erp-systems'] });
       toast({ title: "Success", description: "ERP system created successfully" });
@@ -519,7 +519,7 @@ function AddEntityDialog({ children, open, onOpenChange, systemId }: { children:
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: typeof formData) => apiRequest('/api/erp-entities', { method: 'POST', body: data }),
+    mutationFn: async (data: typeof formData) => apiRequest('POST', '/api/erp-entities', data),
     onSuccess: () => {
       // Invalidate all entity queries for all systems
       queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] === '/api/erp-entities' });
@@ -610,7 +610,7 @@ function AddFieldDialog({ children, open, onOpenChange, entityId }: { children: 
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: typeof formData) => apiRequest('/api/erp-fields', { method: 'POST', body: data }),
+    mutationFn: async (data: typeof formData) => apiRequest('POST', '/api/erp-fields', data),
     onSuccess: () => {
       // Invalidate all field queries for all entities
       queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] === '/api/erp-fields' });

@@ -156,7 +156,7 @@ export default function LicenseIQSchema() {
 
   // Entity mutations
   const createEntityMutation = useMutation({
-    mutationFn: async (data: any) => apiRequest("/api/licenseiq-entities", "POST", data),
+    mutationFn: async (data: any) => apiRequest("POST", "/api/licenseiq-entities", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] === "/api/licenseiq-entities" });
       toast({ title: "Entity created successfully!" });
@@ -170,7 +170,7 @@ export default function LicenseIQSchema() {
 
   const updateEntityMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) =>
-      apiRequest(`/api/licenseiq-entities/${id}`, "PATCH", data),
+      apiRequest("PATCH", `/api/licenseiq-entities/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] === "/api/licenseiq-entities" });
       toast({ title: "Entity updated successfully!" });
@@ -183,7 +183,7 @@ export default function LicenseIQSchema() {
   });
 
   const deleteEntityMutation = useMutation({
-    mutationFn: async (id: string) => apiRequest(`/api/licenseiq-entities/${id}`, "DELETE"),
+    mutationFn: async (id: string) => apiRequest("DELETE", `/api/licenseiq-entities/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] === "/api/licenseiq-entities" });
       toast({ title: "Entity deleted successfully!" });
@@ -195,7 +195,7 @@ export default function LicenseIQSchema() {
 
   // Field mutations
   const createFieldMutation = useMutation({
-    mutationFn: async (data: any) => apiRequest("/api/licenseiq-fields", "POST", data),
+    mutationFn: async (data: any) => apiRequest("POST", "/api/licenseiq-fields", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] === "/api/licenseiq-fields" });
       toast({ title: "Field created successfully!" });
@@ -209,7 +209,7 @@ export default function LicenseIQSchema() {
 
   const updateFieldMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) =>
-      apiRequest(`/api/licenseiq-fields/${id}`, "PATCH", data),
+      apiRequest("PATCH", `/api/licenseiq-fields/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] === "/api/licenseiq-fields" });
       toast({ title: "Field updated successfully!" });
@@ -222,7 +222,7 @@ export default function LicenseIQSchema() {
   });
 
   const deleteFieldMutation = useMutation({
-    mutationFn: async (id: string) => apiRequest(`/api/licenseiq-fields/${id}`, "DELETE"),
+    mutationFn: async (id: string) => apiRequest("DELETE", `/api/licenseiq-fields/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] === "/api/licenseiq-fields" });
       toast({ title: "Field deleted successfully!" });

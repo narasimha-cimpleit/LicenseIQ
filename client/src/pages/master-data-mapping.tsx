@@ -161,7 +161,7 @@ export default function MasterDataMapping() {
   // Generate mapping mutation
   const generateMutation = useMutation({
     mutationFn: async (data: { sourceSchema: any; targetSchema: any; entityType: string; erpSystem: string }) => {
-      const response = await apiRequest('/api/mapping/generate', 'POST', data);
+      const response = await apiRequest('POST', '/api/mapping/generate', data);
       return response.json();
     },
     onSuccess: (data: MappingResult) => {
@@ -183,7 +183,7 @@ export default function MasterDataMapping() {
   // Save mapping mutation
   const saveMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await apiRequest('/api/mapping/save', 'POST', data);
+      const response = await apiRequest('POST', '/api/mapping/save', data);
       return response.json();
     },
     onSuccess: () => {
@@ -208,7 +208,7 @@ export default function MasterDataMapping() {
   // Batch generate mutation
   const batchGenerateMutation = useMutation({
     mutationFn: async (data: { erpSystemId: string; erpEntityIds: string[] }) => {
-      const response = await apiRequest('/api/mapping/batch-generate', 'POST', data);
+      const response = await apiRequest('POST', '/api/mapping/batch-generate', data);
       return response.json();
     },
     onSuccess: (data: { suggestions: BatchSuggestion[]; erpSystemName: string }) => {
@@ -235,7 +235,7 @@ export default function MasterDataMapping() {
   // Delete mapping mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await apiRequest(`/api/mapping/${id}`, 'DELETE');
+      const response = await apiRequest('DELETE', `/api/mapping/${id}`);
       if (response.status === 204) return { success: true };
       return response.json();
     },
@@ -1054,7 +1054,7 @@ export default function MasterDataMapping() {
                           if (!suggestion.licenseiqEntityId) continue;
                           
                           try {
-                            await apiRequest('/api/mapping/save', 'POST', {
+                            await apiRequest('POST', '/api/mapping/save', {
                               mappingName: `${suggestion.erpEntityName} → ${suggestion.licenseiqEntityName}`,
                               erpSystem: erpSystemsData?.systems?.find(s => s.id === batchSystemId)?.name || '',
                               entityType: suggestion.licenseiqEntityName || '',
