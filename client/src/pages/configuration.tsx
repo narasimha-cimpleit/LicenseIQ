@@ -3,6 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useRoles, useActiveRoles } from "@/hooks/use-roles";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -43,12 +44,15 @@ type Role = {
   updatedAt: string;
 };
 
-const AVAILABLE_ROLES = ['user', 'analyst', 'auditor', 'admin', 'owner'];
-
 export default function Configuration() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
-  const [selectedRole, setSelectedRole] = useState<string>('user');
+  
+  // Fetch active roles from database
+  const { data: activeRolesList, isLoading: activeRolesLoading } = useActiveRoles();
+  const availableRoles = activeRolesList || [];
+  
+  const [selectedRole, setSelectedRole] = useState<string>('');
   
   // Role management state
   const [editingRoleId, setEditingRoleId] = useState<string | null>(null);
@@ -221,6 +225,11 @@ export default function Configuration() {
 
   const navItems = navData?.items || [];
   const permissions = permData?.permissions || [];
+  
+  // Set initial selected role when roles are loaded
+  if (!selectedRole && availableRoles.length > 0) {
+    setSelectedRole(availableRoles[0].roleName);
+  }
 
   const isRoleEnabled = (itemKey: string, role: string): boolean => {
     const perm = permissions.find(p => p.navItemKey === itemKey && p.role === role);
@@ -306,20 +315,31 @@ export default function Configuration() {
             <CardContent>
               <div className="space-y-6">
                 {/* Role Selector */}
-                <div className="flex gap-2 flex-wrap">
-                  {AVAILABLE_ROLES.map(role => (
-                    <Button
-                      key={role}
-                      variant={selectedRole === role ? "default" : "outline"}
-                      onClick={() => setSelectedRole(role)}
-                      className={selectedRole === role ? "bg-gradient-to-r from-purple-600 to-pink-600" : ""}
-                      data-testid={`button-role-${role}`}
-                    >
-                      <Users className="h-4 w-4 mr-2" />
-                      {role.charAt(0).toUpperCase() + role.slice(1)}
-                    </Button>
-                  ))}
-                </div>
+                {activeRolesLoading ? (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    Loading roles...
+                  </div>
+                ) : availableRoles.length === 0 ? (
+                  <div className="text-muted-foreground text-sm">
+                    No roles found. Please create roles in the Role Management tab first.
+                  </div>
+                ) : (
+                  <div className="flex gap-2 flex-wrap">
+                    {availableRoles.map(role => (
+                      <Button
+                        key={role.roleName}
+                        variant={selectedRole === role.roleName ? "default" : "outline"}
+                        onClick={() => setSelectedRole(role.roleName)}
+                        className={selectedRole === role.roleName ? "bg-gradient-to-r from-purple-600 to-pink-600" : ""}
+                        data-testid={`button-role-${role.roleName}`}
+                      >
+                        <Users className="h-4 w-4 mr-2" />
+                        {role.displayName}
+                      </Button>
+                    ))}
+                  </div>
+                )}
 
                 {/* Permissions Table */}
                 {navLoading || permLoading ? (
