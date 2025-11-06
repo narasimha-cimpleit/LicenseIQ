@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -13,9 +13,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Sparkles, Upload, Download, Save, Trash2, Eye, FileJson, AlertCircle, CheckCircle2, Loader2, Settings, ArrowLeft } from 'lucide-react';
+import { Sparkles, Upload, Download, Save, Trash2, Eye, FileJson, AlertCircle, CheckCircle2, Loader2, Settings, ArrowLeft, Layers } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import type { ErpSystem, ErpEntity } from '@shared/schema';
+import type { ErpSystem, ErpEntity, LicenseiqEntity, LicenseiqField } from '@shared/schema';
 
 interface FieldMapping {
   source_field: string | null;
@@ -55,6 +55,7 @@ export default function MasterDataMapping() {
   const [targetSchema, setTargetSchema] = useState('');
   const [selectedSystemId, setSelectedSystemId] = useState('');
   const [selectedEntityId, setSelectedEntityId] = useState('');
+  const [selectedLicenseiqEntityId, setSelectedLicenseiqEntityId] = useState('');
   const [mappingResult, setMappingResult] = useState<MappingResult | null>(null);
   const [saveMappingName, setSaveMappingName] = useState('');
   const [saveNotes, setSaveNotes] = useState('');
@@ -73,6 +74,18 @@ export default function MasterDataMapping() {
     queryFn: () => fetch(`/api/erp-entities?systemId=${selectedSystemId}`).then(res => res.json()),
   });
 
+  // Fetch LicenseIQ entities
+  const { data: licenseiqEntitiesData } = useQuery<{ entities: LicenseiqEntity[] }>({
+    queryKey: ['/api/licenseiq-entities'],
+  });
+
+  // Fetch fields for selected LicenseIQ entity
+  const { data: licenseiqFieldsData } = useQuery<{ fields: LicenseiqField[] }>({
+    queryKey: ['/api/licenseiq-fields', selectedLicenseiqEntityId],
+    enabled: !!selectedLicenseiqEntityId,
+    queryFn: () => fetch(`/api/licenseiq-fields?entityId=${selectedLicenseiqEntityId}`).then(res => res.json()),
+  });
+
   // Fetch saved mappings
   const { data: savedMappings = { mappings: [] }, refetch: refetchMappings } = useQuery<{ mappings: SavedMapping[] }>({
     queryKey: ['/api/mapping'],
@@ -80,11 +93,23 @@ export default function MasterDataMapping() {
 
   const selectedSystem = erpSystemsData?.systems?.find(s => s.id === selectedSystemId);
   const selectedEntity = erpEntitiesData?.entities?.find(e => e.id === selectedEntityId);
+  const selectedLicenseiqEntity = licenseiqEntitiesData?.entities?.find(e => e.id === selectedLicenseiqEntityId);
+
+  // Auto-populate target schema when LicenseIQ entity is selected
+  useEffect(() => {
+    if (licenseiqFieldsData?.fields) {
+      const schema: Record<string, string> = {};
+      licenseiqFieldsData.fields.forEach(field => {
+        schema[field.fieldName] = field.dataType;
+      });
+      setTargetSchema(JSON.stringify(schema, null, 2));
+    }
+  }, [licenseiqFieldsData]);
 
   // Generate mapping mutation
   const generateMutation = useMutation({
     mutationFn: async (data: { sourceSchema: any; targetSchema: any; entityType: string; erpSystem: string }) => {
-      const response = await apiRequest('POST', '/api/mapping/generate', data);
+      const response = await apiRequest('/api/mapping/generate', 'POST', data);
       return response.json();
     },
     onSuccess: (data: MappingResult) => {
@@ -106,7 +131,7 @@ export default function MasterDataMapping() {
   // Save mapping mutation
   const saveMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await apiRequest('POST', '/api/mapping/save', data);
+      const response = await apiRequest('/api/mapping/save', 'POST', data);
       return response.json();
     },
     onSuccess: () => {
@@ -131,7 +156,7 @@ export default function MasterDataMapping() {
   // Delete mapping mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await apiRequest('DELETE', `/api/mapping/${id}`);
+      const response = await apiRequest(`/api/mapping/${id}`, 'DELETE');
       if (response.status === 204) return { success: true };
       return response.json();
     },
@@ -315,21 +340,71 @@ export default function MasterDataMapping() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <FileJson className="h-5 w-5 text-blue-500" />
+                  <Layers className="h-5 w-5 text-blue-500" />
                   Target Schema (LicenseIQ)
                 </CardTitle>
                 <CardDescription>
-                  Paste LicenseIQ standard field schema as JSON
+                  Select from your LicenseIQ schema catalog or paste JSON manually
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <Textarea
-                  value={targetSchema}
-                  onChange={(e) => setTargetSchema(e.target.value)}
-                  placeholder={'{\n  "contractId": "string",\n  "partyName": "string",\n  "effectiveDate": "date"\n}'}
-                  className="font-mono text-sm min-h-[300px]"
-                  data-testid="input-target-schema"
-                />
+              <CardContent className="space-y-4">
+                {/* LicenseIQ Entity Selector */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="licenseiq-entity">LicenseIQ Entity</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-auto p-0 text-xs text-blue-600 hover:text-blue-700"
+                      onClick={() => navigate('/licenseiq-schema')}
+                      data-testid="button-configure-licenseiq"
+                    >
+                      <Settings className="h-3 w-3 mr-1" />
+                      Configure Schema
+                    </Button>
+                  </div>
+                  <Select 
+                    value={selectedLicenseiqEntityId} 
+                    onValueChange={(value) => {
+                      setSelectedLicenseiqEntityId(value);
+                    }}
+                  >
+                    <SelectTrigger id="licenseiq-entity" data-testid="select-licenseiq-entity">
+                      <SelectValue placeholder="Select LicenseIQ entity..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {licenseiqEntitiesData?.entities?.map((entity) => (
+                        <SelectItem key={entity.id} value={entity.id}>
+                          {entity.name} ({entity.category})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {selectedLicenseiqEntity && (
+                    <p className="text-sm text-muted-foreground">
+                      {selectedLicenseiqEntity.description}
+                    </p>
+                  )}
+                </div>
+
+                {/* Auto-populated Schema */}
+                <div className="space-y-2">
+                  <Label htmlFor="target-schema">Schema JSON (Auto-populated)</Label>
+                  <Textarea
+                    id="target-schema"
+                    value={targetSchema}
+                    onChange={(e) => setTargetSchema(e.target.value)}
+                    placeholder={'{\n  "contractId": "string",\n  "partyName": "string",\n  "effectiveDate": "date"\n}'}
+                    className="font-mono text-sm min-h-[200px]"
+                    data-testid="input-target-schema"
+                  />
+                  {selectedLicenseiqEntityId && licenseiqFieldsData?.fields && (
+                    <p className="text-xs text-green-600 dark:text-green-500">
+                      ✓ Auto-populated with {licenseiqFieldsData.fields.length} fields from {selectedLicenseiqEntity?.name}
+                    </p>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </div>

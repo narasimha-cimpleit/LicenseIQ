@@ -102,7 +102,7 @@ export default function LicenseIQSchema() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("entities");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedEntity, setSelectedEntity] = useState<LicenseiqEntity | null>(null);
   
   // Entity dialog states
@@ -133,7 +133,7 @@ export default function LicenseIQSchema() {
     queryKey: ["/api/licenseiq-entities", selectedCategory],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (selectedCategory) params.append("category", selectedCategory);
+      if (selectedCategory && selectedCategory !== "all") params.append("category", selectedCategory);
       const response = await fetch(`/api/licenseiq-entities?${params}`);
       if (!response.ok) throw new Error("Failed to fetch entities");
       return response.json();
@@ -356,7 +356,7 @@ export default function LicenseIQSchema() {
                   <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Categories</SelectItem>
+                  <SelectItem value="all">All Categories</SelectItem>
                   <SelectItem value="Master Data">Master Data</SelectItem>
                   <SelectItem value="Transactional">Transactional</SelectItem>
                   <SelectItem value="Rules">Rules</SelectItem>
@@ -401,9 +401,9 @@ export default function LicenseIQSchema() {
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Database className="h-16 w-16 text-gray-400 mb-4" />
                   <p className="text-gray-600 dark:text-gray-400 text-center">
-                    {searchQuery || selectedCategory ? "No entities match your filters" : "No entities defined yet"}
+                    {searchQuery || (selectedCategory && selectedCategory !== "all") ? "No entities match your filters" : "No entities defined yet"}
                   </p>
-                  {!searchQuery && !selectedCategory && (
+                  {!searchQuery && (!selectedCategory || selectedCategory === "all") && (
                     <Button onClick={handleCreateEntity} className="mt-4" variant="outline" data-testid="button-create-first-entity">
                       <Plus className="h-4 w-4 mr-2" />
                       Create Your First Entity
