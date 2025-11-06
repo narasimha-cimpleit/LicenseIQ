@@ -10,7 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Upload, Database, CheckCircle2, XCircle, Clock, AlertCircle, RefreshCw } from "lucide-react";
+import { Upload, Database, CheckCircle2, XCircle, Clock, AlertCircle, RefreshCw, ArrowLeft } from "lucide-react";
+import { useLocation } from "wouter";
 import { format } from "date-fns";
 
 interface Contract {
@@ -41,6 +42,7 @@ interface DataImportJob {
 }
 
 export default function ErpDataImport() {
+  const [, navigate] = useLocation();
   const { toast } = useToast();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedContract, setSelectedContract] = useState<string>("");
@@ -145,11 +147,21 @@ export default function ErpDataImport() {
   return (
     <MainLayout title="ERP Data Import" description="Import master data from your ERP system for semantic sales matching">
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">ERP Data Import</h1>
-          <p className="text-muted-foreground mt-2">
-            Import master data from your ERP system for semantic sales matching
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">ERP Data Import</h1>
+            <p className="text-muted-foreground mt-2">
+              Import master data from your ERP system for semantic sales matching
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => navigate("/")}
+            data-testid="button-back"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
         </div>
 
         {/* Upload Form */}
