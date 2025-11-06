@@ -17,9 +17,25 @@ This comprehensive guide walks you through **EVERY major feature** of the Licens
 10. ✅ **Contract Q&A** - RAG-powered document queries
 
 ## 📦 Test Files Provided
-- **erp_master_data_sample.csv** - 15 nursery products (ERP master data)
-- **sales_data_sample.csv** - 15 sales transactions
-- **Contract PDF** - Use existing Plant Variety License contract or upload your own
+
+### **erp_master_data_sample.csv** - 15 nursery products (ERP master data)
+**Columns:** productCode, productName, category, territory, description, unitCost, standardPrice
+
+Sample row:
+```
+MAPLE-001,Aurora Flame Maple,Ornamental Trees,Primary,Premium ornamental maple tree...,12.50,25.00
+```
+
+### **sales_data_sample.csv** - 15 sales transactions
+**Columns:** transactionDate, transactionId, productCode, productName, category, territory, containerSize, season, currency, grossAmount, netAmount, quantity, unitPrice
+
+Sample row:
+```
+2024-03-15,TXN-2024-001,MAPLE-001,Aurora Flame Maple,Ornamental Trees,Primary,1-gallon,Spring,USD,30000,27000,6200,4.84
+```
+
+### **Contract PDF**
+Use existing Plant Variety License contract or upload your own
 
 ## ⏱️ Estimated Time
 **Total**: 30-45 minutes for complete end-to-end testing
@@ -352,6 +368,30 @@ Requires Review (<70%): 0 mappings
 
 ---
 
+### **💡 IMPORTANT: How Mappings Work with CSV Files**
+
+**Understanding the Connection:**
+
+The mapping you just created (Oracle Items → Products) is a **template** that tells the system how to transform data from your ERP structure to LicenseIQ's standard schema.
+
+**When you import `erp_master_data_sample.csv` in Module 5:**
+- CSV has columns: `productCode, productName, category, territory, description, unitCost, standardPrice`
+- System uses your mapping to transform these to Products schema: `productCode, productName, category, territory, listPrice, etc.`
+- Example: CSV's `standardPrice` → LicenseIQ's `listPrice`
+
+**Key Points:**
+✅ Mappings are **reusable templates** (not tied to one file)
+✅ CSV column names don't have to match Oracle Items fields exactly
+✅ The mapping tells the system: "Column A from CSV → Field B in LicenseIQ"
+✅ You'll select your saved mapping when importing the CSV
+
+**This means:**
+1. **Step 3.1-3.2**: Create mapping template (Oracle Items → Products)
+2. **Step 5.1**: Use that mapping when importing `erp_master_data_sample.csv`
+3. **Step 7.1**: Sales CSV matches against imported products using AI embeddings
+
+---
+
 ### **STEP 3.3: Test Batch Auto-Map (NEW! 10x Faster)**
 
 **Goal**: Process multiple ERP entities in bulk using AI
@@ -488,18 +528,35 @@ Requires Review (<70%): 0 mappings
 
 **Goal**: Import product catalog with AI embeddings
 
+**CSV File Structure (`erp_master_data_sample.csv`):**
+```csv
+productCode,productName,category,territory,description,unitCost,standardPrice
+MAPLE-001,Aurora Flame Maple,Ornamental Trees,Primary,Premium ornamental maple tree...,12.50,25.00
+MAPLE-002,Crimson King Maple,Ornamental Trees,Primary,Classic shade tree...,10.00,22.00
+```
+
 **Steps:**
 1. **Navigate to**: Sidebar → "ERP Data Import"
 2. **Select contract**: Choose your ERP-enabled contract
-3. **Select mapping** (optional): "Oracle Items - Standard Mapping"
+3. **Select mapping**: "Oracle Items to Products" (the mapping you created in Step 3.2)
+   - This tells the system how to map CSV columns to LicenseIQ schema
+   - Maps: productCode → productCode, productName → productName, standardPrice → listPrice, etc.
 4. **Upload file**: Click "Choose File" → Select `erp_master_data_sample.csv`
-5. **Preview data** (optional): Review first few rows
-6. **Click**: "Start Import" button
-7. **Watch progress**:
+5. **Preview data**: System shows first 3-5 rows with column headers
+6. **Verify columns match**:
+   - ✅ productCode
+   - ✅ productName
+   - ✅ category
+   - ✅ territory
+   - ✅ description
+   - ✅ unitCost
+   - ✅ standardPrice
+7. **Click**: "Start Import" button
+8. **Watch progress**:
    - Status: Processing...
    - Progress bar: "Processing 5 of 15 records" (updates every 2 seconds)
    - Shows embedding generation in progress
-8. **Wait**: ~30-60 seconds for 15 records
+9. **Wait**: ~30-60 seconds for 15 records
 
 **Expected Results:**
 ```
@@ -510,25 +567,25 @@ Requires Review (<70%): 0 mappings
 ✅ Import appears in history table
 
 Data Imported (15 products):
-- MAPLE-001: Aurora Flame Maple
-- MAPLE-002: Crimson King Maple
-- JUNIPER-001: Golden Spire Juniper
-- JUNIPER-002: Blue Arrow Juniper
-- ROSE-001: Pacific Sunset Rose
-- ROSE-002: Crimson Glory Rose
-- HOSTA-001: Emerald Crown Hosta
-- HOSTA-002: Royal Standard Hosta
-- HYDRANGEA-001: Cascade Blue Hydrangea
-- HYDRANGEA-002: Pink Diamond Hydrangea
-- AZALEA-001: Flame Azalea
-- LILAC-001: Purple Majesty Lilac
-- BOXWOOD-001: Green Mountain Boxwood
-- SPRUCE-001: Colorado Blue Spruce
-- DOGWOOD-001: Pink Flowering Dogwood
+- MAPLE-001: Aurora Flame Maple (Ornamental Trees, Primary)
+- MAPLE-002: Crimson King Maple (Ornamental Trees, Primary)
+- JUNIPER-001: Golden Spire Juniper (Ornamental Shrubs, Secondary)
+- JUNIPER-002: Blue Arrow Juniper (Ornamental Shrubs, Primary)
+- ROSE-001: Pacific Sunset Rose (Flowering Shrubs, Primary)
+- ROSE-002: Crimson Glory Rose (Flowering Shrubs, Primary)
+- HOSTA-001: Emerald Crown Hosta (Perennials, Primary)
+- HOSTA-002: Royal Standard Hosta (Perennials, Secondary)
+- HYDRANGEA-001: Cascade Blue Hydrangea (Flowering Shrubs, Primary)
+- HYDRANGEA-002: Pink Diamond Hydrangea (Flowering Shrubs, Secondary)
+- AZALEA-001: Flame Azalea (Flowering Shrubs, Primary)
+- LILAC-001: Purple Majesty Lilac (Flowering Shrubs, Primary)
+- BOXWOOD-001: Green Mountain Boxwood (Evergreen Shrubs, Primary)
+- SPRUCE-001: Colorado Blue Spruce (Evergreen Trees, Secondary)
+- DOGWOOD-001: Pink Flowering Dogwood (Ornamental Trees, Primary)
 
-✅ Each product has 384-dimensional embedding
-✅ Stored in erp_master_data table
-✅ Linked to contract
+✅ Each product has 384-dimensional embedding generated by HuggingFace
+✅ Stored in imported_erp_records table with vector search enabled
+✅ Linked to contract for semantic matching
 ```
 
 ---
@@ -718,16 +775,40 @@ Data Imported (15 products):
 
 **Goal**: Upload sales transactions with AI product matching
 
+**CSV File Structure (`sales_data_sample.csv`):**
+```csv
+transactionDate,transactionId,productCode,productName,category,territory,containerSize,season,currency,grossAmount,netAmount,quantity,unitPrice
+2024-03-15,TXN-2024-001,MAPLE-001,Aurora Flame Maple,Ornamental Trees,Primary,1-gallon,Spring,USD,30000,27000,6200,4.84
+2024-03-20,TXN-2024-002,MAPLE-001,Aurora Flame Maple,Ornamental Trees,Primary,5-gallon,Off-Season,USD,25000,22500,1100,22.73
+```
+
+**How Semantic Matching Works:**
+1. System generates embedding for each sales row (combines productCode, productName, category)
+2. Performs vector similarity search against 15 imported ERP products (from Step 5.1)
+3. Finds best match based on semantic similarity (not just exact productCode match)
+4. Assigns confidence score (0-100%)
+5. Links sale to matched ERP product if confidence ≥ 70%
+
 **Steps:**
 1. **Navigate to**: Sidebar → "Sales Data"
 2. **Notice purple banner**: "🔮 ERP Semantic Matching Active" (confirms ERP enabled)
 3. **Select contract**: Choose your ERP-enabled contract
 4. **Upload file**: Select `sales_data_sample.csv`
-5. **Click**: "Upload & Process"
-6. **Wait**: Processing takes 30-60 seconds
+5. **Verify columns** (system shows preview):
+   - transactionDate ✅
+   - transactionId ✅
+   - productCode ✅
+   - productName ✅
+   - category ✅
+   - territory ✅
+   - grossAmount ✅
+   - quantity ✅
+   - (plus containerSize, season, currency, netAmount, unitPrice)
+6. **Click**: "Upload & Process"
+7. **Wait**: Processing takes 30-60 seconds
    - AI generates embeddings for each sale
-   - Performs semantic similarity search
-   - Matches against ERP master data
+   - Performs semantic similarity search against 15 imported products
+   - Matches based on productCode, productName, and category
    - Calculates confidence scores
 
 **Expected Results:**
@@ -747,25 +828,29 @@ Errors: 0
 ⚠️ Unmatched: 0         (<70% confidence)
 📊 Avg Confidence: 95%+ (AI-powered)
 
-💡 Sales records were matched against imported 
-   ERP master data using semantic similarity search
+💡 Sales records were matched against 15 imported 
+   ERP products using semantic similarity search
 
 Sales Data Imported (15 transactions):
-- TXN-2024-001: MAPLE-001 (6,200 units, $30,000) → 98% match
-- TXN-2024-002: MAPLE-001 (1,100 units, $25,000) → 98% match
-- TXN-2024-003: JUNIPER-001 (1,800 units, $28,000) → 97% match
-- TXN-2024-004: ROSE-001 (3,000 units, $12,000) → 98% match
-- TXN-2024-005: HOSTA-001 (900 units, $18,000) → 96% match
-- TXN-2024-006: HYDRANGEA-001 (20,000 units, $120,000) → 97% match
-- TXN-2024-007: ROSE-001 (250 units, $5,000) → 98% match
-- TXN-2024-008: MAPLE-002 (3,000 units, $15,000) → 97% match
-- TXN-2024-009: JUNIPER-002 (800 units, $22,000) → 96% match
-- TXN-2024-010: HYDRANGEA-002 (1,200 units, $18,000) → 95% match
-- TXN-2024-011: HOSTA-002 (1,500 units, $12,000) → 95% match
-- TXN-2024-012: ROSE-002 (1,000 units, $16,000) → 96% match
-- TXN-2024-013: AZALEA-001 (1,300 units, $22,000) → 96% match
-- TXN-2024-014: LILAC-001 (1,600 units, $8,000) → 95% match
-- TXN-2024-015: BOXWOOD-001 (1,250 units, $20,000) → 96% match
+- TXN-2024-001: MAPLE-001 → Aurora Flame Maple (6,200 units, $30,000) [98% match]
+- TXN-2024-002: MAPLE-001 → Aurora Flame Maple (1,100 units, $25,000) [98% match]
+- TXN-2024-003: JUNIPER-001 → Golden Spire Juniper (1,800 units, $28,000) [97% match]
+- TXN-2024-004: ROSE-001 → Pacific Sunset Rose (3,000 units, $12,000) [98% match]
+- TXN-2024-005: HOSTA-001 → Emerald Crown Hosta (900 units, $18,000) [96% match]
+- TXN-2024-006: HYDRANGEA-001 → Cascade Blue Hydrangea (20,000 units, $120,000) [97% match]
+- TXN-2024-007: ROSE-001 → Pacific Sunset Rose (250 units, $5,000) [98% match]
+- TXN-2024-008: MAPLE-002 → Crimson King Maple (3,000 units, $15,000) [97% match]
+- TXN-2024-009: JUNIPER-002 → Blue Arrow Juniper (800 units, $22,000) [96% match]
+- TXN-2024-010: HYDRANGEA-002 → Pink Diamond Hydrangea (1,200 units, $18,000) [95% match]
+- TXN-2024-011: HOSTA-002 → Royal Standard Hosta (1,500 units, $12,000) [95% match]
+- TXN-2024-012: ROSE-002 → Crimson Glory Rose (1,000 units, $16,000) [96% match]
+- TXN-2024-013: AZALEA-001 → Flame Azalea (1,300 units, $22,000) [96% match]
+- TXN-2024-014: LILAC-001 → Purple Majesty Lilac (1,600 units, $8,000) [95% match]
+- TXN-2024-015: BOXWOOD-001 → Green Mountain Boxwood (1,250 units, $20,000) [96% match]
+
+✅ Perfect 15/15 match because productCodes align exactly
+✅ All confidence scores ≥95% due to exact productCode + semantic name matching
+✅ Sales now linked to ERP products for royalty calculations
 ```
 
 ---
