@@ -48,6 +48,21 @@ interface SavedMapping {
   notes?: string;
 }
 
+interface BatchSuggestion {
+  erpEntityId: string;
+  erpEntityName: string;
+  erpEntityType: string;
+  erpSchema: Record<string, string>;
+  licenseiqEntityId: string | null;
+  licenseiqEntityName: string | null;
+  licenseiqSchema: Record<string, string> | null;
+  fieldMappings: FieldMapping[];
+  confidence: number;
+  reasoning: string;
+  erpFieldCount: number;
+  mappedFieldCount: number;
+}
+
 export default function MasterDataMapping() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
@@ -62,16 +77,30 @@ export default function MasterDataMapping() {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [viewMapping, setViewMapping] = useState<SavedMapping | null>(null);
 
+  // Batch mapping state
+  const [batchSystemId, setBatchSystemId] = useState('');
+  const [batchEntityIds, setBatchEntityIds] = useState<string[]>([]);
+  const [batchSuggestions, setBatchSuggestions] = useState<BatchSuggestion[]>([]);
+  const [selectedSuggestions, setSelectedSuggestions] = useState<Set<string>>(new Set());
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+
   // Fetch ERP systems from catalog
   const { data: erpSystemsData } = useQuery<{ systems: ErpSystem[] }>({
     queryKey: ['/api/erp-systems'],
   });
 
-  // Fetch entities for selected ERP system
+  // Fetch entities for selected ERP system (single mapping tab)
   const { data: erpEntitiesData } = useQuery<{ entities: ErpEntity[] }>({
     queryKey: ['/api/erp-entities', selectedSystemId],
     enabled: !!selectedSystemId,
     queryFn: () => fetch(`/api/erp-entities?systemId=${selectedSystemId}`).then(res => res.json()),
+  });
+
+  // Fetch entities for batch mapping tab
+  const { data: batchErpEntitiesData } = useQuery<{ entities: ErpEntity[] }>({
+    queryKey: ['/api/erp-entities', batchSystemId],
+    enabled: !!batchSystemId,
+    queryFn: () => fetch(`/api/erp-entities?systemId=${batchSystemId}`).then(res => res.json()),
   });
 
   // Fetch fields for selected ERP entity
@@ -124,6 +153,11 @@ export default function MasterDataMapping() {
     }
   }, [licenseiqFieldsData]);
 
+  // Clear batch entity selections when batch system changes
+  useEffect(() => {
+    setBatchEntityIds([]);
+  }, [batchSystemId]);
+
   // Generate mapping mutation
   const generateMutation = useMutation({
     mutationFn: async (data: { sourceSchema: any; targetSchema: any; entityType: string; erpSystem: string }) => {
@@ -166,6 +200,33 @@ export default function MasterDataMapping() {
       toast({
         title: 'Save Failed',
         description: error.message || 'Failed to save mapping',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Batch generate mutation
+  const batchGenerateMutation = useMutation({
+    mutationFn: async (data: { erpSystemId: string; erpEntityIds: string[] }) => {
+      const response = await apiRequest('/api/mapping/batch-generate', 'POST', data);
+      return response.json();
+    },
+    onSuccess: (data: { suggestions: BatchSuggestion[]; erpSystemName: string }) => {
+      setBatchSuggestions(data.suggestions);
+      // Auto-select high confidence mappings (90%+)
+      const highConfidence = new Set(
+        data.suggestions.filter(s => s.confidence >= 90).map(s => s.erpEntityId)
+      );
+      setSelectedSuggestions(highConfidence);
+      toast({
+        title: 'Batch Mapping Complete',
+        description: `Generated ${data.suggestions.length} entity mappings. ${highConfidence.size} high-confidence matches auto-selected.`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Batch Generation Failed',
+        description: error.message || 'Failed to generate batch mappings',
         variant: 'destructive',
       });
     },
@@ -325,9 +386,13 @@ export default function MasterDataMapping() {
       </div>
 
       <Tabs defaultValue="generate" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="generate" data-testid="tab-generate">Generate Mapping</TabsTrigger>
-          <TabsTrigger value="saved" data-testid="tab-saved">Saved Mappings ({savedMappings.mappings.length})</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="generate" data-testid="tab-generate">Single Mapping</TabsTrigger>
+          <TabsTrigger value="batch" data-testid="tab-batch">
+            <Sparkles className="h-4 w-4 mr-2" />
+            Batch Auto-Map
+          </TabsTrigger>
+          <TabsTrigger value="saved" data-testid="tab-saved">Saved ({savedMappings.mappings.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="generate" className="space-y-6">
@@ -670,6 +735,358 @@ export default function MasterDataMapping() {
                     </AlertDescription>
                   </Alert>
                 </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="batch" className="space-y-6">
+          {/* Batch Configuration */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-purple-500" />
+                Batch Auto-Mapping
+              </CardTitle>
+              <CardDescription>
+                Automatically map multiple ERP entities at once using AI - Review and approve suggestions before saving
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* System Selection */}
+              <div className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="batch-system">ERP System</Label>
+                    <Select value={batchSystemId} onValueChange={setBatchSystemId}>
+                      <SelectTrigger id="batch-system" data-testid="select-batch-system">
+                        <SelectValue placeholder="Select ERP system..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {erpSystemsData?.systems?.map((system) => (
+                          <SelectItem key={system.id} value={system.id}>
+                            {system.name} (v{system.version})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Entity Multi-Select */}
+                {batchSystemId && (
+                  <div className="space-y-2">
+                    <Label>Select Entities to Map ({batchEntityIds.length} selected)</Label>
+                    <Card className="p-4 max-h-64 overflow-y-auto">
+                      <div className="space-y-2">
+                        {batchErpEntitiesData?.entities?.length === 0 ? (
+                          <p className="text-sm text-muted-foreground">No entities available for this system</p>
+                        ) : (
+                          batchErpEntitiesData?.entities?.map((entity) => (
+                            <label key={entity.id} className="flex items-start gap-3 p-2 rounded hover:bg-accent cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={batchEntityIds.includes(entity.id)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setBatchEntityIds([...batchEntityIds, entity.id]);
+                                  } else {
+                                    setBatchEntityIds(batchEntityIds.filter(id => id !== entity.id));
+                                  }
+                                }}
+                                className="mt-1"
+                                data-testid={`checkbox-entity-${entity.id}`}
+                              />
+                              <div className="flex-1">
+                                <div className="font-medium">{entity.name}</div>
+                                <div className="text-sm text-muted-foreground">{entity.entityType} - {entity.description || 'No description'}</div>
+                              </div>
+                            </label>
+                          ))
+                        )}
+                      </div>
+                    </Card>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setBatchEntityIds(batchErpEntitiesData?.entities?.map(e => e.id) || [])}
+                        data-testid="button-select-all-entities"
+                      >
+                        Select All
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setBatchEntityIds([])}
+                        data-testid="button-deselect-all-entities"
+                      >
+                        Clear All
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Generate Button */}
+                <Button
+                  onClick={() => {
+                    if (batchSystemId && batchEntityIds.length > 0) {
+                      batchGenerateMutation.mutate({ erpSystemId: batchSystemId, erpEntityIds: batchEntityIds });
+                    }
+                  }}
+                  disabled={!batchSystemId || batchEntityIds.length === 0 || batchGenerateMutation.isPending}
+                  className="w-full"
+                  data-testid="button-batch-generate"
+                >
+                  {batchGenerateMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Generating Mappings ({batchEntityIds.length} entities)...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Generate Batch Mappings ({batchEntityIds.length} entities)
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Results Table */}
+          {batchSuggestions.length > 0 && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Mapping Suggestions - Review & Approve</CardTitle>
+                    <CardDescription>
+                      {selectedSuggestions.size} of {batchSuggestions.length} mappings selected for saving
+                    </CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const highConf = new Set(batchSuggestions.filter(s => s.confidence >= 90).map(s => s.erpEntityId));
+                        setSelectedSuggestions(highConf);
+                      }}
+                      data-testid="button-select-high-confidence"
+                    >
+                      Select High Confidence (≥90%)
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedSuggestions(new Set())}
+                      data-testid="button-deselect-all-suggestions"
+                    >
+                      Clear Selection
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12">
+                          <input
+                            type="checkbox"
+                            checked={selectedSuggestions.size === batchSuggestions.filter(s => s.licenseiqEntityId).length}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedSuggestions(new Set(batchSuggestions.filter(s => s.licenseiqEntityId).map(s => s.erpEntityId)));
+                              } else {
+                                setSelectedSuggestions(new Set());
+                              }
+                            }}
+                            data-testid="checkbox-select-all-suggestions"
+                          />
+                        </TableHead>
+                        <TableHead>ERP Entity</TableHead>
+                        <TableHead>LicenseIQ Entity</TableHead>
+                        <TableHead>Confidence</TableHead>
+                        <TableHead>Fields</TableHead>
+                        <TableHead className="w-24">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {batchSuggestions.map((suggestion) => (
+                        <>
+                          <TableRow key={suggestion.erpEntityId} className={expandedRows.has(suggestion.erpEntityId) ? 'bg-muted/50' : ''}>
+                            <TableCell>
+                              <input
+                                type="checkbox"
+                                checked={selectedSuggestions.has(suggestion.erpEntityId)}
+                                disabled={!suggestion.licenseiqEntityId}
+                                onChange={(e) => {
+                                  const newSet = new Set(selectedSuggestions);
+                                  if (e.target.checked) {
+                                    newSet.add(suggestion.erpEntityId);
+                                  } else {
+                                    newSet.delete(suggestion.erpEntityId);
+                                  }
+                                  setSelectedSuggestions(newSet);
+                                }}
+                                data-testid={`checkbox-suggestion-${suggestion.erpEntityId}`}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <div className="font-medium">{suggestion.erpEntityName}</div>
+                              <div className="text-xs text-muted-foreground">{suggestion.erpEntityType}</div>
+                            </TableCell>
+                            <TableCell>
+                              {suggestion.licenseiqEntityId ? (
+                                <div className="font-medium">{suggestion.licenseiqEntityName}</div>
+                              ) : (
+                                <span className="text-sm text-muted-foreground italic">No match found</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Badge 
+                                variant={suggestion.confidence >= 90 ? 'default' : suggestion.confidence >= 70 ? 'secondary' : 'outline'}
+                                className={
+                                  suggestion.confidence >= 90 ? 'bg-green-500' : 
+                                  suggestion.confidence >= 70 ? 'bg-yellow-500' : 
+                                  'bg-red-500 text-white'
+                                }
+                              >
+                                {suggestion.confidence}%
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-sm">
+                                {suggestion.mappedFieldCount}/{suggestion.erpFieldCount} mapped
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  const newExpanded = new Set(expandedRows);
+                                  if (expandedRows.has(suggestion.erpEntityId)) {
+                                    newExpanded.delete(suggestion.erpEntityId);
+                                  } else {
+                                    newExpanded.add(suggestion.erpEntityId);
+                                  }
+                                  setExpandedRows(newExpanded);
+                                }}
+                                data-testid={`button-expand-${suggestion.erpEntityId}`}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                          {expandedRows.has(suggestion.erpEntityId) && (
+                            <TableRow>
+                              <TableCell colSpan={6} className="bg-muted/30 p-4">
+                                <div className="space-y-4">
+                                  <div>
+                                    <h4 className="font-medium mb-2">AI Reasoning:</h4>
+                                    <p className="text-sm text-muted-foreground">{suggestion.reasoning}</p>
+                                  </div>
+                                  {suggestion.fieldMappings.length > 0 && (
+                                    <div>
+                                      <h4 className="font-medium mb-2">Field Mappings ({suggestion.fieldMappings.length}):</h4>
+                                      <div className="rounded border bg-background">
+                                        <Table>
+                                          <TableHeader>
+                                            <TableRow>
+                                              <TableHead>Source Field (ERP)</TableHead>
+                                              <TableHead>Target Field (LicenseIQ)</TableHead>
+                                              <TableHead>Transformation</TableHead>
+                                              <TableHead className="w-24">Confidence</TableHead>
+                                            </TableRow>
+                                          </TableHeader>
+                                          <TableBody>
+                                            {suggestion.fieldMappings.map((fm, idx) => (
+                                              <TableRow key={idx}>
+                                                <TableCell className="font-mono text-xs">
+                                                  {fm.source_field || <span className="text-muted-foreground italic">null</span>}
+                                                </TableCell>
+                                                <TableCell className="font-mono text-xs">{fm.target_field}</TableCell>
+                                                <TableCell className="text-xs">{fm.transformation_rule}</TableCell>
+                                                <TableCell>
+                                                  <Badge variant={fm.confidence >= 80 ? 'default' : 'secondary'} className="text-xs">
+                                                    {fm.confidence}%
+                                                  </Badge>
+                                                </TableCell>
+                                              </TableRow>
+                                            ))}
+                                          </TableBody>
+                                        </Table>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Save Selected Button */}
+                {selectedSuggestions.size > 0 && (
+                  <div className="mt-4 flex justify-end gap-2">
+                    <Alert className="flex-1">
+                      <CheckCircle2 className="h-4 w-4" />
+                      <AlertTitle>Ready to Save</AlertTitle>
+                      <AlertDescription>
+                        {selectedSuggestions.size} mapping{selectedSuggestions.size !== 1 ? 's' : ''} selected. Click Save to add them to your catalog.
+                      </AlertDescription>
+                    </Alert>
+                    <Button
+                      onClick={async () => {
+                        const selectedMappings = batchSuggestions.filter(s => selectedSuggestions.has(s.erpEntityId));
+                        let savedCount = 0;
+                        
+                        for (const suggestion of selectedMappings) {
+                          if (!suggestion.licenseiqEntityId) continue;
+                          
+                          try {
+                            await apiRequest('/api/mapping/save', 'POST', {
+                              mappingName: `${suggestion.erpEntityName} → ${suggestion.licenseiqEntityName}`,
+                              erpSystem: erpSystemsData?.systems?.find(s => s.id === batchSystemId)?.name || '',
+                              entityType: suggestion.licenseiqEntityName || '',
+                              sourceSchema: suggestion.erpSchema,
+                              targetSchema: suggestion.licenseiqSchema,
+                              mappingResults: suggestion.fieldMappings,
+                              notes: `AI-generated batch mapping with ${suggestion.confidence}% confidence. ${suggestion.reasoning}`,
+                            });
+                            savedCount++;
+                          } catch (error) {
+                            console.error(`Failed to save mapping for ${suggestion.erpEntityName}:`, error);
+                          }
+                        }
+                        
+                        toast({
+                          title: 'Batch Save Complete',
+                          description: `Successfully saved ${savedCount} of ${selectedMappings.length} mappings.`,
+                        });
+                        
+                        queryClient.invalidateQueries({ queryKey: ['/api/mapping'] });
+                        setBatchSuggestions([]);
+                        setSelectedSuggestions(new Set());
+                        setBatchEntityIds([]);
+                      }}
+                      className="shrink-0"
+                      data-testid="button-save-selected-mappings"
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Selected ({selectedSuggestions.size})
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}

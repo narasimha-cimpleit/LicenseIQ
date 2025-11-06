@@ -2908,6 +2908,222 @@ Return ONLY valid JSON array, no other text.`;
     }
   });
 
+  // Batch generate AI-driven schema mappings for multiple entities
+  app.post('/api/mapping/batch-generate', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { erpSystemId, erpEntityIds } = req.body;
+
+      if (!erpSystemId || !erpEntityIds || !Array.isArray(erpEntityIds) || erpEntityIds.length === 0) {
+        return res.status(400).json({ error: 'ERP system ID and entity IDs array are required' });
+      }
+
+      console.log(`🪄 [BATCH MAPPING] Starting batch generation for ${erpEntityIds.length} entities...`);
+
+      // Get ERP system details
+      const erpSystem = await storage.getErpSystem(erpSystemId);
+      if (!erpSystem) {
+        return res.status(404).json({ error: 'ERP system not found' });
+      }
+
+      // Get all LicenseIQ entities for matching
+      const licenseiqEntities = await storage.getAllLicenseiqEntities();
+      if (!licenseiqEntities || licenseiqEntities.length === 0) {
+        return res.status(400).json({ error: 'No LicenseIQ entities available for mapping' });
+      }
+
+      // Process each ERP entity
+      const suggestions = [];
+      for (const entityId of erpEntityIds) {
+        try {
+          // Get ERP entity details
+          const erpEntity = await storage.getErpEntity(entityId);
+          if (!erpEntity) {
+            console.warn(`⚠️ [BATCH MAPPING] Entity ${entityId} not found, skipping`);
+            continue;
+          }
+
+          // Get ERP entity fields
+          const erpFields = await storage.getErpFieldsByEntity(entityId);
+          const erpSchema: Record<string, string> = {};
+          erpFields.forEach(field => {
+            erpSchema[field.fieldName] = field.dataType || 'string';
+          });
+
+          console.log(`  🔍 [BATCH MAPPING] Analyzing ${erpEntity.name} (${erpFields.length} fields)...`);
+
+          // Use AI to find best LicenseIQ entity match
+          const matchPrompt = `You are an expert ERP integration specialist. Analyze this ERP entity and find the best matching LicenseIQ entity.
+
+ERP ENTITY:
+Name: ${erpEntity.name}
+Type: ${erpEntity.entityType}
+Description: ${erpEntity.description || 'N/A'}
+Fields: ${JSON.stringify(erpSchema, null, 2)}
+
+AVAILABLE LICENSEIQ ENTITIES:
+${licenseiqEntities.map((entity: any, idx: number) => `${idx + 1}. ${entity.name} (${entity.entityType}) - ${entity.description || 'No description'}`).join('\n')}
+
+TASK: Determine which LicenseIQ entity is the best match for this ERP entity.
+
+Consider:
+1. Semantic similarity of names and descriptions
+2. Entity types and purposes
+3. Field overlap and compatibility
+4. Business logic alignment
+
+OUTPUT FORMAT (JSON object):
+{
+  "matched_entity_id": "string (LicenseIQ entity ID) or null if no good match",
+  "confidence": number (0-100),
+  "reasoning": "string explaining why this is the best match or why no match was found"
+}
+
+Return ONLY valid JSON object, no other text.`;
+
+          const matchResponse = await groqService.makeRequest([
+            { role: 'system', content: 'You are an expert ERP integration specialist. Return only valid JSON.' },
+            { role: 'user', content: matchPrompt }
+          ], 0.1, 1500);
+
+          // Parse AI match response
+          let matchResult: any = null;
+          try {
+            const cleanedMatch = matchResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+            matchResult = JSON.parse(cleanedMatch);
+          } catch (parseError) {
+            console.error(`❌ [BATCH MAPPING] Failed to parse match result for ${erpEntity.name}:`, parseError);
+            // Create default low-confidence result
+            matchResult = {
+              matched_entity_id: null,
+              confidence: 0,
+              reasoning: 'AI parsing failed'
+            };
+          }
+
+          // If no match found, add to suggestions with 0% confidence
+          if (!matchResult.matched_entity_id) {
+            suggestions.push({
+              erpEntityId: erpEntity.id,
+              erpEntityName: erpEntity.name,
+              erpEntityType: erpEntity.entityType,
+              erpSchema,
+              licenseiqEntityId: null,
+              licenseiqEntityName: null,
+              licenseiqSchema: null,
+              fieldMappings: [],
+              confidence: 0,
+              reasoning: matchResult.reasoning || 'No suitable match found',
+              erpFieldCount: erpFields.length,
+              mappedFieldCount: 0,
+            });
+            console.log(`  ⚠️ [BATCH MAPPING] No match for ${erpEntity.name}: ${matchResult.reasoning}`);
+            continue;
+          }
+
+          // Find the matched LicenseIQ entity
+          const matchedLicenseiqEntity = licenseiqEntities.find((e: any) => e.id === matchResult.matched_entity_id);
+          if (!matchedLicenseiqEntity) {
+            console.warn(`⚠️ [BATCH MAPPING] AI matched entity ID ${matchResult.matched_entity_id} not found`);
+            continue;
+          }
+
+          // Get LicenseIQ entity fields
+          const licenseiqFields = await storage.getLicenseiqFieldsByEntity(matchedLicenseiqEntity.id);
+          const licenseiqSchema: Record<string, string> = {};
+          licenseiqFields.forEach((field: any) => {
+            licenseiqSchema[field.fieldName] = field.dataType || 'string';
+          });
+
+          // Generate field-level mappings using AI
+          const fieldMappingPrompt = `You are an expert ERP integration specialist. Create precise field mappings between these schemas.
+
+SOURCE SCHEMA (${erpEntity.name} - ERP):
+${JSON.stringify(erpSchema, null, 2)}
+
+TARGET SCHEMA (${matchedLicenseiqEntity.name} - LicenseIQ):
+${JSON.stringify(licenseiqSchema, null, 2)}
+
+TASK: Generate comprehensive field mappings.
+
+For each target field, identify:
+1. The corresponding source field (or null if no match)
+2. Any data transformation needed
+3. Confidence score (0-100)
+
+RULES:
+- Match by semantic meaning, not just names
+- Consider data types and formats
+- Suggest transformations when needed
+- If no good match, set source_field to null
+
+OUTPUT FORMAT (JSON array):
+[
+  {
+    "source_field": "string or null",
+    "target_field": "string",
+    "transformation_rule": "string or 'direct'",
+    "confidence": number (0-100)
+  }
+]
+
+Return ONLY valid JSON array, no other text.`;
+
+          const fieldResponse = await groqService.makeRequest([
+            { role: 'system', content: 'You are an expert ERP integration specialist. Return only valid JSON.' },
+            { role: 'user', content: fieldMappingPrompt }
+          ], 0.1, 2000);
+
+          // Parse field mappings
+          let fieldMappings: any[] = [];
+          try {
+            const cleanedFields = fieldResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+            fieldMappings = JSON.parse(cleanedFields);
+          } catch (parseError) {
+            console.error(`❌ [BATCH MAPPING] Failed to parse field mappings for ${erpEntity.name}:`, parseError);
+            fieldMappings = [];
+          }
+
+          // Calculate mapped field count
+          const mappedFieldCount = fieldMappings.filter(m => m.source_field !== null).length;
+
+          // Add to suggestions
+          suggestions.push({
+            erpEntityId: erpEntity.id,
+            erpEntityName: erpEntity.name,
+            erpEntityType: erpEntity.entityType,
+            erpSchema,
+            licenseiqEntityId: matchedLicenseiqEntity.id,
+            licenseiqEntityName: matchedLicenseiqEntity.name,
+            licenseiqSchema,
+            fieldMappings,
+            confidence: matchResult.confidence || 0,
+            reasoning: matchResult.reasoning || 'AI-generated match',
+            erpFieldCount: erpFields.length,
+            mappedFieldCount,
+          });
+
+          console.log(`  ✅ [BATCH MAPPING] ${erpEntity.name} → ${matchedLicenseiqEntity.name} (${matchResult.confidence}% confidence, ${mappedFieldCount}/${erpFields.length} fields)`);
+
+        } catch (entityError) {
+          console.error(`❌ [BATCH MAPPING] Error processing entity ${entityId}:`, entityError);
+        }
+      }
+
+      console.log(`🎉 [BATCH MAPPING] Completed batch generation: ${suggestions.length} suggestions created`);
+
+      res.json({
+        erpSystemId,
+        erpSystemName: erpSystem.name,
+        suggestions,
+        totalProcessed: suggestions.length,
+      });
+
+    } catch (error) {
+      console.error('❌ [BATCH MAPPING] Batch generation error:', error);
+      res.status(500).json({ error: 'Failed to generate batch mappings' });
+    }
+  });
+
   // Save mapping to database
   app.post('/api/mapping/save', isAuthenticated, async (req: any, res: Response) => {
     try {
