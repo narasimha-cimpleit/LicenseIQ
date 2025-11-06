@@ -1098,6 +1098,37 @@ export const importedErpRecords = pgTable("imported_erp_records", {
   index("imported_records_embedding_idx").using("hnsw", table.embedding.op("vector_cosine_ops")),
 ]);
 
+// ========================================
+// LICENSEIQ SCHEMA CATALOG
+// ========================================
+
+// LicenseIQ Entities - Defines standard entities in the LicenseIQ platform
+export const licenseiqEntities = pgTable("licenseiq_entities", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 100 }).notNull(), // e.g., "Sales Data", "Contracts", "Royalty Rules"
+  technicalName: varchar("technical_name", { length: 100 }).notNull().unique(), // e.g., "sales_data", "contracts"
+  description: text("description"), // Description of the entity
+  category: varchar("category", { length: 50 }), // e.g., "Transactional", "Master Data", "Rules"
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// LicenseIQ Fields - Defines standard fields for each entity
+export const licenseiqFields = pgTable("licenseiq_fields", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  entityId: varchar("entity_id").notNull().references(() => licenseiqEntities.id, { onDelete: 'cascade' }),
+  fieldName: varchar("field_name", { length: 100 }).notNull(), // e.g., "productName", "quantity"
+  dataType: varchar("data_type", { length: 50 }).notNull(), // e.g., "string", "number", "date", "boolean"
+  description: text("description"), // Description of the field
+  isRequired: boolean("is_required").notNull().default(false), // Is this field mandatory
+  defaultValue: varchar("default_value"), // Default value if any
+  validationRules: text("validation_rules"), // JSON string with validation rules
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("licenseiq_fields_entity_idx").on(table.entityId),
+]);
+
 // Insert schemas for lead capture
 export const insertEarlyAccessSignupSchema = createInsertSchema(earlyAccessSignups).pick({
   email: true,
@@ -1150,6 +1181,19 @@ export const insertImportedErpRecordSchema = createInsertSchema(importedErpRecor
   createdAt: true,
 });
 
+// Insert schemas for LicenseIQ Catalog
+export const insertLicenseiqEntitySchema = createInsertSchema(licenseiqEntities).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertLicenseiqFieldSchema = createInsertSchema(licenseiqFields).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // ======================
 // TYPES FOR NEW TABLES
 // ======================
@@ -1190,3 +1234,7 @@ export type DataImportJob = typeof dataImportJobs.$inferSelect;
 export type InsertDataImportJob = z.infer<typeof insertDataImportJobSchema>;
 export type ImportedErpRecord = typeof importedErpRecords.$inferSelect;
 export type InsertImportedErpRecord = z.infer<typeof insertImportedErpRecordSchema>;
+export type LicenseiqEntity = typeof licenseiqEntities.$inferSelect;
+export type InsertLicenseiqEntity = z.infer<typeof insertLicenseiqEntitySchema>;
+export type LicenseiqField = typeof licenseiqFields.$inferSelect;
+export type InsertLicenseiqField = z.infer<typeof insertLicenseiqFieldSchema>;

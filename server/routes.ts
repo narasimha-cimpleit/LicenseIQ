@@ -3168,6 +3168,113 @@ Return ONLY valid JSON array, no other text.`;
   });
 
   // ==========================================
+  // LICENSEIQ SCHEMA CATALOG ROUTES
+  // ==========================================
+
+  // Get all LicenseIQ entities
+  app.get('/api/licenseiq-entities', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { category } = req.query;
+      const entities = await storage.getAllLicenseiqEntities(category);
+      res.json({ entities });
+    } catch (error) {
+      console.error('❌ [LICENSEIQ ENTITIES] Get error:', error);
+      res.status(500).json({ error: 'Failed to retrieve LicenseIQ entities' });
+    }
+  });
+
+  // Create new LicenseIQ entity
+  app.post('/api/licenseiq-entities', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const entity = await storage.createLicenseiqEntity(req.body);
+      console.log(`✅ [LICENSEIQ ENTITIES] Created: ${entity.name}`);
+      res.json(entity);
+    } catch (error) {
+      console.error('❌ [LICENSEIQ ENTITIES] Create error:', error);
+      res.status(500).json({ error: 'Failed to create LicenseIQ entity' });
+    }
+  });
+
+  // Update LicenseIQ entity
+  app.patch('/api/licenseiq-entities/:id', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const entity = await storage.updateLicenseiqEntity(id, req.body);
+      console.log(`✏️ [LICENSEIQ ENTITIES] Updated: ${entity.name}`);
+      res.json(entity);
+    } catch (error) {
+      console.error('❌ [LICENSEIQ ENTITIES] Update error:', error);
+      res.status(500).json({ error: 'Failed to update LicenseIQ entity' });
+    }
+  });
+
+  // Delete LicenseIQ entity
+  app.delete('/api/licenseiq-entities/:id', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteLicenseiqEntity(id);
+      console.log(`🗑️ [LICENSEIQ ENTITIES] Deleted: ${id}`);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('❌ [LICENSEIQ ENTITIES] Delete error:', error);
+      res.status(500).json({ error: 'Failed to delete LicenseIQ entity' });
+    }
+  });
+
+  // Get fields for a LicenseIQ entity
+  app.get('/api/licenseiq-fields', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { entityId } = req.query;
+      if (!entityId) {
+        return res.status(400).json({ error: 'Entity ID is required' });
+      }
+      const fields = await storage.getLicenseiqFieldsByEntity(entityId as string);
+      res.json({ fields });
+    } catch (error) {
+      console.error('❌ [LICENSEIQ FIELDS] Get error:', error);
+      res.status(500).json({ error: 'Failed to retrieve LicenseIQ fields' });
+    }
+  });
+
+  // Create new LicenseIQ field
+  app.post('/api/licenseiq-fields', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const field = await storage.createLicenseiqField(req.body);
+      console.log(`✅ [LICENSEIQ FIELDS] Created: ${field.fieldName}`);
+      res.json(field);
+    } catch (error) {
+      console.error('❌ [LICENSEIQ FIELDS] Create error:', error);
+      res.status(500).json({ error: 'Failed to create LicenseIQ field' });
+    }
+  });
+
+  // Update LicenseIQ field
+  app.patch('/api/licenseiq-fields/:id', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const field = await storage.updateLicenseiqField(id, req.body);
+      console.log(`✏️ [LICENSEIQ FIELDS] Updated: ${field.fieldName}`);
+      res.json(field);
+    } catch (error) {
+      console.error('❌ [LICENSEIQ FIELDS] Update error:', error);
+      res.status(500).json({ error: 'Failed to update LicenseIQ field' });
+    }
+  });
+
+  // Delete LicenseIQ field
+  app.delete('/api/licenseiq-fields/:id', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteLicenseiqField(id);
+      console.log(`🗑️ [LICENSEIQ FIELDS] Deleted: ${id}`);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('❌ [LICENSEIQ FIELDS] Delete error:', error);
+      res.status(500).json({ error: 'Failed to delete LicenseIQ field' });
+    }
+  });
+
+  // ==========================================
   // ERP DATA IMPORT ROUTES
   // ==========================================
 

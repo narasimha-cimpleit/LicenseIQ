@@ -30,6 +30,8 @@ import {
   erpFields,
   dataImportJobs,
   importedErpRecords,
+  licenseiqEntities,
+  licenseiqFields,
   type User,
   type InsertUser,
   type Contract,
@@ -75,6 +77,10 @@ import {
   type InsertErpField,
   type MasterDataMapping,
   type InsertMasterDataMapping,
+  type LicenseiqEntity,
+  type InsertLicenseiqEntity,
+  type LicenseiqField,
+  type InsertLicenseiqField,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, ilike, count, gte, sql } from "drizzle-orm";
@@ -306,6 +312,20 @@ export interface IStorage {
   getErpFieldsByEntity(entityId: string): Promise<ErpField[]>;
   updateErpField(id: string, updates: Partial<InsertErpField>): Promise<ErpField>;
   deleteErpField(id: string): Promise<void>;
+  
+  // LicenseIQ Entities operations
+  createLicenseiqEntity(entity: InsertLicenseiqEntity): Promise<LicenseiqEntity>;
+  getLicenseiqEntity(id: string): Promise<LicenseiqEntity | undefined>;
+  getAllLicenseiqEntities(category?: string): Promise<LicenseiqEntity[]>;
+  updateLicenseiqEntity(id: string, updates: Partial<InsertLicenseiqEntity>): Promise<LicenseiqEntity>;
+  deleteLicenseiqEntity(id: string): Promise<void>;
+  
+  // LicenseIQ Fields operations
+  createLicenseiqField(field: InsertLicenseiqField): Promise<LicenseiqField>;
+  getLicenseiqField(id: string): Promise<LicenseiqField | undefined>;
+  getLicenseiqFieldsByEntity(entityId: string): Promise<LicenseiqField[]>;
+  updateLicenseiqField(id: string, updates: Partial<InsertLicenseiqField>): Promise<LicenseiqField>;
+  deleteLicenseiqField(id: string): Promise<void>;
   
   // Data import jobs operations
   createDataImportJob(job: any): Promise<any>;
@@ -2080,6 +2100,89 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(erpFields)
       .where(eq(erpFields.id, id));
+  }
+
+  // LicenseIQ Entities operations
+  async createLicenseiqEntity(entity: InsertLicenseiqEntity): Promise<LicenseiqEntity> {
+    const [result] = await db
+      .insert(licenseiqEntities)
+      .values(entity)
+      .returning();
+    return result;
+  }
+
+  async getLicenseiqEntity(id: string): Promise<LicenseiqEntity | undefined> {
+    const [result] = await db
+      .select()
+      .from(licenseiqEntities)
+      .where(eq(licenseiqEntities.id, id));
+    return result;
+  }
+
+  async getAllLicenseiqEntities(category?: string): Promise<LicenseiqEntity[]> {
+    const conditions = category ? eq(licenseiqEntities.category, category) : undefined;
+    const results = await db
+      .select()
+      .from(licenseiqEntities)
+      .where(conditions)
+      .orderBy(licenseiqEntities.name);
+    return results;
+  }
+
+  async updateLicenseiqEntity(id: string, updates: Partial<InsertLicenseiqEntity>): Promise<LicenseiqEntity> {
+    const [result] = await db
+      .update(licenseiqEntities)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(licenseiqEntities.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteLicenseiqEntity(id: string): Promise<void> {
+    await db
+      .delete(licenseiqEntities)
+      .where(eq(licenseiqEntities.id, id));
+  }
+
+  // LicenseIQ Fields operations
+  async createLicenseiqField(field: InsertLicenseiqField): Promise<LicenseiqField> {
+    const [result] = await db
+      .insert(licenseiqFields)
+      .values(field)
+      .returning();
+    return result;
+  }
+
+  async getLicenseiqField(id: string): Promise<LicenseiqField | undefined> {
+    const [result] = await db
+      .select()
+      .from(licenseiqFields)
+      .where(eq(licenseiqFields.id, id));
+    return result;
+  }
+
+  async getLicenseiqFieldsByEntity(entityId: string): Promise<LicenseiqField[]> {
+    const results = await db
+      .select()
+      .from(licenseiqFields)
+      .where(eq(licenseiqFields.entityId, entityId))
+      .orderBy(licenseiqFields.fieldName);
+    return results;
+  }
+
+  async updateLicenseiqField(id: string, updates: Partial<InsertLicenseiqField>): Promise<LicenseiqField> {
+    const [result] = await db
+      .update(licenseiqFields)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(licenseiqFields.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteLicenseiqField(id: string): Promise<void> {
+    await db
+      .delete(licenseiqFields)
+      .where(eq(licenseiqFields.id, id));
   }
 
   // Data import jobs operations
