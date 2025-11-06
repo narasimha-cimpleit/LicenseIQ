@@ -74,7 +74,6 @@ export default function MasterDataMapping() {
   const [mappingResult, setMappingResult] = useState<MappingResult | null>(null);
   const [saveMappingName, setSaveMappingName] = useState('');
   const [saveNotes, setSaveNotes] = useState('');
-  const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [viewMapping, setViewMapping] = useState<SavedMapping | null>(null);
 
   // Batch mapping state
@@ -191,7 +190,6 @@ export default function MasterDataMapping() {
         title: 'Mapping Saved',
         description: 'Mapping configuration has been saved successfully.',
       });
-      setShowSaveDialog(false);
       setSaveMappingName('');
       setSaveNotes('');
       refetchMappings();
@@ -659,28 +657,22 @@ export default function MasterDataMapping() {
                       {mappingResult.mappingResults.length} field mappings generated for {mappingResult.entityType}
                     </CardDescription>
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        const dataStr = JSON.stringify(mappingResult, null, 2);
-                        const blob = new Blob([dataStr], { type: 'application/json' });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = `mapping-${mappingResult.entityType}-${Date.now()}.json`;
-                        a.click();
-                      }}
-                      data-testid="button-export-json"
-                    >
-                      <Download className="mr-2 h-4 w-4" />
-                      Export JSON
-                    </Button>
-                    <Button onClick={() => setShowSaveDialog(true)} data-testid="button-save-mapping">
-                      <Save className="mr-2 h-4 w-4" />
-                      Save Mapping
-                    </Button>
-                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      const dataStr = JSON.stringify(mappingResult, null, 2);
+                      const blob = new Blob([dataStr], { type: 'application/json' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `mapping-${mappingResult.entityType}-${Date.now()}.json`;
+                      a.click();
+                    }}
+                    data-testid="button-export-json"
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Export JSON
+                  </Button>
                 </div>
               </CardHeader>
               <CardContent>
@@ -734,6 +726,61 @@ export default function MasterDataMapping() {
                       {mappingResult.mappingResults.filter(m => m.confidence < 70).length} mappings (&lt;70%)
                     </AlertDescription>
                   </Alert>
+                </div>
+
+                {/* Inline Save Configuration */}
+                <div className="mt-6 p-6 rounded-lg border-2 border-primary/20 bg-primary/5">
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                      <Save className="h-5 w-5" />
+                      Save Mapping Configuration
+                    </h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Provide a name and optional notes to save this mapping for reuse
+                    </p>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="mapping-name">Mapping Name *</Label>
+                      <Input
+                        id="mapping-name"
+                        value={saveMappingName}
+                        onChange={(e) => setSaveMappingName(e.target.value)}
+                        placeholder="e.g., Customer Master Mapping v1"
+                        data-testid="input-mapping-name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="notes">Notes (Optional)</Label>
+                      <Textarea
+                        id="notes"
+                        value={saveNotes}
+                        onChange={(e) => setSaveNotes(e.target.value)}
+                        placeholder="Add any notes about this mapping configuration..."
+                        rows={3}
+                        data-testid="input-mapping-notes"
+                      />
+                    </div>
+                    <Button
+                      onClick={handleSaveMapping}
+                      disabled={saveMutation.isPending || !saveMappingName}
+                      className="w-full"
+                      size="lg"
+                      data-testid="button-save-mapping"
+                    >
+                      {saveMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving Mapping...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="mr-2 h-4 w-4" />
+                          Save Mapping
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -1169,62 +1216,6 @@ export default function MasterDataMapping() {
           </Card>
         </TabsContent>
       </Tabs>
-
-      {/* Save Dialog */}
-      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
-        <DialogContent data-testid="dialog-save-mapping">
-          <DialogHeader>
-            <DialogTitle>Save Mapping Configuration</DialogTitle>
-            <DialogDescription>
-              Provide a name and optional notes for this mapping configuration.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="mapping-name">Mapping Name *</Label>
-              <Input
-                id="mapping-name"
-                value={saveMappingName}
-                onChange={(e) => setSaveMappingName(e.target.value)}
-                placeholder="e.g., Customer Master Mapping v1"
-                data-testid="input-mapping-name"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes (Optional)</Label>
-              <Textarea
-                id="notes"
-                value={saveNotes}
-                onChange={(e) => setSaveNotes(e.target.value)}
-                placeholder="Add any notes about this mapping configuration..."
-                data-testid="input-mapping-notes"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowSaveDialog(false)} data-testid="button-cancel-save">
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSaveMapping}
-              disabled={saveMutation.isPending || !saveMappingName}
-              data-testid="button-confirm-save"
-            >
-              {saveMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Save Mapping
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* View Dialog */}
       {viewMapping && (
