@@ -14,7 +14,7 @@ import { PDFInvoiceService } from "./services/pdfInvoiceService";
 import { HuggingFaceEmbeddingService } from "./services/huggingFaceEmbedding";
 import { RAGService } from "./services/ragService";
 import { db } from "./db";
-import { contracts, contractEmbeddings, royaltyRules, navigationPermissions, roleNavigationPermissions, userNavigationOverrides } from "@shared/schema";
+import { contracts, contractEmbeddings, royaltyRules, navigationPermissions, roleNavigationPermissions, userNavigationOverrides, roles, insertRoleSchema } from "@shared/schema";
 import { 
   insertContractSchema, 
   insertContractAnalysisSchema, 
@@ -3948,6 +3948,127 @@ Return ONLY valid JSON array, no other text.`;
     } catch (error) {
       console.error('❌ [NAV PERMISSIONS] Get allowed items error:', error);
       res.status(500).json({ error: 'Failed to get allowed navigation items' });
+    }
+  });
+
+  // ==========================================
+  // ROLE MANAGEMENT ROUTES
+  // ==========================================
+
+  // Get all roles
+  app.get('/api/roles', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const allRoles = await db.select().from(roles).orderBy(roles.displayName);
+      res.json({ roles: allRoles });
+    } catch (error) {
+      console.error('❌ [ROLES] Get error:', error);
+      res.status(500).json({ error: 'Failed to get roles' });
+    }
+  });
+
+  // Create a new role
+  app.post('/api/roles', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      if (req.user.role !== 'admin' && req.user.role !== 'owner') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      const validatedData = insertRoleSchema.parse(req.body);
+      const created = await db.insert(roles).values(validatedData).returning();
+      res.json(created[0]);
+    } catch (error) {
+      console.error('❌ [ROLES] Create error:', error);
+      res.status(400).json({ error: error instanceof Error ? error.message : 'Failed to create role' });
+    }
+  });
+
+  // Update a role
+  app.put('/api/roles/:id', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      if (req.user.role !== 'admin' && req.user.role !== 'owner') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      const { id } = req.params;
+      const validatedData = insertRoleSchema.partial().parse(req.body);
+      
+      const updated = await db.update(roles)
+        .set({ ...validatedData, updatedAt: new Date() })
+        .where(eq(roles.id, id))
+        .returning();
+
+      if (updated.length === 0) {
+        return res.status(404).json({ error: 'Role not found' });
+      }
+
+      res.json(updated[0]);
+    } catch (error) {
+      console.error('❌ [ROLES] Update error:', error);
+      res.status(400).json({ error: error instanceof Error ? error.message : 'Failed to update role' });
+    }
+  });
+
+  // Delete a role
+  app.delete('/api/roles/:id', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      if (req.user.role !== 'admin' && req.user.role !== 'owner') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      const { id } = req.params;
+      
+      // Check if it's a system role
+      const roleToDelete = await db.select().from(roles).where(eq(roles.id, id));
+      if (roleToDelete.length > 0 && roleToDelete[0].isSystemRole) {
+        return res.status(400).json({ error: 'Cannot delete system roles' });
+      }
+
+      const deleted = await db.delete(roles).where(eq(roles.id, id)).returning();
+      
+      if (deleted.length === 0) {
+        return res.status(404).json({ error: 'Role not found' });
+      }
+
+      res.json({ success: true, deleted: deleted[0] });
+    } catch (error) {
+      console.error('❌ [ROLES] Delete error:', error);
+      res.status(400).json({ error: error instanceof Error ? error.message : 'Failed to delete role' });
+    }
+  });
+
+  // Seed default system roles
+  app.post('/api/roles/seed', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      if (req.user.role !== 'admin' && req.user.role !== 'owner') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      const defaultRoles = [
+        { roleName: 'admin', displayName: 'Administrator', description: 'Full system access', isSystemRole: true },
+        { roleName: 'owner', displayName: 'Owner', description: 'Business owner with full access', isSystemRole: true },
+        { roleName: 'editor', displayName: 'Editor', description: 'Can edit contracts and data', isSystemRole: true },
+        { roleName: 'viewer', displayName: 'Viewer', description: 'Read-only access', isSystemRole: true },
+        { roleName: 'auditor', displayName: 'Auditor', description: 'Access to audit trail and reports', isSystemRole: true },
+      ];
+
+      const created = [];
+      for (const role of defaultRoles) {
+        try {
+          const result = await db.insert(roles).values(role).onConflictDoUpdate({
+            target: roles.roleName,
+            set: { displayName: role.displayName, description: role.description, updatedAt: new Date() }
+          }).returning();
+          created.push(result[0]);
+        } catch (err) {
+          console.error(`Error seeding role ${role.roleName}:`, err);
+        }
+      }
+
+      console.log(`🌱 [ROLES] Seeded ${created.length} system roles`);
+      res.json({ created: created.length, roles: created });
+    } catch (error) {
+      console.error('❌ [ROLES] Seed error:', error);
+      res.status(500).json({ error: 'Failed to seed roles' });
     }
   });
 

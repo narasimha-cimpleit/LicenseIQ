@@ -1260,6 +1260,34 @@ export type LicenseiqEntityRecord = typeof licenseiqEntityRecords.$inferSelect;
 export type InsertLicenseiqEntityRecord = z.infer<typeof insertLicenseiqEntityRecordSchema>;
 
 // ======================
+// ROLES MANAGEMENT
+// ======================
+
+export const roles = pgTable("roles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  roleName: varchar("role_name").notNull().unique(), // Unique role identifier (e.g., 'admin', 'editor', 'custom_analyst')
+  displayName: varchar("display_name").notNull(), // User-friendly name
+  description: text("description"), // Role description
+  isSystemRole: boolean("is_system_role").default(false), // Prevent deletion of system roles (admin, owner, etc.)
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("roles_name_idx").on(table.roleName),
+]);
+
+// Insert schema for roles
+export const insertRoleSchema = createInsertSchema(roles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Types for roles
+export type Role = typeof roles.$inferSelect;
+export type InsertRole = z.infer<typeof insertRoleSchema>;
+
+// ======================
 // NAVIGATION PERMISSIONS
 // ======================
 
