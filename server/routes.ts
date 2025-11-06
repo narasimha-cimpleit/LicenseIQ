@@ -19,7 +19,8 @@ import {
   insertContractSchema, 
   insertContractAnalysisSchema, 
   insertAuditTrailSchema,
-  insertSalesDataSchema
+  insertSalesDataSchema,
+  insertLicenseiqEntityRecordSchema
 } from "@shared/schema";
 import { and, eq, count, desc } from "drizzle-orm";
 
@@ -3487,6 +3488,123 @@ Return ONLY valid JSON array, no other text.`;
     } catch (error) {
       console.error('❌ [LICENSEIQ FIELDS] Delete error:', error);
       res.status(500).json({ error: 'Failed to delete LicenseIQ field' });
+    }
+  });
+
+  // ==========================================
+  // LICENSEIQ ENTITY RECORDS ROUTES
+  // ==========================================
+
+  // Get records for a LicenseIQ entity
+  app.get('/api/licenseiq-records', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { entityId } = req.query;
+      if (!entityId) {
+        return res.status(400).json({ error: 'Entity ID is required' });
+      }
+      const records = await storage.getLicenseiqEntityRecordsByEntity(entityId as string);
+      res.json({ records });
+    } catch (error) {
+      console.error('❌ [LICENSEIQ RECORDS] Get error:', error);
+      res.status(500).json({ error: 'Failed to retrieve records' });
+    }
+  });
+
+  // Create new record
+  app.post('/api/licenseiq-records', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const validated = insertLicenseiqEntityRecordSchema.parse({
+        ...req.body,
+        createdBy: req.user.id
+      });
+      const record = await storage.createLicenseiqEntityRecord(validated);
+      console.log(`✅ [LICENSEIQ RECORDS] Created record for entity: ${validated.entityId}`);
+      res.json(record);
+    } catch (error) {
+      console.error('❌ [LICENSEIQ RECORDS] Create error:', error);
+      res.status(400).json({ error: error instanceof Error ? error.message : 'Failed to create record' });
+    }
+  });
+
+  // Update record
+  app.patch('/api/licenseiq-records/:id', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      const validated = insertLicenseiqEntityRecordSchema.partial().parse(req.body);
+      const record = await storage.updateLicenseiqEntityRecord(id, validated);
+      console.log(`✏️ [LICENSEIQ RECORDS] Updated record: ${id}`);
+      res.json(record);
+    } catch (error) {
+      console.error('❌ [LICENSEIQ RECORDS] Update error:', error);
+      res.status(400).json({ error: error instanceof Error ? error.message : 'Failed to update record' });
+    }
+  });
+
+  // Delete record
+  app.delete('/api/licenseiq-records/:id', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteLicenseiqEntityRecord(id);
+      console.log(`🗑️ [LICENSEIQ RECORDS] Deleted: ${id}`);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('❌ [LICENSEIQ RECORDS] Delete error:', error);
+      res.status(500).json({ error: 'Failed to delete record' });
+    }
+  });
+
+  // Seed 25 standard entities
+  app.post('/api/licenseiq-entities/seed', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const entities = [
+        // Master Data (17)
+        { name: 'Customers/Parties', technicalName: 'customers_parties', category: 'Master Data', description: 'Customer and party master data' },
+        { name: 'Items', technicalName: 'items', category: 'Master Data', description: 'Item master data' },
+        { name: 'Item Category', technicalName: 'item_category', category: 'Master Data', description: 'Item categories' },
+        { name: 'Item Class', technicalName: 'item_class', category: 'Master Data', description: 'Item classifications' },
+        { name: 'Item Catalog', technicalName: 'item_catalog', category: 'Master Data', description: 'Item catalog' },
+        { name: 'Item Structures', technicalName: 'item_structures', category: 'Master Data', description: 'Item structures and hierarchies' },
+        { name: 'Customer Sites', technicalName: 'customer_sites', category: 'Master Data', description: 'Customer site locations' },
+        { name: 'Customer Site Uses', technicalName: 'customer_site_uses', category: 'Master Data', description: 'Customer site uses' },
+        { name: 'Suppliers/Vendors', technicalName: 'suppliers_vendors', category: 'Master Data', description: 'Supplier and vendor master data' },
+        { name: 'Supplier Sites', technicalName: 'supplier_sites', category: 'Master Data', description: 'Supplier site locations' },
+        { name: 'Payment Terms', technicalName: 'payment_terms', category: 'Master Data', description: 'Payment terms master data' },
+        { name: 'Organizations', technicalName: 'organizations', category: 'Master Data', description: 'Organization hierarchy' },
+        { name: 'Business Units', technicalName: 'business_units', category: 'Master Data', description: 'Business unit master data' },
+        { name: 'Chart of Accounts', technicalName: 'chart_of_accounts', category: 'Master Data', description: 'General ledger accounts' },
+        { name: 'Sales Reps', technicalName: 'sales_reps', category: 'Master Data', description: 'Sales representatives' },
+        { name: 'Employee Master', technicalName: 'employee_master', category: 'Master Data', description: 'Employee master data' },
+        // Transactions (9)
+        { name: 'Sales Orders', technicalName: 'sales_orders', category: 'Transactions', description: 'Sales order headers' },
+        { name: 'Sales Order Lines', technicalName: 'sales_order_lines', category: 'Transactions', description: 'Sales order line items' },
+        { name: 'AR Invoices', technicalName: 'ar_invoices', category: 'Transactions', description: 'Accounts receivable invoice headers' },
+        { name: 'AR Invoice Lines', technicalName: 'ar_invoice_lines', category: 'Transactions', description: 'Accounts receivable invoice lines' },
+        { name: 'AP Invoices', technicalName: 'ap_invoices', category: 'Transactions', description: 'Accounts payable invoice headers' },
+        { name: 'AP Invoice Lines', technicalName: 'ap_invoice_lines', category: 'Transactions', description: 'Accounts payable invoice lines' },
+        { name: 'AP Invoice Payments', technicalName: 'ap_invoice_payments', category: 'Transactions', description: 'Accounts payable payments' },
+        { name: 'Purchase Orders', technicalName: 'purchase_orders', category: 'Transactions', description: 'Purchase order headers' },
+        { name: 'Purchase Order Lines', technicalName: 'purchase_order_lines', category: 'Transactions', description: 'Purchase order line items' },
+      ];
+
+      const created = [];
+      for (const entity of entities) {
+        try {
+          const existing = await storage.getAllLicenseiqEntities();
+          const isDuplicate = existing.some(e => e.technicalName === entity.technicalName);
+          if (!isDuplicate) {
+            const result = await storage.createLicenseiqEntity(entity);
+            created.push(result);
+          }
+        } catch (err) {
+          console.log(`⚠️ Entity ${entity.name} may already exist, skipping`);
+        }
+      }
+
+      console.log(`🌱 [LICENSEIQ SEED] Created ${created.length} entities`);
+      res.json({ created: created.length, entities: created });
+    } catch (error) {
+      console.error('❌ [LICENSEIQ SEED] Error:', error);
+      res.status(500).json({ error: 'Failed to seed entities' });
     }
   });
 

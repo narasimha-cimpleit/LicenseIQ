@@ -20,7 +20,8 @@ import {
   Sparkles,
   ClipboardCheck,
   Mail,
-  Layers
+  Layers,
+  Table
 } from "lucide-react";
 import licenseIQLogo from "@assets/Transparent Logo_1761867914841.png";
 
@@ -86,6 +87,12 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
       href: "/licenseiq-schema",
       icon: Layers,
       current: location === "/licenseiq-schema",
+    },
+    {
+      name: "Data Management",
+      href: "/data-management",
+      icon: Table,
+      current: location === "/data-management",
     },
     {
       name: "ERP Data Import",
