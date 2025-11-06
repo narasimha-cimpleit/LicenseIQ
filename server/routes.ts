@@ -3824,8 +3824,25 @@ Return ONLY valid JSON array, no other text.`;
         }
       }
 
+      // Enable ALL navigation items for admin role by default
+      console.log('🌱 [NAV PERMISSIONS] Enabling all items for admin role...');
+      let adminPermissionsCreated = 0;
+      for (const item of navItems) {
+        try {
+          await db.insert(roleNavigationPermissions).values({
+            role: 'admin',
+            navItemKey: item.itemKey,
+            isEnabled: true
+          }).onConflictDoNothing();
+          adminPermissionsCreated++;
+        } catch (err) {
+          console.error(`Error creating admin permission for ${item.itemKey}:`, err);
+        }
+      }
+
       console.log(`🌱 [NAV PERMISSIONS] Seeded ${created.length} navigation items`);
-      res.json({ created: created.length, items: created });
+      console.log(`🌱 [NAV PERMISSIONS] Created ${adminPermissionsCreated} admin role permissions`);
+      res.json({ created: created.length, items: created, adminPermissions: adminPermissionsCreated });
     } catch (error) {
       console.error('❌ [NAV PERMISSIONS] Seed error:', error);
       res.status(500).json({ error: 'Failed to seed navigation items' });
