@@ -8,6 +8,7 @@ This comprehensive guide walks you through **EVERY major feature** of the Licens
 2. ✅ **Contract Metadata Management** - Edit and approve metadata
 3. ✅ **ERP Catalog Setup** - Configure ERP systems, entities, and fields
 4. ✅ **Master Data Mapping** - AI field mapping with human review
+   - **NEW!** Batch Auto-Map - Process multiple entities 10x faster
 5. ✅ **Toggle Configuration** - Enable/disable ERP semantic matching
 6. ✅ **ERP Data Import** - Import master product data with embeddings
 7. ✅ **Rules Management** - Add, edit, delete royalty rules
@@ -251,63 +252,73 @@ This comprehensive guide walks you through **EVERY major feature** of the Licens
 
 ## **MODULE 3: MASTER DATA MAPPING** 🔗
 
-### **STEP 3.1: Generate AI Field Mapping**
+### **STEP 3.1: Generate AI Field Mapping (Single Entity)**
 
-**Goal**: Create intelligent field mapping between ERP and LicenseIQ
+**Goal**: Create intelligent field mapping between one ERP entity and LicenseIQ entity
 
 **Steps:**
 1. **Navigate to**: Sidebar → "Master Data Mapping"
-2. **Click**: "Generate Mapping" tab
-3. **Paste Source Schema** (Your ERP - Oracle format):
+2. **Click**: "Single Mapping" tab (default)
+3. **Select ERP System**: Oracle EBS (from dropdown)
+4. **Select ERP Entity**: Items (from dropdown - shows "Items (master_data)")
+5. **Wait**: Source Schema auto-populates from Items entity
+6. **Select LicenseIQ Entity**: Products (Master Data) (from dropdown)
+7. **Wait**: Target Schema auto-populates from Products entity
+8. **Review auto-populated schemas**:
+   
+   **Source Schema (Oracle Items):**
    ```json
    {
-     "ITEM_NUMBER": "string",
-     "ITEM_DESCRIPTION": "string",
-     "CATEGORY_SET": "string",
-     "SALES_TERRITORY": "string",
-     "ORDERED_QUANTITY": "number",
-     "LINE_AMOUNT": "number",
-     "TRANSACTION_DATE": "date",
-     "ORDER_NUMBER": "string"
+     "CATEGORY_SET_NAME": "VARCHAR2(30)",
+     "DESCRIPTION": "VARCHAR2(240)",
+     "INVENTORY_ASSET_FLAG": "VARCHAR2(1)",
+     "INVENTORY_ITEM_ID": "NUMBER",
+     "ITEM_NUMBER": "VARCHAR2(40)",
+     "ITEM_TYPE": "VARCHAR2(30)",
+     "LIST_PRICE": "NUMBER",
+     "PRIMARY_UOM_CODE": "VARCHAR2(3)",
+     "STATUS": "VARCHAR2(15)",
+     "UNIT_WEIGHT": "NUMBER"
    }
    ```
-4. **Paste Target Schema** (LicenseIQ standard):
+   
+   **Target Schema (LicenseIQ Products):**
    ```json
    {
+     "category": "string",
+     "isActive": "boolean",
+     "listPrice": "number",
+     "manufacturer": "string",
      "productCode": "string",
      "productName": "string",
-     "category": "string",
+     "royaltyRate": "number",
+     "subcategory": "string",
      "territory": "string",
-     "quantity": "number",
-     "grossAmount": "number",
-     "transactionDate": "date",
-     "transactionId": "string"
+     "unitOfMeasure": "string"
    }
    ```
-5. **Select ERP System**: Oracle EBS 12.2
-6. **Select Entity**: Items (MTL_SYSTEM_ITEMS_B)
-7. **Click**: "Generate AI Mapping" (🪄 button)
-8. **Wait**: AI processes (5-10 seconds)
+
+9. **Click**: "Generate AI Mapping" (🪄 button)
+10. **Wait**: AI processes (5-10 seconds)
 
 **Expected Results:**
 ```
 ✅ AI generates field mappings
 ✅ Mapping table displays results:
 
-Source Field (Your ERP) → Target Field (LicenseIQ) | Confidence
+Source Field (Oracle) → Target Field (LicenseIQ) | Confidence
 ──────────────────────────────────────────────────────────────
-ITEM_NUMBER         → productCode              | 98% 🟢
-ITEM_DESCRIPTION    → productName              | 98% 🟢
-CATEGORY_SET        → category                 | 95% 🟢
-SALES_TERRITORY     → territory                | 92% 🟢
-ORDERED_QUANTITY    → quantity                 | 98% 🟢
-LINE_AMOUNT         → grossAmount              | 95% 🟢
-TRANSACTION_DATE    → transactionDate          | 98% 🟢
-ORDER_NUMBER        → transactionId            | 92% 🟢
+ITEM_NUMBER           → productCode              | 98% 🟢
+DESCRIPTION           → productName              | 98% 🟢
+CATEGORY_SET_NAME     → category                 | 95% 🟢
+LIST_PRICE            → listPrice                | 100% 🟢
+PRIMARY_UOM_CODE      → unitOfMeasure            | 92% 🟢
+STATUS                → isActive                 | 85% 🟡
+INVENTORY_ITEM_ID     → productCode              | 75% 🟡
 
 Statistics:
-High Confidence (≥90%): 8 mappings ✅
-Medium Confidence (70-89%): 0 mappings
+High Confidence (≥90%): 5 mappings ✅
+Medium Confidence (70-89%): 2 mappings ⚠️
 Requires Review (<70%): 0 mappings
 ```
 
@@ -328,7 +339,7 @@ Requires Review (<70%): 0 mappings
    - Re-generate mapping
 3. **Click**: "Save Mapping" button
 4. **Fill dialog**:
-   - Mapping Name: "Oracle Items - Standard Mapping"
+   - Mapping Name: "Oracle Items to Products"
    - Notes: "Manually reviewed all mappings, verified correct"
 5. **Click**: "Save"
 
@@ -336,35 +347,89 @@ Requires Review (<70%): 0 mappings
 ```
 ✅ Mapping saved to database
 ✅ Success toast notification
-✅ Mapping appears in "Saved Mappings" tab
+✅ Mapping appears in "Saved" tab
 ```
 
 ---
 
-### **STEP 3.3: View and Manage Saved Mappings**
+### **STEP 3.3: Test Batch Auto-Map (NEW! 10x Faster)**
+
+**Goal**: Process multiple ERP entities in bulk using AI
+
+**Steps:**
+1. **Click**: "Batch Auto-Map" tab
+2. **Select ERP System**: Oracle EBS (from dropdown)
+3. **Wait**: Entity list loads automatically
+4. **Select entities to map** (check boxes):
+   - ☑ Items (master_data)
+   - ☑ Customers (master_data)
+   - ☑ Suppliers (master_data)
+   - ☑ GL Accounts (master_data)
+   - Or click "Select All" to map all 10 Oracle entities
+5. **Click**: "Generate Batch Mappings (4 entities)" button
+6. **Wait**: AI processes (30-60 seconds)
+   - Shows "Generating batch mappings..." with spinner
+   - Processes all 4 entities in parallel
+7. **Review results table**:
+   
+   | ERP Entity | → | LicenseIQ Entity | Confidence | Fields |
+   |------------|---|------------------|------------|---------|
+   | Items | → | Products | 🟢 95% | 7/10 |
+   | Customers | → | Contract Terms | 🟢 92% | 6/10 |
+   | Suppliers | → | Contract Terms | 🟡 88% | 5/10 |
+   | GL Accounts | → | *(No match)* | 🔴 0% | 0/10 |
+
+8. **Expand row details** (click chevron icon):
+   - View AI reasoning: "Items entity contains product catalog..."
+   - See field-level mappings
+   - Review confidence scores per field
+9. **Auto-selection**: High-confidence mappings (≥90%) are pre-selected
+10. **Manual review**:
+    - Uncheck "GL Accounts" (no match)
+    - Keep "Items" and "Customers" (high confidence)
+    - Review "Suppliers" (medium confidence - optional)
+11. **Click**: "Save Selected (3)" button
+12. **Verify**: 3 mappings saved to database
+
+**Expected Results:**
+```
+✅ Batch generation processes 4 entities
+✅ Results table shows all matches
+✅ High-confidence auto-selected (Items, Customers)
+✅ Medium-confidence available for review (Suppliers)
+✅ No-match excluded (GL Accounts)
+✅ Expandable details show AI reasoning
+✅ Save button shows count (3 selected)
+✅ All approved mappings saved successfully
+✅ 10x faster than single entity mapping!
+```
+
+---
+
+### **STEP 3.4: View and Manage Saved Mappings**
 
 **Goal**: Access saved mappings for reuse
 
 **Steps:**
-1. **Click**: "Saved Mappings" tab
+1. **Click**: "Saved" tab (third tab)
 2. **View all saved mappings**:
    - Mapping name
-   - ERP system
-   - Entity type
-   - Status (Active/Inactive)
-   - AI model used
+   - ERP system name
+   - ERP entity name  
+   - LicenseIQ entity name
    - Created by (username)
    - Creation date
 3. **Available actions**:
-   - 👁️ **View**: See full mapping details
-   - 📥 **Load**: Load into editor for modification
+   - 👁️ **View**: See full mapping details in dialog
    - 🗑️ **Delete**: Remove mapping
 
 **Expected Results:**
 ```
-✅ Saved Mappings tab loads
-✅ All saved mappings displayed
-✅ View/Load/Delete actions work
+✅ Saved tab loads
+✅ All saved mappings displayed (single + batch)
+✅ Shows mappings created from both workflows
+✅ View shows complete field mappings
+✅ Delete removes mapping from database
 ✅ Can reuse mappings in ERP Data Import
 ```
 
