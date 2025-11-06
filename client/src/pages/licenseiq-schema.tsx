@@ -108,8 +108,8 @@ export default function LicenseIQSchema() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedEntity, setSelectedEntity] = useState<LicenseiqEntity | null>(null);
   
-  // Entity dialog states
-  const [entityDialogOpen, setEntityDialogOpen] = useState(false);
+  // Entity inline form states
+  const [showEntityForm, setShowEntityForm] = useState(false);
   const [entityDialogMode, setEntityDialogMode] = useState<"create" | "edit">("create");
   const [entityForm, setEntityForm] = useState({
     name: "",
@@ -118,8 +118,8 @@ export default function LicenseIQSchema() {
     category: "",
   });
 
-  // Field dialog states
-  const [fieldDialogOpen, setFieldDialogOpen] = useState(false);
+  // Field inline form states
+  const [showFieldForm, setShowFieldForm] = useState(false);
   const [fieldDialogMode, setFieldDialogMode] = useState<"create" | "edit">("create");
   const [fieldForm, setFieldForm] = useState({
     id: "",
@@ -160,7 +160,7 @@ export default function LicenseIQSchema() {
     onSuccess: () => {
       queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] === "/api/licenseiq-entities" });
       toast({ title: "Entity created successfully!" });
-      setEntityDialogOpen(false);
+      setShowEntityForm(false);
       resetEntityForm();
     },
     onError: () => {
@@ -174,7 +174,7 @@ export default function LicenseIQSchema() {
     onSuccess: () => {
       queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] === "/api/licenseiq-entities" });
       toast({ title: "Entity updated successfully!" });
-      setEntityDialogOpen(false);
+      setShowEntityForm(false);
       resetEntityForm();
     },
     onError: () => {
@@ -199,7 +199,7 @@ export default function LicenseIQSchema() {
     onSuccess: () => {
       queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] === "/api/licenseiq-fields" });
       toast({ title: "Field created successfully!" });
-      setFieldDialogOpen(false);
+      setShowFieldForm(false);
       resetFieldForm();
     },
     onError: () => {
@@ -213,7 +213,7 @@ export default function LicenseIQSchema() {
     onSuccess: () => {
       queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] === "/api/licenseiq-fields" });
       toast({ title: "Field updated successfully!" });
-      setFieldDialogOpen(false);
+      setShowFieldForm(false);
       resetFieldForm();
     },
     onError: () => {
@@ -251,7 +251,7 @@ export default function LicenseIQSchema() {
   const handleCreateEntity = () => {
     setEntityDialogMode("create");
     resetEntityForm();
-    setEntityDialogOpen(true);
+    setShowEntityForm(true);
   };
 
   const handleEditEntity = (entity: LicenseiqEntity) => {
@@ -263,7 +263,7 @@ export default function LicenseIQSchema() {
       category: entity.category || "",
     });
     setSelectedEntity(entity);
-    setEntityDialogOpen(true);
+    setShowEntityForm(true);
   };
 
   const handleSaveEntity = () => {
@@ -281,7 +281,7 @@ export default function LicenseIQSchema() {
     }
     setFieldDialogMode("create");
     resetFieldForm();
-    setFieldDialogOpen(true);
+    setShowFieldForm(true);
   };
 
   const handleEditField = (field: LicenseiqField) => {
@@ -295,7 +295,7 @@ export default function LicenseIQSchema() {
       defaultValue: field.defaultValue || "",
       validationRules: field.validationRules || "",
     });
-    setFieldDialogOpen(true);
+    setShowFieldForm(true);
   };
 
   const handleSaveField = () => {
@@ -394,6 +394,77 @@ export default function LicenseIQSchema() {
 
           {/* Entities Tab */}
           <TabsContent value="entities" className="space-y-6">
+            {/* Inline Entity Form */}
+            {showEntityForm && (
+              <Card className="border-2 border-primary/20 bg-primary/5">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>{entityDialogMode === "create" ? "Create New Entity" : "Edit Entity"}</span>
+                    <Button variant="ghost" size="sm" onClick={() => {setShowEntityForm(false); resetEntityForm();}} data-testid="button-close-entity-form">
+                      ✕
+                    </Button>
+                  </CardTitle>
+                  <CardDescription>
+                    Define a new data entity in your LicenseIQ platform schema
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="entity-name">Entity Name*</Label>
+                    <Input
+                      id="entity-name"
+                      placeholder="e.g., Sales Data"
+                      value={entityForm.name}
+                      onChange={(e) => setEntityForm({ ...entityForm, name: e.target.value })}
+                      data-testid="input-entity-name"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="entity-technical-name">Technical Name*</Label>
+                    <Input
+                      id="entity-technical-name"
+                      placeholder="e.g., sales_data"
+                      value={entityForm.technicalName}
+                      onChange={(e) => setEntityForm({ ...entityForm, technicalName: e.target.value })}
+                      data-testid="input-entity-technical-name"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="entity-category">Category</Label>
+                    <Select value={entityForm.category} onValueChange={(value) => setEntityForm({ ...entityForm, category: value })}>
+                      <SelectTrigger data-testid="select-entity-category">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Master Data">Master Data</SelectItem>
+                        <SelectItem value="Transactional">Transactional</SelectItem>
+                        <SelectItem value="Rules">Rules</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="entity-description">Description</Label>
+                    <Textarea
+                      id="entity-description"
+                      placeholder="Describe this entity's purpose..."
+                      value={entityForm.description}
+                      onChange={(e) => setEntityForm({ ...entityForm, description: e.target.value })}
+                      rows={3}
+                      data-testid="textarea-entity-description"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => {setShowEntityForm(false); resetEntityForm();}} data-testid="button-cancel-entity" className="flex-1">
+                      Cancel
+                    </Button>
+                    <Button onClick={handleSaveEntity} data-testid="button-save-entity" className="flex-1">
+                      {entityDialogMode === "create" ? "Create Entity" : "Save Changes"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             <div className="flex justify-between items-center">
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 {filteredEntities.length} {filteredEntities.length === 1 ? "entity" : "entities"} found
@@ -528,6 +599,82 @@ export default function LicenseIQSchema() {
                   </Button>
                 </div>
 
+                {/* Inline Field Form */}
+                {showFieldForm && (
+                  <Card className="border-2 border-primary/20 bg-primary/5">
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between">
+                        <span>{fieldDialogMode === "create" ? "Add New Field" : "Edit Field"}</span>
+                        <Button variant="ghost" size="sm" onClick={() => {setShowFieldForm(false); resetFieldForm();}} data-testid="button-close-field-form">
+                          ✕
+                        </Button>
+                      </CardTitle>
+                      <CardDescription>
+                        Define a field for {selectedEntity.name}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <Label htmlFor="field-name">Field Name*</Label>
+                        <Input
+                          id="field-name"
+                          placeholder="e.g., transactionId"
+                          value={fieldForm.fieldName}
+                          onChange={(e) => setFieldForm({ ...fieldForm, fieldName: e.target.value })}
+                          data-testid="input-field-name"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="field-data-type">Data Type*</Label>
+                        <Select value={fieldForm.dataType} onValueChange={(value) => setFieldForm({ ...fieldForm, dataType: value })}>
+                          <SelectTrigger data-testid="select-field-data-type">
+                            <SelectValue placeholder="Select data type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {DATA_TYPES.map((type) => (
+                              <SelectItem key={type} value={type}>
+                                {type}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="field-description">Description</Label>
+                        <Textarea
+                          id="field-description"
+                          placeholder="Describe this field's purpose..."
+                          value={fieldForm.description}
+                          onChange={(e) => setFieldForm({ ...fieldForm, description: e.target.value })}
+                          rows={2}
+                          data-testid="textarea-field-description"
+                        />
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="field-required"
+                          checked={fieldForm.isRequired}
+                          onChange={(e) => setFieldForm({ ...fieldForm, isRequired: e.target.checked })}
+                          className="rounded border-gray-300"
+                          data-testid="checkbox-field-required"
+                        />
+                        <Label htmlFor="field-required" className="cursor-pointer">
+                          Required field
+                        </Label>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button variant="outline" onClick={() => {setShowFieldForm(false); resetFieldForm();}} data-testid="button-cancel-field" className="flex-1">
+                          Cancel
+                        </Button>
+                        <Button onClick={handleSaveField} data-testid="button-save-field" className="flex-1">
+                          {fieldDialogMode === "create" ? "Add Field" : "Save Changes"}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
                 {fieldsLoading ? (
                   <div className="text-center py-12">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
@@ -609,145 +756,6 @@ export default function LicenseIQSchema() {
             )}
           </TabsContent>
         </Tabs>
-
-        {/* Entity Dialog */}
-        <Dialog open={entityDialogOpen} onOpenChange={setEntityDialogOpen}>
-          <DialogContent className="sm:max-w-md" data-testid="dialog-entity">
-            <DialogHeader>
-              <DialogTitle>
-                {entityDialogMode === "create" ? "Create New Entity" : "Edit Entity"}
-              </DialogTitle>
-              <DialogDescription>
-                Define a new data entity in your LicenseIQ platform schema
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="entity-name">Entity Name*</Label>
-                <Input
-                  id="entity-name"
-                  placeholder="e.g., Sales Data"
-                  value={entityForm.name}
-                  onChange={(e) => setEntityForm({ ...entityForm, name: e.target.value })}
-                  data-testid="input-entity-name"
-                />
-              </div>
-              <div>
-                <Label htmlFor="entity-technical-name">Technical Name*</Label>
-                <Input
-                  id="entity-technical-name"
-                  placeholder="e.g., sales_data"
-                  value={entityForm.technicalName}
-                  onChange={(e) => setEntityForm({ ...entityForm, technicalName: e.target.value })}
-                  data-testid="input-entity-technical-name"
-                />
-              </div>
-              <div>
-                <Label htmlFor="entity-category">Category</Label>
-                <Select value={entityForm.category} onValueChange={(value) => setEntityForm({ ...entityForm, category: value })}>
-                  <SelectTrigger data-testid="select-entity-category">
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Master Data">Master Data</SelectItem>
-                    <SelectItem value="Transactional">Transactional</SelectItem>
-                    <SelectItem value="Rules">Rules</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="entity-description">Description</Label>
-                <Textarea
-                  id="entity-description"
-                  placeholder="Describe this entity's purpose..."
-                  value={entityForm.description}
-                  onChange={(e) => setEntityForm({ ...entityForm, description: e.target.value })}
-                  data-testid="textarea-entity-description"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setEntityDialogOpen(false)} data-testid="button-cancel-entity">
-                Cancel
-              </Button>
-              <Button onClick={handleSaveEntity} data-testid="button-save-entity">
-                {entityDialogMode === "create" ? "Create Entity" : "Save Changes"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Field Dialog */}
-        <Dialog open={fieldDialogOpen} onOpenChange={setFieldDialogOpen}>
-          <DialogContent className="sm:max-w-md" data-testid="dialog-field">
-            <DialogHeader>
-              <DialogTitle>
-                {fieldDialogMode === "create" ? "Add New Field" : "Edit Field"}
-              </DialogTitle>
-              <DialogDescription>
-                Define a field for {selectedEntity?.name}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="field-name">Field Name*</Label>
-                <Input
-                  id="field-name"
-                  placeholder="e.g., transactionId"
-                  value={fieldForm.fieldName}
-                  onChange={(e) => setFieldForm({ ...fieldForm, fieldName: e.target.value })}
-                  data-testid="input-field-name"
-                />
-              </div>
-              <div>
-                <Label htmlFor="field-data-type">Data Type*</Label>
-                <Select value={fieldForm.dataType} onValueChange={(value) => setFieldForm({ ...fieldForm, dataType: value })}>
-                  <SelectTrigger data-testid="select-field-data-type">
-                    <SelectValue placeholder="Select data type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DATA_TYPES.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {type}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="field-description">Description</Label>
-                <Textarea
-                  id="field-description"
-                  placeholder="Describe this field's purpose..."
-                  value={fieldForm.description}
-                  onChange={(e) => setFieldForm({ ...fieldForm, description: e.target.value })}
-                  data-testid="textarea-field-description"
-                />
-              </div>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="field-required"
-                  checked={fieldForm.isRequired}
-                  onChange={(e) => setFieldForm({ ...fieldForm, isRequired: e.target.checked })}
-                  className="rounded border-gray-300"
-                  data-testid="checkbox-field-required"
-                />
-                <Label htmlFor="field-required" className="cursor-pointer">
-                  Required field
-                </Label>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setFieldDialogOpen(false)} data-testid="button-cancel-field">
-                Cancel
-              </Button>
-              <Button onClick={handleSaveField} data-testid="button-save-field">
-                {fieldDialogMode === "create" ? "Add Field" : "Save Changes"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );
