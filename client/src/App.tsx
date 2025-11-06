@@ -3,6 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { SidebarProvider } from "@/contexts/sidebar-context";
 import { useAuth } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { FloatingAIAssistant } from "@/components/floating-ai-assistant";
@@ -47,7 +48,7 @@ function Router() {
         {isLoading || !isAuthenticated ? (
           <Route path="/" component={Landing} />
         ) : (
-          <>
+          <SidebarProvider>
             {/* Protected routes for authenticated users */}
             <ProtectedRoute path="/" component={Dashboard} />
             <ProtectedRoute path="/contracts" component={Contracts} />
@@ -79,14 +80,14 @@ function Router() {
             {/* Contract Management - must come before /contracts/:id */}
             <ProtectedRoute path="/contracts/:id/manage" component={ContractManagement} />
             <ProtectedRoute path="/contracts/:id" component={ContractAnalysis} />
-          </>
+            
+            {/* Floating AI Assistant - Omnipresent across all authenticated pages */}
+            <FloatingAIAssistant />
+          </SidebarProvider>
         )}
         
         <Route component={NotFound} />
       </Switch>
-      
-      {/* Floating AI Assistant - Omnipresent across all authenticated pages */}
-      {isAuthenticated && !isLoading && <FloatingAIAssistant />}
     </>
   );
 }

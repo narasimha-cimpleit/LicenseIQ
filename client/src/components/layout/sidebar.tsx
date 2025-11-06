@@ -1,5 +1,6 @@
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
+import { useSidebar } from "@/contexts/sidebar-context";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -22,6 +23,8 @@ import {
   Mail,
   Layers,
   Table,
+  ChevronLeft,
+  ChevronRight,
   LucideIcon
 } from "lucide-react";
 import licenseIQLogo from "@assets/Transparent Logo_1761867914841.png";
@@ -56,6 +59,7 @@ const iconMap: Record<string, LucideIcon> = {
 export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
   const [location, setLocation] = useLocation();
   const { user } = useAuth();
+  const { isCollapsed, toggleCollapse } = useSidebar();
 
   // Fetch dynamic navigation permissions from database
   const { data: navData } = useQuery<{ items: any[] }>({
@@ -100,19 +104,38 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
       
       {/* Sidebar */}
       <aside className={cn(
-        "fixed inset-y-0 left-0 w-64 bg-sidebar border-r border-sidebar-border sidebar-transition z-50 transform transition-transform duration-300 ease-in-out",
+        "fixed inset-y-0 left-0 bg-sidebar border-r border-sidebar-border sidebar-transition z-50 transform transition-all duration-300 ease-in-out",
         "md:translate-x-0",
+        isCollapsed ? "w-16" : "w-64",
         isOpen ? "translate-x-0" : "-translate-x-full",
         className
       )}>
       <div className="flex flex-col h-full">
-        {/* Logo */}
-        <div className="flex items-center justify-center px-6 py-5 border-b border-sidebar-border bg-sidebar">
-          <img src={licenseIQLogo} alt="LicenseIQ Logo" className="h-20" />
+        {/* Logo & Toggle */}
+        <div className="flex items-center justify-between px-4 py-5 border-b border-sidebar-border bg-sidebar">
+          {!isCollapsed && (
+            <img src={licenseIQLogo} alt="LicenseIQ Logo" className="h-16 transition-opacity duration-300" />
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleCollapse}
+            className={cn(
+              "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-300",
+              isCollapsed ? "mx-auto" : "ml-auto"
+            )}
+            data-testid="button-toggle-sidebar"
+          >
+            {isCollapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
+          </Button>
         </div>
         
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-1">
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {navigation.map((item) => {
             const Icon = item.icon;
             return (
@@ -120,14 +143,21 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
                 key={item.name}
                 variant="ghost"
                 className={cn(
-                  "w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                  "w-full text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-200",
+                  isCollapsed ? "justify-center px-2" : "justify-start",
                   item.current && "bg-sidebar-accent text-sidebar-accent-foreground"
                 )}
                 onClick={() => handleNavClick(item.href)}
                 data-testid={`nav-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
+                title={isCollapsed ? item.name : undefined}
               >
-                <Icon className="mr-3 h-4 w-4 text-blue-400" />
-                {item.name}
+                <Icon className={cn(
+                  "h-4 w-4 text-blue-400 transition-all duration-200",
+                  !isCollapsed && "mr-3"
+                )} />
+                {!isCollapsed && (
+                  <span className="transition-opacity duration-200">{item.name}</span>
+                )}
               </Button>
             );
           })}
@@ -135,23 +165,28 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
         
         {/* User Profile */}
         <div className="px-3 py-4 border-t border-sidebar-border">
-          <div className="flex items-center">
-            <div className="h-8 w-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+          <div className={cn(
+            "flex items-center transition-all duration-200",
+            isCollapsed ? "justify-center" : ""
+          )}>
+            <div className="h-8 w-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
               <span className="text-sm font-medium text-white">
                 {userInitials}
               </span>
             </div>
-            <div className="ml-3 flex-1">
-              <p className="text-sm font-medium text-sidebar-foreground">
-                {user?.firstName && user?.lastName 
-                  ? `${user.firstName} ${user.lastName}`
-                  : user?.email
-                }
-              </p>
-              <p className="text-xs text-sidebar-foreground/70 capitalize">
-                {user?.role || 'User'}
-              </p>
-            </div>
+            {!isCollapsed && (
+              <div className="ml-3 flex-1 transition-opacity duration-200">
+                <p className="text-sm font-medium text-sidebar-foreground truncate">
+                  {user?.firstName && user?.lastName 
+                    ? `${user.firstName} ${user.lastName}`
+                    : user?.email
+                  }
+                </p>
+                <p className="text-xs text-sidebar-foreground/70 capitalize">
+                  {user?.role || 'User'}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useSidebar } from "@/contexts/sidebar-context";
+import { cn } from "@/lib/utils";
 import Sidebar from "./sidebar";
 import Header from "./header";
 import licenseIQLogo from "@assets/Transparent Logo_1761867914841.png";
@@ -11,6 +13,7 @@ interface MainLayoutProps {
 
 export default function MainLayout({ children, title, description }: MainLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { isCollapsed } = useSidebar();
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -18,7 +21,10 @@ export default function MainLayout({ children, title, description }: MainLayoutP
         isOpen={isSidebarOpen} 
         onClose={() => setIsSidebarOpen(false)} 
       />
-      <main className="md:ml-64 flex-1 flex flex-col">
+      <main className={cn(
+        "flex-1 flex flex-col transition-all duration-300",
+        isCollapsed ? "md:ml-16" : "md:ml-64"
+      )}>
         <Header 
           title={title} 
           description={description}
