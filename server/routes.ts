@@ -3586,12 +3586,14 @@ Return ONLY valid JSON array, no other text.`;
         { name: 'Purchase Order Lines', technicalName: 'purchase_order_lines', category: 'Transactions', description: 'Purchase order line items' },
       ];
 
+      // Get existing entities once
+      const existing = await storage.getAllLicenseiqEntities();
+      const existingTechnicalNames = new Set(existing.map(e => e.technicalName));
+
       const created = [];
       for (const entity of entities) {
         try {
-          const existing = await storage.getAllLicenseiqEntities();
-          const isDuplicate = existing.some(e => e.technicalName === entity.technicalName);
-          if (!isDuplicate) {
+          if (!existingTechnicalNames.has(entity.technicalName)) {
             const result = await storage.createLicenseiqEntity(entity);
             created.push(result);
           }
@@ -3600,8 +3602,13 @@ Return ONLY valid JSON array, no other text.`;
         }
       }
 
-      console.log(`🌱 [LICENSEIQ SEED] Created ${created.length} entities`);
-      res.json({ created: created.length, entities: created });
+      console.log(`🌱 [LICENSEIQ SEED] Created ${created.length} new entities (${entities.length - created.length} already existed)`);
+      res.json({ 
+        created: created.length, 
+        skipped: entities.length - created.length,
+        total: entities.length,
+        entities: created 
+      });
     } catch (error) {
       console.error('❌ [LICENSEIQ SEED] Error:', error);
       res.status(500).json({ error: 'Failed to seed entities' });

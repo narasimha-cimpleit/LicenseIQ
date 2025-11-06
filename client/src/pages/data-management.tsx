@@ -226,17 +226,15 @@ export default function DataManagement() {
           </p>
         </div>
         <div className="flex gap-2">
-          {entities.length === 0 && (
-            <Button
-              onClick={() => seedMutation.mutate()}
-              disabled={seedMutation.isPending}
-              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
-              data-testid="button-seed-entities"
-            >
-              <Database className="h-4 w-4 mr-2" />
-              {seedMutation.isPending ? 'Seeding...' : 'Add 25 Standard Entities'}
-            </Button>
-          )}
+          <Button
+            onClick={() => seedMutation.mutate()}
+            disabled={seedMutation.isPending}
+            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+            data-testid="button-seed-entities"
+          >
+            <Database className="h-4 w-4 mr-2" />
+            {seedMutation.isPending ? 'Seeding...' : entities.length < 25 ? 'Seed All 25 Standard Entities' : 'Reseed Entities'}
+          </Button>
         </div>
       </div>
 
