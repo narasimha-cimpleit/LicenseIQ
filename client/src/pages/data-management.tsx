@@ -99,6 +99,23 @@ export default function DataManagement() {
     },
   });
 
+  // Seed fields mutation
+  const seedFieldsMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest('POST', '/api/licenseiq-fields/seed', {});
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/licenseiq-fields'] });
+      toast({ 
+        title: "Success", 
+        description: data.message || "Standard fields have been added to all entities" 
+      });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to seed fields", variant: "destructive" });
+    },
+  });
+
   // Create record mutation
   const createRecordMutation = useMutation({
     mutationFn: async (data: { entityId: string; recordData: Record<string, any> }) => {
@@ -244,6 +261,15 @@ export default function DataManagement() {
           >
             <Database className="h-4 w-4 mr-2" />
             {seedMutation.isPending ? 'Seeding...' : entities.length < 25 ? 'Seed All 25 Standard Entities' : 'Reseed Entities'}
+          </Button>
+          <Button
+            onClick={() => seedFieldsMutation.mutate()}
+            disabled={seedFieldsMutation.isPending}
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+            data-testid="button-seed-fields"
+          >
+            <FolderOpen className="h-4 w-4 mr-2" />
+            {seedFieldsMutation.isPending ? 'Seeding Fields...' : 'Seed Standard Fields'}
           </Button>
         </div>
       </div>
