@@ -344,38 +344,61 @@ export default function MasterDataMapping() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* ERP Entity Selector - shown only if system is selected */}
-                {selectedSystemId && erpEntitiesData?.entities && (
-                  <div className="space-y-2">
-                    <Label htmlFor="erp-entity-schema">ERP Entity (for schema auto-fill)</Label>
-                    <Select 
-                      value={selectedEntityId} 
-                      onValueChange={(value) => {
-                        setSelectedEntityId(value);
-                      }}
+                {/* ERP Entity Selector */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="erp-entity-schema">ERP Entity</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-auto p-0 text-xs text-orange-600 hover:text-orange-700"
+                      onClick={() => navigate('/erp-catalog')}
+                      data-testid="button-configure-erp-source"
                     >
-                      <SelectTrigger id="erp-entity-schema" data-testid="select-erp-entity-schema">
-                        <SelectValue placeholder="Select ERP entity to auto-fill schema..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {erpEntitiesData.entities.map((entity) => (
-                          <SelectItem key={entity.id} value={entity.id}>
-                            {entity.name} ({entity.entityType})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {selectedEntity && (
-                      <p className="text-sm text-muted-foreground">
-                        {selectedEntity.description || `${selectedEntity.entityType} entity from ${selectedSystem?.name}`}
-                      </p>
-                    )}
+                      <Settings className="h-3 w-3 mr-1" />
+                      Configure Catalog
+                    </Button>
                   </div>
-                )}
+                  <Select 
+                    value={selectedEntityId} 
+                    onValueChange={(value) => {
+                      setSelectedEntityId(value);
+                    }}
+                    disabled={!selectedSystemId || !erpEntitiesData?.entities?.length}
+                  >
+                    <SelectTrigger id="erp-entity-schema" data-testid="select-erp-entity-schema">
+                      <SelectValue placeholder={
+                        !selectedSystemId 
+                          ? "Select ERP System below first..." 
+                          : !erpEntitiesData?.entities?.length
+                          ? "No entities available..."
+                          : "Select ERP entity..."
+                      } />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {erpEntitiesData?.entities?.map((entity) => (
+                        <SelectItem key={entity.id} value={entity.id}>
+                          {entity.name} ({entity.entityType})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {!selectedSystemId && (
+                    <p className="text-sm text-muted-foreground">
+                      ↓ Select an ERP System in the configuration section below to enable this dropdown
+                    </p>
+                  )}
+                  {selectedEntity && (
+                    <p className="text-sm text-muted-foreground">
+                      {selectedEntity.description || `${selectedEntity.entityType} entity from ${selectedSystem?.name}`}
+                    </p>
+                  )}
+                </div>
 
                 {/* Schema JSON Textarea */}
                 <div className="space-y-2">
-                  <Label htmlFor="source-schema">Schema JSON {selectedEntityId ? '(Auto-populated)' : ''}</Label>
+                  <Label htmlFor="source-schema">Schema JSON (Auto-populated)</Label>
                   <Textarea
                     id="source-schema"
                     value={sourceSchema}
