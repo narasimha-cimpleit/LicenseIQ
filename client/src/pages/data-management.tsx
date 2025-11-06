@@ -405,6 +405,18 @@ export default function DataManagement() {
               <div className="flex items-center justify-center py-16">
                 <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
+            ) : fields.length === 0 ? (
+              <div className="text-center py-16">
+                <Database className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                <h3 className="text-lg font-semibold mb-2">No Fields Defined</h3>
+                <p className="text-muted-foreground mb-4">
+                  This entity has no fields yet. Define fields in the LicenseIQ Schema page before adding data.
+                </p>
+                <Button onClick={() => navigate('/licenseiq-schema')} data-testid="button-define-fields">
+                  <Database className="h-4 w-4 mr-2" />
+                  Go to Schema Manager
+                </Button>
+              </div>
             ) : records.length === 0 && !showRecordForm ? (
               <div className="text-center py-16">
                 <Receipt className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
