@@ -3491,6 +3491,250 @@ Return ONLY valid JSON array, no other text.`;
     }
   });
 
+  // Seed standard fields for all 25 entities
+  app.post('/api/licenseiq-fields/seed', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      console.log('🌱 [LICENSEIQ FIELDS] Starting field seeding...');
+      
+      const entities = await storage.getAllLicenseiqEntities();
+      const entityMap = new Map(entities.map(e => [e.technicalName, e.id]));
+      
+      // Standard field definitions for all 25 entities
+      const standardFields: Record<string, Array<{fieldName: string; dataType: string; isRequired: boolean; description?: string}>> = {
+        customers_parties: [
+          { fieldName: 'customerCode', dataType: 'text', isRequired: true, description: 'Unique customer code' },
+          { fieldName: 'customerName', dataType: 'text', isRequired: true, description: 'Customer full name' },
+          { fieldName: 'email', dataType: 'text', isRequired: false, description: 'Customer email address' },
+          { fieldName: 'phone', dataType: 'text', isRequired: false, description: 'Contact phone number' },
+          { fieldName: 'category', dataType: 'text', isRequired: false, description: 'Customer category' },
+          { fieldName: 'isActive', dataType: 'boolean', isRequired: true, description: 'Active status' },
+        ],
+        items: [
+          { fieldName: 'itemCode', dataType: 'text', isRequired: true, description: 'Unique item code' },
+          { fieldName: 'itemName', dataType: 'text', isRequired: true, description: 'Item description' },
+          { fieldName: 'category', dataType: 'text', isRequired: false, description: 'Item category' },
+          { fieldName: 'unitPrice', dataType: 'number', isRequired: false, description: 'Standard unit price' },
+          { fieldName: 'uom', dataType: 'text', isRequired: false, description: 'Unit of measure' },
+          { fieldName: 'isActive', dataType: 'boolean', isRequired: true, description: 'Active status' },
+        ],
+        item_category: [
+          { fieldName: 'categoryCode', dataType: 'text', isRequired: true, description: 'Category code' },
+          { fieldName: 'categoryName', dataType: 'text', isRequired: true, description: 'Category name' },
+          { fieldName: 'parentCategory', dataType: 'text', isRequired: false, description: 'Parent category code' },
+          { fieldName: 'isActive', dataType: 'boolean', isRequired: true, description: 'Active status' },
+        ],
+        item_class: [
+          { fieldName: 'classCode', dataType: 'text', isRequired: true, description: 'Class code' },
+          { fieldName: 'className', dataType: 'text', isRequired: true, description: 'Class name' },
+          { fieldName: 'description', dataType: 'text', isRequired: false, description: 'Class description' },
+          { fieldName: 'isActive', dataType: 'boolean', isRequired: true, description: 'Active status' },
+        ],
+        item_catalog: [
+          { fieldName: 'catalogCode', dataType: 'text', isRequired: true, description: 'Catalog code' },
+          { fieldName: 'catalogName', dataType: 'text', isRequired: true, description: 'Catalog name' },
+          { fieldName: 'effectiveDate', dataType: 'date', isRequired: false, description: 'Effective from date' },
+          { fieldName: 'isActive', dataType: 'boolean', isRequired: true, description: 'Active status' },
+        ],
+        item_structures: [
+          { fieldName: 'structureCode', dataType: 'text', isRequired: true, description: 'Structure code' },
+          { fieldName: 'parentItem', dataType: 'text', isRequired: true, description: 'Parent item code' },
+          { fieldName: 'childItem', dataType: 'text', isRequired: true, description: 'Child item code' },
+          { fieldName: 'quantity', dataType: 'number', isRequired: true, description: 'Component quantity' },
+          { fieldName: 'isActive', dataType: 'boolean', isRequired: true, description: 'Active status' },
+        ],
+        customer_sites: [
+          { fieldName: 'siteCode', dataType: 'text', isRequired: true, description: 'Site code' },
+          { fieldName: 'customerCode', dataType: 'text', isRequired: true, description: 'Customer code' },
+          { fieldName: 'siteName', dataType: 'text', isRequired: true, description: 'Site name' },
+          { fieldName: 'address', dataType: 'text', isRequired: false, description: 'Site address' },
+          { fieldName: 'city', dataType: 'text', isRequired: false, description: 'City' },
+          { fieldName: 'country', dataType: 'text', isRequired: false, description: 'Country' },
+          { fieldName: 'isActive', dataType: 'boolean', isRequired: true, description: 'Active status' },
+        ],
+        customer_site_uses: [
+          { fieldName: 'siteUseCode', dataType: 'text', isRequired: true, description: 'Site use code' },
+          { fieldName: 'siteCode', dataType: 'text', isRequired: true, description: 'Site code' },
+          { fieldName: 'useType', dataType: 'text', isRequired: true, description: 'Use type (Bill-To, Ship-To)' },
+          { fieldName: 'isPrimary', dataType: 'boolean', isRequired: false, description: 'Primary site flag' },
+          { fieldName: 'isActive', dataType: 'boolean', isRequired: true, description: 'Active status' },
+        ],
+        suppliers_vendors: [
+          { fieldName: 'supplierCode', dataType: 'text', isRequired: true, description: 'Supplier code' },
+          { fieldName: 'supplierName', dataType: 'text', isRequired: true, description: 'Supplier name' },
+          { fieldName: 'email', dataType: 'text', isRequired: false, description: 'Contact email' },
+          { fieldName: 'phone', dataType: 'text', isRequired: false, description: 'Contact phone' },
+          { fieldName: 'category', dataType: 'text', isRequired: false, description: 'Supplier category' },
+          { fieldName: 'isActive', dataType: 'boolean', isRequired: true, description: 'Active status' },
+        ],
+        supplier_sites: [
+          { fieldName: 'siteCode', dataType: 'text', isRequired: true, description: 'Site code' },
+          { fieldName: 'supplierCode', dataType: 'text', isRequired: true, description: 'Supplier code' },
+          { fieldName: 'siteName', dataType: 'text', isRequired: true, description: 'Site name' },
+          { fieldName: 'address', dataType: 'text', isRequired: false, description: 'Site address' },
+          { fieldName: 'isActive', dataType: 'boolean', isRequired: true, description: 'Active status' },
+        ],
+        payment_terms: [
+          { fieldName: 'code', dataType: 'text', isRequired: true, description: 'Terms code' },
+          { fieldName: 'name', dataType: 'text', isRequired: true, description: 'Terms name' },
+          { fieldName: 'dueDays', dataType: 'number', isRequired: true, description: 'Due in days' },
+          { fieldName: 'discountPercent', dataType: 'number', isRequired: false, description: 'Discount percentage' },
+          { fieldName: 'isActive', dataType: 'boolean', isRequired: true, description: 'Active status' },
+        ],
+        organizations: [
+          { fieldName: 'orgCode', dataType: 'text', isRequired: true, description: 'Organization code' },
+          { fieldName: 'orgName', dataType: 'text', isRequired: true, description: 'Organization name' },
+          { fieldName: 'parentOrg', dataType: 'text', isRequired: false, description: 'Parent organization code' },
+          { fieldName: 'level', dataType: 'number', isRequired: false, description: 'Hierarchy level' },
+          { fieldName: 'isActive', dataType: 'boolean', isRequired: true, description: 'Active status' },
+        ],
+        business_units: [
+          { fieldName: 'buCode', dataType: 'text', isRequired: true, description: 'Business unit code' },
+          { fieldName: 'buName', dataType: 'text', isRequired: true, description: 'Business unit name' },
+          { fieldName: 'orgCode', dataType: 'text', isRequired: false, description: 'Organization code' },
+          { fieldName: 'manager', dataType: 'text', isRequired: false, description: 'Manager name' },
+          { fieldName: 'isActive', dataType: 'boolean', isRequired: true, description: 'Active status' },
+        ],
+        chart_of_accounts: [
+          { fieldName: 'accountCode', dataType: 'text', isRequired: true, description: 'GL account code' },
+          { fieldName: 'accountName', dataType: 'text', isRequired: true, description: 'Account name' },
+          { fieldName: 'accountType', dataType: 'text', isRequired: true, description: 'Account type (Asset/Liability/Revenue/Expense)' },
+          { fieldName: 'isActive', dataType: 'boolean', isRequired: true, description: 'Active status' },
+        ],
+        sales_reps: [
+          { fieldName: 'repCode', dataType: 'text', isRequired: true, description: 'Sales rep code' },
+          { fieldName: 'repName', dataType: 'text', isRequired: true, description: 'Sales rep name' },
+          { fieldName: 'email', dataType: 'text', isRequired: false, description: 'Email address' },
+          { fieldName: 'territory', dataType: 'text', isRequired: false, description: 'Sales territory' },
+          { fieldName: 'isActive', dataType: 'boolean', isRequired: true, description: 'Active status' },
+        ],
+        employee_master: [
+          { fieldName: 'empCode', dataType: 'text', isRequired: true, description: 'Employee code' },
+          { fieldName: 'empName', dataType: 'text', isRequired: true, description: 'Employee name' },
+          { fieldName: 'department', dataType: 'text', isRequired: false, description: 'Department' },
+          { fieldName: 'position', dataType: 'text', isRequired: false, description: 'Job position' },
+          { fieldName: 'hireDate', dataType: 'date', isRequired: false, description: 'Hire date' },
+        ],
+        sales_orders: [
+          { fieldName: 'orderNumber', dataType: 'text', isRequired: true, description: 'Sales order number' },
+          { fieldName: 'customerCode', dataType: 'text', isRequired: true, description: 'Customer code' },
+          { fieldName: 'orderDate', dataType: 'date', isRequired: true, description: 'Order date' },
+          { fieldName: 'totalAmount', dataType: 'number', isRequired: true, description: 'Order total amount' },
+          { fieldName: 'status', dataType: 'text', isRequired: true, description: 'Order status' },
+          { fieldName: 'salesRep', dataType: 'text', isRequired: false, description: 'Sales rep code' },
+        ],
+        sales_order_lines: [
+          { fieldName: 'lineNumber', dataType: 'number', isRequired: true, description: 'Line number' },
+          { fieldName: 'orderNumber', dataType: 'text', isRequired: true, description: 'Sales order number' },
+          { fieldName: 'itemCode', dataType: 'text', isRequired: true, description: 'Item code' },
+          { fieldName: 'quantity', dataType: 'number', isRequired: true, description: 'Ordered quantity' },
+          { fieldName: 'unitPrice', dataType: 'number', isRequired: true, description: 'Unit price' },
+          { fieldName: 'lineTotal', dataType: 'number', isRequired: true, description: 'Line total' },
+        ],
+        ar_invoices: [
+          { fieldName: 'invoiceNumber', dataType: 'text', isRequired: true, description: 'Invoice number' },
+          { fieldName: 'customerCode', dataType: 'text', isRequired: true, description: 'Customer code' },
+          { fieldName: 'invoiceDate', dataType: 'date', isRequired: true, description: 'Invoice date' },
+          { fieldName: 'amount', dataType: 'number', isRequired: true, description: 'Invoice amount' },
+          { fieldName: 'status', dataType: 'text', isRequired: true, description: 'Invoice status' },
+          { fieldName: 'dueDate', dataType: 'date', isRequired: false, description: 'Payment due date' },
+        ],
+        ar_invoice_lines: [
+          { fieldName: 'lineNumber', dataType: 'number', isRequired: true, description: 'Line number' },
+          { fieldName: 'invoiceNumber', dataType: 'text', isRequired: true, description: 'Invoice number' },
+          { fieldName: 'description', dataType: 'text', isRequired: true, description: 'Line description' },
+          { fieldName: 'amount', dataType: 'number', isRequired: true, description: 'Line amount' },
+          { fieldName: 'quantity', dataType: 'number', isRequired: true, description: 'Quantity' },
+        ],
+        ap_invoices: [
+          { fieldName: 'invoiceNumber', dataType: 'text', isRequired: true, description: 'AP invoice number' },
+          { fieldName: 'supplierCode', dataType: 'text', isRequired: true, description: 'Supplier code' },
+          { fieldName: 'invoiceDate', dataType: 'date', isRequired: true, description: 'Invoice date' },
+          { fieldName: 'amount', dataType: 'number', isRequired: true, description: 'Invoice amount' },
+          { fieldName: 'status', dataType: 'text', isRequired: true, description: 'Status' },
+          { fieldName: 'dueDate', dataType: 'date', isRequired: false, description: 'Payment due date' },
+        ],
+        ap_invoice_lines: [
+          { fieldName: 'lineNumber', dataType: 'number', isRequired: true, description: 'Line number' },
+          { fieldName: 'invoiceNumber', dataType: 'text', isRequired: true, description: 'AP invoice number' },
+          { fieldName: 'description', dataType: 'text', isRequired: true, description: 'Line description' },
+          { fieldName: 'amount', dataType: 'number', isRequired: true, description: 'Line amount' },
+          { fieldName: 'quantity', dataType: 'number', isRequired: true, description: 'Quantity' },
+        ],
+        ap_invoice_payments: [
+          { fieldName: 'paymentNumber', dataType: 'text', isRequired: true, description: 'Payment number' },
+          { fieldName: 'invoiceNumber', dataType: 'text', isRequired: true, description: 'AP invoice number' },
+          { fieldName: 'paymentDate', dataType: 'date', isRequired: true, description: 'Payment date' },
+          { fieldName: 'paymentAmount', dataType: 'number', isRequired: true, description: 'Payment amount' },
+          { fieldName: 'paymentMethod', dataType: 'text', isRequired: false, description: 'Payment method' },
+        ],
+        purchase_orders: [
+          { fieldName: 'poNumber', dataType: 'text', isRequired: true, description: 'PO number' },
+          { fieldName: 'supplierCode', dataType: 'text', isRequired: true, description: 'Supplier code' },
+          { fieldName: 'orderDate', dataType: 'date', isRequired: true, description: 'Order date' },
+          { fieldName: 'totalAmount', dataType: 'number', isRequired: true, description: 'Total amount' },
+          { fieldName: 'status', dataType: 'text', isRequired: true, description: 'PO status' },
+        ],
+        purchase_order_lines: [
+          { fieldName: 'lineNumber', dataType: 'number', isRequired: true, description: 'Line number' },
+          { fieldName: 'poNumber', dataType: 'text', isRequired: true, description: 'PO number' },
+          { fieldName: 'itemCode', dataType: 'text', isRequired: true, description: 'Item code' },
+          { fieldName: 'quantity', dataType: 'number', isRequired: true, description: 'Order quantity' },
+          { fieldName: 'unitPrice', dataType: 'number', isRequired: true, description: 'Unit price' },
+          { fieldName: 'lineTotal', dataType: 'number', isRequired: true, description: 'Line total' },
+        ],
+        contract_terms: [
+          { fieldName: 'termCode', dataType: 'text', isRequired: true, description: 'Term code' },
+          { fieldName: 'termName', dataType: 'text', isRequired: true, description: 'Term name' },
+          { fieldName: 'description', dataType: 'text', isRequired: false, description: 'Term description' },
+          { fieldName: 'isStandard', dataType: 'boolean', isRequired: true, description: 'Standard term flag' },
+        ],
+      };
+
+      let totalCreated = 0;
+      let totalSkipped = 0;
+
+      for (const [technicalName, fieldDefs] of Object.entries(standardFields)) {
+        const entityId = entityMap.get(technicalName);
+        if (!entityId) {
+          console.log(`⚠️ [FIELD SEED] Entity not found: ${technicalName}`);
+          continue;
+        }
+
+        // Check if fields already exist
+        const existingFields = await storage.getLicenseiqFieldsByEntity(entityId);
+        if (existingFields.length > 0) {
+          console.log(`⏭️ [FIELD SEED] ${technicalName} already has ${existingFields.length} fields, skipping`);
+          totalSkipped++;
+          continue;
+        }
+
+        // Create all fields for this entity
+        for (const fieldDef of fieldDefs) {
+          try {
+            await storage.createLicenseiqField({
+              entityId,
+              ...fieldDef
+            });
+            totalCreated++;
+          } catch (err) {
+            console.error(`❌ [FIELD SEED] Failed to create ${fieldDef.fieldName} for ${technicalName}:`, err);
+          }
+        }
+        console.log(`✅ [FIELD SEED] Created ${fieldDefs.length} fields for ${technicalName}`);
+      }
+
+      console.log(`🌱 [FIELD SEED] Complete: ${totalCreated} fields created, ${totalSkipped} entities skipped`);
+      res.json({ 
+        created: totalCreated, 
+        skipped: totalSkipped,
+        message: `Successfully seeded ${totalCreated} standard fields across ${Object.keys(standardFields).length - totalSkipped} entities` 
+      });
+    } catch (error) {
+      console.error('❌ [FIELD SEED] Error:', error);
+      res.status(500).json({ error: 'Failed to seed standard fields' });
+    }
+  });
+
   // ==========================================
   // LICENSEIQ ENTITY RECORDS ROUTES
   // ==========================================
