@@ -69,3 +69,23 @@ The architecture emphasizes an AI-native design, integrating AI capabilities thr
 - **TanStack Query**: Data synchronization.
 - **Wouter**: Client-side routing.
 - **Zod**: Schema validation.
+
+# Deployment
+
+## Production Deployment
+A comprehensive step-by-step deployment guide for Hostinger VPS is available in `HOSTINGER_DEPLOYMENT_GUIDE.md`. This guide covers:
+- VPS setup and initial server configuration
+- Node.js, PostgreSQL, and pgvector installation
+- Application deployment with PM2 process manager
+- Nginx reverse proxy configuration
+- SSL certificate setup with Let's Encrypt
+- Domain configuration and DNS setup
+- Database backup and maintenance procedures
+- Troubleshooting common issues
+
+The deployment uses:
+- **Ubuntu 22.04/24.04** as the operating system
+- **PM2** for process management and auto-restart
+- **Nginx** as reverse proxy for production traffic
+- **PostgreSQL 14+** with pgvector extension for vector embeddings
+- **Let's Encrypt** for free SSL certificates
