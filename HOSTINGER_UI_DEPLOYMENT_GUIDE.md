@@ -394,13 +394,33 @@ systemctl enable nginx
 
 ---
 
-## 5. Setting Up Domain DNS via hPanel
+## 5. Setting Up Domain DNS
 
-### Step 5.1: Access Domain Management
+**⚠️ IMPORTANT:** Domain DNS is managed at your **domain registrar**, NOT in CloudPanel or VPS settings!
+
+### Step 5.1: Identify Your Control Panel
+
+**Check which control panel you have:**
+
+**Option A: Hostinger hPanel** (Default Hostinger interface)
+- Login at: https://hpanel.hostinger.com
+- Clean, modern blue/white interface
+- ➡️ Follow **Section 5A** below
+
+**Option B: CloudPanel/cPanel** (Server control panel)
+- Shows "CloudPanel" or "cPanel" at top
+- Manages sites/databases on your VPS
+- ➡️ Follow **Section 5B** below
+
+---
+
+## 5A. DNS Setup for hPanel Users
+
+### Step 5A.1: Access Domain Management
 
 **From hPanel Dashboard:**
 
-1. Click **"Domains"** in the top menu
+1. Click **"Domains"** in the top menu (NOT VPS!)
 2. You'll see list of your domains
 3. Find the domain you want to use for LicenseIQ
 4. Click the **"Manage"** button next to it
@@ -498,11 +518,169 @@ systemctl enable nginx
 
 ---
 
-## 6. Installing SSL Certificate via hPanel
+## 5B. DNS Setup for CloudPanel/cPanel Users ⬅️ **YOU ARE HERE!**
+
+**⚠️ CRITICAL:** If you're using CloudPanel (like in your screenshot), DNS is **NOT managed in CloudPanel**! 
+
+You must set DNS at your **domain registrar** (where you bought the domain).
+
+### Step 5B.1: Find Where Your Domain is Registered
+
+**Check your domain registrar:**
+
+1. Go to: **https://who.is**
+2. Enter your domain: `licenseiq.ai` (or `rao.licenseiq.ai`)
+3. Look for **"Registrar"** in the results
+4. Common registrars: Hostinger, GoDaddy, Namecheap, Cloudflare, etc.
+
+### Step 5B.2: Access Domain DNS at Registrar
+
+**If domain registered at Hostinger:**
+
+1. Go to: **https://hpanel.hostinger.com** (different from your CloudPanel!)
+2. Login with your Hostinger account
+3. Click **"Domains"** in top menu
+4. Find `licenseiq.ai`
+5. Click **"Manage"**
+6. Click **"DNS / Nameservers"** tab
+7. ➡️ **Continue to Step 5B.3**
+
+**If domain registered elsewhere (GoDaddy, Namecheap, etc.):**
+
+1. Login to your domain registrar's website
+2. Find "DNS Management" or "Domain Management"
+3. Locate "DNS Records" or "Advanced DNS"
+4. ➡️ **Continue to Step 5B.3**
+
+### Step 5B.3: Add A Record for Your Domain
+
+**You need to create an A record pointing to your VPS IP**
+
+**Get your VPS IP address first:**
+- From CloudPanel: Check your VPS dashboard
+- From Hostinger hPanel: VPS → Manage → Overview
+- Example: `123.45.67.89`
+
+**Add A Record:**
+
+1. Click **"Add Record"** or **"Add DNS Record"**
+2. Fill in these details:
+
+| Field | Value |
+|-------|-------|
+| **Type** | `A` |
+| **Host/Name** | `@` (for main domain) or `rao` (for subdomain) |
+| **Points to/Value** | Your VPS IP (e.g., `123.45.67.89`) |
+| **TTL** | `14400` or `Automatic` |
+
+3. Click **"Save"** or **"Add Record"**
+
+**Example for subdomain `rao.licenseiq.ai`:**
+```
+┌─── Add DNS Record ────────────────────────┐
+│                                            │
+│  Type: [A ▼]                               │
+│  Name: [rao]                               │
+│  Value: [123.45.67.89]  ← Your VPS IP     │
+│  TTL: [14400 ▼]                            │
+│                                            │
+│  [Cancel]  [Add Record]                    │
+└────────────────────────────────────────────┘
+```
+
+### Step 5B.4: Wait for DNS Propagation
+
+**DNS changes take 5 minutes to 24 hours to propagate**
+
+**Check if it's working:**
+1. Open Terminal/Command Prompt on your computer
+2. Type: `ping rao.licenseiq.ai`
+3. Should show your VPS IP address
+
+**Or use online tool:**
+1. Go to: **https://www.whatsmydns.net**
+2. Enter: `rao.licenseiq.ai`
+3. Select: `A`
+4. Click **"Search"**
+5. Should show your VPS IP globally
+
+### Step 5B.5: Add Site to CloudPanel
+
+**Once DNS is set, add the site in CloudPanel:**
+
+1. In CloudPanel, go to **"Sites"** (or "Domains")
+2. Click **"+ ADD SITE"** button
+3. Fill in:
+   - **Domain Name:** `rao.licenseiq.ai`
+   - **Application/Type:** Select `Static` or `Node.js` (if available)
+   - **User:** Select existing or create new
+4. Click **"Create"** or **"Add"**
+
+**CloudPanel will:**
+- Create directory for your site
+- Set up basic Nginx configuration
+- Prepare SSL certificate capability
+
+---
+
+## 6. Installing SSL Certificate
+
+**Choose the method based on your control panel:**
+
+### 6A. SSL for CloudPanel Users ⬅️ **YOU ARE HERE!**
+
+**CloudPanel has built-in SSL certificate management!**
+
+**Step 1: Wait for DNS Propagation**
+- Make sure your domain is pointing to VPS (check Step 5B.4)
+- Wait at least 15-30 minutes after DNS changes
+
+**Step 2: Add SSL in CloudPanel**
+
+1. In CloudPanel, go to **"Sites"**
+2. Find your site: `rao.licenseiq.ai`
+3. Click **"Manage"** next to it
+4. Look for **"SSL/TLS"** or **"Certificates"** section
+5. Click **"Install SSL Certificate"** or **"Let's Encrypt"**
+6. CloudPanel will automatically:
+   - Verify domain ownership
+   - Generate SSL certificate
+   - Configure Nginx
+   - Enable HTTPS redirect
+
+**Step 3: Verify SSL**
+- Visit: `https://rao.licenseiq.ai`
+- You should see a padlock 🔒 in browser
+
+**If CloudPanel doesn't have SSL UI, use Method 2:**
+
+**Method 2: Install SSL via Terminal**
+
+1. SSH into your VPS (via CloudPanel terminal or Browser Terminal)
+2. Install Certbot:
+```bash
+apt install -y certbot python3-certbot-nginx
+```
+
+3. Generate certificate:
+```bash
+certbot --nginx -d rao.licenseiq.ai
+```
+
+4. Follow the prompts:
+   - Enter your email
+   - Agree to terms (type `A`)
+   - Choose HTTPS redirect (option `2`)
+
+**Auto-renewal is automatic** - Certbot sets up a cron job
+
+---
+
+### 6B. SSL for hPanel Users
 
 **⚠️ IMPORTANT:** Wait for DNS to fully propagate before installing SSL!
 
-### Method 1: Using Browser Terminal (Recommended)
+### Method 1: Using Browser Terminal
 
 **Step 1:** Go back to your Browser Terminal
 
