@@ -394,6 +394,338 @@ systemctl enable nginx
 
 ---
 
+## 4.8: Deploy Your LicenseIQ Application
+
+Now let's deploy your actual React + Node.js + PostgreSQL application!
+
+### Step 4.8.1: Create Application Directory
+
+```bash
+mkdir -p /var/www/licenseiq
+cd /var/www/licenseiq
+```
+
+### Step 4.8.2: Get Your Application Code
+
+**Option A: Clone from GitHub** (If you have your code in GitHub)
+
+```bash
+# If public repository:
+git clone https://github.com/yourusername/licenseiq.git .
+
+# If private repository, you'll need SSH key or Personal Access Token
+```
+
+**Option B: Upload Files via SFTP**
+
+1. Download **FileZilla** (free SFTP client): https://filezilla-project.org
+2. Open FileZilla
+3. Fill in connection details:
+   - **Host:** `sftp://YOUR_VPS_IP`
+   - **Username:** `root`
+   - **Password:** Your VPS root password
+   - **Port:** `22`
+4. Click **"Quickconnect"**
+5. Navigate to `/var/www/licenseiq`
+6. Drag and drop your local LicenseIQ folder to the server
+
+**Option C: Upload via CloudPanel File Manager** (If available)
+
+1. In CloudPanel, go to **Files** or **File Manager**
+2. Navigate to `/var/www/licenseiq`
+3. Use Upload button to upload your files
+
+### Step 4.8.3: Set Up PostgreSQL Database
+
+**Create database and user:**
+
+```bash
+# Switch to postgres user
+sudo -u postgres psql
+
+# In PostgreSQL prompt, run these commands:
+CREATE DATABASE licenseiq_db;
+CREATE USER licenseiq_user WITH ENCRYPTED PASSWORD 'YourSecurePassword123!';
+GRANT ALL PRIVILEGES ON DATABASE licenseiq_db TO licenseiq_user;
+
+# For PostgreSQL 15+ (grant schema permissions):
+\c licenseiq_db
+GRANT ALL ON SCHEMA public TO licenseiq_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO licenseiq_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO licenseiq_user;
+
+# Enable pgvector extension:
+CREATE EXTENSION IF NOT EXISTS vector;
+
+# Verify extension:
+\dx
+
+# Exit PostgreSQL:
+\q
+```
+
+### Step 4.8.4: Configure Environment Variables
+
+**Create .env file:**
+
+```bash
+cd /var/www/licenseiq
+nano .env
+```
+
+**Add these environment variables** (update with your values):
+
+```env
+# Database Configuration
+DATABASE_URL=postgresql://licenseiq_user:YourSecurePassword123!@localhost:5432/licenseiq_db
+PGHOST=localhost
+PGPORT=5432
+PGDATABASE=licenseiq_db
+PGUSER=licenseiq_user
+PGPASSWORD=YourSecurePassword123!
+
+# Server Configuration
+NODE_ENV=production
+PORT=5000
+
+# Session Secret (generate a random string)
+SESSION_SECRET=your-super-secret-session-key-change-this
+
+# AI Service API Keys (get these from your accounts)
+OPENAI_API_KEY=sk-your-openai-key-here
+GROQ_API_KEY=gsk_your-groq-key-here
+HUGGINGFACE_API_KEY=hf_your-huggingface-key-here
+
+# Application URL (update after domain setup)
+APP_URL=https://qa.licenseiq.ai
+```
+
+**Save file:**
+- Press `Ctrl + X`
+- Press `Y`
+- Press `Enter`
+
+**Secure the file:**
+```bash
+chmod 600 .env
+```
+
+### Step 4.8.5: Install Application Dependencies
+
+```bash
+cd /var/www/licenseiq
+npm install
+```
+
+**This will take 2-5 minutes** - installing all React and Node.js packages
+
+### Step 4.8.6: Run Database Migrations
+
+**Push your Drizzle schema to the database:**
+
+```bash
+npm run db:push
+```
+
+**If you get a data-loss warning:**
+```bash
+npm run db:push --force
+```
+
+**You should see:**
+```
+✓ pgvector extension enabled
+✓ Database schema synced successfully
+```
+
+### Step 4.8.7: Build React Frontend
+
+```bash
+npm run build
+```
+
+**This compiles your React app for production** - takes 1-3 minutes
+
+**You should see:**
+```
+vite v5.x.x building for production...
+✓ built in X.XXs
+```
+
+### Step 4.8.8: Set Up PM2 Process Manager
+
+**Create PM2 configuration:**
+
+```bash
+nano ecosystem.config.js
+```
+
+**Add this configuration:**
+
+```javascript
+module.exports = {
+  apps: [{
+    name: 'licenseiq',
+    script: 'npm',
+    args: 'start',
+    cwd: '/var/www/licenseiq',
+    instances: 2,
+    exec_mode: 'cluster',
+    watch: false,
+    max_memory_restart: '1G',
+    env: {
+      NODE_ENV: 'production',
+      PORT: 5000
+    },
+    error_file: '/var/www/licenseiq/logs/pm2-error.log',
+    out_file: '/var/www/licenseiq/logs/pm2-out.log',
+    log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+    merge_logs: true
+  }]
+};
+```
+
+**Save:** `Ctrl + X`, then `Y`, then `Enter`
+
+**Create logs directory:**
+```bash
+mkdir -p /var/www/licenseiq/logs
+```
+
+**Start the application with PM2:**
+```bash
+pm2 start ecosystem.config.js
+pm2 save
+pm2 startup systemd
+```
+
+**Copy and run the command that PM2 outputs** (starts with `sudo env...`)
+
+**Check if running:**
+```bash
+pm2 status
+pm2 logs licenseiq --lines 50
+```
+
+**You should see:**
+```
+┌─────┬─────────────┬─────────┬─────────┬─────────┐
+│ id  │ name        │ mode    │ status  │ cpu     │
+├─────┼─────────────┼─────────┼─────────┼─────────┤
+│ 0   │ licenseiq   │ cluster │ online  │ 0%      │
+│ 1   │ licenseiq   │ cluster │ online  │ 0%      │
+└─────┴─────────────┴─────────┴─────────┴─────────┘
+```
+
+### Step 4.8.9: Configure Nginx for Your App
+
+**Create Nginx configuration:**
+
+```bash
+nano /etc/nginx/sites-available/licenseiq
+```
+
+**Add this configuration** (replace `qa.licenseiq.ai` with your domain):
+
+```nginx
+server {
+    listen 80;
+    listen [::]:80;
+    
+    server_name qa.licenseiq.ai;
+    
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    
+    # Proxy to Node.js application
+    location / {
+        proxy_pass http://localhost:5000;
+        proxy_http_version 1.1;
+        
+        # WebSocket support
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        
+        # Standard proxy headers
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # Timeout settings
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+        
+        # Buffer settings
+        proxy_buffering off;
+        proxy_cache_bypass $http_upgrade;
+    }
+    
+    # Logs
+    access_log /var/log/nginx/licenseiq_access.log;
+    error_log /var/log/nginx/licenseiq_error.log;
+}
+```
+
+**Save:** `Ctrl + X`, then `Y`, then `Enter`
+
+**Enable the site:**
+```bash
+ln -s /etc/nginx/sites-available/licenseiq /etc/nginx/sites-enabled/
+```
+
+**Remove default site:**
+```bash
+rm /etc/nginx/sites-enabled/default
+```
+
+**Test Nginx configuration:**
+```bash
+nginx -t
+```
+
+**Should show:** `syntax is ok` and `test is successful`
+
+**Restart Nginx:**
+```bash
+systemctl restart nginx
+```
+
+### Step 4.8.10: Set Up Firewall
+
+```bash
+# Allow SSH (IMPORTANT!)
+ufw allow OpenSSH
+
+# Allow HTTP and HTTPS
+ufw allow 'Nginx Full'
+
+# Enable firewall
+ufw enable
+
+# Check status
+ufw status verbose
+```
+
+### Step 4.8.11: Test Your Application
+
+**Test locally first:**
+```bash
+curl http://localhost:5000
+```
+
+**Should return HTML from your React app**
+
+**Test via IP:**
+- Open browser
+- Go to: `http://YOUR_VPS_IP`
+- You should see your LicenseIQ app!
+
+---
+
 ## 5. Setting Up Domain DNS
 
 **⚠️ IMPORTANT:** Domain DNS is managed at your **domain registrar**, NOT in CloudPanel or VPS settings!
