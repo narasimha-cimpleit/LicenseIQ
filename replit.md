@@ -73,7 +73,10 @@ The architecture emphasizes an AI-native design, integrating AI capabilities thr
 # Deployment
 
 ## Production Deployment
-A comprehensive step-by-step deployment guide for Hostinger VPS is available in `HOSTINGER_DEPLOYMENT_GUIDE.md`. This guide covers:
+Two comprehensive deployment guides are available for Hostinger VPS:
+
+### 1. Command-Line Guide (`HOSTINGER_DEPLOYMENT_GUIDE.md`)
+Complete terminal-based deployment guide covering:
 - VPS setup and initial server configuration
 - Node.js, PostgreSQL, and pgvector installation
 - Application deployment with PM2 process manager
@@ -83,7 +86,16 @@ A comprehensive step-by-step deployment guide for Hostinger VPS is available in 
 - Database backup and maintenance procedures
 - Troubleshooting common issues
 
-The deployment uses:
+### 2. UI-Based Guide (`HOSTINGER_UI_DEPLOYMENT_GUIDE.md`)
+Visual walkthrough using Hostinger's website interface (hPanel):
+- Step-by-step UI navigation with screenshots descriptions
+- Browser Terminal usage for all installations
+- hPanel-based domain DNS configuration
+- Visual firewall setup and snapshot management
+- No SSH client required - everything through web browser
+- Perfect for users preferring GUI over command-line
+
+Both guides use:
 - **Ubuntu 22.04/24.04** as the operating system
 - **PM2** for process management and auto-restart
 - **Nginx** as reverse proxy for production traffic
