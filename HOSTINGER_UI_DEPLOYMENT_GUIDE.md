@@ -15,6 +15,7 @@ This guide shows you **exactly where to click** in Hostinger's control panel (hP
 6. [Installing SSL Certificate via hPanel](#6-installing-ssl-certificate-via-hpanel)
 7. [Managing Your VPS via hPanel](#7-managing-your-vps-via-hpanel)
 8. [Monitoring & Troubleshooting](#8-monitoring--troubleshooting)
+9. [Database Backup & Restore](#9-database-backup--restore)
 
 ---
 
@@ -1441,6 +1442,527 @@ After following this guide, you should have:
 1. Check usage in **Overview** tab
 2. **Option 1:** Clean up files via Browser Terminal
 3. **Option 2:** Upgrade VPS plan in **Billing**
+
+---
+
+## 9. Database Backup & Restore
+
+### Why Database Backups Are Critical
+
+Your LicenseIQ database contains:
+- ✅ All contract data and documents
+- ✅ User accounts and permissions
+- ✅ Payment calculations and history
+- ✅ AI-extracted contract metadata
+- ✅ Custom rules and configurations
+
+**Losing this data = losing everything!** Regular backups ensure you can recover from:
+- Accidental data deletion
+- Server crashes or hardware failures
+- Bad migrations or updates
+- Ransomware or security breaches
+
+---
+
+### Step 9.1: Create a Database Backup
+
+**Option A: Manual Backup via Browser Terminal**
+
+1. **Open Browser Terminal** (VPS → Browser Terminal)
+2. **Create backup directory:**
+
+```bash
+mkdir -p /home/licenseiq-qa/htdocs/qa.licenseiq.ai/database/backups
+cd /home/licenseiq-qa/htdocs/qa.licenseiq.ai/database/backups
+```
+
+3. **Create full database backup:**
+
+```bash
+# Full backup with timestamp
+pg_dump -h localhost -U licenseiq_user -d licenseiq_db > full_backup_$(date +%Y%m%d_%H%M%S).sql
+```
+
+**You'll be prompted for the database password** - enter it and press Enter
+
+4. **Verify backup was created:**
+
+```bash
+ls -lh
+```
+
+**You should see:**
+```
+-rw-r--r-- 1 root root 312K Nov 08 18:29 full_backup_20251108_182949.sql
+```
+
+**The file size should be >100KB** if you have data in the database
+
+---
+
+**Option B: Automated Daily Backups**
+
+**Create a backup script:**
+
+```bash
+cd /home/licenseiq-qa/htdocs/qa.licenseiq.ai/database
+nano backup.sh
+```
+
+**Paste this script:**
+
+```bash
+#!/bin/bash
+
+# Database backup script for LicenseIQ
+# Automatically creates timestamped backups
+
+# Configuration
+DB_USER="licenseiq_user"
+DB_NAME="licenseiq_db"
+DB_HOST="localhost"
+BACKUP_DIR="/home/licenseiq-qa/htdocs/qa.licenseiq.ai/database/backups"
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+BACKUP_FILE="$BACKUP_DIR/full_backup_$TIMESTAMP.sql"
+
+# Create backup directory if it doesn't exist
+mkdir -p $BACKUP_DIR
+
+# Export password to avoid prompt (set this in your .env or here)
+export PGPASSWORD='YourDatabasePassword'
+
+# Create backup
+echo "Creating database backup..."
+pg_dump -h $DB_HOST -U $DB_USER -d $DB_NAME > $BACKUP_FILE
+
+# Check if backup was successful
+if [ $? -eq 0 ]; then
+    echo "✓ Backup created successfully: $BACKUP_FILE"
+    
+    # Get file size
+    FILE_SIZE=$(ls -lh $BACKUP_FILE | awk '{print $5}')
+    echo "✓ Backup size: $FILE_SIZE"
+    
+    # Delete backups older than 30 days (keep last 30 days)
+    find $BACKUP_DIR -name "full_backup_*.sql" -mtime +30 -delete
+    echo "✓ Cleaned up old backups (kept last 30 days)"
+else
+    echo "✗ Backup failed!"
+    exit 1
+fi
+
+# Unset password
+unset PGPASSWORD
+
+echo "✓ Backup complete!"
+```
+
+**Save:** `Ctrl + X`, `Y`, `Enter`
+
+**Make script executable:**
+
+```bash
+chmod +x backup.sh
+```
+
+**Test the backup script:**
+
+```bash
+./backup.sh
+```
+
+**You should see:**
+```
+Creating database backup...
+✓ Backup created successfully: /home/licenseiq-qa/htdocs/qa.licenseiq.ai/database/backups/full_backup_20251108_183045.sql
+✓ Backup size: 312K
+✓ Cleaned up old backups (kept last 30 days)
+✓ Backup complete!
+```
+
+---
+
+**Schedule Daily Automatic Backups:**
+
+```bash
+# Open crontab editor
+crontab -e
+```
+
+**If prompted, choose nano (option 1)**
+
+**Add this line at the end:**
+
+```bash
+# Daily database backup at 2:00 AM
+0 2 * * * /home/licenseiq-qa/htdocs/qa.licenseiq.ai/database/backup.sh >> /home/licenseiq-qa/htdocs/qa.licenseiq.ai/database/backup.log 2>&1
+```
+
+**Save:** `Ctrl + X`, `Y`, `Enter`
+
+**Verify cron job was added:**
+
+```bash
+crontab -l
+```
+
+**Now your database will be automatically backed up every day at 2:00 AM!**
+
+---
+
+### Step 9.2: Download Backup to Your Computer
+
+**It's critical to keep backups OFF the server** in case of complete server failure!
+
+**Option A: Download via FileZilla (SFTP)**
+
+1. **Open FileZilla**
+2. **Connect to your VPS:**
+   - Host: `sftp://YOUR_VPS_IP`
+   - Username: `root` (or your user)
+   - Password: Your VPS password
+   - Port: `22`
+3. **Navigate to:**
+   ```
+   /home/licenseiq-qa/htdocs/qa.licenseiq.ai/database/backups
+   ```
+4. **Right-click on backup file** → **Download**
+5. **Save to a safe location** on your computer
+
+**Option B: Download via Browser (CloudPanel)**
+
+1. **Login to CloudPanel**
+2. **Go to:** Files → File Manager
+3. **Navigate to:**
+   ```
+   /home/licenseiq-qa/htdocs/qa.licenseiq.ai/database/backups
+   ```
+4. **Select backup file** → Click **Download** button
+5. **Save to your computer**
+
+**Option C: Download via Command Line (SCP)**
+
+From your **local computer** terminal:
+
+```bash
+# Download backup to your local machine
+scp root@YOUR_VPS_IP:/home/licenseiq-qa/htdocs/qa.licenseiq.ai/database/backups/full_backup_20251108_182949.sql ~/Desktop/
+```
+
+**Enter your VPS password when prompted**
+
+---
+
+### Step 9.3: Restore Database from Backup
+
+**⚠️ WARNING:** Restoring a backup will **REPLACE ALL CURRENT DATA**. Make sure you have a current backup before restoring!
+
+**Step 1: Upload Backup File to VPS** (if restoring from local backup)
+
+**Using FileZilla:**
+1. Connect to VPS via SFTP
+2. Navigate to `/home/licenseiq-qa/htdocs/qa.licenseiq.ai/database/backups`
+3. Drag and drop your `.sql` backup file from your computer
+
+---
+
+**Step 2: Stop the Application**
+
+```bash
+# Stop PM2 to prevent database access during restore
+pm2 stop licenseiq
+```
+
+---
+
+**Step 3: Drop and Recreate Database** (Clean Slate)
+
+```bash
+# Connect to PostgreSQL as postgres user
+sudo -u postgres psql
+```
+
+**In PostgreSQL prompt, run:**
+
+```sql
+-- Disconnect all users from the database
+SELECT pg_terminate_backend(pid) 
+FROM pg_stat_activity 
+WHERE datname = 'licenseiq_db' AND pid <> pg_backend_pid();
+
+-- Drop the database
+DROP DATABASE licenseiq_db;
+
+-- Recreate the database
+CREATE DATABASE licenseiq_db;
+
+-- Grant permissions to user
+GRANT ALL PRIVILEGES ON DATABASE licenseiq_db TO licenseiq_user;
+
+-- Connect to the new database
+\c licenseiq_db
+
+-- Grant schema permissions (PostgreSQL 15+)
+GRANT ALL ON SCHEMA public TO licenseiq_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO licenseiq_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO licenseiq_user;
+
+-- Enable pgvector extension
+CREATE EXTENSION IF NOT EXISTS vector;
+
+-- Verify extension is installed
+\dx
+
+-- Exit PostgreSQL
+\q
+```
+
+---
+
+**Step 4: Restore the Backup**
+
+```bash
+cd /home/licenseiq-qa/htdocs/qa.licenseiq.ai/database/backups
+
+# Restore the backup (replace with your actual backup filename)
+psql -h localhost -U licenseiq_user -d licenseiq_db < full_backup_20251108_182949.sql
+```
+
+**Enter database password when prompted**
+
+**You'll see output like:**
+```
+SET
+SET
+SET
+CREATE TABLE
+CREATE TABLE
+CREATE INDEX
+COPY 150
+COPY 25
+...
+```
+
+**This means tables are being created and data is being restored**
+
+---
+
+**Step 5: Verify Restoration**
+
+```bash
+# Connect to database
+psql -h localhost -U licenseiq_user -d licenseiq_db
+```
+
+**In PostgreSQL prompt:**
+
+```sql
+-- List all tables
+\dt
+
+-- Check number of records in key tables
+SELECT COUNT(*) FROM users;
+SELECT COUNT(*) FROM contracts;
+SELECT COUNT(*) FROM payment_calculations;
+
+-- Exit
+\q
+```
+
+**You should see your data restored!**
+
+---
+
+**Step 6: Restart Application**
+
+```bash
+# Start PM2 again
+pm2 start licenseiq
+
+# Check status
+pm2 status
+
+# Check logs for errors
+pm2 logs licenseiq --lines 50
+```
+
+---
+
+**Step 7: Test Application**
+
+1. Open browser
+2. Go to: `https://qa.licenseiq.ai`
+3. Login to your account
+4. Verify your data is present:
+   - Contracts are visible
+   - Users exist
+   - Payment calculations are there
+
+**✅ If everything looks good, the restore was successful!**
+
+---
+
+### Step 9.4: Create Restore Script
+
+**For faster restoration in emergencies:**
+
+```bash
+cd /home/licenseiq-qa/htdocs/qa.licenseiq.ai/database
+nano restore.sh
+```
+
+**Paste this script:**
+
+```bash
+#!/bin/bash
+
+# Database restore script for LicenseIQ
+# Usage: ./restore.sh <backup_file.sql>
+
+# Check if backup file was provided
+if [ -z "$1" ]; then
+    echo "Usage: ./restore.sh <backup_file.sql>"
+    echo "Example: ./restore.sh backups/full_backup_20251108_182949.sql"
+    exit 1
+fi
+
+BACKUP_FILE=$1
+
+# Check if file exists
+if [ ! -f "$BACKUP_FILE" ]; then
+    echo "Error: Backup file not found: $BACKUP_FILE"
+    exit 1
+fi
+
+# Configuration
+DB_USER="licenseiq_user"
+DB_NAME="licenseiq_db"
+DB_HOST="localhost"
+
+# Export password
+export PGPASSWORD='YourDatabasePassword'
+
+echo "⚠️  WARNING: This will REPLACE ALL DATA in $DB_NAME!"
+echo "Backup file: $BACKUP_FILE"
+echo ""
+read -p "Are you sure you want to continue? (yes/no): " confirm
+
+if [ "$confirm" != "yes" ]; then
+    echo "Restore cancelled."
+    exit 0
+fi
+
+echo ""
+echo "Step 1: Stopping application..."
+pm2 stop licenseiq
+
+echo "Step 2: Dropping existing database..."
+sudo -u postgres psql << EOF
+SELECT pg_terminate_backend(pid) 
+FROM pg_stat_activity 
+WHERE datname = '$DB_NAME' AND pid <> pg_backend_pid();
+DROP DATABASE IF EXISTS $DB_NAME;
+CREATE DATABASE $DB_NAME;
+GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;
+\c $DB_NAME
+GRANT ALL ON SCHEMA public TO $DB_USER;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO $DB_USER;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO $DB_USER;
+CREATE EXTENSION IF NOT EXISTS vector;
+EOF
+
+echo "Step 3: Restoring backup..."
+psql -h $DB_HOST -U $DB_USER -d $DB_NAME < $BACKUP_FILE
+
+if [ $? -eq 0 ]; then
+    echo "✓ Database restored successfully!"
+else
+    echo "✗ Restore failed!"
+    unset PGPASSWORD
+    exit 1
+fi
+
+echo "Step 4: Restarting application..."
+pm2 start licenseiq
+
+echo ""
+echo "✓ Restore complete!"
+echo "✓ Application restarted"
+echo ""
+echo "Next steps:"
+echo "1. Check application: https://qa.licenseiq.ai"
+echo "2. Verify data is correct"
+echo "3. Check logs: pm2 logs licenseiq"
+
+# Unset password
+unset PGPASSWORD
+```
+
+**Save:** `Ctrl + X`, `Y`, `Enter`
+
+**Make executable:**
+
+```bash
+chmod +x restore.sh
+```
+
+**To restore a backup, simply run:**
+
+```bash
+./restore.sh backups/full_backup_20251108_182949.sql
+```
+
+---
+
+### Step 9.5: Best Practices for Database Backups
+
+**Backup Frequency:**
+- ✅ **Daily automated backups** (via cron job)
+- ✅ **Before major updates** (manual backup)
+- ✅ **Before database migrations** (manual backup)
+- ✅ **After bulk data imports** (manual backup)
+
+**Backup Storage:**
+- ✅ Keep backups on the server (last 30 days)
+- ✅ **Download monthly backups** to your computer
+- ✅ **Upload to cloud storage** (Google Drive, Dropbox, AWS S3)
+- ✅ Keep at least **3 copies** in different locations
+
+**Backup Verification:**
+- ✅ Test restoration **once per month**
+- ✅ Check backup file sizes (sudden drops = problem)
+- ✅ Keep restoration logs
+
+**Security:**
+- ✅ Encrypt backups before uploading to cloud
+- ✅ Secure backup files with `chmod 600`
+- ✅ Never commit backups to GitHub
+- ✅ Store database passwords securely
+
+---
+
+### Quick Reference - Backup Commands
+
+```bash
+# Create manual backup
+cd /home/licenseiq-qa/htdocs/qa.licenseiq.ai/database
+./backup.sh
+
+# List all backups
+ls -lh backups/
+
+# Restore from backup
+./restore.sh backups/full_backup_20251108_182949.sql
+
+# Download backup to local machine (from your computer)
+scp root@YOUR_VPS_IP:/home/licenseiq-qa/htdocs/qa.licenseiq.ai/database/backups/full_backup_*.sql ~/Desktop/
+
+# Check cron jobs
+crontab -l
+
+# View backup logs
+tail -f /home/licenseiq-qa/htdocs/qa.licenseiq.ai/database/backup.log
+```
 
 ---
 
