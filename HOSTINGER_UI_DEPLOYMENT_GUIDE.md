@@ -438,7 +438,7 @@ git clone https://github.com/yourusername/licenseiq.git .
 
 ### Step 4.8.3: Set Up PostgreSQL Database
 
-**Create database and user:**
+**Create database:**
 
 ```bash
 # Switch to postgres user
@@ -446,24 +446,21 @@ sudo -u postgres psql
 
 # In PostgreSQL prompt, run these commands:
 CREATE DATABASE licenseiq_db;
-CREATE USER licenseiq_user WITH ENCRYPTED PASSWORD 'YourSecurePassword123!';
-GRANT ALL PRIVILEGES ON DATABASE licenseiq_db TO licenseiq_user;
 
-# For PostgreSQL 15+ (grant schema permissions):
+# Connect to the database
 \c licenseiq_db
-GRANT ALL ON SCHEMA public TO licenseiq_user;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO licenseiq_user;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO licenseiq_user;
 
-# Enable pgvector extension:
+# Enable pgvector extension
 CREATE EXTENSION IF NOT EXISTS vector;
 
-# Verify extension:
+# Verify extension is installed
 \dx
 
-# Exit PostgreSQL:
+# Exit PostgreSQL
 \q
 ```
+
+**Note:** We're using the default `postgres` superuser for simplicity. For production, you can create a dedicated user with limited permissions if needed.
 
 ### Step 4.8.4: Configure Environment Variables
 
@@ -478,12 +475,12 @@ nano .env
 
 ```env
 # Database Configuration
-DATABASE_URL=postgresql://licenseiq_user:YourSecurePassword123!@localhost:5432/licenseiq_db
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/licenseiq_db
 PGHOST=localhost
 PGPORT=5432
 PGDATABASE=licenseiq_db
-PGUSER=licenseiq_user
-PGPASSWORD=YourSecurePassword123!
+PGUSER=postgres
+PGPASSWORD=postgres
 
 # Server Configuration
 NODE_ENV=production
@@ -1480,7 +1477,7 @@ cd /home/licenseiq-qa/htdocs/qa.licenseiq.ai/database/backups
 
 ```bash
 # Full backup with timestamp
-pg_dump -h localhost -U licenseiq_user -d licenseiq_db > full_backup_$(date +%Y%m%d_%H%M%S).sql
+pg_dump -h localhost -U postgres -d licenseiq_db > full_backup_$(date +%Y%m%d_%H%M%S).sql
 ```
 
 **You'll be prompted for the database password** - enter it and press Enter
@@ -1518,7 +1515,7 @@ nano backup.sh
 # Automatically creates timestamped backups
 
 # Configuration
-DB_USER="licenseiq_user"
+DB_USER="postgres"
 DB_NAME="licenseiq_db"
 DB_HOST="localhost"
 BACKUP_DIR="/home/licenseiq-qa/htdocs/qa.licenseiq.ai/database/backups"
@@ -1528,8 +1525,8 @@ BACKUP_FILE="$BACKUP_DIR/full_backup_$TIMESTAMP.sql"
 # Create backup directory if it doesn't exist
 mkdir -p $BACKUP_DIR
 
-# Export password to avoid prompt (set this in your .env or here)
-export PGPASSWORD='YourDatabasePassword'
+# Export password to avoid prompt
+export PGPASSWORD='postgres'
 
 # Create backup
 echo "Creating database backup..."
@@ -1725,7 +1722,7 @@ CREATE EXTENSION IF NOT EXISTS vector;
 cd /home/licenseiq-qa/htdocs/qa.licenseiq.ai/database/backups
 
 # Restore the backup (replace with your actual backup filename)
-psql -h localhost -U licenseiq_user -d licenseiq_db < full_backup_20251108_182949.sql
+psql -h localhost -U postgres -d licenseiq_db < full_backup_20251108_182949.sql
 ```
 
 **Enter database password when prompted**
@@ -1751,7 +1748,7 @@ COPY 25
 
 ```bash
 # Connect to database
-psql -h localhost -U licenseiq_user -d licenseiq_db
+psql -h localhost -U postgres -d licenseiq_db
 ```
 
 **In PostgreSQL prompt:**
@@ -1835,12 +1832,12 @@ if [ ! -f "$BACKUP_FILE" ]; then
 fi
 
 # Configuration
-DB_USER="licenseiq_user"
+DB_USER="postgres"
 DB_NAME="licenseiq_db"
 DB_HOST="localhost"
 
 # Export password
-export PGPASSWORD='YourDatabasePassword'
+export PGPASSWORD='postgres'
 
 echo "⚠️  WARNING: This will REPLACE ALL DATA in $DB_NAME!"
 echo "Backup file: $BACKUP_FILE"
@@ -1863,7 +1860,7 @@ FROM pg_stat_activity
 WHERE datname = '$DB_NAME' AND pid <> pg_backend_pid();
 DROP DATABASE IF EXISTS $DB_NAME;
 CREATE DATABASE $DB_NAME;
-GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;
+-- No need to grant privileges, postgres is superuser
 \c $DB_NAME
 GRANT ALL ON SCHEMA public TO $DB_USER;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO $DB_USER;

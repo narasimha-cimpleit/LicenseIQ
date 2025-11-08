@@ -4,7 +4,7 @@
 # Automatically creates timestamped backups
 
 # Configuration for Hostinger VPS
-DB_USER="licenseiq_user"
+DB_USER="postgres"
 DB_NAME="licenseiq_db"
 DB_HOST="localhost"
 BACKUP_DIR="/home/licenseiq-qa/htdocs/qa.licenseiq.ai/database/backups"

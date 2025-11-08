@@ -4,7 +4,7 @@
 # Usage: ./restore-hostinger.sh <backup_file.sql>
 
 # Configuration for Hostinger VPS
-DB_USER="licenseiq_user"
+DB_USER="postgres"
 DB_NAME="licenseiq_db"
 DB_HOST="localhost"
 
