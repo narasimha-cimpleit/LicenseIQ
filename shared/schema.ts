@@ -1161,35 +1161,10 @@ export const companies = pgTable("companies", {
   index("companies_name_idx").on(table.companyName),
 ]);
 
-// Business Units table
-export const businessUnits = pgTable("business_units", {
-  id: varchar("org_id").primaryKey().default(sql`gen_random_uuid()`),
-  companyId: varchar("company_id").notNull().references(() => companies.id, { onDelete: 'cascade' }),
-  orgName: varchar("org_name", { length: 500 }).notNull(),
-  orgDescr: text("org_descr"),
-  address1: varchar("address1", { length: 500 }),
-  contactPerson: varchar("contact_person", { length: 300 }),
-  contactEmail: varchar("contact_email", { length: 300 }),
-  contactPhone: varchar("contact_phone", { length: 50 }),
-  contactPreference: varchar("contact_preference", { length: 50 }),
-  
-  // Audit columns
-  status: varchar("status", { length: 1 }).notNull().default("A"),
-  createdBy: varchar("created_by").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  creationDate: timestamp("creation_date").notNull().defaultNow(),
-  lastUpdatedBy: varchar("last_updated_by").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  lastUpdateDate: timestamp("last_update_date").notNull().defaultNow(),
-}, (table) => [
-  index("business_units_company_idx").on(table.companyId),
-  index("business_units_status_idx").on(table.status),
-  index("business_units_name_idx").on(table.orgName),
-]);
-
 // Locations table
 export const locations = pgTable("locations", {
   id: varchar("loc_id").primaryKey().default(sql`gen_random_uuid()`),
   companyId: varchar("company_id").notNull().references(() => companies.id, { onDelete: 'cascade' }),
-  orgId: varchar("org_id").notNull().references(() => businessUnits.id, { onDelete: 'cascade' }),
   locName: varchar("loc_name", { length: 500 }).notNull(),
   locDescr: text("loc_descr"),
   address1: varchar("address1", { length: 500 }),
@@ -1206,19 +1181,12 @@ export const locations = pgTable("locations", {
   lastUpdateDate: timestamp("last_update_date").notNull().defaultNow(),
 }, (table) => [
   index("locations_company_idx").on(table.companyId),
-  index("locations_org_idx").on(table.orgId),
   index("locations_status_idx").on(table.status),
   index("locations_name_idx").on(table.locName),
 ]);
 
 // Insert schemas
 export const insertCompanySchema = createInsertSchema(companies).omit({
-  id: true,
-  creationDate: true,
-  lastUpdateDate: true,
-});
-
-export const insertBusinessUnitSchema = createInsertSchema(businessUnits).omit({
   id: true,
   creationDate: true,
   lastUpdateDate: true,
@@ -1233,8 +1201,6 @@ export const insertLocationSchema = createInsertSchema(locations).omit({
 // Types
 export type Company = typeof companies.$inferSelect;
 export type InsertCompany = z.infer<typeof insertCompanySchema>;
-export type BusinessUnit = typeof businessUnits.$inferSelect;
-export type InsertBusinessUnit = z.infer<typeof insertBusinessUnitSchema>;
 export type Location = typeof locations.$inferSelect;
 export type InsertLocation = z.infer<typeof insertLocationSchema>;
 
@@ -1245,10 +1211,9 @@ export const licenseiqEntityRecords = pgTable("licenseiq_entity_records", {
   entityId: varchar("entity_id").notNull().references(() => licenseiqEntities.id, { onDelete: 'cascade' }),
   recordData: jsonb("record_data").notNull(), // Flexible JSON data matching the entity's fields
   
-  // Organization Hierarchy - Records must be linked to company hierarchy (will be mandatory after backfill)
-  grpId: varchar("grp_id").references(() => companies.id, { onDelete: 'restrict' }), // Company ID - temporarily nullable
-  orgId: varchar("org_id").references(() => businessUnits.id, { onDelete: 'restrict' }), // Business Unit ID - temporarily nullable
-  locId: varchar("loc_id").references(() => locations.id, { onDelete: 'restrict' }), // Location ID - temporarily nullable
+  // Organization Hierarchy - Records must be linked to company hierarchy
+  grpId: varchar("grp_id").notNull().references(() => companies.id, { onDelete: 'restrict' }), // Company ID - mandatory
+  locId: varchar("loc_id").notNull().references(() => locations.id, { onDelete: 'restrict' }), // Location ID - mandatory
   
   createdBy: varchar("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
@@ -1256,7 +1221,6 @@ export const licenseiqEntityRecords = pgTable("licenseiq_entity_records", {
 }, (table) => [
   index("licenseiq_records_entity_idx").on(table.entityId),
   index("licenseiq_records_grp_idx").on(table.grpId),
-  index("licenseiq_records_org_idx").on(table.orgId),
   index("licenseiq_records_loc_idx").on(table.locId),
 ]);
 
