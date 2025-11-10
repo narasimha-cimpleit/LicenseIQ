@@ -32,6 +32,12 @@ export default function MasterDataPage() {
 
   const { data: hierarchy, isLoading } = useQuery<HierarchyNode>({
     queryKey: ['/api/master-data/hierarchy', filterStatus],
+    queryFn: async () => {
+      const params = filterStatus !== 'all' ? `?status=${filterStatus}` : '';
+      const response = await fetch(`/api/master-data/hierarchy${params}`);
+      if (!response.ok) throw new Error('Failed to fetch hierarchy');
+      return response.json();
+    },
   });
 
   if (isLoading) {
