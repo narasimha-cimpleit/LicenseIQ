@@ -1134,11 +1134,20 @@ export const licenseiqEntityRecords = pgTable("licenseiq_entity_records", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   entityId: varchar("entity_id").notNull().references(() => licenseiqEntities.id, { onDelete: 'cascade' }),
   recordData: jsonb("record_data").notNull(), // Flexible JSON data matching the entity's fields
+  
+  // Mandatory Organization Hierarchy - All records must be linked to company hierarchy
+  grpId: varchar("grp_id").notNull().references(() => companies.id, { onDelete: 'restrict' }), // Company ID
+  orgId: varchar("org_id").notNull().references(() => businessUnits.id, { onDelete: 'restrict' }), // Business Unit ID
+  locId: varchar("loc_id").notNull().references(() => locations.id, { onDelete: 'restrict' }), // Location ID
+  
   createdBy: varchar("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
   index("licenseiq_records_entity_idx").on(table.entityId),
+  index("licenseiq_records_grp_idx").on(table.grpId),
+  index("licenseiq_records_org_idx").on(table.orgId),
+  index("licenseiq_records_loc_idx").on(table.locId),
 ]);
 
 // Insert schemas for lead capture
