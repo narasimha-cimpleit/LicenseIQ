@@ -5,6 +5,38 @@ This guide shows you **exactly where to click** in Hostinger's control panel (hP
 
 ---
 
+## 🎯 Your VPS Configuration
+
+**This guide is customized for your specific Hostinger VPS setup:**
+
+| Configuration | Your Values |
+|---------------|-------------|
+| **VPS Path** | `/home/licenseiq-qa/htdocs/qa.licenseiq.ai` |
+| **Domain** | `qa.licenseiq.ai` |
+| **Control Panel** | CloudPanel (on VPS) + hPanel (Hostinger account) |
+| **PostgreSQL Version** | 16.10 (Ubuntu 16.10-0ubuntu0.24.04.1) |
+| **Database Name** | `licenseiq_db` |
+| **Database User** | `postgres` |
+| **Database Password** | `postgres` |
+| **Application Port** | `5000` |
+| **Server** | `srv1108884` |
+
+**Important Commands for Your Setup:**
+
+```bash
+# Navigate to your app
+cd /home/licenseiq-qa/htdocs/qa.licenseiq.ai
+
+# Access PostgreSQL (note: postgres, not "postgress")
+sudo -i -u postgres
+psql
+
+# Connect to your database
+\c licenseiq_db
+```
+
+---
+
 ## 📋 Table of Contents
 
 1. [Purchase VPS Through Hostinger Website](#1-purchase-vps-through-hostinger-website)
@@ -59,7 +91,7 @@ This guide shows you **exactly where to click** in Hostinger's control panel (hP
    - You'll receive confirmation email
    - VPS will appear in your account within 5-10 minutes
 
----
+--- a
 
 ## 2. Initial VPS Setup via hPanel
 
@@ -360,9 +392,13 @@ systemctl status postgresql
 **Required for LicenseIQ's semantic search features**
 
 **Step 1:** Install development files
+
+**For PostgreSQL 16 (your version):**
 ```bash
-apt install -y postgresql-server-dev-14
+apt install -y postgresql-server-dev-16
 ```
+
+**Note:** Replace `16` with your PostgreSQL version if different. To check your version: `psql --version`
 
 **Step 2:** Download and compile pgvector
 ```bash
@@ -399,12 +435,17 @@ systemctl enable nginx
 
 Now let's deploy your actual React + Node.js + PostgreSQL application!
 
-### Step 4.8.1: Create Application Directory
+### Step 4.8.1: Navigate to Application Directory
+
+**For CloudPanel users, your application directory is:**
 
 ```bash
-mkdir -p /var/www/licenseiq
-cd /var/www/licenseiq
+cd /home/licenseiq-qa/htdocs/qa.licenseiq.ai
 ```
+
+**Note:** CloudPanel automatically creates this directory when you add a site. The structure is:
+- `/home/[username]/htdocs/[domain]`
+- For you: `/home/licenseiq-qa/htdocs/qa.licenseiq.ai`
 
 ### Step 4.8.2: Get Your Application Code
 
@@ -427,22 +468,27 @@ git clone https://github.com/yourusername/licenseiq.git .
    - **Password:** Your VPS root password
    - **Port:** `22`
 4. Click **"Quickconnect"**
-5. Navigate to `/var/www/licenseiq`
+5. Navigate to `/home/licenseiq-qa/htdocs/qa.licenseiq.ai`
 6. Drag and drop your local LicenseIQ folder to the server
 
-**Option C: Upload via CloudPanel File Manager** (If available)
+**Option C: Upload via CloudPanel File Manager** (Recommended)
 
 1. In CloudPanel, go to **Files** or **File Manager**
-2. Navigate to `/var/www/licenseiq`
+2. Navigate to `/home/licenseiq-qa/htdocs/qa.licenseiq.ai`
 3. Use Upload button to upload your files
 
 ### Step 4.8.3: Set Up PostgreSQL Database
 
+**Important:** Your VPS has PostgreSQL 16.10 (Ubuntu 16.10-0ubuntu0.24.04.1) installed.
+
 **Create database:**
 
 ```bash
-# Switch to postgres user
-sudo -u postgres psql
+# Switch to postgres user (correct command - note: it's postgres, not postgress)
+sudo -i -u postgres
+
+# Once logged in as postgres user, start psql
+psql
 
 # In PostgreSQL prompt, run these commands:
 CREATE DATABASE licenseiq_db;
@@ -456,18 +502,25 @@ CREATE EXTENSION IF NOT EXISTS vector;
 # Verify extension is installed
 \dx
 
+# You should see 'vector' in the list
+
 # Exit PostgreSQL
 \q
+
+# Exit postgres user session
+exit
 ```
 
-**Note:** We're using the default `postgres` superuser for simplicity. For production, you can create a dedicated user with limited permissions if needed.
+**Common typo:** The command is `sudo -i -u postgres` (not "postgress")
+
+**Note:** We're using the default `postgres` superuser for simplicity. The default password is usually `postgres`.
 
 ### Step 4.8.4: Configure Environment Variables
 
 **Create .env file:**
 
 ```bash
-cd /var/www/licenseiq
+cd /home/licenseiq-qa/htdocs/qa.licenseiq.ai
 nano .env
 ```
 
@@ -511,7 +564,7 @@ chmod 600 .env
 ### Step 4.8.5: Install Application Dependencies
 
 ```bash
-cd /var/www/licenseiq
+cd /home/licenseiq-qa/htdocs/qa.licenseiq.ai
 npm install
 ```
 
@@ -566,7 +619,7 @@ module.exports = {
     name: 'licenseiq',
     script: 'npm',
     args: 'start',
-    cwd: '/var/www/licenseiq',
+    cwd: '/home/licenseiq-qa/htdocs/qa.licenseiq.ai',
     instances: 2,
     exec_mode: 'cluster',
     watch: false,
@@ -575,8 +628,8 @@ module.exports = {
       NODE_ENV: 'production',
       PORT: 5000
     },
-    error_file: '/var/www/licenseiq/logs/pm2-error.log',
-    out_file: '/var/www/licenseiq/logs/pm2-out.log',
+    error_file: '/home/licenseiq-qa/htdocs/qa.licenseiq.ai/logs/pm2-error.log',
+    out_file: '/home/licenseiq-qa/htdocs/qa.licenseiq.ai/logs/pm2-out.log',
     log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
     merge_logs: true
   }]
@@ -587,7 +640,7 @@ module.exports = {
 
 **Create logs directory:**
 ```bash
-mkdir -p /var/www/licenseiq/logs
+mkdir -p /home/licenseiq-qa/htdocs/qa.licenseiq.ai/logs
 ```
 
 **Start the application with PM2:**
@@ -617,13 +670,30 @@ pm2 logs licenseiq --lines 50
 
 ### Step 4.8.9: Configure Nginx for Your App
 
-**Create Nginx configuration:**
+**⚠️ IMPORTANT FOR CLOUDPANEL USERS:**
+
+If you're using CloudPanel, Nginx is **already configured** when you added the site `qa.licenseiq.ai`. 
+
+**Check if CloudPanel already created the config:**
+
+```bash
+ls -la /etc/nginx/sites-available/ | grep licenseiq
+```
+
+**If you see a config file, edit it instead of creating a new one:**
+
+```bash
+# Find and edit existing config (CloudPanel might use domain name)
+nano /etc/nginx/sites-available/qa.licenseiq.ai
+```
+
+**If no config exists, create one:**
 
 ```bash
 nano /etc/nginx/sites-available/licenseiq
 ```
 
-**Add this configuration** (replace `qa.licenseiq.ai` with your domain):
+**Add this configuration:**
 
 ```nginx
 server {
