@@ -4196,6 +4196,265 @@ Return ONLY valid JSON array, no other text.`;
   });
 
   // ==========================================
+  // MASTER DATA MANAGEMENT ROUTES
+  // ==========================================
+  
+  // Get full hierarchy
+  app.get('/api/master-data/hierarchy', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { status } = req.query;
+      const hierarchy = await storage.getMasterDataHierarchy(status as string);
+      res.json(hierarchy);
+    } catch (error: any) {
+      console.error('Get hierarchy error:', error);
+      res.status(500).json({ error: error.message || 'Failed to get master data hierarchy' });
+    }
+  });
+
+  // Companies
+  app.get('/api/master-data/companies', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { status } = req.query;
+      const companies = await storage.getAllCompanies(status as string);
+      res.json(companies);
+    } catch (error: any) {
+      console.error('Get companies error:', error);
+      res.status(500).json({ error: error.message || 'Failed to get companies' });
+    }
+  });
+
+  app.post('/api/master-data/companies', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const user = await storage.getUser(req.user.id);
+      if (!['admin', 'owner', 'editor'].includes(user?.role || '')) {
+        return res.status(403).json({ error: 'Insufficient permissions' });
+      }
+
+      const { insertCompanySchema } = await import("@shared/schema");
+      const companyData = insertCompanySchema.parse({
+        ...req.body,
+        createdBy: req.user.id,
+        lastUpdatedBy: req.user.id,
+      });
+
+      const company = await storage.createCompany(companyData);
+      
+      await createAuditLog(req, 'create_company', 'company', company.id, {
+        companyName: company.companyName,
+      });
+
+      res.json(company);
+    } catch (error: any) {
+      console.error('Create company error:', error);
+      res.status(500).json({ error: error.message || 'Failed to create company' });
+    }
+  });
+
+  app.patch('/api/master-data/companies/:id', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const user = await storage.getUser(req.user.id);
+      if (!['admin', 'owner', 'editor'].includes(user?.role || '')) {
+        return res.status(403).json({ error: 'Insufficient permissions' });
+      }
+
+      const company = await storage.updateCompany(req.params.id, req.body, req.user.id);
+      
+      await createAuditLog(req, 'update_company', 'company', company.id, {
+        changes: req.body,
+      });
+
+      res.json(company);
+    } catch (error: any) {
+      console.error('Update company error:', error);
+      res.status(500).json({ error: error.message || 'Failed to update company' });
+    }
+  });
+
+  app.delete('/api/master-data/companies/:id', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const user = await storage.getUser(req.user.id);
+      if (!['admin', 'owner'].includes(user?.role || '')) {
+        return res.status(403).json({ error: 'Only admins and owners can delete companies' });
+      }
+
+      await storage.deleteCompany(req.params.id);
+      
+      await createAuditLog(req, 'delete_company', 'company', req.params.id, {});
+
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('Delete company error:', error);
+      res.status(500).json({ error: error.message || 'Failed to delete company' });
+    }
+  });
+
+  // Business Units
+  app.get('/api/master-data/business-units', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { companyId, status } = req.query;
+      const units = companyId 
+        ? await storage.getBusinessUnitsByCompany(companyId as string, status as string)
+        : [];
+      res.json(units);
+    } catch (error: any) {
+      console.error('Get business units error:', error);
+      res.status(500).json({ error: error.message || 'Failed to get business units' });
+    }
+  });
+
+  app.post('/api/master-data/business-units', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const user = await storage.getUser(req.user.id);
+      if (!['admin', 'owner', 'editor'].includes(user?.role || '')) {
+        return res.status(403).json({ error: 'Insufficient permissions' });
+      }
+
+      const { insertBusinessUnitSchema } = await import("@shared/schema");
+      const unitData = insertBusinessUnitSchema.parse({
+        ...req.body,
+        createdBy: req.user.id,
+        lastUpdatedBy: req.user.id,
+      });
+
+      const unit = await storage.createBusinessUnit(unitData);
+      
+      await createAuditLog(req, 'create_business_unit', 'business_unit', unit.id, {
+        orgName: unit.orgName,
+        companyId: unit.companyId,
+      });
+
+      res.json(unit);
+    } catch (error: any) {
+      console.error('Create business unit error:', error);
+      res.status(500).json({ error: error.message || 'Failed to create business unit' });
+    }
+  });
+
+  app.patch('/api/master-data/business-units/:id', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const user = await storage.getUser(req.user.id);
+      if (!['admin', 'owner', 'editor'].includes(user?.role || '')) {
+        return res.status(403).json({ error: 'Insufficient permissions' });
+      }
+
+      const unit = await storage.updateBusinessUnit(req.params.id, req.body, req.user.id);
+      
+      await createAuditLog(req, 'update_business_unit', 'business_unit', unit.id, {
+        changes: req.body,
+      });
+
+      res.json(unit);
+    } catch (error: any) {
+      console.error('Update business unit error:', error);
+      res.status(500).json({ error: error.message || 'Failed to update business unit' });
+    }
+  });
+
+  app.delete('/api/master-data/business-units/:id', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const user = await storage.getUser(req.user.id);
+      if (!['admin', 'owner'].includes(user?.role || '')) {
+        return res.status(403).json({ error: 'Only admins and owners can delete business units' });
+      }
+
+      await storage.deleteBusinessUnit(req.params.id);
+      
+      await createAuditLog(req, 'delete_business_unit', 'business_unit', req.params.id, {});
+
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('Delete business unit error:', error);
+      res.status(500).json({ error: error.message || 'Failed to delete business unit' });
+    }
+  });
+
+  // Locations
+  app.get('/api/master-data/locations', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { companyId, orgId, status } = req.query;
+      let locations = [];
+      
+      if (orgId) {
+        locations = await storage.getLocationsByBusinessUnit(orgId as string, status as string);
+      } else if (companyId) {
+        locations = await storage.getLocationsByCompany(companyId as string, status as string);
+      }
+      
+      res.json(locations);
+    } catch (error: any) {
+      console.error('Get locations error:', error);
+      res.status(500).json({ error: error.message || 'Failed to get locations' });
+    }
+  });
+
+  app.post('/api/master-data/locations', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const user = await storage.getUser(req.user.id);
+      if (!['admin', 'owner', 'editor'].includes(user?.role || '')) {
+        return res.status(403).json({ error: 'Insufficient permissions' });
+      }
+
+      const { insertLocationSchema } = await import("@shared/schema");
+      const locationData = insertLocationSchema.parse({
+        ...req.body,
+        createdBy: req.user.id,
+        lastUpdatedBy: req.user.id,
+      });
+
+      const location = await storage.createLocation(locationData);
+      
+      await createAuditLog(req, 'create_location', 'location', location.id, {
+        locName: location.locName,
+        companyId: location.companyId,
+        orgId: location.orgId,
+      });
+
+      res.json(location);
+    } catch (error: any) {
+      console.error('Create location error:', error);
+      res.status(500).json({ error: error.message || 'Failed to create location' });
+    }
+  });
+
+  app.patch('/api/master-data/locations/:id', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const user = await storage.getUser(req.user.id);
+      if (!['admin', 'owner', 'editor'].includes(user?.role || '')) {
+        return res.status(403).json({ error: 'Insufficient permissions' });
+      }
+
+      const location = await storage.updateLocation(req.params.id, req.body, req.user.id);
+      
+      await createAuditLog(req, 'update_location', 'location', location.id, {
+        changes: req.body,
+      });
+
+      res.json(location);
+    } catch (error: any) {
+      console.error('Update location error:', error);
+      res.status(500).json({ error: error.message || 'Failed to update location' });
+    }
+  });
+
+  app.delete('/api/master-data/locations/:id', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const user = await storage.getUser(req.user.id);
+      if (!['admin', 'owner'].includes(user?.role || '')) {
+        return res.status(403).json({ error: 'Only admins and owners can delete locations' });
+      }
+
+      await storage.deleteLocation(req.params.id);
+      
+      await createAuditLog(req, 'delete_location', 'location', req.params.id, {});
+
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('Delete location error:', error);
+      res.status(500).json({ error: error.message || 'Failed to delete location' });
+    }
+  });
+
+  // ==========================================
   // ROLE MANAGEMENT ROUTES
   // ==========================================
 
