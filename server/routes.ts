@@ -4251,7 +4251,7 @@ Return ONLY valid JSON array, no other text.`;
     try {
       const { status } = req.query;
       const hierarchy = await storage.getMasterDataHierarchy(status as string);
-      res.json(hierarchy);
+      res.json({ companies: hierarchy });
     } catch (error: any) {
       console.error('Get hierarchy error:', error);
       res.status(500).json({ error: error.message || 'Failed to get master data hierarchy' });
