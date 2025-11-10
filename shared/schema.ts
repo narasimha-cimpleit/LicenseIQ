@@ -1245,10 +1245,10 @@ export const licenseiqEntityRecords = pgTable("licenseiq_entity_records", {
   entityId: varchar("entity_id").notNull().references(() => licenseiqEntities.id, { onDelete: 'cascade' }),
   recordData: jsonb("record_data").notNull(), // Flexible JSON data matching the entity's fields
   
-  // Organization Hierarchy - Records must be linked to company hierarchy (will be mandatory after backfill)
-  grpId: varchar("grp_id").references(() => companies.id, { onDelete: 'restrict' }), // Company ID - temporarily nullable
-  orgId: varchar("org_id").references(() => businessUnits.id, { onDelete: 'restrict' }), // Business Unit ID - temporarily nullable
-  locId: varchar("loc_id").references(() => locations.id, { onDelete: 'restrict' }), // Location ID - temporarily nullable
+  // Organization Hierarchy - Records must be linked to company hierarchy
+  grpId: varchar("grp_id").notNull().references(() => companies.id, { onDelete: 'restrict' }), // Company ID - MANDATORY
+  orgId: varchar("org_id").notNull().references(() => businessUnits.id, { onDelete: 'restrict' }), // Business Unit ID - MANDATORY
+  locId: varchar("loc_id").notNull().references(() => locations.id, { onDelete: 'restrict' }), // Location ID - MANDATORY
   
   createdBy: varchar("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
