@@ -4099,6 +4099,7 @@ Return ONLY valid JSON array, no other text.`;
         { itemKey: 'review-queue', itemName: 'Review Queue', href: '/review-queue', iconName: 'ClipboardCheck', defaultRoles: ['admin', 'owner'], sortOrder: 17 },
         { itemKey: 'user-management', itemName: 'User Management', href: '/users', iconName: 'Users', defaultRoles: ['admin', 'owner'], sortOrder: 18 },
         { itemKey: 'audit-trail', itemName: 'Audit Trail', href: '/audit', iconName: 'History', defaultRoles: ['auditor', 'admin', 'owner'], sortOrder: 19 },
+        { itemKey: 'configuration', itemName: 'Configuration', href: '/configuration', iconName: 'Sparkles', defaultRoles: ['admin', 'owner'], sortOrder: 20 },
       ];
 
       const created = [];
