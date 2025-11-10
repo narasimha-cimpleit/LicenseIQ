@@ -24,15 +24,17 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Building2, MapPin, Plus, ChevronRight, ChevronDown, Check, X, Trash2, Edit2, ArrowLeft } from 'lucide-react';
+import { Building2, Layers, MapPin, Plus, ChevronRight, ChevronDown, Check, X, Trash2, Edit2, ArrowLeft } from 'lucide-react';
 import { useLocation } from 'wouter';
-import type { Company, Location } from '@shared/schema';
+import type { Company, BusinessUnit, Location } from '@shared/schema';
 
 type Status = 'A' | 'I' | 'D';
 
 interface HierarchyNode {
   companies: (Company & { 
-    locations: Location[] 
+    businessUnits: (BusinessUnit & { 
+      locations: Location[] 
+    })[] 
   })[];
 }
 
@@ -131,14 +133,15 @@ export default function MasterDataPage() {
   );
 }
 
-function CompanyNode({ company }: { company: Company & { locations: Location[] } }) {
+function CompanyNode({ company }: { company: Company & { businessUnits: (BusinessUnit & { locations: Location[] })[] } }) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
-  const [showAddLocation, setShowAddLocation] = useState(false);
+  const [showAddBU, setShowAddBU] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { toast } = useToast();
 
-  const totalLocs = company.locations?.length || 0;
+  const totalBUs = company.businessUnits?.length || 0;
+  const totalLocs = company.businessUnits?.reduce((sum, bu) => sum + (bu.locations?.length || 0), 0) || 0;
 
   const deleteMutation = useMutation({
     mutationFn: () => apiRequest('DELETE', `/api/master-data/companies/${company.id}`, {}),
@@ -213,11 +216,11 @@ function CompanyNode({ company }: { company: Company & { locations: Location[] }
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setShowAddLocation(!showAddLocation)}
-                data-testid={`button-add-location-${company.id}`}
+                onClick={() => setShowAddBU(!showAddBU)}
+                data-testid={`button-add-bu-${company.id}`}
               >
                 <Plus className="h-4 w-4 mr-1" />
-                Add Location
+                Add Unit
               </Button>
               <Button
                 variant="ghost"
@@ -235,15 +238,15 @@ function CompanyNode({ company }: { company: Company & { locations: Location[] }
 
       {isExpanded && (
         <div className="ml-6 mt-1 border-l-2 border-muted pl-4 space-y-1">
-          {showAddLocation && (
-            <LocationForm 
+          {showAddBU && (
+            <BusinessUnitForm 
               companyId={company.id} 
-              onCancel={() => setShowAddLocation(false)}
-              onSaved={() => setShowAddLocation(false)}
+              onCancel={() => setShowAddBU(false)}
+              onSaved={() => setShowAddBU(false)}
             />
           )}
-          {company.locations?.map((location) => (
-            <LocationNode key={location.id} location={location} />
+          {company.businessUnits?.map((bu) => (
+            <BusinessUnitNode key={bu.id} businessUnit={bu} companyId={company.id} />
           ))}
         </div>
       )}
@@ -253,9 +256,13 @@ function CompanyNode({ company }: { company: Company & { locations: Location[] }
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Company?</AlertDialogTitle>
             <AlertDialogDescription>
-              {totalLocs > 0 ? (
+              {totalBUs > 0 || totalLocs > 0 ? (
                 <>
-                  This will permanently delete <strong>{company.companyName}</strong> and all its {totalLocs} location{totalLocs > 1 ? 's' : ''}.
+                  This will permanently delete <strong>{company.companyName}</strong> and all its children:
+                  <ul className="list-disc list-inside mt-2 space-y-1">
+                    {totalBUs > 0 && <li>{totalBUs} Business Unit{totalBUs > 1 ? 's' : ''}</li>}
+                    {totalLocs > 0 && <li>{totalLocs} Location{totalLocs > 1 ? 's' : ''}</li>}
+                  </ul>
                   <p className="mt-2 text-destructive font-semibold">This action cannot be undone.</p>
                 </>
               ) : (
@@ -280,6 +287,167 @@ function CompanyNode({ company }: { company: Company & { locations: Location[] }
     </div>
   );
 }
+
+function BusinessUnitNode({ 
+  businessUnit, 
+  companyId 
+}: { 
+  businessUnit: BusinessUnit & { locations: Location[] }; 
+  companyId: string;
+}) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [showAddLoc, setShowAddLoc] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const { toast } = useToast();
+
+  const totalLocs = businessUnit.locations?.length || 0;
+
+  const deleteMutation = useMutation({
+    mutationFn: () => apiRequest('DELETE', `/api/master-data/business-units/${businessUnit.id}`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/master-data/hierarchy'] });
+      toast({ title: 'Business unit deleted successfully' });
+      setShowDeleteDialog(false);
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: 'Failed to delete business unit', 
+        description: error.message, 
+        variant: 'destructive' 
+      });
+    },
+  });
+
+  return (
+    <div className="group" data-testid={`bu-node-${businessUnit.id}`}>
+      <div className="flex items-center gap-2.5 p-3 rounded-lg hover:bg-gradient-to-r hover:from-blue-500/5 hover:to-blue-600/5 transition-all duration-200 border border-transparent hover:border-blue-500/20">
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="shrink-0 hover:bg-blue-500/10 p-1 rounded transition-colors"
+          data-testid={`button-toggle-bu-${businessUnit.id}`}
+          aria-label={isExpanded ? 'Collapse business unit' : 'Expand business unit'}
+        >
+          {isExpanded ? (
+            <ChevronDown className="h-4 w-4 text-blue-500" />
+          ) : (
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          )}
+        </button>
+        <div className="flex items-center justify-center w-8 h-8 rounded-md bg-gradient-to-br from-blue-500 to-blue-600 shadow">
+          <Layers className="h-4 w-4 text-white shrink-0" />
+        </div>
+        <div className="flex-1 min-w-0">
+          {isEditing ? (
+            <BusinessUnitEditForm 
+              businessUnit={businessUnit} 
+              onCancel={() => setIsEditing(false)} 
+              onSaved={() => setIsEditing(false)} 
+            />
+          ) : (
+            <div className="flex items-center gap-2">
+              <span 
+                className="text-sm font-medium cursor-pointer hover:text-primary transition-colors" 
+                onClick={() => setIsEditing(true)}
+                data-testid={`text-bu-name-${businessUnit.id}`}
+              >
+                {businessUnit.orgName}
+              </span>
+              <StatusBadge 
+                status={businessUnit.status as Status} 
+                entityType="business_unit" 
+                entityId={businessUnit.id} 
+              />
+            </div>
+          )}
+        </div>
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {!isEditing && (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsEditing(true)}
+                data-testid={`button-edit-bu-${businessUnit.id}`}
+              >
+                <Edit2 className="h-3 w-3 mr-1" />
+                Edit
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAddLoc(!showAddLoc)}
+                data-testid={`button-add-location-${businessUnit.id}`}
+              >
+                <Plus className="h-3 w-3 mr-1" />
+                Add Location
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowDeleteDialog(true)}
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                data-testid={`button-delete-bu-${businessUnit.id}`}
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {isExpanded && (
+        <div className="ml-6 mt-1 border-l-2 border-muted/50 pl-4 space-y-1">
+          {showAddLoc && (
+            <LocationForm 
+              companyId={companyId}
+              orgId={businessUnit.id} 
+              onCancel={() => setShowAddLoc(false)}
+              onSaved={() => setShowAddLoc(false)}
+            />
+          )}
+          {businessUnit.locations?.map((loc) => (
+            <LocationNode key={loc.id} location={loc} />
+          ))}
+        </div>
+      )}
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Business Unit?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {totalLocs > 0 ? (
+                <>
+                  This will permanently delete <strong>{businessUnit.orgName}</strong> and all its children:
+                  <ul className="list-disc list-inside mt-2">
+                    <li>{totalLocs} Location{totalLocs > 1 ? 's' : ''}</li>
+                  </ul>
+                  <p className="mt-2 text-destructive font-semibold">This action cannot be undone.</p>
+                </>
+              ) : (
+                <>
+                  Are you sure you want to delete <strong>{businessUnit.orgName}</strong>? This action cannot be undone.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteMutation.mutate()}
+              disabled={deleteMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
 function LocationNode({ location }: { location: Location }) {
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -385,7 +553,7 @@ function StatusBadge({
   entityId 
 }: { 
   status: Status; 
-  entityType: 'company' | 'location'; 
+  entityType: 'company' | 'business_unit' | 'location'; 
   entityId: string;
 }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -395,6 +563,7 @@ function StatusBadge({
     mutationFn: async (newStatus: Status) => {
       const endpoints = {
         company: '/api/master-data/companies',
+        business_unit: '/api/master-data/business-units',
         location: '/api/master-data/locations',
       };
       return apiRequest('PATCH', `${endpoints[entityType]}/${entityId}`, { status: newStatus });
@@ -682,12 +851,176 @@ function CompanyEditForm({ company, onCancel, onSaved }: { company: Company; onC
   );
 }
 
-function LocationForm({ companyId, onCancel, onSaved }: { companyId: string; onCancel: () => void; onSaved: () => void }) {
+function BusinessUnitForm({ companyId, onCancel, onSaved }: { companyId: string; onCancel: () => void; onSaved: () => void }) {
   const [name, setName] = useState('');
   const { toast } = useToast();
 
   const createMutation = useMutation({
-    mutationFn: (data: { locName: string; companyId: string }) => 
+    mutationFn: (data: { orgName: string; companyId: string }) => 
+      apiRequest('POST', '/api/master-data/business-units', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/master-data/hierarchy'] });
+      toast({ title: 'Business unit created successfully' });
+      onSaved();
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: 'Failed to create business unit', 
+        description: error.message, 
+        variant: 'destructive' 
+      });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+    createMutation.mutate({ orgName: name, companyId });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="flex items-center gap-2 p-2 bg-accent/20 rounded-lg mb-1">
+      <Layers className="h-4 w-4 text-blue-500" />
+      <Input
+        placeholder="Business unit name *"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        className="flex-1 h-8 text-sm"
+        autoFocus
+        data-testid="input-bu-name"
+      />
+      <Button type="submit" size="sm" disabled={!name.trim() || createMutation.isPending} data-testid="button-save-bu">
+        <Check className="h-3 w-3" />
+      </Button>
+      <Button type="button" variant="ghost" size="sm" onClick={onCancel} data-testid="button-cancel-bu">
+        <X className="h-3 w-3" />
+      </Button>
+    </form>
+  );
+}
+
+function BusinessUnitEditForm({ businessUnit, onCancel, onSaved }: { businessUnit: BusinessUnit; onCancel: () => void; onSaved: () => void }) {
+  const [formData, setFormData] = useState({
+    orgName: businessUnit.orgName,
+    orgDescr: businessUnit.orgDescr || '',
+    address1: businessUnit.address1 || '',
+    contactPerson: businessUnit.contactPerson || '',
+    contactEmail: businessUnit.contactEmail || '',
+    contactPhone: businessUnit.contactPhone || '',
+    contactPreference: businessUnit.contactPreference || '',
+  });
+  const { toast } = useToast();
+
+  const updateMutation = useMutation({
+    mutationFn: (data: any) => 
+      apiRequest('PATCH', `/api/master-data/business-units/${businessUnit.id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/master-data/hierarchy'] });
+      toast({ title: 'Business unit updated successfully' });
+      onSaved();
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: 'Failed to update business unit', 
+        description: error.message, 
+        variant: 'destructive' 
+      });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.orgName.trim()) return;
+    updateMutation.mutate(formData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-2 p-3 bg-accent/20 rounded-lg" onClick={(e) => e.stopPropagation()}>
+      <div className="grid grid-cols-2 gap-2">
+        <div className="col-span-2">
+          <Input
+            placeholder="Business unit name *"
+            value={formData.orgName}
+            onChange={(e) => setFormData({...formData, orgName: e.target.value})}
+            className="text-sm"
+            autoFocus
+            data-testid="input-edit-bu-name"
+          />
+        </div>
+        <div className="col-span-2">
+          <Textarea
+            placeholder="Description"
+            value={formData.orgDescr}
+            onChange={(e) => setFormData({...formData, orgDescr: e.target.value})}
+            rows={2}
+            className="text-sm"
+            data-testid="input-edit-bu-descr"
+          />
+        </div>
+        <div className="col-span-2">
+          <Input
+            placeholder="Address"
+            value={formData.address1}
+            onChange={(e) => setFormData({...formData, address1: e.target.value})}
+            className="text-sm"
+            data-testid="input-edit-bu-address"
+          />
+        </div>
+        <Input
+          placeholder="Contact Person"
+          value={formData.contactPerson}
+          onChange={(e) => setFormData({...formData, contactPerson: e.target.value})}
+          className="text-sm"
+          data-testid="input-edit-bu-contact-person"
+        />
+        <Input
+          placeholder="Contact Email"
+          value={formData.contactEmail}
+          onChange={(e) => setFormData({...formData, contactEmail: e.target.value})}
+          className="text-sm"
+          data-testid="input-edit-bu-contact-email"
+        />
+        <Input
+          placeholder="Contact Phone"
+          value={formData.contactPhone}
+          onChange={(e) => setFormData({...formData, contactPhone: e.target.value})}
+          className="text-sm"
+          data-testid="input-edit-bu-contact-phone"
+        />
+        <Select 
+          value={formData.contactPreference} 
+          onValueChange={(val) => setFormData({...formData, contactPreference: val})}
+        >
+          <SelectTrigger className="text-sm" data-testid="select-edit-bu-contact-preference">
+            <SelectValue placeholder="Contact Preference" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="email">Email</SelectItem>
+            <SelectItem value="phone">Phone</SelectItem>
+            <SelectItem value="both">Both</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="flex gap-2">
+        <Button type="submit" size="sm" disabled={!formData.orgName.trim() || updateMutation.isPending} data-testid="button-update-bu">
+          <Check className="h-3 w-3 mr-1" />
+          Save
+        </Button>
+        <Button type="button" variant="ghost" size="sm" onClick={onCancel} data-testid="button-cancel-edit-bu">
+          <X className="h-3 w-3 mr-1" />
+          Cancel
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+function LocationForm({ companyId, orgId, onCancel, onSaved }: { companyId: string; orgId: string; onCancel: () => void; onSaved: () => void }) {
+  const [name, setName] = useState('');
+  const { toast } = useToast();
+
+  const createMutation = useMutation({
+    mutationFn: (data: { locName: string; companyId: string; orgId: string }) => 
       apiRequest('POST', '/api/master-data/locations', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/master-data/hierarchy'] });
@@ -706,7 +1039,7 @@ function LocationForm({ companyId, onCancel, onSaved }: { companyId: string; onC
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
-    createMutation.mutate({ locName: name, companyId });
+    createMutation.mutate({ locName: name, companyId, orgId });
   };
 
   return (
