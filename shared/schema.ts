@@ -1129,16 +1129,126 @@ export const licenseiqFields = pgTable("licenseiq_fields", {
   index("licenseiq_fields_entity_idx").on(table.entityId),
 ]);
 
+// ======================
+// MASTER DATA MANAGEMENT
+// ======================
+
+// Companies table
+export const companies = pgTable("companies", {
+  id: varchar("company_id").primaryKey().default(sql`gen_random_uuid()`),
+  companyName: varchar("company_name", { length: 500 }).notNull(),
+  companyDescr: text("company_descr"),
+  address1: varchar("address1", { length: 500 }),
+  address2: varchar("address2", { length: 500 }),
+  address3: varchar("address3", { length: 500 }),
+  city: varchar("city", { length: 200 }),
+  stateProvince: varchar("state_province", { length: 200 }),
+  county: varchar("county", { length: 200 }),
+  country: varchar("country", { length: 200 }),
+  contactPerson: varchar("contact_person", { length: 300 }),
+  contactEmail: varchar("contact_email", { length: 300 }),
+  contactPhone: varchar("contact_phone", { length: 50 }),
+  contactPreference: varchar("contact_preference", { length: 50 }), // email, phone, both
+  
+  // Audit columns
+  status: varchar("status", { length: 1 }).notNull().default("A"), // A=Active, I=Inactive, D=Deleted
+  createdBy: varchar("created_by").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  creationDate: timestamp("creation_date").notNull().defaultNow(),
+  lastUpdatedBy: varchar("last_updated_by").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  lastUpdateDate: timestamp("last_update_date").notNull().defaultNow(),
+}, (table) => [
+  index("companies_status_idx").on(table.status),
+  index("companies_name_idx").on(table.companyName),
+]);
+
+// Business Units table
+export const businessUnits = pgTable("business_units", {
+  id: varchar("org_id").primaryKey().default(sql`gen_random_uuid()`),
+  companyId: varchar("company_id").notNull().references(() => companies.id, { onDelete: 'cascade' }),
+  orgName: varchar("org_name", { length: 500 }).notNull(),
+  orgDescr: text("org_descr"),
+  address1: varchar("address1", { length: 500 }),
+  contactPerson: varchar("contact_person", { length: 300 }),
+  contactEmail: varchar("contact_email", { length: 300 }),
+  contactPhone: varchar("contact_phone", { length: 50 }),
+  contactPreference: varchar("contact_preference", { length: 50 }),
+  
+  // Audit columns
+  status: varchar("status", { length: 1 }).notNull().default("A"),
+  createdBy: varchar("created_by").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  creationDate: timestamp("creation_date").notNull().defaultNow(),
+  lastUpdatedBy: varchar("last_updated_by").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  lastUpdateDate: timestamp("last_update_date").notNull().defaultNow(),
+}, (table) => [
+  index("business_units_company_idx").on(table.companyId),
+  index("business_units_status_idx").on(table.status),
+  index("business_units_name_idx").on(table.orgName),
+]);
+
+// Locations table
+export const locations = pgTable("locations", {
+  id: varchar("loc_id").primaryKey().default(sql`gen_random_uuid()`),
+  companyId: varchar("company_id").notNull().references(() => companies.id, { onDelete: 'cascade' }),
+  orgId: varchar("org_id").notNull().references(() => businessUnits.id, { onDelete: 'cascade' }),
+  locName: varchar("loc_name", { length: 500 }).notNull(),
+  locDescr: text("loc_descr"),
+  address1: varchar("address1", { length: 500 }),
+  contactPerson: varchar("contact_person", { length: 300 }),
+  contactEmail: varchar("contact_email", { length: 300 }),
+  contactPhone: varchar("contact_phone", { length: 50 }),
+  contactPreference: varchar("contact_preference", { length: 50 }),
+  
+  // Audit columns
+  status: varchar("status", { length: 1 }).notNull().default("A"),
+  createdBy: varchar("created_by").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  creationDate: timestamp("creation_date").notNull().defaultNow(),
+  lastUpdatedBy: varchar("last_updated_by").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  lastUpdateDate: timestamp("last_update_date").notNull().defaultNow(),
+}, (table) => [
+  index("locations_company_idx").on(table.companyId),
+  index("locations_org_idx").on(table.orgId),
+  index("locations_status_idx").on(table.status),
+  index("locations_name_idx").on(table.locName),
+]);
+
+// Insert schemas
+export const insertCompanySchema = createInsertSchema(companies).omit({
+  id: true,
+  creationDate: true,
+  lastUpdateDate: true,
+});
+
+export const insertBusinessUnitSchema = createInsertSchema(businessUnits).omit({
+  id: true,
+  creationDate: true,
+  lastUpdateDate: true,
+});
+
+export const insertLocationSchema = createInsertSchema(locations).omit({
+  id: true,
+  creationDate: true,
+  lastUpdateDate: true,
+});
+
+// Types
+export type Company = typeof companies.$inferSelect;
+export type InsertCompany = z.infer<typeof insertCompanySchema>;
+export type BusinessUnit = typeof businessUnits.$inferSelect;
+export type InsertBusinessUnit = z.infer<typeof insertBusinessUnitSchema>;
+export type Location = typeof locations.$inferSelect;
+export type InsertLocation = z.infer<typeof insertLocationSchema>;
+
+
 // LicenseIQ Entity Records - Stores actual data for each entity (flexible schema)
 export const licenseiqEntityRecords = pgTable("licenseiq_entity_records", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   entityId: varchar("entity_id").notNull().references(() => licenseiqEntities.id, { onDelete: 'cascade' }),
   recordData: jsonb("record_data").notNull(), // Flexible JSON data matching the entity's fields
   
-  // Mandatory Organization Hierarchy - All records must be linked to company hierarchy
-  grpId: varchar("grp_id").notNull().references(() => companies.id, { onDelete: 'restrict' }), // Company ID
-  orgId: varchar("org_id").notNull().references(() => businessUnits.id, { onDelete: 'restrict' }), // Business Unit ID
-  locId: varchar("loc_id").notNull().references(() => locations.id, { onDelete: 'restrict' }), // Location ID
+  // Organization Hierarchy - Records must be linked to company hierarchy (will be mandatory after backfill)
+  grpId: varchar("grp_id").references(() => companies.id, { onDelete: 'restrict' }), // Company ID - temporarily nullable
+  orgId: varchar("org_id").references(() => businessUnits.id, { onDelete: 'restrict' }), // Business Unit ID - temporarily nullable
+  locId: varchar("loc_id").references(() => locations.id, { onDelete: 'restrict' }), // Location ID - temporarily nullable
   
   createdBy: varchar("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
@@ -1366,111 +1476,3 @@ export type InsertRoleNavigationPermission = z.infer<typeof insertRoleNavigation
 export type UserNavigationOverride = typeof userNavigationOverrides.$inferSelect;
 export type InsertUserNavigationOverride = z.infer<typeof insertUserNavigationOverrideSchema>;
 
-// ======================
-// MASTER DATA MANAGEMENT
-// ======================
-
-// Companies table
-export const companies = pgTable("companies", {
-  id: varchar("company_id").primaryKey().default(sql`gen_random_uuid()`),
-  companyName: varchar("company_name", { length: 500 }).notNull(),
-  companyDescr: text("company_descr"),
-  address1: varchar("address1", { length: 500 }),
-  address2: varchar("address2", { length: 500 }),
-  address3: varchar("address3", { length: 500 }),
-  city: varchar("city", { length: 200 }),
-  stateProvince: varchar("state_province", { length: 200 }),
-  county: varchar("county", { length: 200 }),
-  country: varchar("country", { length: 200 }),
-  contactPerson: varchar("contact_person", { length: 300 }),
-  contactEmail: varchar("contact_email", { length: 300 }),
-  contactPhone: varchar("contact_phone", { length: 50 }),
-  contactPreference: varchar("contact_preference", { length: 50 }), // email, phone, both
-  
-  // Audit columns
-  status: varchar("status", { length: 1 }).notNull().default("A"), // A=Active, I=Inactive, D=Deleted
-  createdBy: varchar("created_by").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  creationDate: timestamp("creation_date").notNull().defaultNow(),
-  lastUpdatedBy: varchar("last_updated_by").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  lastUpdateDate: timestamp("last_update_date").notNull().defaultNow(),
-}, (table) => [
-  index("companies_status_idx").on(table.status),
-  index("companies_name_idx").on(table.companyName),
-]);
-
-// Business Units table
-export const businessUnits = pgTable("business_units", {
-  id: varchar("org_id").primaryKey().default(sql`gen_random_uuid()`),
-  companyId: varchar("company_id").notNull().references(() => companies.id, { onDelete: 'cascade' }),
-  orgName: varchar("org_name", { length: 500 }).notNull(),
-  orgDescr: text("org_descr"),
-  address1: varchar("address1", { length: 500 }),
-  contactPerson: varchar("contact_person", { length: 300 }),
-  contactEmail: varchar("contact_email", { length: 300 }),
-  contactPhone: varchar("contact_phone", { length: 50 }),
-  contactPreference: varchar("contact_preference", { length: 50 }),
-  
-  // Audit columns
-  status: varchar("status", { length: 1 }).notNull().default("A"),
-  createdBy: varchar("created_by").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  creationDate: timestamp("creation_date").notNull().defaultNow(),
-  lastUpdatedBy: varchar("last_updated_by").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  lastUpdateDate: timestamp("last_update_date").notNull().defaultNow(),
-}, (table) => [
-  index("business_units_company_idx").on(table.companyId),
-  index("business_units_status_idx").on(table.status),
-  index("business_units_name_idx").on(table.orgName),
-]);
-
-// Locations table
-export const locations = pgTable("locations", {
-  id: varchar("loc_id").primaryKey().default(sql`gen_random_uuid()`),
-  companyId: varchar("company_id").notNull().references(() => companies.id, { onDelete: 'cascade' }),
-  orgId: varchar("org_id").notNull().references(() => businessUnits.id, { onDelete: 'cascade' }),
-  locName: varchar("loc_name", { length: 500 }).notNull(),
-  locDescr: text("loc_descr"),
-  address1: varchar("address1", { length: 500 }),
-  contactPerson: varchar("contact_person", { length: 300 }),
-  contactEmail: varchar("contact_email", { length: 300 }),
-  contactPhone: varchar("contact_phone", { length: 50 }),
-  contactPreference: varchar("contact_preference", { length: 50 }),
-  
-  // Audit columns
-  status: varchar("status", { length: 1 }).notNull().default("A"),
-  createdBy: varchar("created_by").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  creationDate: timestamp("creation_date").notNull().defaultNow(),
-  lastUpdatedBy: varchar("last_updated_by").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  lastUpdateDate: timestamp("last_update_date").notNull().defaultNow(),
-}, (table) => [
-  index("locations_company_idx").on(table.companyId),
-  index("locations_org_idx").on(table.orgId),
-  index("locations_status_idx").on(table.status),
-  index("locations_name_idx").on(table.locName),
-]);
-
-// Insert schemas
-export const insertCompanySchema = createInsertSchema(companies).omit({
-  id: true,
-  creationDate: true,
-  lastUpdateDate: true,
-});
-
-export const insertBusinessUnitSchema = createInsertSchema(businessUnits).omit({
-  id: true,
-  creationDate: true,
-  lastUpdateDate: true,
-});
-
-export const insertLocationSchema = createInsertSchema(locations).omit({
-  id: true,
-  creationDate: true,
-  lastUpdateDate: true,
-});
-
-// Types
-export type Company = typeof companies.$inferSelect;
-export type InsertCompany = z.infer<typeof insertCompanySchema>;
-export type BusinessUnit = typeof businessUnits.$inferSelect;
-export type InsertBusinessUnit = z.infer<typeof insertBusinessUnitSchema>;
-export type Location = typeof locations.$inferSelect;
-export type InsertLocation = z.infer<typeof insertLocationSchema>;
