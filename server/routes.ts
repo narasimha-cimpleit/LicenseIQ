@@ -3513,21 +3513,9 @@ Return ONLY valid JSON array, no other text.`;
           { fieldName: 'lastUpdatedBy', dataType: 'text', isRequired: false, description: 'User ID who last updated this record' },
           { fieldName: 'lastUpdateDate', dataType: 'date', isRequired: false, description: 'Last update timestamp' },
         ],
-        business_units: [
-          { fieldName: 'id', dataType: 'text', isRequired: true, description: 'Unique business unit identifier (UUID)' },
-          { fieldName: 'companyId', dataType: 'text', isRequired: true, description: 'Parent company ID (foreign key)' },
-          { fieldName: 'code', dataType: 'text', isRequired: true, description: 'Business unit code (unique)' },
-          { fieldName: 'name', dataType: 'text', isRequired: true, description: 'Business unit name' },
-          { fieldName: 'description', dataType: 'text', isRequired: false, description: 'Business unit description' },
-          { fieldName: 'status', dataType: 'text', isRequired: true, description: 'Status: A(Active), I(Inactive), D(Deleted)' },
-          { fieldName: 'createdBy', dataType: 'text', isRequired: true, description: 'User ID who created this record' },
-          { fieldName: 'creationDate', dataType: 'date', isRequired: true, description: 'Record creation timestamp' },
-          { fieldName: 'lastUpdatedBy', dataType: 'text', isRequired: false, description: 'User ID who last updated this record' },
-          { fieldName: 'lastUpdateDate', dataType: 'date', isRequired: false, description: 'Last update timestamp' },
-        ],
         locations: [
           { fieldName: 'id', dataType: 'text', isRequired: true, description: 'Unique location identifier (UUID)' },
-          { fieldName: 'businessUnitId', dataType: 'text', isRequired: true, description: 'Parent business unit ID (foreign key)' },
+          { fieldName: 'companyId', dataType: 'text', isRequired: true, description: 'Parent company ID (foreign key)' },
           { fieldName: 'code', dataType: 'text', isRequired: true, description: 'Location code (unique)' },
           { fieldName: 'name', dataType: 'text', isRequired: true, description: 'Location name' },
           { fieldName: 'description', dataType: 'text', isRequired: false, description: 'Location description' },
@@ -3619,20 +3607,6 @@ Return ONLY valid JSON array, no other text.`;
           { fieldName: 'name', dataType: 'text', isRequired: true, description: 'Terms name' },
           { fieldName: 'dueDays', dataType: 'number', isRequired: true, description: 'Due in days' },
           { fieldName: 'discountPercent', dataType: 'number', isRequired: false, description: 'Discount percentage' },
-          { fieldName: 'isActive', dataType: 'boolean', isRequired: true, description: 'Active status' },
-        ],
-        organizations: [
-          { fieldName: 'orgCode', dataType: 'text', isRequired: true, description: 'Organization code' },
-          { fieldName: 'orgName', dataType: 'text', isRequired: true, description: 'Organization name' },
-          { fieldName: 'parentOrg', dataType: 'text', isRequired: false, description: 'Parent organization code' },
-          { fieldName: 'level', dataType: 'number', isRequired: false, description: 'Hierarchy level' },
-          { fieldName: 'isActive', dataType: 'boolean', isRequired: true, description: 'Active status' },
-        ],
-        business_units: [
-          { fieldName: 'buCode', dataType: 'text', isRequired: true, description: 'Business unit code' },
-          { fieldName: 'buName', dataType: 'text', isRequired: true, description: 'Business unit name' },
-          { fieldName: 'orgCode', dataType: 'text', isRequired: false, description: 'Organization code' },
-          { fieldName: 'manager', dataType: 'text', isRequired: false, description: 'Manager name' },
           { fieldName: 'isActive', dataType: 'boolean', isRequired: true, description: 'Active status' },
         ],
         chart_of_accounts: [
@@ -3842,11 +3816,10 @@ Return ONLY valid JSON array, no other text.`;
   app.post('/api/licenseiq-entities/seed', isAuthenticated, async (req: any, res: Response) => {
     try {
       const entities = [
-        // Organization Hierarchy (3) - NEW: Actual database tables for company structure
+        // Organization Hierarchy (2) - Actual database tables for company structure
         { name: 'Companies', technicalName: 'companies', category: 'Organization Hierarchy', description: 'Top-level company entities in the organizational hierarchy' },
-        { name: 'Business Units', technicalName: 'business_units', category: 'Organization Hierarchy', description: 'Business units within companies' },
-        { name: 'Locations', technicalName: 'locations', category: 'Organization Hierarchy', description: 'Physical or logical locations within business units' },
-        // Master Data (17)
+        { name: 'Locations', technicalName: 'locations', category: 'Organization Hierarchy', description: 'Physical or logical locations within companies' },
+        // Master Data (15)
         { name: 'Customers/Parties', technicalName: 'customers_parties', category: 'Master Data', description: 'Customer and party master data' },
         { name: 'Items', technicalName: 'items', category: 'Master Data', description: 'Item master data' },
         { name: 'Item Category', technicalName: 'item_category', category: 'Master Data', description: 'Item categories' },
@@ -3858,8 +3831,6 @@ Return ONLY valid JSON array, no other text.`;
         { name: 'Suppliers/Vendors', technicalName: 'suppliers_vendors', category: 'Master Data', description: 'Supplier and vendor master data' },
         { name: 'Supplier Sites', technicalName: 'supplier_sites', category: 'Master Data', description: 'Supplier site locations' },
         { name: 'Payment Terms', technicalName: 'payment_terms', category: 'Master Data', description: 'Payment terms master data' },
-        { name: 'Organizations', technicalName: 'organizations', category: 'Master Data', description: 'Organization hierarchy' },
-        { name: 'Business Units (Template)', technicalName: 'business_units_template', category: 'Master Data', description: 'Business unit template data' },
         { name: 'Chart of Accounts', technicalName: 'chart_of_accounts', category: 'Master Data', description: 'General ledger accounts' },
         { name: 'Sales Reps', technicalName: 'sales_reps', category: 'Master Data', description: 'Sales representatives' },
         { name: 'Employee Master', technicalName: 'employee_master', category: 'Master Data', description: 'Employee master data' },
@@ -3969,16 +3940,6 @@ Return ONLY valid JSON array, no other text.`;
           { code: 'NET30', name: 'Net 30 Days', dueDays: 30, discountPercent: 0, isActive: true },
           { code: 'NET60', name: 'Net 60 Days', dueDays: 60, discountPercent: 0, isActive: true },
           { code: '2/10NET30', name: '2% 10, Net 30', dueDays: 30, discountPercent: 2, isActive: true }
-        ],
-        organizations: [
-          { orgCode: 'ORG001', orgName: 'Corporate HQ', parentOrg: null, level: 1, isActive: true },
-          { orgCode: 'ORG002', orgName: 'North America Division', parentOrg: 'ORG001', level: 2, isActive: true },
-          { orgCode: 'ORG003', orgName: 'EMEA Division', parentOrg: 'ORG001', level: 2, isActive: true }
-        ],
-        business_units_template: [
-          { buCode: 'BU001', buName: 'Sales', orgCode: 'ORG001', manager: 'John Doe', isActive: true },
-          { buCode: 'BU002', buName: 'Engineering', orgCode: 'ORG002', manager: 'Jane Smith', isActive: true },
-          { buCode: 'BU003', buName: 'Operations', orgCode: 'ORG003', manager: 'Bob Johnson', isActive: true }
         ],
         chart_of_accounts: [
           { accountCode: '1000', accountName: 'Cash', accountType: 'Asset', isActive: true },
@@ -4335,97 +4296,13 @@ Return ONLY valid JSON array, no other text.`;
     }
   });
 
-  // Business Units
-  app.get('/api/master-data/business-units', isAuthenticated, async (req: any, res: Response) => {
-    try {
-      const { companyId, status } = req.query;
-      const units = companyId 
-        ? await storage.getBusinessUnitsByCompany(companyId as string, status as string)
-        : [];
-      res.json(units);
-    } catch (error: any) {
-      console.error('Get business units error:', error);
-      res.status(500).json({ error: error.message || 'Failed to get business units' });
-    }
-  });
-
-  app.post('/api/master-data/business-units', isAuthenticated, async (req: any, res: Response) => {
-    try {
-      const user = await storage.getUser(req.user.id);
-      if (!['admin', 'owner', 'editor'].includes(user?.role || '')) {
-        return res.status(403).json({ error: 'Insufficient permissions' });
-      }
-
-      const { insertBusinessUnitSchema } = await import("@shared/schema");
-      const unitData = insertBusinessUnitSchema.parse({
-        ...req.body,
-        createdBy: req.user.id,
-        lastUpdatedBy: req.user.id,
-      });
-
-      const unit = await storage.createBusinessUnit(unitData);
-      
-      await createAuditLog(req, 'create_business_unit', 'business_unit', unit.id, {
-        orgName: unit.orgName,
-        companyId: unit.companyId,
-      });
-
-      res.json(unit);
-    } catch (error: any) {
-      console.error('Create business unit error:', error);
-      res.status(500).json({ error: error.message || 'Failed to create business unit' });
-    }
-  });
-
-  app.patch('/api/master-data/business-units/:id', isAuthenticated, async (req: any, res: Response) => {
-    try {
-      const user = await storage.getUser(req.user.id);
-      if (!['admin', 'owner', 'editor'].includes(user?.role || '')) {
-        return res.status(403).json({ error: 'Insufficient permissions' });
-      }
-
-      const unit = await storage.updateBusinessUnit(req.params.id, req.body, req.user.id);
-      
-      await createAuditLog(req, 'update_business_unit', 'business_unit', unit.id, {
-        changes: req.body,
-      });
-
-      res.json(unit);
-    } catch (error: any) {
-      console.error('Update business unit error:', error);
-      res.status(500).json({ error: error.message || 'Failed to update business unit' });
-    }
-  });
-
-  app.delete('/api/master-data/business-units/:id', isAuthenticated, async (req: any, res: Response) => {
-    try {
-      const user = await storage.getUser(req.user.id);
-      if (!['admin', 'owner'].includes(user?.role || '')) {
-        return res.status(403).json({ error: 'Only admins and owners can delete business units' });
-      }
-
-      await storage.deleteBusinessUnit(req.params.id);
-      
-      await createAuditLog(req, 'delete_business_unit', 'business_unit', req.params.id, {});
-
-      res.json({ success: true });
-    } catch (error: any) {
-      console.error('Delete business unit error:', error);
-      res.status(500).json({ error: error.message || 'Failed to delete business unit' });
-    }
-  });
-
   // Locations
   app.get('/api/master-data/locations', isAuthenticated, async (req: any, res: Response) => {
     try {
-      const { companyId, orgId, status } = req.query;
-      let locations = [];
-      
-      if (orgId) {
-        locations = await storage.getLocationsByBusinessUnit(orgId as string, status as string);
-      } else if (companyId) {
-        locations = await storage.getLocationsByCompany(companyId as string, status as string);
-      }
+      const { companyId, status } = req.query;
+      const locations = companyId 
+        ? await storage.getLocationsByCompany(companyId as string, status as string)
+        : [];
       
       res.json(locations);
     } catch (error: any) {
@@ -4453,7 +4330,6 @@ Return ONLY valid JSON array, no other text.`;
       await createAuditLog(req, 'create_location', 'location', location.id, {
         locName: location.locName,
         companyId: location.companyId,
-        orgId: location.orgId,
       });
 
       res.json(location);
