@@ -78,7 +78,9 @@ interface LicenseiqField {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
+  "Organization Hierarchy": "bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-100",
   "Master Data": "bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-100",
+  "Transactions": "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100",
   "Transactional": "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100",
   "Rules": "bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-100",
 };

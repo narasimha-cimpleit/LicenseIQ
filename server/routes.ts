@@ -3499,8 +3499,49 @@ Return ONLY valid JSON array, no other text.`;
       const entities = await storage.getAllLicenseiqEntities();
       const entityMap = new Map(entities.map(e => [e.technicalName, e.id]));
       
-      // Standard field definitions for all 25 entities
+      // Standard field definitions for all 28 entities
       const standardFields: Record<string, Array<{fieldName: string; dataType: string; isRequired: boolean; description?: string}>> = {
+        // Organization Hierarchy entities (3)
+        companies: [
+          { fieldName: 'id', dataType: 'text', isRequired: true, description: 'Unique company identifier (UUID)' },
+          { fieldName: 'code', dataType: 'text', isRequired: true, description: 'Company code (unique)' },
+          { fieldName: 'name', dataType: 'text', isRequired: true, description: 'Company name' },
+          { fieldName: 'description', dataType: 'text', isRequired: false, description: 'Company description' },
+          { fieldName: 'status', dataType: 'text', isRequired: true, description: 'Status: A(Active), I(Inactive), D(Deleted)' },
+          { fieldName: 'createdBy', dataType: 'text', isRequired: true, description: 'User ID who created this record' },
+          { fieldName: 'creationDate', dataType: 'date', isRequired: true, description: 'Record creation timestamp' },
+          { fieldName: 'lastUpdatedBy', dataType: 'text', isRequired: false, description: 'User ID who last updated this record' },
+          { fieldName: 'lastUpdateDate', dataType: 'date', isRequired: false, description: 'Last update timestamp' },
+        ],
+        business_units: [
+          { fieldName: 'id', dataType: 'text', isRequired: true, description: 'Unique business unit identifier (UUID)' },
+          { fieldName: 'companyId', dataType: 'text', isRequired: true, description: 'Parent company ID (foreign key)' },
+          { fieldName: 'code', dataType: 'text', isRequired: true, description: 'Business unit code (unique)' },
+          { fieldName: 'name', dataType: 'text', isRequired: true, description: 'Business unit name' },
+          { fieldName: 'description', dataType: 'text', isRequired: false, description: 'Business unit description' },
+          { fieldName: 'status', dataType: 'text', isRequired: true, description: 'Status: A(Active), I(Inactive), D(Deleted)' },
+          { fieldName: 'createdBy', dataType: 'text', isRequired: true, description: 'User ID who created this record' },
+          { fieldName: 'creationDate', dataType: 'date', isRequired: true, description: 'Record creation timestamp' },
+          { fieldName: 'lastUpdatedBy', dataType: 'text', isRequired: false, description: 'User ID who last updated this record' },
+          { fieldName: 'lastUpdateDate', dataType: 'date', isRequired: false, description: 'Last update timestamp' },
+        ],
+        locations: [
+          { fieldName: 'id', dataType: 'text', isRequired: true, description: 'Unique location identifier (UUID)' },
+          { fieldName: 'businessUnitId', dataType: 'text', isRequired: true, description: 'Parent business unit ID (foreign key)' },
+          { fieldName: 'code', dataType: 'text', isRequired: true, description: 'Location code (unique)' },
+          { fieldName: 'name', dataType: 'text', isRequired: true, description: 'Location name' },
+          { fieldName: 'description', dataType: 'text', isRequired: false, description: 'Location description' },
+          { fieldName: 'address', dataType: 'text', isRequired: false, description: 'Physical address' },
+          { fieldName: 'city', dataType: 'text', isRequired: false, description: 'City' },
+          { fieldName: 'state', dataType: 'text', isRequired: false, description: 'State/Province' },
+          { fieldName: 'country', dataType: 'text', isRequired: false, description: 'Country' },
+          { fieldName: 'postalCode', dataType: 'text', isRequired: false, description: 'Postal/ZIP code' },
+          { fieldName: 'status', dataType: 'text', isRequired: true, description: 'Status: A(Active), I(Inactive), D(Deleted)' },
+          { fieldName: 'createdBy', dataType: 'text', isRequired: true, description: 'User ID who created this record' },
+          { fieldName: 'creationDate', dataType: 'date', isRequired: true, description: 'Record creation timestamp' },
+          { fieldName: 'lastUpdatedBy', dataType: 'text', isRequired: false, description: 'User ID who last updated this record' },
+          { fieldName: 'lastUpdateDate', dataType: 'date', isRequired: false, description: 'Last update timestamp' },
+        ],
         customers_parties: [
           { fieldName: 'customerCode', dataType: 'text', isRequired: true, description: 'Unique customer code' },
           { fieldName: 'customerName', dataType: 'text', isRequired: true, description: 'Customer full name' },
@@ -3801,6 +3842,10 @@ Return ONLY valid JSON array, no other text.`;
   app.post('/api/licenseiq-entities/seed', isAuthenticated, async (req: any, res: Response) => {
     try {
       const entities = [
+        // Organization Hierarchy (3) - NEW: Actual database tables for company structure
+        { name: 'Companies', technicalName: 'companies', category: 'Organization Hierarchy', description: 'Top-level company entities in the organizational hierarchy' },
+        { name: 'Business Units', technicalName: 'business_units', category: 'Organization Hierarchy', description: 'Business units within companies' },
+        { name: 'Locations', technicalName: 'locations', category: 'Organization Hierarchy', description: 'Physical or logical locations within business units' },
         // Master Data (17)
         { name: 'Customers/Parties', technicalName: 'customers_parties', category: 'Master Data', description: 'Customer and party master data' },
         { name: 'Items', technicalName: 'items', category: 'Master Data', description: 'Item master data' },
@@ -3814,7 +3859,7 @@ Return ONLY valid JSON array, no other text.`;
         { name: 'Supplier Sites', technicalName: 'supplier_sites', category: 'Master Data', description: 'Supplier site locations' },
         { name: 'Payment Terms', technicalName: 'payment_terms', category: 'Master Data', description: 'Payment terms master data' },
         { name: 'Organizations', technicalName: 'organizations', category: 'Master Data', description: 'Organization hierarchy' },
-        { name: 'Business Units', technicalName: 'business_units', category: 'Master Data', description: 'Business unit master data' },
+        { name: 'Business Units (Template)', technicalName: 'business_units_template', category: 'Master Data', description: 'Business unit template data' },
         { name: 'Chart of Accounts', technicalName: 'chart_of_accounts', category: 'Master Data', description: 'General ledger accounts' },
         { name: 'Sales Reps', technicalName: 'sales_reps', category: 'Master Data', description: 'Sales representatives' },
         { name: 'Employee Master', technicalName: 'employee_master', category: 'Master Data', description: 'Employee master data' },
@@ -3930,7 +3975,7 @@ Return ONLY valid JSON array, no other text.`;
           { orgCode: 'ORG002', orgName: 'North America Division', parentOrg: 'ORG001', level: 2, isActive: true },
           { orgCode: 'ORG003', orgName: 'EMEA Division', parentOrg: 'ORG001', level: 2, isActive: true }
         ],
-        business_units: [
+        business_units_template: [
           { buCode: 'BU001', buName: 'Sales', orgCode: 'ORG001', manager: 'John Doe', isActive: true },
           { buCode: 'BU002', buName: 'Engineering', orgCode: 'ORG002', manager: 'Jane Smith', isActive: true },
           { buCode: 'BU003', buName: 'Operations', orgCode: 'ORG003', manager: 'Bob Johnson', isActive: true }
