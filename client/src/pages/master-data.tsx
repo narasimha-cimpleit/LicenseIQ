@@ -24,7 +24,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Building2, Layers, MapPin, Plus, ChevronRight, ChevronDown, Check, X, Trash2, Edit2 } from 'lucide-react';
+import { Building2, Layers, MapPin, Plus, ChevronRight, ChevronDown, Check, X, Trash2, Edit2, ArrowLeft } from 'lucide-react';
+import { useLocation } from 'wouter';
 import type { Company, BusinessUnit, Location } from '@shared/schema';
 
 type Status = 'A' | 'I' | 'D';
@@ -40,6 +41,7 @@ interface HierarchyNode {
 export default function MasterDataPage() {
   const [filterStatus, setFilterStatus] = useState<string>('A');
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   const { data: hierarchy, isLoading } = useQuery<HierarchyNode>({
     queryKey: ['/api/master-data/hierarchy', filterStatus],
@@ -63,21 +65,32 @@ export default function MasterDataPage() {
   }
 
   return (
-    <div className="h-full flex flex-col bg-gradient-to-br from-background via-background to-muted/20">
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-        <div className="container mx-auto p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+    <div className="h-full flex flex-col bg-gradient-to-br from-background via-background to-primary/5">
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/80 border-b shadow-sm">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center gap-4 mb-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLocation('/')}
+              className="gap-2 hover:bg-accent"
+              data-testid="button-back"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
+            <div className="h-6 w-px bg-border" />
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-primary to-blue-600 bg-clip-text text-transparent">
                 Master Data Management
               </h1>
-              <p className="text-muted-foreground mt-1">
+              <p className="text-sm text-muted-foreground mt-0.5">
                 Manage your organizational hierarchy
               </p>
             </div>
             <div className="flex items-center gap-3">
               <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-40" data-testid="select-status-filter">
+                <SelectTrigger className="w-40 shadow-sm" data-testid="select-status-filter">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -94,19 +107,21 @@ export default function MasterDataPage() {
 
       <div className="flex-1 overflow-auto">
         <div className="container mx-auto p-6">
-          <Card className="p-6">
+          <Card className="shadow-lg border-2 backdrop-blur-sm bg-card/95">
             {hierarchy?.companies && hierarchy.companies.length > 0 ? (
-              <div className="space-y-2">
+              <div className="p-6 space-y-3">
                 {hierarchy.companies.map((company) => (
                   <CompanyNode key={company.id} company={company} />
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12">
-                <Building2 className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No companies found</h3>
-                <p className="text-muted-foreground mb-4">
-                  Get started by creating your first company
+              <div className="text-center py-16">
+                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-4">
+                  <Building2 className="h-10 w-10 text-primary" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">No companies found</h3>
+                <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+                  Get started by creating your first company to build your organizational hierarchy
                 </p>
                 <AddCompanyButton />
               </div>
@@ -146,20 +161,22 @@ function CompanyNode({ company }: { company: Company & { businessUnits: (Busines
 
   return (
     <div className="group" data-testid={`company-node-${company.id}`}>
-      <div className="flex items-center gap-2 p-3 rounded-lg hover:bg-accent/50 transition-colors border border-transparent hover:border-border">
+      <div className="flex items-center gap-3 p-4 rounded-xl hover:bg-gradient-to-r hover:from-primary/5 hover:to-blue-500/5 transition-all duration-200 border border-border/50 hover:border-primary/30 shadow-sm hover:shadow-md bg-card/50">
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="shrink-0 hover:bg-accent p-1 rounded"
+          className="shrink-0 hover:bg-primary/10 p-1.5 rounded-md transition-colors"
           data-testid={`button-toggle-company-${company.id}`}
           aria-label={isExpanded ? 'Collapse company' : 'Expand company'}
         >
           {isExpanded ? (
-            <ChevronDown className="h-4 w-4 text-primary" />
+            <ChevronDown className="h-5 w-5 text-primary" />
           ) : (
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            <ChevronRight className="h-5 w-5 text-muted-foreground" />
           )}
         </button>
-        <Building2 className="h-5 w-5 text-primary shrink-0" />
+        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-blue-600 shadow-md">
+          <Building2 className="h-5 w-5 text-white shrink-0" />
+        </div>
         <div className="flex-1 min-w-0">
           {isEditing ? (
             <CompanyEditForm 
@@ -304,10 +321,10 @@ function BusinessUnitNode({
 
   return (
     <div className="group" data-testid={`bu-node-${businessUnit.id}`}>
-      <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-accent/30 transition-colors">
+      <div className="flex items-center gap-2.5 p-3 rounded-lg hover:bg-gradient-to-r hover:from-blue-500/5 hover:to-blue-600/5 transition-all duration-200 border border-transparent hover:border-blue-500/20">
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="shrink-0 hover:bg-accent p-1 rounded"
+          className="shrink-0 hover:bg-blue-500/10 p-1 rounded transition-colors"
           data-testid={`button-toggle-bu-${businessUnit.id}`}
           aria-label={isExpanded ? 'Collapse business unit' : 'Expand business unit'}
         >
@@ -317,7 +334,9 @@ function BusinessUnitNode({
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           )}
         </button>
-        <Layers className="h-4 w-4 text-blue-500 shrink-0" />
+        <div className="flex items-center justify-center w-8 h-8 rounded-md bg-gradient-to-br from-blue-500 to-blue-600 shadow">
+          <Layers className="h-4 w-4 text-white shrink-0" />
+        </div>
         <div className="flex-1 min-w-0">
           {isEditing ? (
             <BusinessUnitEditForm 
@@ -451,8 +470,10 @@ function LocationNode({ location }: { location: Location }) {
   });
 
   return (
-    <div className="group flex items-center gap-2 p-2 rounded-lg hover:bg-accent/20 transition-colors" data-testid={`location-node-${location.id}`}>
-      <MapPin className="h-4 w-4 text-green-500 shrink-0 ml-6" />
+    <div className="group flex items-center gap-2.5 p-3 rounded-lg hover:bg-gradient-to-r hover:from-green-500/5 hover:to-emerald-500/5 transition-all duration-200 border border-transparent hover:border-green-500/20" data-testid={`location-node-${location.id}`}>
+      <div className="flex items-center justify-center w-7 h-7 rounded-md bg-gradient-to-br from-green-500 to-emerald-600 shadow ml-6">
+        <MapPin className="h-3.5 w-3.5 text-white shrink-0" />
+      </div>
       <div className="flex-1 min-w-0">
         {isEditing ? (
           <LocationEditForm 
