@@ -33,6 +33,9 @@ import {
   licenseiqEntities,
   licenseiqFields,
   licenseiqEntityRecords,
+  companies,
+  businessUnits,
+  locations,
   type User,
   type InsertUser,
   type Contract,
@@ -84,6 +87,12 @@ import {
   type InsertLicenseiqField,
   type LicenseiqEntityRecord,
   type InsertLicenseiqEntityRecord,
+  type Company,
+  type InsertCompany,
+  type BusinessUnit,
+  type InsertBusinessUnit,
+  type Location,
+  type InsertLocation,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, ilike, count, gte, sql } from "drizzle-orm";
@@ -347,6 +356,31 @@ export interface IStorage {
   createImportedErpRecords(records: any[]): Promise<void>;
   getImportedErpRecords(contractId?: string, jobId?: string): Promise<any[]>;
   searchSemanticMatches(embedding: number[], contractId?: string, limit?: number): Promise<any[]>;
+  
+  // Master Data operations - Company
+  createCompany(company: InsertCompany): Promise<Company>;
+  getCompany(id: string): Promise<Company | undefined>;
+  getAllCompanies(status?: string): Promise<Company[]>;
+  updateCompany(id: string, updates: Partial<InsertCompany>, userId: string): Promise<Company>;
+  deleteCompany(id: string): Promise<void>;
+  
+  // Master Data operations - Business Unit
+  createBusinessUnit(unit: InsertBusinessUnit): Promise<BusinessUnit>;
+  getBusinessUnit(id: string): Promise<BusinessUnit | undefined>;
+  getBusinessUnitsByCompany(companyId: string, status?: string): Promise<BusinessUnit[]>;
+  updateBusinessUnit(id: string, updates: Partial<InsertBusinessUnit>, userId: string): Promise<BusinessUnit>;
+  deleteBusinessUnit(id: string): Promise<void>;
+  
+  // Master Data operations - Location
+  createLocation(location: InsertLocation): Promise<Location>;
+  getLocation(id: string): Promise<Location | undefined>;
+  getLocationsByCompany(companyId: string, status?: string): Promise<Location[]>;
+  getLocationsByBusinessUnit(orgId: string, status?: string): Promise<Location[]>;
+  updateLocation(id: string, updates: Partial<InsertLocation>, userId: string): Promise<Location>;
+  deleteLocation(id: string): Promise<void>;
+  
+  // Master Data operations - Get full hierarchy
+  getMasterDataHierarchy(status?: string): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2336,6 +2370,211 @@ export class DatabaseStorage implements IStorage {
     
     const result = await db.execute(sql.raw(query, ...params));
     return result.rows as any[];
+  }
+
+  // Master Data operations - Company
+  async createCompany(company: InsertCompany): Promise<Company> {
+    const [newCompany] = await db
+      .insert(companies)
+      .values(company)
+      .returning();
+    return newCompany;
+  }
+
+  async getCompany(id: string): Promise<Company | undefined> {
+    const [company] = await db
+      .select()
+      .from(companies)
+      .where(eq(companies.id, id));
+    return company;
+  }
+
+  async getAllCompanies(status?: string): Promise<Company[]> {
+    let query = db.select().from(companies);
+    
+    if (status) {
+      query = query.where(eq(companies.status, status)) as any;
+    }
+    
+    return await query.orderBy(companies.companyName);
+  }
+
+  async updateCompany(id: string, updates: Partial<InsertCompany>, userId: string): Promise<Company> {
+    const [updated] = await db
+      .update(companies)
+      .set({ ...updates, lastUpdateDate: new Date(), lastUpdatedBy: userId })
+      .where(eq(companies.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteCompany(id: string): Promise<void> {
+    await db.delete(companies).where(eq(companies.id, id));
+  }
+
+  // Master Data operations - Business Unit
+  async createBusinessUnit(unit: InsertBusinessUnit): Promise<BusinessUnit> {
+    const [newUnit] = await db
+      .insert(businessUnits)
+      .values(unit)
+      .returning();
+    return newUnit;
+  }
+
+  async getBusinessUnit(id: string): Promise<BusinessUnit | undefined> {
+    const [unit] = await db
+      .select()
+      .from(businessUnits)
+      .where(eq(businessUnits.id, id));
+    return unit;
+  }
+
+  async getBusinessUnitsByCompany(companyId: string, status?: string): Promise<BusinessUnit[]> {
+    let query = db
+      .select()
+      .from(businessUnits)
+      .where(eq(businessUnits.companyId, companyId));
+    
+    if (status) {
+      query = query.where(and(
+        eq(businessUnits.companyId, companyId),
+        eq(businessUnits.status, status)
+      )) as any;
+    }
+    
+    return await query.orderBy(businessUnits.orgName);
+  }
+
+  async updateBusinessUnit(id: string, updates: Partial<InsertBusinessUnit>, userId: string): Promise<BusinessUnit> {
+    const [updated] = await db
+      .update(businessUnits)
+      .set({ ...updates, lastUpdateDate: new Date(), lastUpdatedBy: userId })
+      .where(eq(businessUnits.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteBusinessUnit(id: string): Promise<void> {
+    await db.delete(businessUnits).where(eq(businessUnits.id, id));
+  }
+
+  // Master Data operations - Location
+  async createLocation(location: InsertLocation): Promise<Location> {
+    const [newLocation] = await db
+      .insert(locations)
+      .values(location)
+      .returning();
+    return newLocation;
+  }
+
+  async getLocation(id: string): Promise<Location | undefined> {
+    const [location] = await db
+      .select()
+      .from(locations)
+      .where(eq(locations.id, id));
+    return location;
+  }
+
+  async getLocationsByCompany(companyId: string, status?: string): Promise<Location[]> {
+    let query = db
+      .select()
+      .from(locations)
+      .where(eq(locations.companyId, companyId));
+    
+    if (status) {
+      query = query.where(and(
+        eq(locations.companyId, companyId),
+        eq(locations.status, status)
+      )) as any;
+    }
+    
+    return await query.orderBy(locations.locName);
+  }
+
+  async getLocationsByBusinessUnit(orgId: string, status?: string): Promise<Location[]> {
+    let query = db
+      .select()
+      .from(locations)
+      .where(eq(locations.orgId, orgId));
+    
+    if (status) {
+      query = query.where(and(
+        eq(locations.orgId, orgId),
+        eq(locations.status, status)
+      )) as any;
+    }
+    
+    return await query.orderBy(locations.locName);
+  }
+
+  async updateLocation(id: string, updates: Partial<InsertLocation>, userId: string): Promise<Location> {
+    const [updated] = await db
+      .update(locations)
+      .set({ ...updates, lastUpdateDate: new Date(), lastUpdatedBy: userId })
+      .where(eq(locations.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteLocation(id: string): Promise<void> {
+    await db.delete(locations).where(eq(locations.id, id));
+  }
+
+  // Master Data operations - Get full hierarchy
+  async getMasterDataHierarchy(status?: string): Promise<any> {
+    let companiesQuery = db.select().from(companies);
+    if (status) {
+      companiesQuery = companiesQuery.where(eq(companies.status, status)) as any;
+    }
+    const allCompanies = await companiesQuery.orderBy(companies.companyName);
+    
+    const hierarchy = await Promise.all(
+      allCompanies.map(async (company) => {
+        let unitsQuery = db
+          .select()
+          .from(businessUnits)
+          .where(eq(businessUnits.companyId, company.id));
+        
+        if (status) {
+          unitsQuery = unitsQuery.where(and(
+            eq(businessUnits.companyId, company.id),
+            eq(businessUnits.status, status)
+          )) as any;
+        }
+        
+        const units = await unitsQuery.orderBy(businessUnits.orgName);
+        
+        const unitsWithLocations = await Promise.all(
+          units.map(async (unit) => {
+            let locsQuery = db
+              .select()
+              .from(locations)
+              .where(eq(locations.orgId, unit.id));
+            
+            if (status) {
+              locsQuery = locsQuery.where(and(
+                eq(locations.orgId, unit.id),
+                eq(locations.status, status)
+              )) as any;
+            }
+            
+            const locs = await locsQuery.orderBy(locations.locName);
+            
+            return {
+              ...unit,
+              locations: locs,
+            };
+          })
+        );
+        
+        return {
+          ...company,
+          businessUnits: unitsWithLocations,
+        };
+      })
+    );
+    
+    return hierarchy;
   }
 
 }
