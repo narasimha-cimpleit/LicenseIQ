@@ -35,6 +35,20 @@ psql
 \c licenseiq_db
 ```
 
+**⚠️ CRITICAL DATABASE DRIVER CHANGE REQUIRED:**
+
+Your code currently uses Neon Database (for Replit), but Hostinger VPS requires standard PostgreSQL driver. 
+
+**You MUST modify `server/db.ts` before deployment!** See **Section 4.8.2B** for complete instructions.
+
+**Quick Fix:**
+```bash
+# After uploading code to VPS
+npm install pg
+nano server/db.ts
+# Replace Neon imports with pg driver (see Section 4.8.2B)
+```
+
 ---
 
 ## 📋 Table of Contents
@@ -477,6 +491,172 @@ git clone https://github.com/yourusername/licenseiq.git .
 2. Navigate to `/home/licenseiq-qa/htdocs/qa.licenseiq.ai`
 3. Use Upload button to upload your files
 
+---
+
+### Step 4.8.2B: Update Database Driver for VPS (CRITICAL!)
+
+**⚠️ VERY IMPORTANT:** Your LicenseIQ code is configured for **Neon Database** (serverless), but Hostinger VPS uses **standard PostgreSQL**. You MUST change the database driver before deployment!
+
+**Why this matters:**
+- ❌ Replit uses: Neon Database → `@neondatabase/serverless` driver
+- ✅ Hostinger VPS uses: PostgreSQL 16.10 → `pg` driver (standard)
+
+Without this change, your app will fail to connect to the database on VPS!
+
+---
+
+**Step 1: Install Standard PostgreSQL Driver**
+
+```bash
+cd /home/licenseiq-qa/htdocs/qa.licenseiq.ai
+npm install pg
+npm install --save-dev @types/node
+```
+
+**This installs the standard Node.js PostgreSQL driver.**
+
+---
+
+**Step 2: Modify `server/db.ts` File**
+
+```bash
+nano server/db.ts
+```
+
+**Replace ALL content with this:**
+
+```typescript
+import { Pool } from 'pg';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import * as schema from "@shared/schema";
+
+if (!process.env.DATABASE_URL) {
+  throw new Error(
+    "DATABASE_URL must be set. Did you forget to provision a database?",
+  );
+}
+
+export const pool = new Pool({ 
+  connectionString: process.env.DATABASE_URL,
+  // Optional: connection pool settings for production
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+});
+
+export const db = drizzle(pool, { schema });
+```
+
+**Save:** `Ctrl + X`, `Y`, `Enter`
+
+---
+
+**What Changed:**
+
+| Old (Neon Database) | New (Standard PostgreSQL) |
+|---------------------|---------------------------|
+| `import { Pool, neonConfig } from '@neondatabase/serverless'` | `import { Pool } from 'pg'` ✅ |
+| `import { drizzle } from 'drizzle-orm/neon-serverless'` | `import { drizzle } from 'drizzle-orm/node-postgres'` ✅ |
+| `import ws from "ws"` | ❌ Removed |
+| `neonConfig.webSocketConstructor = ws` | ❌ Removed |
+| `drizzle({ client: pool, schema })` | `drizzle(pool, { schema })` ✅ |
+
+---
+
+**Step 3: Verify the Changes**
+
+```bash
+# Check the file was updated correctly
+head -10 server/db.ts
+```
+
+**You should see:**
+```
+import { Pool } from 'pg';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import * as schema from "@shared/schema";
+```
+
+**If you still see `@neondatabase/serverless`, the file wasn't updated correctly!**
+
+---
+
+**Step 4: Remove Neon Package (Optional - Saves Space)**
+
+```bash
+npm uninstall @neondatabase/serverless
+```
+
+**This removes the Neon package since it's not needed on VPS.**
+
+---
+
+**Alternative: Keep Both Replit & VPS Working (Advanced)**
+
+If you want your code to work on BOTH Replit and Hostinger VPS, use this conditional version:
+
+```bash
+nano server/db.ts
+```
+
+**Paste this:**
+
+```typescript
+import * as schema from "@shared/schema";
+
+if (!process.env.DATABASE_URL) {
+  throw new Error(
+    "DATABASE_URL must be set. Did you forget to provision a database?",
+  );
+}
+
+// Detect environment: Replit has REPL_ID environment variable
+const isReplit = process.env.REPL_ID !== undefined;
+
+let pool: any;
+let db: any;
+
+if (isReplit) {
+  // Use Neon Database for Replit
+  const { Pool: NeonPool, neonConfig } = require('@neondatabase/serverless');
+  const { drizzle: neonDrizzle } = require('drizzle-orm/neon-serverless');
+  const ws = require('ws');
+  
+  neonConfig.webSocketConstructor = ws;
+  pool = new NeonPool({ connectionString: process.env.DATABASE_URL });
+  db = neonDrizzle({ client: pool, schema });
+} else {
+  // Use standard PostgreSQL for VPS
+  const { Pool: PgPool } = require('pg');
+  const { drizzle: pgDrizzle } = require('drizzle-orm/node-postgres');
+  
+  pool = new PgPool({ 
+    connectionString: process.env.DATABASE_URL,
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
+  });
+  db = pgDrizzle(pool, { schema });
+}
+
+export { pool, db };
+```
+
+**This version works on both environments!**
+
+---
+
+**Common Errors & Solutions:**
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| `Cannot find module '@neondatabase/serverless'` | Using Neon code on VPS | Update `server/db.ts` to use `pg` |
+| `Connection refused` | Wrong database config | Check `.env` has correct `DATABASE_URL` |
+| `Cannot find module 'pg'` | Package not installed | Run `npm install pg` |
+| `drizzle is not a function` | Wrong import syntax | Use `drizzle(pool, { schema })` not `drizzle({ client: pool })` |
+
+---
+
 ### Step 4.8.3: Set Up PostgreSQL Database
 
 **Important:** Your VPS has PostgreSQL 16.10 (Ubuntu 16.10-0ubuntu0.24.04.1) installed.
@@ -791,6 +971,59 @@ curl http://localhost:5000
 - Open browser
 - Go to: `http://YOUR_VPS_IP`
 - You should see your LicenseIQ app!
+
+---
+
+### ✅ Deployment Checklist - Did You Complete Everything?
+
+**Before moving to DNS setup, verify all steps are complete:**
+
+| Step | Task | Status |
+|------|------|--------|
+| **4.8.1** | Navigate to `/home/licenseiq-qa/htdocs/qa.licenseiq.ai` | ☐ |
+| **4.8.2** | Upload your application code | ☐ |
+| **4.8.2B** | ⚠️ **CRITICAL:** Update `server/db.ts` to use `pg` driver | ☐ |
+| **4.8.2B** | ⚠️ **CRITICAL:** Install `pg` package: `npm install pg` | ☐ |
+| **4.8.3** | Create database `licenseiq_db` | ☐ |
+| **4.8.3** | Enable pgvector extension | ☐ |
+| **4.8.4** | Create `.env` file with DATABASE_URL | ☐ |
+| **4.8.4** | Add all API keys to `.env` | ☐ |
+| **4.8.5** | Run `npm install` | ☐ |
+| **4.8.6** | Run `npm run db:push` (database migrations) | ☐ |
+| **4.8.7** | Run `npm run build` (build React app) | ☐ |
+| **4.8.8** | Create `ecosystem.config.js` | ☐ |
+| **4.8.8** | Start PM2: `pm2 start ecosystem.config.js` | ☐ |
+| **4.8.8** | Save PM2: `pm2 save` | ☐ |
+| **4.8.9** | Configure Nginx | ☐ |
+| **4.8.9** | Test Nginx: `nginx -t` | ☐ |
+| **4.8.9** | Restart Nginx | ☐ |
+| **4.8.10** | Enable firewall (UFW) | ☐ |
+| **4.8.11** | Test via `curl http://localhost:5000` | ☐ |
+| **4.8.11** | Test via `http://YOUR_VPS_IP` in browser | ☐ |
+
+**⚠️ Most Common Mistake:**
+
+**Forgetting Step 4.8.2B** - If you skip updating `server/db.ts`, your app will fail with:
+```
+Error: Cannot find module '@neondatabase/serverless'
+```
+
+**Quick Test:**
+```bash
+# Verify you updated the database driver
+head -3 /home/licenseiq-qa/htdocs/qa.licenseiq.ai/server/db.ts
+
+# Should show:
+# import { Pool } from 'pg';
+# import { drizzle } from 'drizzle-orm/node-postgres';
+```
+
+**If everything works:**
+✅ App loads at `http://YOUR_VPS_IP`  
+✅ PM2 shows "online" status  
+✅ No errors in `pm2 logs licenseiq`
+
+**Proceed to Section 5 for DNS setup →**
 
 ---
 
