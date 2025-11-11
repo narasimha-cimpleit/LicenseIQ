@@ -90,7 +90,7 @@ export function FormulaPreview({ contractId, periodStart, periodEnd }: FormulaPr
           <div className="space-y-2">
             <h4 className="font-semibold text-sm flex items-center gap-2 text-green-700 dark:text-green-400">
               <CheckCircle className="h-5 w-5" />
-              ✅ Matched Products (Will Generate Royalties)
+              ✅ Matched Products (Will Generate License Fees)
             </h4>
             <div className="space-y-2">
               {matchedSamples.map((sample: any, idx: number) => (
@@ -209,8 +209,14 @@ export function FormulaPreview({ contractId, periodStart, periodEnd }: FormulaPr
           <div className="space-y-2">
             <h4 className="font-semibold text-sm flex items-center gap-2 text-red-700 dark:text-red-400">
               <XCircle className="h-5 w-5" />
-              ❌ Unmatched Products (No Royalties)
+              ❌ Unmatched Products (No License Fees)
             </h4>
+            <div className="bg-red-50/50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg p-3 mb-2">
+              <p className="text-xs text-red-800 dark:text-red-300">
+                Tried to match against <strong>{preview.totalRules} active rule{preview.totalRules !== 1 ? 's' : ''}</strong> but found no matches. 
+                {preview.totalRules === 0 ? ' Create rules to generate license fees.' : ' Update rule categories or create new rules.'}
+              </p>
+            </div>
             <div className="space-y-2">
               {unmatchedSamples.map((sample: any, idx: number) => (
                 <div 
@@ -225,7 +231,7 @@ export function FormulaPreview({ contractId, periodStart, periodEnd }: FormulaPr
                       {sample.category} • {sample.sampleUnits} units
                     </div>
                     <div className="text-xs text-red-600 dark:text-red-400 mt-1">
-                      No matching rule found - will not generate royalties
+                      No matching rule found - will not generate license fees
                     </div>
                   </div>
                   <div className="px-3 py-1 bg-red-100 dark:bg-red-900 rounded text-xs font-medium text-red-800 dark:text-red-200">
@@ -242,7 +248,7 @@ export function FormulaPreview({ contractId, periodStart, periodEnd }: FormulaPr
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              <strong>{preview.unmatchedSales} product{preview.unmatchedSales > 1 ? 's' : ''}</strong> will not generate royalties. Please create matching rules or update existing rule categories to include these products.
+              <strong>{preview.unmatchedSales} product{preview.unmatchedSales > 1 ? 's' : ''}</strong> will not generate license fees. Please create matching rules or update existing rule categories to include these products.
             </AlertDescription>
           </Alert>
         )}

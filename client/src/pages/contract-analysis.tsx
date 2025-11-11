@@ -533,9 +533,9 @@ export default function ContractAnalysis() {
                     </p>
                     <ul className="list-disc list-inside space-y-1 text-sm text-foreground bg-red-50 dark:bg-red-950 p-3 rounded-md">
                       <li>📄 Contract file and AI analysis</li>
-                      <li>📊 All royalty rules and formulas</li>
+                      <li>📊 All license fee rules and formulas</li>
                       <li>💰 All sales data</li>
-                      <li>🧮 All royalty calculations and history</li>
+                      <li>🧮 All license fee calculations and history</li>
                       <li>🤖 Contract embeddings and AI data</li>
                       <li>📋 All audit trail records</li>
                     </ul>
@@ -653,7 +653,7 @@ export default function ContractAnalysis() {
                   <div>
                     <p className="text-xs text-muted-foreground uppercase tracking-wide">Amount/Rate</p>
                     <p className="text-sm font-medium" data-testid="text-amount">
-                      {contractDetails.contractValue || "Variable royalty rates"}
+                      {contractDetails.contractValue || "Variable license fee rates"}
                     </p>
                   </div>
                 </CardContent>
