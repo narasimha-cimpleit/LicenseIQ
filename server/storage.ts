@@ -612,24 +612,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteContract(id: string): Promise<void> {
-    // Delete all related data in correct order (respecting foreign key constraints)
+    // Database cascade deletes will automatically remove all child records:
+    // - contractAnalysis (onDelete: cascade)
+    // - contractEmbeddings (onDelete: cascade)
+    // - contractVersions (onDelete: cascade)
+    // - royaltyRules (onDelete: cascade)
+    // - contractRoyaltyCalculations (onDelete: cascade)
+    // - dynamicExtractionRuns (onDelete: cascade)
+    // - documentChatSessions (onDelete: cascade)
+    // - etc.
+    // 
+    // Sales data uses matchedContractId with onDelete: set null, so it won't be deleted
+    // but the contract reference will be cleared
     
-    // 1. Delete royalty calculations
-    await db.delete(contractRoyaltyCalculations).where(eq(contractRoyaltyCalculations.contractId, id));
-    
-    // 2. Delete sales data (uses matchedContractId column)
-    await db.delete(salesData).where(eq(salesData.matchedContractId, id));
-    
-    // 3. Delete royalty rules
-    await db.delete(royaltyRules).where(eq(royaltyRules.contractId, id));
-    
-    // 4. Delete contract embeddings
-    await db.delete(contractEmbeddings).where(eq(contractEmbeddings.contractId, id));
-    
-    // 5. Delete contract analysis
-    await db.delete(contractAnalysis).where(eq(contractAnalysis.contractId, id));
-    
-    // 6. Finally delete the contract itself
     await db.delete(contracts).where(eq(contracts.id, id));
   }
 
