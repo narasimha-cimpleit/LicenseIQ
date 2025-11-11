@@ -490,11 +490,11 @@ Return ONLY valid JSON. No explanations.`;
 
     try {
       console.log(`⚡ Making consolidated extraction call...`);
-      // Increase max tokens from 3000 to 8000 to avoid truncation
+      // Increase max tokens to 12000 for large contracts (Electronics: 18k chars needs ~12k tokens)
       const response = await this.makeRequest([
         { role: 'system', content: 'You are a precise contract analyzer. Extract ALL information in one comprehensive response. Return only JSON.' },
         { role: 'user', content: prompt }
-      ], 0.1, 8000);
+      ], 0.1, 12000);
       
       let extracted = this.extractAndRepairJSON(response, { basicInfo: {}, rules: [] });
       
