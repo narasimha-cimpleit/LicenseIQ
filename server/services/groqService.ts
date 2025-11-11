@@ -344,15 +344,118 @@ export class GroqService {
     };
   }
 
-  // ⚡ CONSOLIDATED EXTRACTION - Replaces 6 sequential AI calls with 1 comprehensive call
-  private async extractAllContractDataInOneCall(contractText: string): Promise<{
+  // 📄 CHUNKED EXTRACTION - For large contracts that exceed token limits
+  private async extractLargeContractInChunks(contractText: string): Promise<{
+    basicInfo: any;
+    allRules: RoyaltyRule[];
+  }> {
+    console.log(`📄 Large contract detected (${contractText.length} chars). Using chunked extraction...`);
+    
+    // Extract basic info from first 20k chars (header section has parties, dates, etc.)
+    const headerChunk = contractText.substring(0, 20000);
+    const headerResult = await this.extractChunkWithoutRecursion(headerChunk);
+    
+    // Extract rules from middle/end sections where payment terms usually are
+    const middleStart = Math.floor(contractText.length * 0.3);
+    const middleChunk = contractText.substring(middleStart, middleStart + 20000);
+    const middleResult = await this.extractRulesOnly(middleChunk);
+    
+    // Extract from end section (often contains pricing schedules and payment terms)
+    const endStart = Math.max(contractText.length - 20000, middleStart + 10000);
+    const endChunk = contractText.substring(endStart);
+    const endResult = await this.extractRulesOnly(endChunk);
+    
+    // Merge all rules, removing duplicates based on sourceSpan.text similarity
+    const allRules = [...headerResult.allRules, ...middleResult, ...endResult];
+    const uniqueRules = this.deduplicateRules(allRules);
+    
+    console.log(`✅ Chunked extraction complete: ${uniqueRules.length} unique rules from 3 chunks`);
+    
+    return {
+      basicInfo: headerResult.basicInfo,
+      allRules: uniqueRules
+    };
+  }
+
+  // Extract from a chunk without triggering recursion
+  private async extractChunkWithoutRecursion(contractText: string): Promise<{
     basicInfo: any;
     allRules: RoyaltyRule[];
   }> {
     const prompt = `Analyze this contract and extract ALL information in ONE comprehensive response. Extract contract type, parties, dates, AND all pricing/payment rules.
 
 Contract Text:
-${contractText.substring(0, 8000)}
+${contractText}
+
+  // Extract only rules from a text chunk (skip basic info)
+  private async extractRulesOnly(contractText: string): Promise<RoyaltyRule[]> {
+    const prompt = `Extract ALL pricing/payment rules from this contract section. Return ONLY rules that explicitly exist in the text.
+
+Contract Text:
+${contractText.substring(0, 20000)}
+
+Extract EVERY pricing rule using these ruleType values:
+- "tiered", "percentage", "minimum_guarantee", "fixed_price", "variable_price"
+- "per_seat", "per_unit", "per_time_period", "usage_based"
+- "auto_renewal", "escalation_clause", "early_termination"
+- "license_scope", "volume_discount"
+
+Each rule MUST include:
+- sourceSpan.text with EXACT verbatim quote from the contract
+- productCategories array (use ["General"] if not specified)
+- confidence 0.6-1.0 based on how explicit it is
+
+Return JSON: { "rules": [...] }`;
+
+    try {
+      const response = await this.makeRequest([
+        { role: 'system', content: 'Extract only pricing rules. Return valid JSON.' },
+        { role: 'user', content: prompt }
+      ], 0.1, 8000);
+      
+      const extracted = this.extractAndRepairJSON(response, { rules: [] });
+      return Array.isArray(extracted.rules) ? extracted.rules.filter((rule: any) =>
+        rule.sourceSpan?.text?.trim().length > 0
+      ) : [];
+    } catch (error) {
+      console.error('❌ Error extracting rules from chunk:', error);
+      return [];
+    }
+  }
+
+  // Deduplicate rules based on source text similarity
+  private deduplicateRules(rules: RoyaltyRule[]): RoyaltyRule[] {
+    const unique: RoyaltyRule[] = [];
+    const seenTexts = new Set<string>();
+    
+    for (const rule of rules) {
+      const sourceText = rule.sourceSpan?.text?.toLowerCase().trim() || '';
+      // Use first 100 chars as fingerprint to catch similar rules
+      const fingerprint = sourceText.substring(0, 100);
+      
+      if (!seenTexts.has(fingerprint) && sourceText.length > 0) {
+        seenTexts.add(fingerprint);
+        unique.push(rule);
+      }
+    }
+    
+    return unique;
+  }
+
+  // ⚡ CONSOLIDATED EXTRACTION - Replaces 6 sequential AI calls with 1 comprehensive call
+  private async extractAllContractDataInOneCall(contractText: string): Promise<{
+    basicInfo: any;
+    allRules: RoyaltyRule[];
+  }> {
+    // For large contracts (>20k chars), use chunked extraction
+    if (contractText.length > 20000) {
+      return this.extractLargeContractInChunks(contractText);
+    }
+
+    const prompt = `Analyze this contract and extract ALL information in ONE comprehensive response. Extract contract type, parties, dates, AND all pricing/payment rules.
+
+Contract Text:
+${contractText.substring(0, 20000)}
 
 **SECTION 1: Contract Parties** (MANDATORY - NEVER return null)
 Extract BOTH contracting parties. Look for:
