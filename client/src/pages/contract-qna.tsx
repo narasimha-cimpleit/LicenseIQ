@@ -99,7 +99,7 @@ export default function ContractQnA() {
   };
 
   return (
-    <MainLayout title="Contract Q&A">
+    <MainLayout title="LIQ AI">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -108,7 +108,7 @@ export default function ContractQnA() {
               <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg">
                 <Sparkles className="h-6 w-6 text-white" />
               </div>
-              Contract Intelligence
+              LIQ AI - Contract Intelligence
             </h1>
             <p className="text-muted-foreground mt-1">
               Ask questions about your contracts using AI-powered semantic search

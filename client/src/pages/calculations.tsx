@@ -60,7 +60,7 @@ export default function CalculationsPage() {
 
   if (isLoading) {
     return (
-      <MainLayout title="Royalty Calculator" description="Loading...">
+      <MainLayout title="License Fee Calculator" description="Loading...">
         <div className="space-y-4">
           <div className="flex items-center justify-between space-y-2">
             <Skeleton className="h-10 w-64" />
@@ -79,8 +79,8 @@ export default function CalculationsPage() {
 
   return (
     <MainLayout 
-      title="Royalty Calculator" 
-      description="View and manage all royalty calculations across your contracts"
+      title="License Fee Calculator" 
+      description="View and manage all license fee calculations across your contracts"
     >
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -110,7 +110,7 @@ export default function CalculationsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-blue-900 dark:text-blue-100">{allCalculations.length}</div>
-              <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Completed royalty runs</p>
+              <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Completed license fee runs</p>
             </CardContent>
           </Card>
           <Card className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border-green-200 dark:border-green-800">
@@ -122,7 +122,7 @@ export default function CalculationsPage() {
               <div className="text-3xl font-bold text-green-900 dark:text-green-100">
                 ${allCalculations.reduce((sum: number, calc: any) => sum + (parseFloat(calc.totalRoyalty) || 0), 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
-              <p className="text-xs text-green-600 dark:text-green-400 mt-1">Total royalties calculated</p>
+              <p className="text-xs text-green-600 dark:text-green-400 mt-1">Total license fees calculated</p>
             </CardContent>
           </Card>
           <Card className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 border-purple-200 dark:border-purple-800">

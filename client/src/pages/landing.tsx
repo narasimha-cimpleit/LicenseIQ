@@ -357,7 +357,7 @@ export default function Landing() {
               </CardContent>
             </Card>
 
-            {/* Feature 5 - Contract Q&A */}
+            {/* Feature 5 - LIQ AI */}
             <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-pink-200 dark:hover:border-pink-800 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150">
               <CardContent className="p-6 space-y-4">
                 <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-pink-500 to-pink-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
@@ -365,7 +365,7 @@ export default function Landing() {
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
-                    Contract Q&A Chat
+                    LIQ AI
                   </h3>
                   <p className="text-slate-600 dark:text-slate-300">
                     Ask questions about your contracts in plain English. RAG-powered AI provides accurate answers with citations

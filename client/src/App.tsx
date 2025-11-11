@@ -59,12 +59,12 @@ function Router() {
             <ProtectedRoute path="/users" component={Users} />
             <ProtectedRoute path="/users/new" component={CreateUser} />
             <ProtectedRoute path="/audit" component={Audit} />
-            {/* Royalty Calculations */}
+            {/* License Fee Calculations */}
             <ProtectedRoute path="/sales-upload" component={SalesUpload} />
             <ProtectedRoute path="/calculations" component={CalculationsPage} />
             <ProtectedRoute path="/royalty-dashboard/:id" component={RoyaltyDashboard} />
             <ProtectedRoute path="/contracts/:id/rules" component={RulesManagement} />
-            {/* Contract Q&A */}
+            {/* LIQ AI */}
             <ProtectedRoute path="/contract-qna" component={ContractQnA} />
             <ProtectedRoute path="/rag-dashboard" component={RAGDashboard} />
             {/* Dynamic Extraction */}
