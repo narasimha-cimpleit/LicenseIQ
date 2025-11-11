@@ -73,9 +73,13 @@ function normalizeFieldNames(row: any): any {
     'gross amount': 'grossAmount',
     'grossamount': 'grossAmount',
     'gross_amount': 'grossAmount',
+    'gross sales': 'grossAmount',
+    'grosssales': 'grossAmount',
+    'gross_sales': 'grossAmount',
     'amount': 'grossAmount',
     'total amount': 'grossAmount',
     'revenue': 'grossAmount',
+    'sales': 'grossAmount',
     
     // Net Amount variations
     'net amount': 'netAmount',
