@@ -290,7 +290,17 @@ export default function ContractQnA() {
                   "What types of contracts does this platform support?",
                   "How does the license fee calculation work?",
                   "What AI services are used?",
-                  "How does the rule engine work?"
+                  "How does the rule engine work?",
+                  "How does LicenseIQ process sales data?",
+                  "What is the multi-tenant architecture?",
+                  "What security features does LicenseIQ have?",
+                  "How does AI contract reading work?",
+                  "What is the RAG-powered Q&A system?",
+                  "How do I navigate the platform?",
+                  "What reporting and analytics are available?",
+                  "How does the master data mapping work?",
+                  "What is the company hierarchy structure?",
+                  "How can I deploy LicenseIQ?"
                 ].map((example, idx) => (
                   <button
                     key={`platform-${idx}`}
