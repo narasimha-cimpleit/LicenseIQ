@@ -5,6 +5,7 @@
 
 import { HuggingFaceEmbeddingService } from './huggingFaceEmbedding';
 import { SemanticSearchService } from './semanticSearchService';
+import { SystemSearchService } from './systemSearchService';
 import { db } from '../db';
 import { contracts } from '@shared/schema';
 import { eq } from 'drizzle-orm';
@@ -31,81 +32,105 @@ export class RAGService {
     try {
       console.log(`🤖 [RAG] Answering question: "${question}"`);
       
-      // Step 1: Generate embedding for the question
-      const { embedding } = await HuggingFaceEmbeddingService.generateEmbedding(question);
+      // Step 1: Search both contract documents AND system documentation
+      const [contractMatches, systemMatches] = await Promise.all([
+        SemanticSearchService.findMatchingContracts(question, {
+          minSimilarity: 0.4,
+          limit: 8,
+        }),
+        SystemSearchService.findMatchingDocumentation(question, {
+          minSimilarity: 0.5,
+          limit: 5,
+        }),
+      ]);
       
-      // Step 2: Find relevant contract sections using semantic search
-      // Balanced similarity threshold and increased limit for better accuracy
-      const matches = await SemanticSearchService.findMatchingContracts(question, {
-        minSimilarity: 0.4,
-        limit: 10,
-      });
+      console.log(`📊 [RAG] Found ${contractMatches.length} contract matches, ${systemMatches.length} system docs matches`);
       
-      // Filter by contract if specified
-      const filteredMatches = contractId
-        ? matches.filter(m => m.contractId === contractId)
-        : matches;
+      // Step 2: Determine if this is a platform question or contract question
+      // Use platform docs if: (1) no contract matches exist, OR (2) system match is strong (>0.7), OR (3) system similarity beats contract similarity
+      const isPlatformQuestion = systemMatches.length > 0 && 
+        (contractMatches.length === 0 || 
+         systemMatches[0].similarity > 0.7 || 
+         systemMatches[0].similarity > (contractMatches[0]?.similarity || 0));
       
-      if (filteredMatches.length === 0) {
-        return {
-          answer: "I couldn't find any relevant information in the contracts to answer your question.",
-          sources: [],
-          confidence: 0,
-        };
-      }
+      // Step 3: Build context from the most relevant source
+      let context: string;
+      let sources: any[];
+      let confidence: number;
       
-      // Step 3: Get contract details for context
-      const contractIds = Array.from(new Set(filteredMatches.map(m => m.contractId)));
-      const contractDetails = await db
-        .select()
-        .from(contracts)
-        .where(eq(contracts.id, contractIds[0])); // For now, use the most relevant contract
-      
-      // Step 4: Build context from relevant sections (use up to 8 for more complete context)
-      const context = filteredMatches
-        .slice(0, 8)
-        .map((match, i) => `[Section ${i + 1}] ${match.sourceText}`)
-        .join('\n\n');
-      
-      // Step 5: Generate answer using Groq LLaMA
-      const answer = await this.generateAnswer(question, context);
-      
-      // Step 6: Build response with sources
-      const sources = filteredMatches.slice(0, 3).map(match => ({
-        contractId: match.contractId,
-        contractName: contractDetails.find(c => c.id === match.contractId)?.originalName || 'Unknown Contract',
-        relevantText: match.sourceText.substring(0, 200) + '...',
-        similarity: match.similarity,
-      }));
-      
-      const avgConfidence = sources.reduce((sum, s) => sum + s.similarity, 0) / sources.length;
-      
-      console.log(`✅ [RAG] Answer generated with ${sources.length} sources (avg confidence: ${(avgConfidence * 100).toFixed(1)}%)`);
-      
-      // If confidence is too low (< 55%), fall back to full contract analysis
-      if (avgConfidence < 0.55) {
-        console.log(`⚠️ [RAG] Low confidence (${(avgConfidence * 100).toFixed(1)}%), falling back to full contract analysis`);
+      if (isPlatformQuestion) {
+        // Answer about the LicenseIQ platform itself
+        console.log(`🏢 [RAG] Platform question detected - using system documentation`);
+        context = systemMatches
+          .slice(0, 5)
+          .map((match, i) => `[${match.title}] ${match.sourceText}`)
+          .join('\n\n');
         
-        // Get the full contract text
-        const contractToAnalyze = contractId 
-          ? contractDetails.find(c => c.id === contractId)
-          : contractDetails[0];
+        sources = systemMatches.slice(0, 3).map(match => ({
+          contractId: 'system',
+          contractName: `LicenseIQ Platform: ${match.category}`,
+          relevantText: match.sourceText.substring(0, 200) + '...',
+          similarity: match.similarity,
+        }));
         
-        if (contractToAnalyze) {
-          const fallbackAnswer = await this.generateAnswerFromFullContract(question, contractToAnalyze.id);
-          
+        confidence = systemMatches[0]?.similarity || 0.8;
+      } else {
+        // Answer about uploaded contracts
+        console.log(`📄 [RAG] Contract question detected - using contract documents`);
+        
+        // Filter by contract if specified
+        const filteredMatches = contractId
+          ? contractMatches.filter(m => m.contractId === contractId)
+          : contractMatches;
+        
+        if (filteredMatches.length === 0) {
           return {
-            answer: fallbackAnswer,
-            sources: sources,
-            confidence: 0.80, // Indicate this is from full contract analysis
+            answer: "I couldn't find any relevant information in the contracts to answer your question.",
+            sources: [],
+            confidence: 0,
           };
         }
+        
+        context = filteredMatches
+          .slice(0, 8)
+          .map((match, i) => `[Section ${i + 1}] ${match.sourceText}`)
+          .join('\n\n');
+        
+        // Get contract details for sources
+        const contractIds = Array.from(new Set(filteredMatches.map(m => m.contractId)));
+        const contractDetails = await db
+          .select()
+          .from(contracts)
+          .where(eq(contracts.id, contractIds[0]));
+        
+        sources = filteredMatches.slice(0, 3).map(match => {
+          let textContent = '';
+          if (typeof match.sourceText === 'string') {
+            textContent = match.sourceText;
+          } else if (match.sourceText && typeof match.sourceText === 'object') {
+            textContent = JSON.stringify(match.sourceText);
+          }
+          
+          return {
+            contractId: match.contractId,
+            contractName: contractDetails.find(c => c.id === match.contractId)?.originalName || 'Unknown Contract',
+            relevantText: textContent ? textContent.substring(0, 200) + '...' : 'No text available',
+            similarity: match.similarity,
+          };
+        });
+        
+        confidence = sources.reduce((sum, s) => sum + s.similarity, 0) / sources.length;
       }
+      
+      // Step 4: Generate answer using Groq LLaMA
+      const answer = await this.generateAnswer(question, context);
+      
+      console.log(`✅ [RAG] Answer generated with ${sources.length} sources (confidence: ${(confidence * 100).toFixed(1)}%)`);
       
       return {
         answer,
         sources,
-        confidence: avgConfidence,
+        confidence,
       };
       
     } catch (error: any) {

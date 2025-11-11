@@ -58,6 +58,10 @@ async function initializeDatabase() {
     // Seed LicenseIQ Schema Catalog with standard entities
     const { seedLicenseIQSchema } = await import("./seed-licenseiq-schema");
     await seedLicenseIQSchema();
+    
+    // Seed System Knowledge Base for LIQ AI platform questions
+    const { SystemKnowledgeSeeder } = await import("./services/systemKnowledgeSeeder");
+    await SystemKnowledgeSeeder.seedKnowledgeBase();
   } catch (error: any) {
     log(`⚠ Database initialization warning: ${error.message}`);
     // Don't fail server startup if index creation fails

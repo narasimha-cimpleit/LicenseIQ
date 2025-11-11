@@ -103,6 +103,22 @@ export const contractEmbeddings = pgTable("contract_embeddings", {
   index("contract_embeddings_type_idx").on(table.embeddingType),
 ]);
 
+// System documentation embeddings for LIQ AI platform knowledge
+export const systemEmbeddings = pgTable("system_embeddings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  documentId: varchar("document_id").notNull().unique(), // Knowledge base entry ID
+  category: varchar("category").notNull(), // Category for filtering
+  title: varchar("title").notNull(), // Document title
+  sourceText: text("source_text").notNull(), // Original text that was embedded
+  embedding: vector("embedding", { dimensions: 384 }), // Same dimensions as contract embeddings
+  metadata: jsonb("metadata"), // Additional context
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("system_embeddings_category_idx").on(table.category),
+  index("system_embeddings_document_idx").on(table.documentId),
+]);
+
 // Contract Versions - Full snapshot versioning for contract metadata
 export const contractVersions = pgTable("contract_versions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
