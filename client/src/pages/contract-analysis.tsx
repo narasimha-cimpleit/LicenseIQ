@@ -501,7 +501,7 @@ export default function ContractAnalysis() {
               className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
             >
               <Calculator className="h-4 w-4 mr-2" />
-              Royalty Dashboard
+              License Fee Dashboard
             </Button>
             <Button onClick={handleEditAnalysis} data-testid="button-edit-analysis">
               <Edit className="h-4 w-4 mr-2 text-green-400" />
