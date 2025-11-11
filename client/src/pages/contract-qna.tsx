@@ -283,53 +283,50 @@ export default function ContractQnA() {
                   Example Questions
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="text-xs font-semibold text-muted-foreground mb-2">Platform Questions:</div>
-                {[
-                  "What is LicenseIQ?",
-                  "What types of contracts does this platform support?",
-                  "How does the license fee calculation work?",
-                  "What AI services are used?",
-                  "How does the rule engine work?",
-                  "How does LicenseIQ process sales data?",
-                  "What is the multi-tenant architecture?",
-                  "What security features does LicenseIQ have?",
-                  "How does AI contract reading work?",
-                  "What is the RAG-powered Q&A system?",
-                  "How do I navigate the platform?",
-                  "What reporting and analytics are available?",
-                  "How does the master data mapping work?",
-                  "What is the company hierarchy structure?",
-                  "How can I deploy LicenseIQ?"
-                ].map((example, idx) => (
-                  <button
-                    key={`platform-${idx}`}
-                    onClick={() => setQuestion(example)}
-                    className="w-full text-left text-xs p-2 rounded hover:bg-accent transition-colors border border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800"
-                    data-testid={`example-question-platform-${idx}`}
-                  >
-                    {example}
-                  </button>
-                ))}
-                <div className="text-xs font-semibold text-muted-foreground mb-2 mt-4">Contract Questions:</div>
-                {[
-                  "What are the license fee rates?",
-                  "Which territories are covered?",
-                  "What are the payment terms?",
-                  "Are there any volume discounts?",
-                  "What products are included?",
-                  "When are payments due?",
-                  "What are the reporting requirements?"
-                ].map((example, idx) => (
-                  <button
-                    key={`contract-${idx}`}
-                    onClick={() => setQuestion(example)}
-                    className="w-full text-left text-xs p-2 rounded hover:bg-accent transition-colors border"
-                    data-testid={`example-question-contract-${idx}`}
-                  >
-                    {example}
-                  </button>
-                ))}
+              <CardContent>
+                <div className="max-h-[400px] overflow-y-auto space-y-2 pr-2">
+                  <div className="text-xs font-semibold text-muted-foreground mb-2">Platform Questions:</div>
+                  <div className="space-y-2">
+                    {[
+                      "What is LicenseIQ?",
+                      "What types of contracts are supported?",
+                      "How does the license fee calculation work?",
+                      "What AI services are used?",
+                      "How does the rule engine work?",
+                      "What is the multi-tenant architecture?",
+                      "What security features are available?",
+                      "How does master data mapping work?"
+                    ].map((example, idx) => (
+                      <button
+                        key={`platform-${idx}`}
+                        onClick={() => setQuestion(example)}
+                        className="w-full text-left text-xs p-2 rounded hover:bg-accent transition-colors border border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800"
+                        data-testid={`example-question-platform-${idx}`}
+                      >
+                        {example}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="text-xs font-semibold text-muted-foreground mb-2 mt-4">Contract Questions:</div>
+                  <div className="space-y-2">
+                    {[
+                      "What are the license fee rates?",
+                      "Which territories are covered?",
+                      "What are the payment terms?",
+                      "Are there any volume discounts?",
+                      "What products are included?"
+                    ].map((example, idx) => (
+                      <button
+                        key={`contract-${idx}`}
+                        onClick={() => setQuestion(example)}
+                        className="w-full text-left text-xs p-2 rounded hover:bg-accent transition-colors border"
+                        data-testid={`example-question-contract-${idx}`}
+                      >
+                        {example}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
