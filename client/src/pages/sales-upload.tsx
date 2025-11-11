@@ -258,10 +258,7 @@ export default function SalesUpload() {
                   ) : (
                     contracts.map((contract: any) => (
                       <SelectItem key={contract.id} value={contract.id}>
-                        <div className="flex flex-col items-start">
-                          <span className="font-medium">{contract.originalName || contract.name}</span>
-                          <span className="text-xs text-muted-foreground">ID: {contract.id.substring(0, 8)}...</span>
-                        </div>
+                        {contract.displayName || contract.originalName || contract.name}
                       </SelectItem>
                     ))
                   )}
