@@ -357,10 +357,10 @@ export default function RoyaltyDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calculator className="h-5 w-5" />
-              Calculate Royalties
+              Calculate License Fee
             </CardTitle>
             <CardDescription>
-              Calculate royalties based on matched sales data. 
+              Calculate license fees based on matched sales data. 
               {salesData.length === 0 && " Please upload sales data first."}
             </CardDescription>
           </CardHeader>
@@ -379,7 +379,7 @@ export default function RoyaltyDashboard() {
               <CollapsibleContent className="mt-4">
                 <div className="border rounded-lg p-6 space-y-4 bg-gray-50 dark:bg-gray-900">
                   <div className="space-y-2">
-                    <h3 className="text-lg font-semibold">Calculate Royalties</h3>
+                    <h3 className="text-lg font-semibold">Calculate License Fee</h3>
                     <p className="text-sm text-muted-foreground">
                       Configure the calculation parameters for this contract.
                     </p>
