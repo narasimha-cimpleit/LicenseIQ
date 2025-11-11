@@ -14,7 +14,7 @@ import { PDFInvoiceService } from "./services/pdfInvoiceService";
 import { HuggingFaceEmbeddingService } from "./services/huggingFaceEmbedding";
 import { RAGService } from "./services/ragService";
 import { db } from "./db";
-import { contracts, contractEmbeddings, royaltyRules, navigationPermissions, roleNavigationPermissions, userNavigationOverrides, roles, insertRoleSchema } from "@shared/schema";
+import { contracts, contractEmbeddings, royaltyRules, navigationPermissions, roleNavigationPermissions, userNavigationOverrides, roles, insertRoleSchema, InsertRoyaltyRule } from "@shared/schema";
 import { 
   insertContractSchema, 
   insertContractAnalysisSchema, 
@@ -5049,13 +5049,51 @@ async function processContractAnalysis(contractId: string, filePath: string) {
       throw new Error('AI extraction failed: Missing required summary or key terms');
     }
     
-    // Step 2: Extract royalty rules (this returns rule data but doesn't save yet)
+    // Step 2: Get detailed extraction with parties info and royalty rules
     console.log(`🔍 Extracting royalty rules...`);
-    const royaltyRulesData = await extractRoyaltyRulesData(extractedText, aiAnalysis);
-    console.log(`📋 Found ${royaltyRulesData.length} royalty rules to save`);
-    
-    // Step 2.5: Get detailed extraction with parties info
     const detailedExtraction = await groqService.extractDetailedRoyaltyRules(extractedText);
+    
+    // 🔧 FIX: Map Groq RoyaltyRule[] to InsertRoyaltyRule[] for database persistence
+    const royaltyRulesData: InsertRoyaltyRule[] = (detailedExtraction.rules || []).map(rule => {
+      // Build formulaDefinition from calculation + conditions for dynamic formula engine
+      const formulaDefinition = {
+        calculation: rule.calculation || {},
+        conditions: rule.conditions || {},
+        metadata: {
+          ruleType: rule.ruleType,
+          description: rule.description
+        }
+      };
+      
+      return {
+        contractId, // Will be added by the loop below, but TypeScript needs it
+        ruleType: rule.ruleType,
+        ruleName: rule.ruleName,
+        description: rule.description || '',
+        
+        // NEW: JSON-based formula definition
+        formulaDefinition: formulaDefinition as any,
+        formulaVersion: '1.0',
+        
+        // LEGACY: Map to legacy fields for backwards compatibility
+        productCategories: rule.conditions?.productCategories || [],
+        territories: rule.conditions?.territories || [],
+        baseRate: rule.calculation?.rate?.toString() || null,
+        volumeTiers: rule.calculation?.tiers || null,
+        minimumGuarantee: (rule.ruleType === 'minimum_guarantee' || rule.ruleType === 'fixed_fee') && rule.calculation?.amount 
+          ? rule.calculation.amount.toString() 
+          : null,
+        
+        // Provenance & confidence
+        confidence: rule.confidence?.toString() || '0.8',
+        sourceSection: rule.sourceSpan?.section || (rule.sourceSpan?.page ? `Page ${rule.sourceSpan.page}` : null),
+        sourceText: rule.sourceSpan?.text || null,
+        priority: rule.priority || 10,
+        isActive: true
+      };
+    }).filter(rule => rule.sourceText && rule.sourceText.trim().length > 0); // Skip rules without source text
+    
+    console.log(`📋 Found ${royaltyRulesData.length} royalty rules to save`);
     
     // 🔧 FIX: Add parties data to keyTerms so frontend can access it
     // keyTerms is an array, but we'll convert it to an object with licensor/licensee
