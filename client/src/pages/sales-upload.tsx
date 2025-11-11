@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Upload, FileSpreadsheet, AlertCircle, CheckCircle, Download, Calculator, Network, FileUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 export default function SalesUpload() {
   const { toast } = useToast();
@@ -53,6 +53,13 @@ export default function SalesUpload() {
         description: `Imported ${data.validRows || 0} sales transactions successfully!`,
       });
       setSelectedFile(null);
+      
+      // Invalidate all relevant queries for the dashboard to refresh immediately
+      if (selectedContractId) {
+        queryClient.invalidateQueries({ queryKey: [`/api/contracts/${selectedContractId}/sales`] });
+        queryClient.invalidateQueries({ queryKey: [`/api/contracts/${selectedContractId}/formula-preview`] });
+        queryClient.invalidateQueries({ queryKey: [`/api/contracts/${selectedContractId}/royalty-calculations`] });
+      }
     },
     onError: (error: Error) => {
       toast({
