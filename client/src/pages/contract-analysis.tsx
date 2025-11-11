@@ -818,8 +818,8 @@ export default function ContractAnalysis() {
                 </Card>
               )}
 
-              {/* Dynamic Extraction Results */}
-              {extractionRuns && extractionRuns.length > 0 && (
+              {/* Dynamic Extraction Results - HIDDEN */}
+              {false && extractionRuns && extractionRuns.length > 0 && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -887,16 +887,18 @@ export default function ContractAnalysis() {
                 </Card>
               )}
 
-              {/* Enhanced Royalty Rules Editor */}
-              <RoyaltyRulesEditor 
-                contractId={id || ''}
-                ruleSets={royaltyRules?.ruleSets || []}
-                onRulesUpdate={() => {
-                  // Refetch rules when they're updated
-                  queryClient.invalidateQueries({ queryKey: ['/api/contracts', id, 'rules'] });
-                }}
-                onReprocess={handleReprocess}
-              />
+              {/* Enhanced Royalty Rules Editor - HIDDEN */}
+              {false && (
+                <RoyaltyRulesEditor 
+                  contractId={id || ''}
+                  ruleSets={royaltyRules?.ruleSets || []}
+                  onRulesUpdate={() => {
+                    // Refetch rules when they're updated
+                    queryClient.invalidateQueries({ queryKey: ['/api/contracts', id, 'rules'] });
+                  }}
+                  onReprocess={handleReprocess}
+                />
+              )}
             </div>
 
             {/* Sidebar Info */}
@@ -992,15 +994,18 @@ export default function ContractAnalysis() {
                       <Share className="h-4 w-4 mr-2" />
                       Share Analysis
                     </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
-                      onClick={() => setLocation(`/royalty-calculations/${id}`)}
-                      data-testid="button-calculate-royalties-sidebar"
-                    >
-                      <Calculator className="h-4 w-4 mr-2" />
-                      Calculate Royalties
-                    </Button>
+                    {/* Calculate Royalties button - HIDDEN */}
+                    {false && (
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+                        onClick={() => setLocation(`/royalty-calculations/${id}`)}
+                        data-testid="button-calculate-royalties-sidebar"
+                      >
+                        <Calculator className="h-4 w-4 mr-2" />
+                        Calculate Royalties
+                      </Button>
+                    )}
                     <Button
                       variant={contract?.flaggedForReview ? "default" : "outline"}
                       className="w-full justify-start"
