@@ -40,7 +40,8 @@ import {
   Trash2,
   Calculator,
   Sparkles,
-  Network
+  Network,
+  ListChecks
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -511,6 +512,15 @@ export default function ContractAnalysis() {
             >
               <Calculator className="h-4 w-4 mr-2" />
               License Fee Dashboard
+            </Button>
+            <Button 
+              onClick={() => setLocation(`/contracts/${id}/rules`)} 
+              data-testid="button-manage-rules"
+              variant="outline"
+              className="border-blue-200 text-blue-600 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950"
+            >
+              <ListChecks className="h-4 w-4 mr-2" />
+              Manage License Fee Rules
             </Button>
             <Button onClick={handleEditAnalysis} data-testid="button-edit-analysis">
               <Edit className="h-4 w-4 mr-2 text-green-400" />
