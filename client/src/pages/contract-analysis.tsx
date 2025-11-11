@@ -481,16 +481,19 @@ export default function ContractAnalysis() {
               <AlertTriangle className="h-4 w-4 mr-2 text-amber-400" />
               {reprocessMutation.isPending ? "Reprocessing..." : "Reprocess"}
             </Button>
-            <Button 
-              variant="outline"
-              onClick={() => triggerExtractionMutation.mutate()}
-              disabled={triggerExtractionMutation.isPending}
-              data-testid="button-trigger-extraction"
-              className="border-purple-200 text-purple-600 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-400 dark:hover:bg-purple-950"
-            >
-              <Sparkles className="h-4 w-4 mr-2" />
-              {triggerExtractionMutation.isPending ? "Extracting..." : "AI Extract"}
-            </Button>
+            {/* AI Extract button - HIDDEN */}
+            {false && (
+              <Button 
+                variant="outline"
+                onClick={() => triggerExtractionMutation.mutate()}
+                disabled={triggerExtractionMutation.isPending}
+                data-testid="button-trigger-extraction"
+                className="border-purple-200 text-purple-600 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-400 dark:hover:bg-purple-950"
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                {triggerExtractionMutation.isPending ? "Extracting..." : "AI Extract"}
+              </Button>
+            )}
             <Button variant="outline" onClick={handleExport} data-testid="button-export">
               <Download className="h-4 w-4 mr-2 text-blue-400" />
               Export
