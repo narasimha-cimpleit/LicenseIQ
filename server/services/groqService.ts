@@ -1421,7 +1421,7 @@ Return empty array [] if contract has NO payment terms.`;
     }
   }
 
-  private async makeRequest(messages: Array<{ role: string; content: string }>, temperature = 0.1, maxTokens = 2000): Promise<string> {
+  private async makeRequest(messages: Array<{ role: string; content: string }>, temperature = 0.1, maxTokens = 4000): Promise<string> {
     let lastError: Error | undefined;
     
     // Retry logic for rate limits
