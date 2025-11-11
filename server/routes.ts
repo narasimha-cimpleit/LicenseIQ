@@ -2703,15 +2703,13 @@ Report ID: ${contractId}
         source: 'landing_page',
       });
 
-      // Send emails asynchronously
+      // Send emails using Zoho Mail
       try {
-        const { getUncachableResendClient } = await import('./resend.js');
-        const { client, fromEmail } = await getUncachableResendClient();
+        const { sendZohoEmail } = await import('./zoho-mail.js');
         
         // Send notification email to info@licenseiq.ai
-        await client.emails.send({
-          from: fromEmail,
-          to: ['info@licenseiq.ai'],
+        await sendZohoEmail({
+          to: 'info@licenseiq.ai',
           subject: '🎯 New Early Access Signup - LicenseIQ',
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -2737,9 +2735,8 @@ Report ID: ${contractId}
         console.log(`📧 Early access notification sent to info@licenseiq.ai for ${email}`);
 
         // Send confirmation email to customer
-        await client.emails.send({
-          from: fromEmail,
-          to: [email],
+        await sendZohoEmail({
+          to: email,
           subject: 'Welcome to LicenseIQ Early Access! 🚀',
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
