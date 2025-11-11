@@ -251,12 +251,20 @@ export default function SalesUpload() {
                   ) : (
                     contracts.map((contract: any) => (
                       <SelectItem key={contract.id} value={contract.id}>
-                        {contract.originalName || contract.name}
+                        <div className="flex flex-col items-start">
+                          <span className="font-medium">{contract.originalName || contract.name}</span>
+                          <span className="text-xs text-muted-foreground">ID: {contract.id.substring(0, 8)}...</span>
+                        </div>
                       </SelectItem>
                     ))
                   )}
                 </SelectContent>
               </Select>
+              {selectedContract && (
+                <p className="text-xs text-muted-foreground">
+                  Selected Contract ID: <code className="bg-muted px-1 rounded">{selectedContract.id}</code>
+                </p>
+              )}
             </div>
 
             {/* File Upload */}

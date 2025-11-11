@@ -17,6 +17,102 @@ const salesDataRowSchema = z.object({
   unitPrice: z.number().or(z.string().transform(val => parseFloat(val))).optional(),
 });
 
+/**
+ * Normalize field names from various CSV formats to match our schema
+ * Supports common variations like "Date" -> "transactionDate", "Sales Amount" -> "grossAmount"
+ */
+function normalizeFieldNames(row: any): any {
+  const normalized: any = {};
+  
+  // Field name mappings (case-insensitive)
+  const fieldMappings: Record<string, string> = {
+    // Transaction Date variations
+    'date': 'transactionDate',
+    'transaction date': 'transactionDate',
+    'transactiondate': 'transactionDate',
+    'sale date': 'transactionDate',
+    'saledate': 'transactionDate',
+    
+    // Transaction ID variations
+    'transaction id': 'transactionId',
+    'transactionid': 'transactionId',
+    'transaction_id': 'transactionId',
+    'id': 'transactionId',
+    'sale id': 'transactionId',
+    
+    // Product Code variations
+    'product code': 'productCode',
+    'productcode': 'productCode',
+    'product_code': 'productCode',
+    'sku': 'productCode',
+    'item code': 'productCode',
+    
+    // Product Name variations
+    'product name': 'productName',
+    'productname': 'productName',
+    'product_name': 'productName',
+    'product': 'productName',
+    'item name': 'productName',
+    'item': 'productName',
+    
+    // Category variations
+    'category': 'category',
+    'product category': 'category',
+    'productcategory': 'category',
+    'type': 'category',
+    
+    // Territory variations
+    'territory': 'territory',
+    'region': 'territory',
+    'country': 'territory',
+    'location': 'territory',
+    
+    // Gross Amount variations
+    'sales amount': 'grossAmount',
+    'salesamount': 'grossAmount',
+    'gross amount': 'grossAmount',
+    'grossamount': 'grossAmount',
+    'gross_amount': 'grossAmount',
+    'amount': 'grossAmount',
+    'total amount': 'grossAmount',
+    'revenue': 'grossAmount',
+    
+    // Net Amount variations
+    'net amount': 'netAmount',
+    'netamount': 'netAmount',
+    'net_amount': 'netAmount',
+    'net': 'netAmount',
+    
+    // Quantity variations
+    'quantity': 'quantity',
+    'qty': 'quantity',
+    'units': 'quantity',
+    'units sold': 'quantity',
+    'unitssold': 'quantity',
+    'volume': 'quantity',
+    
+    // Unit Price variations
+    'unit price': 'unitPrice',
+    'unitprice': 'unitPrice',
+    'unit_price': 'unitPrice',
+    'price': 'unitPrice',
+    'price per unit': 'unitPrice',
+    
+    // Component Type (electronics specific)
+    'component type': 'category',
+    'componenttype': 'category',
+  };
+  
+  // Process each field in the row
+  for (const [key, value] of Object.entries(row)) {
+    const normalizedKey = key.toLowerCase().trim();
+    const mappedKey = fieldMappings[normalizedKey] || key;
+    normalized[mappedKey] = value;
+  }
+  
+  return normalized;
+}
+
 export interface ParsedSalesRow {
   rowIndex: number;
   rowData: any;
@@ -109,14 +205,16 @@ export class SalesDataParser {
     let invalidCount = 0;
 
     rawRows.forEach((row, index) => {
-      const result = salesDataRowSchema.safeParse(row);
+      // Normalize field names to match our schema (e.g., "Date" -> "transactionDate")
+      const normalizedRow = normalizeFieldNames(row);
+      const result = salesDataRowSchema.safeParse(normalizedRow);
       
       if (result.success) {
         parsedRows.push({
           rowIndex: index,
           rowData: result.data,
           validationStatus: 'valid',
-          externalId: row.transactionId || `row-${index}`
+          externalId: normalizedRow.transactionId || row.transactionId || `row-${index}`
         });
         validCount++;
       } else {
@@ -126,7 +224,7 @@ export class SalesDataParser {
           rowData: row,
           validationStatus: 'invalid',
           validationErrors: errors,
-          externalId: row.transactionId || `row-${index}`
+          externalId: normalizedRow.transactionId || row.transactionId || `row-${index}`
         });
         invalidCount++;
       }
