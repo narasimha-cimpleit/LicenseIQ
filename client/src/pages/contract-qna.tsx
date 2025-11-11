@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import MainLayout from "@/components/layout/main-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,6 +38,15 @@ export default function ContractQnA() {
   const [selectedContract, setSelectedContract] = useState<string>("all");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isAsking, setIsAsking] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   // Fetch all contracts
   const { data: contractsResponse, isLoading: contractsLoading } = useQuery({
@@ -142,64 +151,67 @@ export default function ContractQnA() {
                       </p>
                     </div>
                   ) : (
-                    messages.map((msg, idx) => (
-                      <div key={idx} className={`flex ${msg.type === 'question' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[80%] ${msg.type === 'question' ? 'bg-purple-100 dark:bg-purple-900' : 'bg-gray-100 dark:bg-gray-800'} rounded-lg p-4`}>
-                          {msg.type === 'question' ? (
-                            <div>
-                              <p className="text-sm font-semibold text-purple-700 dark:text-purple-300 mb-1">You asked:</p>
-                              <p className="text-sm">{msg.content}</p>
-                            </div>
-                          ) : (
-                            <div className="space-y-3">
-                              <div className="flex items-start gap-2">
-                                <Sparkles className="h-5 w-5 text-purple-600 mt-0.5" />
-                                <div className="flex-1">
-                                  <p className="text-sm font-semibold text-purple-700 dark:text-purple-300 mb-2">AI Answer:</p>
-                                  <p className="text-sm leading-relaxed">{msg.content}</p>
-                                </div>
+                    <>
+                      {messages.map((msg, idx) => (
+                        <div key={idx} className={`flex ${msg.type === 'question' ? 'justify-end' : 'justify-start'}`}>
+                          <div className={`max-w-[80%] ${msg.type === 'question' ? 'bg-purple-100 dark:bg-purple-900' : 'bg-gray-100 dark:bg-gray-800'} rounded-lg p-4`}>
+                            {msg.type === 'question' ? (
+                              <div>
+                                <p className="text-sm font-semibold text-purple-700 dark:text-purple-300 mb-1">You asked:</p>
+                                <p className="text-sm">{msg.content}</p>
                               </div>
-                              {msg.confidence !== undefined && (
-                                <div className="flex items-center gap-2 pt-2 border-t">
-                                  <Badge variant={getConfidenceBadge(msg.confidence)}>
-                                    <CheckCircle2 className="h-3 w-3 mr-1" />
-                                    {(msg.confidence * 100).toFixed(0)}% Confidence
-                                  </Badge>
-                                  {msg.sources && msg.sources.length > 0 && (
-                                    <span className="text-xs text-muted-foreground">
-                                      {msg.sources.length} source{msg.sources.length > 1 ? 's' : ''}
-                                    </span>
-                                  )}
-                                </div>
-                              )}
-                              {msg.sources && msg.sources.length > 0 && (
-                                <details className="group">
-                                  <summary className="cursor-pointer text-xs text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1">
-                                    <ChevronDown className="h-3 w-3 transition-transform group-open:rotate-180" />
-                                    View Sources
-                                  </summary>
-                                  <div className="mt-2 space-y-2">
-                                    {msg.sources.map((source, sidx) => (
-                                      <div key={sidx} className="bg-white dark:bg-gray-900 rounded p-3 border">
-                                        <div className="flex items-center justify-between mb-1">
-                                          <p className="text-xs font-semibold text-purple-700 dark:text-purple-300">
-                                            {source.contractName}
-                                          </p>
-                                          <Badge variant="outline" className="text-xs">
-                                            {(source.similarity * 100).toFixed(0)}% match
-                                          </Badge>
-                                        </div>
-                                        <p className="text-xs text-muted-foreground">{source.relevantText}</p>
-                                      </div>
-                                    ))}
+                            ) : (
+                              <div className="space-y-3">
+                                <div className="flex items-start gap-2">
+                                  <Sparkles className="h-5 w-5 text-purple-600 mt-0.5" />
+                                  <div className="flex-1">
+                                    <p className="text-sm font-semibold text-purple-700 dark:text-purple-300 mb-2">AI Answer:</p>
+                                    <p className="text-sm leading-relaxed">{msg.content}</p>
                                   </div>
-                                </details>
-                              )}
-                            </div>
-                          )}
+                                </div>
+                                {msg.confidence !== undefined && (
+                                  <div className="flex items-center gap-2 pt-2 border-t">
+                                    <Badge variant={getConfidenceBadge(msg.confidence)}>
+                                      <CheckCircle2 className="h-3 w-3 mr-1" />
+                                      {(msg.confidence * 100).toFixed(0)}% Confidence
+                                    </Badge>
+                                    {msg.sources && msg.sources.length > 0 && (
+                                      <span className="text-xs text-muted-foreground">
+                                        {msg.sources.length} source{msg.sources.length > 1 ? 's' : ''}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                                {msg.sources && msg.sources.length > 0 && (
+                                  <details className="group">
+                                    <summary className="cursor-pointer text-xs text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1">
+                                      <ChevronDown className="h-3 w-3 transition-transform group-open:rotate-180" />
+                                      View Sources
+                                    </summary>
+                                    <div className="mt-2 space-y-2">
+                                      {msg.sources.map((source, sidx) => (
+                                        <div key={sidx} className="bg-white dark:bg-gray-900 rounded p-3 border">
+                                          <div className="flex items-center justify-between mb-1">
+                                            <p className="text-xs font-semibold text-purple-700 dark:text-purple-300">
+                                              {source.contractName}
+                                            </p>
+                                            <Badge variant="outline" className="text-xs">
+                                              {(source.similarity * 100).toFixed(0)}% match
+                                            </Badge>
+                                          </div>
+                                          <p className="text-xs text-muted-foreground">{source.relevantText}</p>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </details>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      ))}
+                      <div ref={messagesEndRef} />
+                    </>
                   )}
                 </div>
 

@@ -35,9 +35,10 @@ export class RAGService {
       const { embedding } = await HuggingFaceEmbeddingService.generateEmbedding(question);
       
       // Step 2: Find relevant contract sections using semantic search
+      // Balanced similarity threshold and increased limit for better accuracy
       const matches = await SemanticSearchService.findMatchingContracts(question, {
-        minSimilarity: 0.3,
-        limit: 5,
+        minSimilarity: 0.4,
+        limit: 10,
       });
       
       // Filter by contract if specified
@@ -60,10 +61,10 @@ export class RAGService {
         .from(contracts)
         .where(eq(contracts.id, contractIds[0])); // For now, use the most relevant contract
       
-      // Step 4: Build context from relevant sections
+      // Step 4: Build context from relevant sections (use up to 8 for more complete context)
       const context = filteredMatches
-        .slice(0, 3)
-        .map((match, i) => `[${i + 1}] ${match.sourceText}`)
+        .slice(0, 8)
+        .map((match, i) => `[Section ${i + 1}] ${match.sourceText}`)
         .join('\n\n');
       
       // Step 5: Generate answer using Groq LLaMA
@@ -81,8 +82,8 @@ export class RAGService {
       
       console.log(`✅ [RAG] Answer generated with ${sources.length} sources (avg confidence: ${(avgConfidence * 100).toFixed(1)}%)`);
       
-      // If confidence is too low (< 60%), fall back to full contract analysis
-      if (avgConfidence < 0.6) {
+      // If confidence is too low (< 55%), fall back to full contract analysis
+      if (avgConfidence < 0.55) {
         console.log(`⚠️ [RAG] Low confidence (${(avgConfidence * 100).toFixed(1)}%), falling back to full contract analysis`);
         
         // Get the full contract text
@@ -96,7 +97,7 @@ export class RAGService {
           return {
             answer: fallbackAnswer,
             sources: sources,
-            confidence: 0.75, // Indicate this is from full contract analysis
+            confidence: 0.80, // Indicate this is from full contract analysis
           };
         }
       }
@@ -240,21 +241,25 @@ Provide a helpful answer based on the contract information above:`;
       throw new Error('GROQ_API_KEY is not set');
     }
     
-    const systemPrompt = `You are an expert contract analyst assistant. Answer questions about contracts based ONLY on the provided context. 
+    const systemPrompt = `You are an expert contract analyst assistant with deep knowledge of licensing agreements, royalty structures, and contract terms. Your job is to provide accurate, helpful answers based ONLY on the contract information provided.
 
-Rules:
-1. Use ONLY information from the provided context
-2. If the context doesn't contain the answer, say "I don't have enough information to answer that"
-3. Be concise and precise
-4. Cite specific sections when possible (e.g., "According to the agreement...")
-5. If you're uncertain, indicate that clearly`;
+CRITICAL RULES:
+1. ONLY use information explicitly stated in the provided contract sections
+2. If the provided sections don't contain enough information to answer the question, clearly state: "I don't have enough information in the provided contract sections to answer that question accurately"
+3. DO NOT speculate or infer beyond what is explicitly written in the contract
+4. Be specific - cite exact numbers, percentages, dates, and terms from the contract sections
+5. If information spans multiple sections, synthesize them into a comprehensive answer
+6. Clearly distinguish between direct quotes from the contract and your interpretation
+7. Format your answer in a clear, professional manner with specific citations`;
 
-    const userPrompt = `Context from contracts:
+    const userPrompt = `I have extracted the following relevant sections from the contract documents:
+
 ${context}
 
-Question: ${question}
+Based ONLY on the information in these contract sections, please answer the following question:
+${question}
 
-Answer:`;
+IMPORTANT: Only provide information that is explicitly stated in the sections above. If the answer is not in these sections, clearly state that you don't have enough information. Cite specific sections when possible.`;
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -268,8 +273,8 @@ Answer:`;
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
-        temperature: 0.3,
-        max_tokens: 500,
+        temperature: 0.4,
+        max_tokens: 800,
       }),
     });
 
