@@ -671,16 +671,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (Array.isArray(riskData)) {
           return riskData.map((risk: any, index: number) => {
             if (typeof risk === 'string') return `${index + 1}. ${risk}`;
-            return `${index + 1}. [${risk.level?.toUpperCase() || 'UNKNOWN'}] ${risk.title || risk.category || 'Risk'}\n   ${risk.description || risk.details || JSON.stringify(risk)}`;
+            if (typeof risk === 'object') {
+              const title = risk.title || risk.category || risk.type || 'Risk';
+              const level = risk.level ? `[${risk.level.toUpperCase()}] ` : '';
+              const description = risk.description || risk.details || risk.impact || risk.mitigation || '';
+              // If no description fields found, stringify the whole object
+              const content = description || JSON.stringify(risk, null, 2);
+              return `${index + 1}. ${level}${title}\n   ${content}`;
+            }
+            return `${index + 1}. ${JSON.stringify(risk)}`;
           }).join('\n\n');
         }
         if (typeof riskData === 'object') {
           const risks = [];
           if (riskData.overall) risks.push(`Overall Risk Level: ${riskData.overall}`);
           if (riskData.risks && Array.isArray(riskData.risks)) {
-            risks.push(...riskData.risks.map((risk: any, index: number) => 
-              `${index + 1}. [${risk.level?.toUpperCase() || 'UNKNOWN'}] ${risk.title || risk.category}\n   ${risk.description || risk.details}`
-            ));
+            risks.push(...riskData.risks.map((risk: any, index: number) => {
+              const title = risk.title || risk.category || risk.type || 'Risk';
+              const level = risk.level ? `[${risk.level.toUpperCase()}] ` : '';
+              const description = risk.description || risk.details || risk.impact || risk.mitigation || '';
+              // If no description fields found, stringify the whole object
+              const content = description || JSON.stringify(risk, null, 2);
+              return `${index + 1}. ${level}${title}\n   ${content}`;
+            }));
           }
           return risks.length > 0 ? risks.join('\n\n') : JSON.stringify(riskData, null, 2);
         }
@@ -694,19 +707,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (Array.isArray(insightsData)) {
           return insightsData.map((insight: any, index: number) => {
             if (typeof insight === 'string') return `${index + 1}. ${insight}`;
-            return `${index + 1}. ${insight.title || insight.category || 'Insight'}\n   ${insight.description || insight.recommendation || JSON.stringify(insight)}`;
+            if (typeof insight === 'object') {
+              const title = insight.title || insight.category || insight.type || 'Insight';
+              const content = insight.description || insight.recommendation || insight.details || insight.action || '';
+              // If no content fields found, stringify the whole object
+              const text = content || JSON.stringify(insight, null, 2);
+              return `${index + 1}. ${title}\n   ${text}`;
+            }
+            return `${index + 1}. ${JSON.stringify(insight)}`;
           }).join('\n\n');
         }
         if (typeof insightsData === 'object') {
           const insights = [];
           if (insightsData.recommendations && Array.isArray(insightsData.recommendations)) {
-            insights.push(...insightsData.recommendations.map((rec: any, index: number) => 
-              `${index + 1}. ${rec.title || rec.category}\n   ${rec.description || rec.recommendation || rec.details}`
-            ));
+            insights.push(...insightsData.recommendations.map((rec: any, index: number) => {
+              const title = rec.title || rec.category || rec.type || 'Recommendation';
+              const content = rec.description || rec.recommendation || rec.details || rec.action || '';
+              // If no content fields found, stringify the whole object
+              const text = content || JSON.stringify(rec, null, 2);
+              return `${index + 1}. ${title}\n   ${text}`;
+            }));
           } else if (insightsData.insights && Array.isArray(insightsData.insights)) {
-            insights.push(...insightsData.insights.map((insight: any, index: number) => 
-              `${index + 1}. ${insight.title || insight.category}\n   ${insight.description || insight.details}`
-            ));
+            insights.push(...insightsData.insights.map((insight: any, index: number) => {
+              const title = insight.title || insight.category || insight.type || 'Insight';
+              const content = insight.description || insight.details || insight.action || '';
+              // If no content fields found, stringify the whole object
+              const text = content || JSON.stringify(insight, null, 2);
+              return `${index + 1}. ${title}\n   ${text}`;
+            }));
           }
           return insights.length > 0 ? insights.join('\n\n') : JSON.stringify(insightsData, null, 2);
         }
