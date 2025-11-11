@@ -5055,25 +5055,16 @@ async function processContractAnalysis(contractId: string, filePath: string) {
     
     // 🔧 FIX: Map Groq RoyaltyRule[] to InsertRoyaltyRule[] for database persistence
     const royaltyRulesData: InsertRoyaltyRule[] = (detailedExtraction.rules || []).map(rule => {
-      // Build formulaDefinition from calculation + conditions for dynamic formula engine
-      const formulaDefinition = {
-        calculation: rule.calculation || {},
-        conditions: rule.conditions || {},
-        metadata: {
-          ruleType: rule.ruleType,
-          description: rule.description
-        }
-      };
-      
       return {
         contractId, // Will be added by the loop below, but TypeScript needs it
         ruleType: rule.ruleType,
         ruleName: rule.ruleName,
         description: rule.description || '',
         
-        // NEW: JSON-based formula definition
-        formulaDefinition: formulaDefinition as any,
-        formulaVersion: '1.0',
+        // NEW: JSON-based formula definition - Set to null for now (use legacy calculation)
+        // TODO: Build proper FormulaNode expression tree from AI data
+        formulaDefinition: null,
+        formulaVersion: null,
         
         // LEGACY: Map to legacy fields for backwards compatibility
         productCategories: rule.conditions?.productCategories || [],
