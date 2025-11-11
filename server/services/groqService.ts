@@ -568,8 +568,8 @@ Return ONLY valid JSON. No explanations.`;
     basicInfo: any;
     allRules: RoyaltyRule[];
   }> {
-    // For large contracts (>20k chars), use chunked extraction to capture rules from beginning, middle, and end
-    if (contractText.length > 20000) {
+    // For large contracts (>15k chars), use chunked extraction to capture rules from beginning, middle, and end
+    if (contractText.length > 15000) {
       console.log(`📄 Large contract (${contractText.length} chars) - using chunked extraction`);
       return await this.extractLargeContractInChunks(contractText);
     }
