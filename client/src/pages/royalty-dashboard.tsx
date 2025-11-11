@@ -91,7 +91,7 @@ export default function RoyaltyDashboard() {
       setIsFormOpen(false);
       toast({
         title: "Calculation Complete",
-        description: data.message || "Royalties calculated successfully",
+        description: data.message || "License fees calculated successfully",
       });
       queryClient.invalidateQueries({ queryKey: [`/api/contracts/${id}/royalty-calculations`] });
     },
@@ -145,7 +145,7 @@ export default function RoyaltyDashboard() {
     onSuccess: async (data) => {
       toast({
         title: "Calculations Deleted",
-        description: data.message || "All royalty calculations have been deleted",
+        description: data.message || "All license fee calculations have been deleted",
       });
       await queryClient.invalidateQueries({ queryKey: [`/api/contracts/${id}/royalty-calculations`] });
       await queryClient.refetchQueries({ queryKey: [`/api/contracts/${id}/royalty-calculations`] });
@@ -211,7 +211,7 @@ export default function RoyaltyDashboard() {
 
   const pieData = [
     { name: "Sales Amount", value: parseFloat(latestCalculation?.totalSalesAmount || 0), color: "#8b5cf6" },
-    { name: "Royalty", value: parseFloat(latestCalculation?.totalRoyalty || 0), color: "#ec4899" },
+    { name: "License Fee", value: parseFloat(latestCalculation?.totalRoyalty || 0), color: "#ec4899" },
   ];
 
   const COLORS = ["#8b5cf6", "#ec4899"];
@@ -219,8 +219,8 @@ export default function RoyaltyDashboard() {
   if (contractLoading || salesLoading || calculationsLoading) {
     return (
       <MainLayout
-        title="Royalty Calculator"
-        description="Calculate and manage royalty payments"
+        title="License Fee Calculator"
+        description="Calculate and manage license fee payments"
       >
         <div className="space-y-6">
           <Skeleton className="h-40 w-full" />
@@ -232,9 +232,9 @@ export default function RoyaltyDashboard() {
 
   return (
     <MainLayout
-      title="Royalty Calculator"
+      title="License Fee Calculator"
       description={
-        `Calculate royalties for ${(contract as any)?.contractNumber ? `${(contract as any).contractNumber} - ` : ''}${(contract as any)?.originalName || 'contract'}`
+        `Calculate license fees for ${(contract as any)?.contractNumber ? `${(contract as any).contractNumber} - ` : ''}${(contract as any)?.originalName || 'contract'}`
       }
     >
       <div className="space-y-6">
@@ -250,7 +250,7 @@ export default function RoyaltyDashboard() {
             data-testid="button-manage-rules"
           >
             <Settings className="h-4 w-4 mr-2" />
-            Manage Royalty Rules
+            Manage License Fee Rules
           </Button>
         </div>
 
@@ -287,7 +287,7 @@ export default function RoyaltyDashboard() {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
-                Final Royalty
+                Final License Fee
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -500,7 +500,7 @@ export default function RoyaltyDashboard() {
               <div className="space-y-2">
                 <h4 className="text-sm font-semibold">Calculation History</h4>
                 <p className="text-xs text-muted-foreground mb-2">
-                  Delete all {calculations.length} royalty calculation runs
+                  Delete all {calculations.length} license fee calculation runs
                 </p>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
@@ -518,7 +518,7 @@ export default function RoyaltyDashboard() {
                     <AlertDialogHeader>
                       <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                       <AlertDialogDescription>
-                        This will permanently delete all {calculations.length} royalty calculation runs for this contract. 
+                        This will permanently delete all {calculations.length} license fee calculation runs for this contract. 
                         This action cannot be undone.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
@@ -550,7 +550,7 @@ export default function RoyaltyDashboard() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BarChart3 className="h-5 w-5" />
-                Sales & Royalty Breakdown
+                Sales & License Fee Breakdown
               </CardTitle>
               <CardDescription>
                 Top {chartData.length} products by sales amount
@@ -565,7 +565,7 @@ export default function RoyaltyDashboard() {
                   <Tooltip />
                   <Legend />
                   <Bar dataKey="sales" fill="#8b5cf6" name="Sales Amount" />
-                  <Bar dataKey="royalty" fill="#ec4899" name="Royalty Amount" />
+                  <Bar dataKey="royalty" fill="#ec4899" name="License Fee Amount" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -580,7 +580,7 @@ export default function RoyaltyDashboard() {
                 Revenue Distribution
               </CardTitle>
               <CardDescription>
-                Sales amount vs Royalty amount
+                Sales amount vs License Fee amount
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -614,7 +614,7 @@ export default function RoyaltyDashboard() {
               Calculation History
             </CardTitle>
             <CardDescription>
-              Previous royalty calculations for this contract
+              Previous license fee calculations for this contract
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -647,7 +647,7 @@ export default function RoyaltyDashboard() {
                         <p className="font-semibold">${parseFloat(calc.totalSalesAmount || "0").toLocaleString()}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm text-muted-foreground">Royalty</p>
+                        <p className="text-sm text-muted-foreground">License Fee</p>
                         <p className="font-semibold text-purple-600">${parseFloat(calc.totalRoyalty || "0").toLocaleString()}</p>
                       </div>
                       <Badge variant={calc.status === "approved" ? "default" : calc.status === "rejected" ? "destructive" : "secondary"}>
