@@ -5151,7 +5151,9 @@ async function processContractAnalysis(contractId: string, filePath: string) {
       
       // Only update fields that are currently null/empty AND AI extracted a value
       if (!currentContract.displayName && detailedExtraction.parties?.licensor) {
-        metadataUpdate.displayName = `${detailedExtraction.parties.licensor} - ${detailedExtraction.licenseType || 'Agreement'}`;
+        const contractNum = currentContract.contractNumber || '';
+        const originalName = currentContract.originalName || '';
+        metadataUpdate.displayName = contractNum ? `${contractNum} ${originalName}` : `${detailedExtraction.parties.licensor} - ${detailedExtraction.licenseType || 'Agreement'}`;
       }
       if (!currentContract.counterpartyName && detailedExtraction.parties?.licensor) {
         metadataUpdate.counterpartyName = detailedExtraction.parties.licensor;

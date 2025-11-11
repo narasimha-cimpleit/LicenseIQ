@@ -372,7 +372,7 @@ export default function RulesManagement() {
       <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="bg-blue-100 dark:bg-blue-900">
-            {contractCategory === 'royalty' ? 'Royalty/Licensing Contract' : 
+            {contractCategory === 'royalty' ? 'License Fee/Licensing Contract' : 
              contractCategory === 'payment' ? 'Service/Payment Contract' : 
              'General Contract'}
           </Badge>
@@ -471,7 +471,7 @@ export default function RulesManagement() {
                 placeholder="1.25"
                 data-testid="input-base-rate"
               />
-              <p className="text-xs text-muted-foreground mt-1">Per-unit base royalty rate</p>
+              <p className="text-xs text-muted-foreground mt-1">Per-unit base license fee rate</p>
             </div>
             
             <div>
@@ -894,7 +894,7 @@ export default function RulesManagement() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
-                Royalty Rules Management
+                License Fee Rules Management
               </h1>
               <p className="text-muted-foreground mt-2">
                 {(contract as any)?.contractNumber && (
@@ -922,7 +922,7 @@ export default function RulesManagement() {
         {showAddForm && (
           <Card className="mb-6 border-2 border-violet-300 dark:border-violet-700">
             <CardHeader>
-              <CardTitle>Add New Royalty Rule</CardTitle>
+              <CardTitle>Add New License Fee Rule</CardTitle>
               <CardDescription>
                 Configure calculation formulas and rule parameters. All fields are optional except Rule Name.
               </CardDescription>
@@ -941,7 +941,7 @@ export default function RulesManagement() {
         ) : !rulesData?.rules || rulesData.rules.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground mb-4">No royalty rules found for this contract.</p>
+              <p className="text-muted-foreground mb-4">No license fee rules found for this contract.</p>
               {!showAddForm && (
                 <Button
                   onClick={startAddNew}
