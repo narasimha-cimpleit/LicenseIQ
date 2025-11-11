@@ -10,6 +10,16 @@ Preferred communication style: Simple, everyday language.
 - Use "License Fee" (NOT "Royalty") throughout the application
 - Use "LIQ AI" (NOT "Contract Q&A") for the RAG-powered assistant
 
+# Recent Changes
+
+- **Chunked Contract Extraction** (2025-01-11): Implemented intelligent 3-chunk extraction for large contracts (>20k chars) - extracts from header (parties/dates), middle (30% position - detailed pricing), and tail (last 20k - pricing schedules). Deduplicates rules by normalized sourceSpan.text, keeping highest confidence entries. Solves "no rules generated" issue for large PDFs like Electronics Patent License.
+- **System Knowledge Base for LIQ AI**: LIQ AI can now answer questions about the LicenseIQ platform itself, not just contract content. 11 documentation topics seeded covering platform features, contract types, AI services, calculations, security, deployment, etc.
+- **RAG Dual-Source Routing**: Enhanced RAG service to intelligently route questions between contract documentation and platform documentation based on semantic similarity.
+- **LIQ AI Example Questions UX**: Added 8 curated platform questions (blue-highlighted) and 5 essential contract questions in a compact, scrollable UI (400px max height) for better user experience.
+- **Terminology Standardization**: Changed all "Royalty" references to "License Fee" across rules management (titles, labels, descriptions).
+- **View Sources Bug Fix**: Fixed "[object Object]" display by adding proper string handling for sourceText field.
+- **Enhanced Contract Display**: Contract dropdown now shows user-friendly format "CNT-2025-003 Plant Variety License & Royalty Agreement.pdf".
+
 # System Architecture
 
 ## UI/UX Decisions
