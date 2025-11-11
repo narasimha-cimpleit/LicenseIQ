@@ -84,6 +84,12 @@ export default function ContractAnalysis() {
         title: "Contract Deleted",
         description: "The contract has been permanently deleted.",
       });
+      
+      // Invalidate all related caches
+      queryClient.invalidateQueries({ queryKey: ["/api/contracts"] }); // Contracts list
+      queryClient.invalidateQueries({ queryKey: ["/api/calculations/all"] }); // Global calculations page
+      queryClient.invalidateQueries({ queryKey: [`/api/contracts/${id}`] }); // This contract's detail
+      
       // Redirect to contracts list
       setLocation("/contracts");
     },
