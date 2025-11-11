@@ -391,16 +391,27 @@ export default function SalesUpload() {
               <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 border border-green-200 dark:border-green-800 rounded-lg p-4">
                 <p className="text-sm text-green-800 dark:text-green-200 font-semibold mb-3">✅ Sales data uploaded successfully!</p>
                 <p className="text-sm text-green-800 dark:text-green-200 mb-4">
-                  View your sales data and calculate license fees on the License Fee Dashboard.
+                  What would you like to do next?
                 </p>
-                <Button
-                  onClick={() => setLocation(`/royalty-dashboard/${selectedContractId}`)}
-                  className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
-                  data-testid="button-view-dashboard"
-                >
-                  <Calculator className="h-4 w-4 mr-2" />
-                  View License Fee Dashboard
-                </Button>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <Button
+                    onClick={() => setLocation(`/royalty-dashboard/${selectedContractId}`)}
+                    className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+                    data-testid="button-view-dashboard"
+                  >
+                    <Calculator className="h-4 w-4 mr-2" />
+                    View License Fee Dashboard
+                  </Button>
+                  <Button
+                    onClick={() => setLocation(`/contracts/${selectedContractId}/rules`)}
+                    variant="outline"
+                    className="border-purple-300 dark:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-950"
+                    data-testid="button-manage-rules"
+                  >
+                    <FileSpreadsheet className="h-4 w-4 mr-2" />
+                    Manage License Fee Rules
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
