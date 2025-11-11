@@ -2703,11 +2703,12 @@ Report ID: ${contractId}
         source: 'landing_page',
       });
 
-      // Send notification email to info@licenseiq.ai
+      // Send emails asynchronously
       try {
         const { getUncachableResendClient } = await import('./resend.js');
         const { client, fromEmail } = await getUncachableResendClient();
         
+        // Send notification email to info@licenseiq.ai
         await client.emails.send({
           from: fromEmail,
           to: ['info@licenseiq.ai'],
@@ -2734,8 +2735,64 @@ Report ID: ${contractId}
         });
         
         console.log(`📧 Early access notification sent to info@licenseiq.ai for ${email}`);
+
+        // Send confirmation email to customer
+        await client.emails.send({
+          from: fromEmail,
+          to: [email],
+          subject: 'Welcome to LicenseIQ Early Access! 🚀',
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: #2563eb; margin-bottom: 10px;">Thank You for Your Interest!</h1>
+                <p style="color: #6b7280; font-size: 18px;">You're on the list for early access to LicenseIQ</p>
+              </div>
+              
+              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 12px; color: white; margin: 20px 0;">
+                <h2 style="margin: 0 0 15px 0; font-size: 24px;">What Happens Next?</h2>
+                <p style="margin: 0; font-size: 16px; line-height: 1.6;">
+                  Our team will review your request and reach out to you within 1-2 business days to schedule a personalized demo and discuss how LicenseIQ can transform your contract management.
+                </p>
+              </div>
+
+              <div style="background-color: #f9fafb; padding: 25px; border-radius: 8px; margin: 25px 0;">
+                <h3 style="color: #1f2937; margin-top: 0;">Your Registration Details</h3>
+                <p style="margin: 8px 0; color: #4b5563;"><strong>Name:</strong> ${name || 'Not provided'}</p>
+                <p style="margin: 8px 0; color: #4b5563;"><strong>Email:</strong> ${email}</p>
+                ${company ? `<p style="margin: 8px 0; color: #4b5563;"><strong>Company:</strong> ${company}</p>` : ''}
+              </div>
+
+              <div style="background-color: #eff6ff; border-left: 4px solid #2563eb; padding: 20px; margin: 25px 0;">
+                <h3 style="color: #1e40af; margin-top: 0;">🎯 What You'll Get:</h3>
+                <ul style="color: #1e40af; line-height: 1.8; margin: 10px 0;">
+                  <li>AI-powered contract analysis and risk assessment</li>
+                  <li>Automated payment calculations and compliance checks</li>
+                  <li>Dynamic rule engine for complex licensing agreements</li>
+                  <li>RAG-powered Q&A system for instant contract insights</li>
+                  <li>Seamless ERP integration with intelligent field mapping</li>
+                </ul>
+              </div>
+
+              <div style="text-align: center; margin: 30px 0;">
+                <p style="color: #6b7280; margin-bottom: 20px;">
+                  Have questions? Reply to this email or contact us at 
+                  <a href="mailto:info@licenseiq.ai" style="color: #2563eb; text-decoration: none;">info@licenseiq.ai</a>
+                </p>
+              </div>
+
+              <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px;">
+                <p style="color: #9ca3af; font-size: 14px; text-align: center; margin: 0;">
+                  This email was sent because you requested early access to LicenseIQ Research Platform.<br>
+                  © ${new Date().getFullYear()} LicenseIQ. All rights reserved.
+                </p>
+              </div>
+            </div>
+          `,
+        });
+        
+        console.log(`✅ Confirmation email sent to customer: ${email}`);
       } catch (emailError) {
-        console.error('Failed to send notification email:', emailError);
+        console.error('Failed to send emails:', emailError);
         // Don't fail the request if email fails - signup is already saved
       }
 
