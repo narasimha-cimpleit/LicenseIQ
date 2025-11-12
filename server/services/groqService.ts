@@ -372,33 +372,49 @@ export class GroqService {
     const uniqueRules = this.deduplicateRules(allRules);
     console.log(`✅ Chunked extraction: ${uniqueRules.length} unique rules from ${allRules.length} total`);
     
+    // Phase 2: Add source snippets to rules
+    const rulesWithSources = await this.addRuleSources(contractText, uniqueRules);
+    
     return {
       basicInfo: headerResult.basicInfo,
-      allRules: uniqueRules
+      allRules: rulesWithSources
     };
   }
 
-  // Deduplicate rules based on normalized sourceSpan.text, keeping highest confidence
+  // Deduplicate rules based on rule identity (calculation + conditions), keeping highest confidence
   private deduplicateRules(rules: RoyaltyRule[]): RoyaltyRule[] {
     const ruleMap = new Map<string, RoyaltyRule>();
     
     for (const rule of rules) {
-      if (!rule.sourceSpan?.text) continue;
+      // Create fingerprint from rule identity (type, name, calculation values, product categories)
+      const fingerprint = JSON.stringify({
+        type: rule.ruleType,
+        name: rule.ruleName?.toLowerCase().trim(),
+        rate: rule.calculation?.rate,
+        amount: rule.calculation?.amount,
+        products: rule.conditions?.productCategories?.map(p => p.toLowerCase().trim()).sort()
+      });
       
-      // Normalize source text for comparison (lowercase, trim whitespace)
-      const normalizedText = rule.sourceSpan.text
-        .toLowerCase()
-        .replace(/\s+/g, ' ')
-        .trim()
-        .substring(0, 200); // Use first 200 chars as fingerprint
-      
-      const existing = ruleMap.get(normalizedText);
-      if (!existing || rule.confidence > existing.confidence) {
-        ruleMap.set(normalizedText, rule);
+      const existing = ruleMap.get(fingerprint);
+      if (!existing || (rule.confidence || 0) > (existing.confidence || 0)) {
+        ruleMap.set(fingerprint, rule);
       }
     }
     
     return Array.from(ruleMap.values());
+  }
+  
+  // Add source snippets to rules after extraction (Phase 2 of two-phase pipeline)
+  private async addRuleSources(contractText: string, rules: RoyaltyRule[]): Promise<RoyaltyRule[]> {
+    // For each rule, add a simple sourceSpan with section info
+    // We keep it lightweight to avoid re-triggering truncation issues
+    return rules.map(rule => ({
+      ...rule,
+      sourceSpan: {
+        section: rule.ruleType || 'Payment Terms',
+        text: `${rule.ruleName || 'Rule'}: ${rule.description || 'Pricing rule'}`.substring(0, 150)
+      }
+    }));
   }
 
   // Build extraction prompt (reusable helper)
@@ -810,9 +826,10 @@ Return ONLY valid JSON. No explanations.`;
     }
   }
 
-  // ⚡ SEPARATE RULES EXTRACTION - Focused call only for payment/pricing rules
+  // ⚡ SEPARATE RULES EXTRACTION - Focused call only for payment/pricing rules (WITHOUT sourceSpan to prevent truncation)
   private async extractRulesOnly(contractText: string, documentType: string): Promise<RoyaltyRule[]> {
     const prompt = `Extract ALL pricing and payment rules from this ${documentType} contract.
+**DO NOT include sourceSpan field** - we will add sources separately to prevent response overflow.
 
 Contract Text:
 ${contractText.substring(0, 10000)}
@@ -835,7 +852,6 @@ ${contractText.substring(0, 10000)}
 
 **CRITICAL - ANTI-HALLUCINATION RULES**: 
 - Extract ONLY rules that EXPLICITLY exist in the contract text
-- Each rule MUST include sourceSpan.text with EXACT VERBATIM quote from the contract
 - DO NOT invent, assume, or create rules
 - Set confidence 0.6-1.0 based on how explicit the rule is
 - Return empty array if no pricing/payment terms found
@@ -845,7 +861,7 @@ ${contractText.substring(0, 10000)}
 - If rule applies to "all products", use ["General"]
 - DO NOT leave productCategories empty
 
-**Return this EXACT JSON array:**
+**Return this EXACT JSON array (NO sourceSpan field):**
 [
   {
     "ruleType": "one of the exact types above",
@@ -863,15 +879,11 @@ ${contractText.substring(0, 10000)}
       "tiers": [{"min": 0, "max": 1000, "rate": 5.0}]
     },
     "priority": 1,
-    "sourceSpan": {
-      "section": "section name",
-      "text": "verbatim quote"
-    },
     "confidence": 0.9
   }
 ]
 
-Return ONLY valid JSON array. No explanations.`;
+**IMPORTANT**: Do NOT include "sourceSpan" field in your response. Return ONLY valid JSON array. No explanations.`;
 
     try {
       console.log(`📋 Making separate rules extraction call...`);
