@@ -392,6 +392,91 @@ chmod 600 .env
 echo ".env" >> .gitignore
 ```
 
+### Step 7.4: ⚠️ **CRITICAL: Update Database Configuration Files**
+
+Since you're using **standalone PostgreSQL** (not Neon serverless), you must modify these files:
+
+#### 📝 **File 1: `server/db.ts`**
+
+**Current (Development - Neon Serverless):**
+```typescript
+import { Pool, neonConfig } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-serverless';
+import ws from "ws";
+import * as schema from "@shared/schema";
+
+neonConfig.webSocketConstructor = ws;
+
+if (!process.env.DATABASE_URL) {
+  throw new Error(
+    "DATABASE_URL must be set. Did you forget to provision a database?",
+  );
+}
+
+export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+export const db = drizzle({ client: pool, schema });
+```
+
+**Change to (Production - Standalone PostgreSQL):**
+```typescript
+import { Pool } from 'pg';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import * as schema from "@shared/schema";
+
+if (!process.env.DATABASE_URL) {
+  throw new Error(
+    "DATABASE_URL must be set. Did you forget to provision a database?",
+  );
+}
+
+export const pool = new Pool({ 
+  connectionString: process.env.DATABASE_URL,
+  ssl: false // Set to true if using SSL
+});
+export const db = drizzle(pool, { schema });
+```
+
+**Key Changes:**
+1. ✅ Import `Pool` from `'pg'` instead of `'@neondatabase/serverless'`
+2. ✅ Import `drizzle` from `'drizzle-orm/node-postgres'` instead of `'drizzle-orm/neon-serverless'`
+3. ✅ Remove `neonConfig` and `ws` imports
+4. ✅ Remove `neonConfig.webSocketConstructor = ws;`
+5. ✅ Use `drizzle(pool, { schema })` instead of `drizzle({ client: pool, schema })`
+6. ✅ Add `ssl: false` option for local PostgreSQL
+
+#### 📝 **File 2: `server/index.ts`**
+
+**No changes required** - This file already uses standard Drizzle ORM syntax that works with both Neon and standalone PostgreSQL.
+
+The database initialization code at lines 40-69 is compatible with both:
+```typescript
+await db.execute(sql`CREATE EXTENSION IF NOT EXISTS vector;`);
+// This works with both Neon and standalone PostgreSQL
+```
+
+#### 📦 **Update package.json Dependencies**
+
+The `pg` library should already be installed. Verify with:
+```bash
+cd /var/www/licenseiq
+npm list pg
+```
+
+If not installed:
+```bash
+npm install pg
+npm install --save-dev @types/node
+```
+
+#### 🔄 **Summary of Changes**
+
+| File | What to Change | Why |
+|------|---------------|-----|
+| `server/db.ts` | Replace Neon imports with `pg` | Standalone PostgreSQL uses standard pg library |
+| `server/db.ts` | Change drizzle import path | Different adapter for node-postgres |
+| `server/db.ts` | Update Pool and drizzle() calls | Different syntax for standard pg |
+| `server/index.ts` | ✅ No changes needed | Already compatible |
+
 ---
 
 ## 8. Build Application
@@ -1086,6 +1171,49 @@ free -h                    # Memory usage
 htop                       # Process monitor
 ```
 
+### Issue: Database Configuration Error - "Cannot find module '@neondatabase/serverless'"
+
+**Cause**: Forgot to change `server/db.ts` from Neon to standalone PostgreSQL
+
+**Solution**:
+```bash
+# Edit server/db.ts
+nano /var/www/licenseiq/server/db.ts
+
+# Replace the imports and configuration as shown in Step 7.4
+# Then rebuild and restart
+npm run build
+pm2 restart licenseiq
+```
+
+**Quick Fix - Replace entire file:**
+```typescript
+// /var/www/licenseiq/server/db.ts
+import { Pool } from 'pg';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import * as schema from "@shared/schema";
+
+if (!process.env.DATABASE_URL) {
+  throw new Error(
+    "DATABASE_URL must be set. Did you forget to provision a database?",
+  );
+}
+
+export const pool = new Pool({ 
+  connectionString: process.env.DATABASE_URL,
+  ssl: false
+});
+export const db = drizzle(pool, { schema });
+```
+
+### Issue: "Module not found: Error: Can't resolve 'drizzle-orm/neon-serverless'"
+
+**Cause**: Same as above - Neon imports still present
+
+**Solution**: See Step 7.4 in this guide for complete database configuration changes.
+
+---
+
 ### Next Steps
 
 1. ✅ Set up automated backups
@@ -1102,7 +1230,30 @@ htop                       # Process monitor
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: November 2024  
+---
+
+## Quick Reference: Database Configuration Changes
+
+**Must change before deploying to Hostinger VPS with standalone PostgreSQL:**
+
+### server/db.ts Changes
+
+| Component | Development (Neon) | Production (Standalone PostgreSQL) |
+|-----------|-------------------|-------------------------------------|
+| Import Pool | `from '@neondatabase/serverless'` | `from 'pg'` |
+| Import drizzle | `from 'drizzle-orm/neon-serverless'` | `from 'drizzle-orm/node-postgres'` |
+| WebSocket config | `neonConfig.webSocketConstructor = ws;` | ❌ Remove this |
+| Pool creation | `new Pool({ connectionString: ... })` | `new Pool({ connectionString: ..., ssl: false })` |
+| Drizzle init | `drizzle({ client: pool, schema })` | `drizzle(pool, { schema })` |
+
+### server/index.ts
+✅ No changes needed - already compatible with both
+
+**See Step 7.4 for complete code examples.**
+
+---
+
+**Document Version**: 2.0  
+**Last Updated**: November 12, 2025  
 **Application**: LicenseIQ  
 **Author**: LicenseIQ Development Team
