@@ -4,6 +4,24 @@ Complete step-by-step guide to deploy LicenseIQ application on Hostinger VPS wit
 
 ---
 
+## 🆕 **Latest Updates - November 2025**
+
+**Critical Production Updates:**
+- ✅ **Enhanced Product Matching** - Keyword-based semantic matching for License Fee Calculator
+- ✅ **Favicon Update** - LicenseIQ logo symbol added as favicon
+- ✅ **Fresh Database Backup** - `database_backup_production_20251112_172901.sql` (613KB)
+- ✅ **Admin User Setup** - SQL script for admin@licenseiq.ai with password: admin123
+
+**Files Changed:**
+- `server/routes.ts` - Enhanced product matching algorithm (lines 1773-1811)
+- `client/public/favicon.png` - LicenseIQ logo symbol
+- `client/public/apple-touch-icon.png` - iOS touch icon
+- `client/index.html` - Favicon meta tags
+
+**Database Backup Location:** `database_backup_production_20251112_172901.sql`
+
+---
+
 ## Table of Contents
 
 1. [Prerequisites](#1-prerequisites)
@@ -835,11 +853,38 @@ crontab -e
 
 ### Step 15.3: Restore Database Backup
 
+**📦 Latest Production Backup Available:**
+- File: `database_backup_production_20251112_172901.sql`
+- Size: 613KB
+- Date: November 12, 2025
+- Includes: All demo contracts, rules, sales data, and system knowledge base
+
+**Option A: Restore from Development Backup (Fresh Setup)**
+
+```bash
+# Upload the backup file to server (run from LOCAL machine)
+scp database_backup_production_20251112_172901.sql licenseiq@your_vps_ip:/tmp/
+
+# SSH into server
+ssh licenseiq@your_vps_ip
+
+# Restore database
+sudo -u postgres psql licenseiq_db < /tmp/database_backup_production_20251112_172901.sql
+
+# Clean up
+rm /tmp/database_backup_production_20251112_172901.sql
+
+# Restart application
+pm2 restart licenseiq
+```
+
+**Option B: Restore from Server Backup (Regular Maintenance)**
+
 ```bash
 # List backups
 ls -lh /var/backups/licenseiq/
 
-# Restore from backup
+# Restore from gzipped backup
 gunzip < /var/backups/licenseiq/licenseiq_db_YYYYMMDD_HHMMSS.sql.gz | sudo -u postgres psql licenseiq_db
 
 # Restart application
