@@ -872,86 +872,66 @@ Return ONLY valid JSON. No explanations.`;
     }
   }
 
-  // ⚡ SEPARATE RULES EXTRACTION - Focused call only for payment/pricing rules (WITHOUT sourceSpan to prevent truncation)
+  // ⚡ NDJSON RULES EXTRACTION - Line-by-line format immune to truncation
   private async extractRulesOnly(contractText: string, documentType: string): Promise<RoyaltyRule[]> {
     const prompt = `Extract ALL pricing and payment rules from this ${documentType} contract.
-**DO NOT include sourceSpan field** - we will add sources separately to prevent response overflow.
 
 Contract Text:
 ${contractText.substring(0, 10000)}
 
-**Extract EVERY pricing rule you find.** Use these EXACT ruleType values:
-- "tiered" - Volume-based tiers
-- "percentage" - Percentage-based rates
-- "minimum_guarantee" - Minimum payment guarantees
-- "fixed_price" - One-time fixed fees
-- "variable_price" - Variable pricing
-- "per_seat" - Per user/seat pricing
-- "per_unit" - Per unit pricing
-- "per_time_period" - Monthly/annual pricing
-- "usage_based" - Usage/consumption-based
-- "auto_renewal" - Renewal terms
-- "escalation_clause" - Price increases
-- "early_termination" - Termination fees
-- "license_scope" - License restrictions
-- "volume_discount" - Volume discounts
+**CRITICAL - NDJSON OUTPUT FORMAT:**
+- Output ONE rule as a compact JSON object per line
+- DO NOT use an enclosing array []
+- Each line must be complete, valid JSON
+- After all rules, output: {"status":"DONE"}
 
-**CRITICAL - ANTI-HALLUCINATION RULES**: 
-- Extract ONLY rules that EXPLICITLY exist in the contract text
-- DO NOT invent, assume, or create rules
-- Set confidence 0.6-1.0 based on how explicit the rule is
-- Return empty array if no pricing/payment terms found
+**Rule Types:** tiered, percentage, minimum_guarantee, fixed_price, variable_price, per_seat, per_unit, per_time_period, usage_based, auto_renewal, escalation_clause, early_termination, license_scope, volume_discount
 
-**MANDATORY PRODUCT IDENTIFIERS**:
-- EVERY rule MUST specify productCategories array with explicit product/service names
-- If rule applies to "all products", use ["General"]
-- DO NOT leave productCategories empty
+**Required Fields:**
+- ruleType, ruleName, description (<80 chars), conditions (productCategories, territories, timeperiod), calculation, priority, confidence
 
-**Return this EXACT JSON array (NO sourceSpan field):**
-[
-  {
-    "ruleType": "one of the exact types above",
-    "ruleName": "descriptive name",
-    "description": "clear description",
-    "conditions": {
-      "productCategories": ["category1"],
-      "territories": ["territory1"],
-      "timeperiod": "monthly|annually|etc"
-    },
-    "calculation": {
-      "rate": 5.0,
-      "baseRate": 10.0,
-      "amount": 1000.0,
-      "tiers": [{"min": 0, "max": 1000, "rate": 5.0}]
-    },
-    "priority": 1,
-    "confidence": 0.9
-  }
-]
-
-**IMPORTANT**: Do NOT include "sourceSpan" field in your response. Return ONLY valid JSON array. No explanations.`;
+**Example Output (one JSON object per line):**
+{"ruleType":"percentage","ruleName":"Standard Rate","description":"5% royalty","conditions":{"productCategories":["Products"],"territories":["US"],"timeperiod":"quarterly"},"calculation":{"rate":5.0,"baseRate":5.0,"amount":null,"tiers":[]},"priority":1,"confidence":0.95}
+{"ruleType":"minimum_guarantee","ruleName":"Min Payment","description":"Quarterly minimum","conditions":{"productCategories":["All"],"territories":["US"],"timeperiod":"quarterly"},"calculation":{"amount":50000},"priority":2,"confidence":0.9}
+{"status":"DONE"}`;
 
     try {
-      console.log(`📋 Making separate rules extraction call...`);
+      console.log(`📋 Making NDJSON rules extraction call...`);
       const response = await this.makeRequest([
-        { role: 'system', content: 'You are a precise payment terms analyzer. Extract ALL pricing rules. Return only JSON array.' },
+        { role: 'system', content: 'You are a precise payment terms analyzer. Output rules in NDJSON format (one JSON object per line).' },
         { role: 'user', content: prompt }
       ], 0.1, 6000);
       
-      let extracted = this.extractAndRepairJSON(response, []);
+      // Parse NDJSON line-by-line - truncation only loses last incomplete line
+      const rules: RoyaltyRule[] = [];
+      const lines = response.trim().split('\n');
       
-      // Ensure we have an array
-      if (!Array.isArray(extracted)) {
-        if (extracted && extracted.rules && Array.isArray(extracted.rules)) {
-          extracted = extracted.rules;
-        } else {
-          console.error('⚠️ Rules extraction returned non-array, using empty array');
-          return [];
+      console.log(`📄 Parsing ${lines.length} NDJSON lines...`);
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        
+        try {
+          const obj = JSON.parse(line);
+          if (obj.status === 'DONE') {
+            console.log(`✅ Found DONE marker`);
+            break;
+          }
+          if (obj.ruleType) {
+            rules.push(obj as RoyaltyRule);
+            console.log(`  ✓ Line ${i + 1}: ${obj.ruleName}`);
+          }
+        } catch (e) {
+          if (i === lines.length - 1) {
+            console.log(`⚠️ Truncated last line (expected): ${line.substring(0, 60)}...`);
+          } else {
+            console.warn(`⚠️ Parse error line ${i + 1}: ${line.substring(0, 60)}...`);
+          }
         }
       }
       
-      console.log(`✅ Rules extraction complete: ${extracted.length} rules found`);
-      return extracted;
+      console.log(`✅ NDJSON extraction: ${rules.length} rules parsed successfully`);
+      return rules;
     } catch (error) {
       console.error('❌ Rules extraction error:', error);
       return [];
