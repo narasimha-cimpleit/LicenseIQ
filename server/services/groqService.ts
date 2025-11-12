@@ -477,6 +477,8 @@ Extract EVERY pricing rule you find. Use these EXACT ruleType values:
 **CRITICAL - ANTI-HALLUCINATION & PRODUCT MATCHING RULES**: 
 - Extract ONLY rules that EXPLICITLY exist in the contract text provided
 - Each rule MUST include sourceSpan.text with EXACT VERBATIM quote from the contract
+- **KEEP sourceSpan.text CONCISE** (max 150 chars) - quote ONLY the single sentence/clause supporting the rule
+- **NEVER include full pricing tables** in sourceSpan.text - extract table values into calculation fields instead
 - DO NOT invent, assume, or create rules that are not in the text
 - DO NOT include examples or generic contract terms
 - DO NOT reuse rules from previous contracts
@@ -533,7 +535,7 @@ Extract EVERY pricing rule you find. Use these EXACT ruleType values:
       "priority": 1-10,
       "sourceSpan": {
         "section": "section name",
-        "text": "verbatim quote from contract"
+        "text": "concise verbatim quote (max 150 chars) - just key clause, not entire table"
       },
       "confidence": 0.6 to 1.0
     }
@@ -541,6 +543,19 @@ Extract EVERY pricing rule you find. Use these EXACT ruleType values:
 }
 
 Return ONLY valid JSON. No explanations.`;
+  }
+
+  // Sanitize extracted rules by clamping sourceSpan.text to prevent JSON truncation
+  private sanitizeExtractedRules(rules: any[]): RoyaltyRule[] {
+    return rules
+      .filter((r: any) => r.sourceSpan?.text?.trim().length > 0)
+      .map((r: any) => {
+        // Clamp sourceSpan.text to 150 characters to prevent response overflow
+        if (r.sourceSpan?.text && r.sourceSpan.text.length > 150) {
+          r.sourceSpan.text = r.sourceSpan.text.substring(0, 147) + '...';
+        }
+        return r;
+      });
   }
 
   // Execute extraction API call and parse results
@@ -557,9 +572,7 @@ Return ONLY valid JSON. No explanations.`;
     
     return {
       basicInfo: extracted.basicInfo || {},
-      allRules: Array.isArray(extracted.rules) 
-        ? extracted.rules.filter((r: any) => r.sourceSpan?.text?.trim().length > 0)
-        : []
+      allRules: this.sanitizeExtractedRules(Array.isArray(extracted.rules) ? extracted.rules : [])
     };
   }
 
@@ -648,6 +661,8 @@ Extract EVERY pricing rule you find. Use these EXACT ruleType values:
 **CRITICAL - ANTI-HALLUCINATION & PRODUCT MATCHING RULES**: 
 - Extract ONLY rules that EXPLICITLY exist in the contract text provided
 - Each rule MUST include sourceSpan.text with EXACT VERBATIM quote from the contract
+- **KEEP sourceSpan.text CONCISE** (max 150 chars) - quote ONLY the single sentence/clause supporting the rule
+- **NEVER include full pricing tables** in sourceSpan.text - extract table values into calculation fields instead
 - DO NOT invent, assume, or create rules that are not in the text
 - DO NOT include examples or generic contract terms
 - DO NOT reuse rules from previous contracts
@@ -704,7 +719,7 @@ Extract EVERY pricing rule you find. Use these EXACT ruleType values:
       "priority": 1-10,
       "sourceSpan": {
         "section": "section name",
-        "text": "verbatim quote from contract"
+        "text": "concise verbatim quote (max 150 chars) - just key clause, not entire table"
       },
       "confidence": 0.6 to 1.0
     }
