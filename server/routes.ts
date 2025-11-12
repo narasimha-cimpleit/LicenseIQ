@@ -1767,7 +1767,7 @@ Report ID: ${contractId}
           const hasCategories = Array.isArray(rule.productCategories) && rule.productCategories.length > 0;
           if (!hasCategories) continue;
           
-          // Check product categories (bidirectional matching)
+          // Check product categories (enhanced keyword-based matching)
           const categoryMatch = rule.productCategories!.some((cat: string) => {
             const catLower = cat.toLowerCase().trim();
             const saleCategoryLower = (sale.category?.toLowerCase() || '').trim();
@@ -1778,13 +1778,29 @@ Report ID: ${contractId}
               return false;
             }
             
-            // PRIORITY 1: Product name exact matching (AI often stores product names in productCategories)
+            // PRIORITY 1: Exact substring matching (fast path)
             if (saleProductLower && (saleProductLower.includes(catLower) || catLower.includes(saleProductLower))) {
               return true;
             }
-            
-            // PRIORITY 2: Category matching (for generic rules)
             if (saleCategoryLower && (saleCategoryLower.includes(catLower) || catLower.includes(saleCategoryLower))) {
+              return true;
+            }
+            
+            // PRIORITY 2: Keyword-based semantic matching (flexible)
+            // Extract keywords from both strings (ignore common words)
+            const stopWords = ['and', 'or', 'the', 'a', 'an', 'of', 'in', 'to', 'for', 'with', 'on', 'at', 'by'];
+            const extractKeywords = (str: string) => 
+              str.split(/[\s,&/\-]+/).filter(w => w.length > 2 && !stopWords.includes(w));
+            
+            const ruleKeywords = extractKeywords(catLower);
+            const saleKeywords = extractKeywords(saleCategoryLower + ' ' + saleProductLower);
+            
+            // Match if at least 1 significant keyword overlaps
+            const hasKeywordMatch = ruleKeywords.some(rk => 
+              saleKeywords.some(sk => sk.includes(rk) || rk.includes(sk))
+            );
+            
+            if (hasKeywordMatch) {
               return true;
             }
             
