@@ -216,27 +216,29 @@ export class GroqService {
           // ARRAY-SPECIFIC REPAIR: Handle truncated arrays (check original response, not jsonMatch)
           if (isArrayResponse) {
             console.log('🔧 Detected truncated array, attempting to salvage complete objects...');
-            // Find the last complete object by finding the last complete }
-            let lastCloseBrace = -1;
-            let braceCount = 0;
+            // Find complete objects by properly counting braces
+            let depth = 0;
+            let lastGoodPosition = -1;
             
-            for (let i = truncPos - 1; i >= 0; i--) {
-              if (jsonStr[i] === '}') {
-                braceCount++;
-                if (braceCount === 1) {
-                  lastCloseBrace = i;
-                  break;
+            for (let i = 0; i < Math.min(jsonStr.length, truncPos); i++) {
+              if (jsonStr[i] === '{') {
+                depth++;
+              } else if (jsonStr[i] === '}') {
+                depth--;
+                if (depth === 0) {
+                  // Found end of a complete object
+                  lastGoodPosition = i;
                 }
-              } else if (jsonStr[i] === '{') {
-                braceCount--;
               }
             }
             
-            if (lastCloseBrace > 0) {
-              const repairedArray = jsonStr.substring(0, lastCloseBrace + 1) + '\n]';
-              console.log(`🔧 Array repaired: trimmed to last complete object at position ${lastCloseBrace}`);
+            if (lastGoodPosition > 0) {
+              const repairedArray = jsonStr.substring(0, lastGoodPosition + 1) + ']';
+              console.log(`🔧 Array repaired: extracted ${lastGoodPosition + 1} chars with complete objects`);
               try {
-                return JSON.parse(repairedArray);
+                const parsed = JSON.parse(repairedArray);
+                console.log(`✅ Successfully parsed ${parsed.length} rules from truncated array`);
+                return parsed;
               } catch (e) {
                 console.error('❌ Array repair failed:', e);
               }
