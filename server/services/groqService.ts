@@ -168,6 +168,9 @@ export class GroqService {
     try {
       const cleanResponse = response.trim();
       
+      // CRITICAL: Detect if response is an array BEFORE matching
+      const isArrayResponse = cleanResponse.startsWith('[');
+      
       // Try to find JSON object FIRST (to get full response), then array as fallback
       // CRITICAL: Match object {...} before array [...] to preserve basicInfo!
       let jsonMatch = cleanResponse.match(/\{[\s\S]*\}/) || cleanResponse.match(/\[[\s\S]*\]/);
@@ -210,9 +213,8 @@ export class GroqService {
           const truncPos = parseInt(posMatch[1]);
           console.warn(`⚠️ JSON truncated at position ${truncPos}, attempting advanced repair...`);
           
-          // ARRAY-SPECIFIC REPAIR: Handle truncated arrays that start with [
-          const trimmed = jsonStr.trim();
-          if (trimmed.startsWith('[')) {
+          // ARRAY-SPECIFIC REPAIR: Handle truncated arrays (check original response, not jsonMatch)
+          if (isArrayResponse) {
             console.log('🔧 Detected truncated array, attempting to salvage complete objects...');
             // Find the last complete object by finding the last complete }
             let lastCloseBrace = -1;
