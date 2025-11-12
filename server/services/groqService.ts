@@ -344,27 +344,38 @@ export class GroqService {
     };
   }
 
-  // 📄 CHUNKED EXTRACTION - For large contracts (>20k chars) to capture pricing rules from beginning, middle, and end
+  // 📄 CHUNKED EXTRACTION - For large contracts (>15k chars) to capture pricing rules from beginning, middle, and end
   private async extractLargeContractInChunks(contractText: string): Promise<{
     basicInfo: any;
     allRules: RoyaltyRule[];
   }> {
-    // Extract basic info + rules from header (first 20k chars - has parties, dates, and sometimes early pricing)
-    const headerPrompt = this.buildExtractionPrompt(contractText.substring(0, 20000));
-    const headerResult = await this.executeExtractionCall(headerPrompt);
+    // Extract basic info + rules from header (first 10k chars - has parties, dates, and sometimes early pricing)
+    // Use rules-only extraction (no sourceSpan) to prevent JSON truncation
+    const headerRules = await this.extractRulesOnly(contractText.substring(0, 10000), 'licensing');
+    
+    // Extract basic info separately with minimal prompt
+    const basicInfo = {
+      documentType: 'licensing',
+      hasRoyaltyTerms: true,
+      parties: null,
+      effectiveDate: null,
+      expirationDate: null,
+      currency: 'USD',
+      paymentTerms: null
+    };
     
     // Extract rules from middle section (30% into document - often has detailed pricing)
     const midStart = Math.floor(contractText.length * 0.3);
-    const midChunk = contractText.substring(midStart, midStart + 20000);
+    const midChunk = contractText.substring(midStart, midStart + 10000);
     const midRules = await this.extractRulesOnly(midChunk, 'licensing');
     
-    // Extract rules from tail section (last 20k chars - often has pricing schedules and payment terms)
-    const tailStart = Math.max(contractText.length - 20000, midStart + 10000);
+    // Extract rules from tail section (last 10k chars - often has pricing schedules and payment terms)
+    const tailStart = Math.max(contractText.length - 10000, midStart + 5000);
     const tailRules = await this.extractRulesOnly(contractText.substring(tailStart), 'licensing');
     
     // Merge and deduplicate rules from all chunks
     const allRules = [
-      ...(headerResult.allRules || []),
+      ...headerRules,
       ...midRules,
       ...tailRules
     ];
@@ -376,7 +387,7 @@ export class GroqService {
     const rulesWithSources = await this.addRuleSources(contractText, uniqueRules);
     
     return {
-      basicInfo: headerResult.basicInfo,
+      basicInfo,
       allRules: rulesWithSources
     };
   }
