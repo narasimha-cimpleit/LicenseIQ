@@ -204,13 +204,44 @@ export class GroqService {
       try {
         return JSON.parse(jsonStr);
       } catch (parseError: any) {
-        // ⚡ NEW: If parsing fails, try to repair truncated JSON
+        // ⚡ If parsing fails, try to repair truncated JSON
         const posMatch = parseError.message.match(/position (\d+)/);
         if (posMatch) {
           const truncPos = parseInt(posMatch[1]);
           console.warn(`⚠️ JSON truncated at position ${truncPos}, attempting advanced repair...`);
           
-          // STRATEGY 1: Try to salvage partial rules array
+          // ARRAY-SPECIFIC REPAIR: Handle truncated arrays that start with [
+          const trimmed = jsonStr.trim();
+          if (trimmed.startsWith('[')) {
+            console.log('🔧 Detected truncated array, attempting to salvage complete objects...');
+            // Find the last complete object by finding the last complete }
+            let lastCloseBrace = -1;
+            let braceCount = 0;
+            
+            for (let i = truncPos - 1; i >= 0; i--) {
+              if (jsonStr[i] === '}') {
+                braceCount++;
+                if (braceCount === 1) {
+                  lastCloseBrace = i;
+                  break;
+                }
+              } else if (jsonStr[i] === '{') {
+                braceCount--;
+              }
+            }
+            
+            if (lastCloseBrace > 0) {
+              const repairedArray = jsonStr.substring(0, lastCloseBrace + 1) + '\n]';
+              console.log(`🔧 Array repaired: trimmed to last complete object at position ${lastCloseBrace}`);
+              try {
+                return JSON.parse(repairedArray);
+              } catch (e) {
+                console.error('❌ Array repair failed:', e);
+              }
+            }
+          }
+          
+          // STRATEGY 1: Try to salvage partial rules array from object
           if (jsonStr.includes('"rules"') && jsonStr.includes('[')) {
             const rulesMatch = jsonStr.match(/"rules"\s*:\s*\[/);
             if (rulesMatch) {
