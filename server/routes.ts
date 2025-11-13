@@ -2921,6 +2921,122 @@ Report ID: ${contractId}
         source: 'pricing_section',
       });
 
+      // Send emails using Zoho Mail
+      try {
+        const { sendZohoEmail } = await import('./zoho-mail.js');
+        
+        // Get plan details for the email
+        const planNames: Record<string, string> = {
+          'licenseiq': 'LicenseIQ',
+          'licenseiq_plus': 'LicenseIQ Plus',
+          'licenseiq_ultra': 'LicenseIQ Ultra'
+        };
+        
+        const planName = planNames[planTier] || planTier;
+        
+        // Send notification email to info@licenseiq.ai
+        await sendZohoEmail({
+          to: 'info@licenseiq.ai',
+          subject: `📅 New Demo Request - ${planName}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #2563eb;">New Demo Request</h2>
+              <p>A new user has requested a personalized demo for ${planName}.</p>
+              
+              <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <p style="margin: 8px 0;"><strong>Email:</strong> ${email}</p>
+                <p style="margin: 8px 0;"><strong>Plan Tier:</strong> ${planName}</p>
+                <p style="margin: 8px 0;"><strong>Source:</strong> Pricing Section</p>
+                <p style="margin: 8px 0;"><strong>Request ID:</strong> ${request.id}</p>
+                <p style="margin: 8px 0;"><strong>Timestamp:</strong> ${new Date().toLocaleString()}</p>
+              </div>
+              
+              <div style="margin-top: 20px; padding: 15px; background-color: #eff6ff; border-left: 4px solid #2563eb; border-radius: 4px;">
+                <p style="margin: 0; color: #1e40af;"><strong>📋 Next Steps:</strong></p>
+                <ol style="margin: 10px 0; padding-left: 20px; color: #1e3a8a;">
+                  <li>Review the demo request in the admin panel</li>
+                  <li>Contact the user within 24 hours to schedule</li>
+                  <li>Prepare personalized demo based on ${planName} features</li>
+                </ol>
+              </div>
+              
+              <p style="margin-top: 30px; font-size: 12px; color: #666; text-align: center;">
+                This notification was sent from the LicenseIQ Demo Request system.
+              </p>
+            </div>
+          `,
+        });
+        
+        console.log(`✅ Demo request notification sent to info@licenseiq.ai for ${email}`);
+        
+        // Send confirmation email to the customer
+        await sendZohoEmail({
+          to: email,
+          subject: 'Thank You for Requesting a LicenseIQ Demo! 🎯',
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; border-radius: 8px 8px 0 0;">
+                <h1 style="color: white; margin: 0; font-size: 32px;">LicenseIQ</h1>
+                <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 18px;">AI-Powered Contract Intelligence</p>
+              </div>
+              
+              <div style="background-color: white; padding: 40px 30px;">
+                <h2 style="color: #1a202c; margin-top: 0;">Thank You for Your Interest!</h2>
+                
+                <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
+                  We've received your request for a personalized demo of <strong>${planName}</strong>.
+                </p>
+                
+                <div style="background-color: #f7fafc; padding: 20px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #667eea;">
+                  <p style="margin: 0; color: #2d3748;"><strong>🎯 What Happens Next?</strong></p>
+                  <ul style="margin: 15px 0; padding-left: 20px; color: #4a5568;">
+                    <li>Our team will contact you within 24 hours</li>
+                    <li>We'll schedule a personalized demo at your convenience</li>
+                    <li>You'll see how ${planName} can transform your contract workflows</li>
+                  </ul>
+                </div>
+                
+                <div style="background-color: #edf2f7; padding: 20px; border-radius: 8px; margin: 25px 0;">
+                  <p style="margin: 0 0 10px 0; color: #2d3748;"><strong>📊 ${planName} Includes:</strong></p>
+                  <p style="margin: 0; color: #4a5568; font-size: 14px; line-height: 1.6;">
+                    ${planTier === 'licenseiq' ? 
+                      '✓ AI contract reading & extraction<br>✓ Automated payment calculations<br>✓ Complete audit trail<br>✓ Basic integrations<br>✓ 5 contracts included' :
+                      planTier === 'licenseiq_plus' ?
+                      '✓ Everything in LicenseIQ<br>✓ Advanced ERP integrations<br>✓ Multi-currency & territories<br>✓ Custom rule builder<br>✓ 25 contracts included' :
+                      '✓ Everything in Plus<br>✓ Enterprise SSO<br>✓ Dedicated support<br>✓ API access<br>✓ Unlimited contracts'}
+                  </p>
+                </div>
+                
+                <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin-top: 25px;">
+                  In the meantime, feel free to explore our website or reply to this email with any questions.
+                </p>
+                
+                <div style="margin-top: 30px; padding-top: 30px; border-top: 1px solid #e2e8f0; text-align: center;">
+                  <p style="color: #718096; font-size: 14px; margin: 0;">
+                    Looking forward to showing you the future of contract intelligence!
+                  </p>
+                  <p style="color: #718096; font-size: 14px; margin: 10px 0 0 0;">
+                    <strong>The LicenseIQ Team</strong>
+                  </p>
+                </div>
+              </div>
+              
+              <div style="background-color: #f7fafc; padding: 20px; text-align: center; border-radius: 0 0 8px 8px;">
+                <p style="margin: 0; font-size: 12px; color: #718096;">
+                  This email was sent because you requested a demo of LicenseIQ.<br>
+                  © ${new Date().getFullYear()} LicenseIQ. All rights reserved.
+                </p>
+              </div>
+            </div>
+          `,
+        });
+        
+        console.log(`✅ Confirmation email sent to customer: ${email}`);
+      } catch (emailError) {
+        console.error('Failed to send demo request emails:', emailError);
+        // Don't fail the request if email fails - demo request is already saved
+      }
+
       res.json({ 
         success: true, 
         message: 'Thank you! We\'ll contact you soon to schedule your demo.',
