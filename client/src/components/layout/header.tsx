@@ -92,12 +92,12 @@ export default function Header({ title, description, onMenuClick }: HeaderProps)
             <DropdownMenuTrigger asChild>
               <Button 
                 variant="ghost" 
-                size="sm" 
-                className="relative h-9 w-9 rounded-full"
+                size="icon"
+                className="relative h-10 w-10 rounded-full p-0 hover:bg-transparent"
                 data-testid="button-user-profile"
               >
-                <div className="h-8 w-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-medium text-white">
+                <div className="h-10 w-10 bg-blue-600 rounded-full flex items-center justify-center shadow-md">
+                  <span className="text-sm font-semibold text-white">
                     {userInitials}
                   </span>
                 </div>
