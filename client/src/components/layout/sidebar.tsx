@@ -104,7 +104,7 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
       
       {/* Sidebar */}
       <aside className={cn(
-        "fixed inset-y-0 left-0 bg-sidebar border-r border-sidebar-border sidebar-transition z-50 transform transition-all duration-300 ease-in-out",
+        "fixed inset-y-0 left-0 bg-gradient-to-b from-blue-600 via-blue-700 to-blue-800 border-r border-blue-900/50 shadow-2xl sidebar-transition z-50 transform transition-all duration-300 ease-in-out",
         "md:translate-x-0",
         isCollapsed ? "w-16" : "w-64",
         isOpen ? "translate-x-0" : "-translate-x-full",
@@ -112,28 +112,32 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
       )}>
       <div className="flex flex-col h-full">
         {/* Logo & Toggle */}
-        <div className="flex items-center justify-between px-4 py-4 border-b border-sidebar-border bg-sidebar">
+        <div className="flex items-center justify-between px-4 py-4 border-b border-white/10">
           {!isCollapsed && (
             <div className="flex-1 flex justify-center">
-              <img src={logoSymbol} alt="LicenseIQ" className="h-20 w-20 transition-opacity duration-300" />
+              <div className="bg-white/95 p-3 rounded-xl shadow-lg">
+                <img src={logoSymbol} alt="LicenseIQ" className="h-14 w-14 transition-opacity duration-300" />
+              </div>
             </div>
           )}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleCollapse}
-            className={cn(
-              "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-300",
-              isCollapsed ? "mx-auto" : "flex-shrink-0"
-            )}
-            data-testid="button-toggle-sidebar"
-          >
-            {isCollapsed ? (
-              <ChevronRight className="h-4 w-4" />
-            ) : (
+          {isCollapsed && (
+            <div className="mx-auto">
+              <div className="bg-white/95 p-2 rounded-lg shadow-lg">
+                <img src={logoSymbol} alt="LicenseIQ" className="h-8 w-8" />
+              </div>
+            </div>
+          )}
+          {!isCollapsed && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleCollapse}
+              className="flex-shrink-0 text-white hover:bg-white/10 transition-all duration-300"
+              data-testid="button-toggle-sidebar"
+            >
               <ChevronLeft className="h-4 w-4" />
-            )}
-          </Button>
+            </Button>
+          )}
         </div>
         
         {/* Navigation */}
@@ -145,20 +149,20 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
                 key={item.name}
                 variant="ghost"
                 className={cn(
-                  "w-full text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-200",
+                  "w-full text-white hover:bg-white/10 transition-all duration-200",
                   isCollapsed ? "justify-center px-2" : "justify-start",
-                  item.current && "bg-sidebar-accent text-sidebar-accent-foreground"
+                  item.current && "bg-white/20 shadow-md"
                 )}
                 onClick={() => handleNavClick(item.href)}
                 data-testid={`nav-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
                 title={isCollapsed ? item.name : undefined}
               >
                 <Icon className={cn(
-                  "h-4 w-4 text-blue-400 transition-all duration-200",
+                  "h-5 w-5 text-white transition-all duration-200",
                   !isCollapsed && "mr-3"
                 )} />
                 {!isCollapsed && (
-                  <span className="transition-opacity duration-200">{item.name}</span>
+                  <span className="transition-opacity duration-200 font-medium">{item.name}</span>
                 )}
               </Button>
             );
@@ -166,25 +170,25 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
         </nav>
         
         {/* User Profile */}
-        <div className="px-3 py-4 border-t border-sidebar-border">
+        <div className="px-3 py-4 border-t border-white/10">
           <div className={cn(
             "flex items-center transition-all duration-200",
             isCollapsed ? "justify-center" : ""
           )}>
-            <div className="h-8 w-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-sm font-medium text-white">
+            <div className="h-10 w-10 bg-gradient-to-br from-white to-blue-100 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
+              <span className="text-sm font-bold text-blue-700">
                 {userInitials}
               </span>
             </div>
             {!isCollapsed && (
               <div className="ml-3 flex-1 transition-opacity duration-200">
-                <p className="text-sm font-medium text-sidebar-foreground truncate">
+                <p className="text-sm font-semibold text-white truncate">
                   {user?.firstName && user?.lastName 
                     ? `${user.firstName} ${user.lastName}`
                     : user?.email
                   }
                 </p>
-                <p className="text-xs text-sidebar-foreground/70 capitalize">
+                <p className="text-xs text-white/70 capitalize">
                   {user?.role || 'User'}
                 </p>
               </div>
