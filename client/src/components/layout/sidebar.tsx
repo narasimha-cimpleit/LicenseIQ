@@ -27,7 +27,7 @@ import {
   ChevronRight,
   LucideIcon
 } from "lucide-react";
-import logoSymbol from "@assets/Original Logo Symbol_1762113838183.png";
+import licenseIQLogo from "@assets/Transparent Logo_1761867914841.png";
 
 interface SidebarProps {
   className?: string;
@@ -112,12 +112,9 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
       )}>
       <div className="flex flex-col h-full">
         {/* Logo & Toggle */}
-        <div className="flex items-center justify-between px-4 py-4 border-b border-sidebar-border bg-sidebar">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-sidebar-border bg-sidebar">
           {!isCollapsed && (
-            <div className="flex items-center gap-2">
-              <img src={logoSymbol} alt="LicenseIQ" className="h-12 w-12 transition-opacity duration-300" />
-              <span className="text-xl font-bold text-sidebar-foreground">LicenseIQ</span>
-            </div>
+            <img src={licenseIQLogo} alt="LicenseIQ Logo" className="h-16 transition-opacity duration-300" />
           )}
           <Button
             variant="ghost"
