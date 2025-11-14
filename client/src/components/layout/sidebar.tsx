@@ -112,10 +112,10 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
       )}>
       <div className="flex flex-col h-full">
         {/* Logo & Toggle */}
-        <div className="flex items-center justify-center px-3 py-1 border-b border-blue-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+        <div className="flex items-center justify-center px-3 py-1 border-b border-blue-200 dark:border-slate-700">
           {!isCollapsed && (
             <div className="flex items-center justify-center w-full relative">
-              <img src={logoSymbol} alt="" className="h-32 w-32 transition-opacity duration-300" />
+              <img src={logoSymbol} alt="" className="h-32 w-32 transition-opacity duration-300 mix-blend-multiply dark:mix-blend-normal" />
               <Button
                 variant="ghost"
                 size="icon"
