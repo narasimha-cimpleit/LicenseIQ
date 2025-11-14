@@ -27,7 +27,7 @@ import {
   ChevronRight,
   LucideIcon
 } from "lucide-react";
-import licenseIQLogo from "@assets/Transparent Logo_1761867914841.png";
+import logoSymbol from "@assets/Original Logo Symbol_1762113838183.png";
 
 interface SidebarProps {
   className?: string;
@@ -112,9 +112,11 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
       )}>
       <div className="flex flex-col h-full">
         {/* Logo & Toggle */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-sidebar-border bg-sidebar">
+        <div className="flex items-center justify-between px-4 py-4 border-b border-sidebar-border bg-sidebar">
           {!isCollapsed && (
-            <img src={licenseIQLogo} alt="LicenseIQ Logo" className="h-16 transition-opacity duration-300" />
+            <div className="flex-1 flex justify-center">
+              <img src={logoSymbol} alt="LicenseIQ" className="h-20 w-20 transition-opacity duration-300" />
+            </div>
           )}
           <Button
             variant="ghost"
@@ -122,7 +124,7 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
             onClick={toggleCollapse}
             className={cn(
               "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-300",
-              isCollapsed ? "mx-auto" : ""
+              isCollapsed ? "mx-auto" : "flex-shrink-0"
             )}
             data-testid="button-toggle-sidebar"
           >
