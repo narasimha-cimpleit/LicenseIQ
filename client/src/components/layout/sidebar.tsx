@@ -112,17 +112,15 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
       )}>
       <div className="flex flex-col h-full">
         {/* Logo & Toggle */}
-        <div className="flex flex-col items-center px-4 py-2 border-b border-white/10 gap-2 bg-white dark:bg-slate-900">
+        <div className="flex items-center justify-center px-3 py-1 border-b border-white/10 bg-white dark:bg-slate-900">
           {!isCollapsed && (
-            <div className="flex items-center justify-between w-full group">
-              <div className="flex-1 flex justify-center">
-                <img src={logoSymbol} alt="" className="h-32 w-32 transition-opacity duration-300" />
-              </div>
+            <div className="flex items-center justify-center w-full relative">
+              <img src={logoSymbol} alt="" className="h-32 w-32 transition-opacity duration-300" />
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={toggleCollapse}
-                className="flex-shrink-0 text-white hover:bg-white/10 transition-all duration-300 opacity-0 group-hover:opacity-100"
+                className="absolute right-0 text-white hover:bg-white/10 transition-all duration-300"
                 data-testid="button-toggle-sidebar"
               >
                 <ChevronLeft className="h-4 w-4" />
