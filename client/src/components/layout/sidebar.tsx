@@ -168,33 +168,6 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
             );
           })}
         </nav>
-        
-        {/* User Profile */}
-        <div className="px-3 py-4 border-t border-blue-200 dark:border-slate-700">
-          <div className={cn(
-            "flex items-center transition-all duration-200",
-            isCollapsed ? "justify-center" : ""
-          )}>
-            <div className="h-10 w-10 bg-gradient-to-br from-white to-blue-100 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
-              <span className="text-sm font-bold text-blue-700">
-                {userInitials}
-              </span>
-            </div>
-            {!isCollapsed && (
-              <div className="ml-3 flex-1 transition-opacity duration-200">
-                <p className="text-sm font-semibold text-slate-700 dark:text-white truncate">
-                  {user?.firstName && user?.lastName 
-                    ? `${user.firstName} ${user.lastName}`
-                    : user?.email
-                  }
-                </p>
-                <p className="text-xs text-slate-600 dark:text-white/70 capitalize">
-                  {user?.role || 'User'}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
       </div>
     </aside>
     </>

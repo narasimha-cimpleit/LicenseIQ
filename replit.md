@@ -12,6 +12,8 @@ Preferred communication style: Simple, everyday language.
 
 # Recent Changes
 
+- **In-App Theme Selection** (2025-01-14): Implemented comprehensive theme management system with ThemeProvider context. Users can now select Light, Dark, or System theme from the user profile dropdown in the top-right header. Theme selection is persisted in localStorage and automatically syncs with system preferences when "System" is selected.
+- **Sidebar UI Refinement** (2025-01-14): Removed user profile section from bottom of sidebar for cleaner design. User information now exclusively displayed in top-right dropdown menu with circular profile icon.
 - **Chunked Contract Extraction** (2025-01-11): Implemented intelligent 3-chunk extraction for large contracts (>20k chars) - extracts from header (parties/dates), middle (30% position - detailed pricing), and tail (last 20k - pricing schedules). Deduplicates rules by normalized sourceSpan.text, keeping highest confidence entries. Solves "no rules generated" issue for large PDFs like Electronics Patent License.
 - **System Knowledge Base for LIQ AI**: LIQ AI can now answer questions about the LicenseIQ platform itself, not just contract content. 11 documentation topics seeded covering platform features, contract types, AI services, calculations, security, deployment, etc.
 - **RAG Dual-Source Routing**: Enhanced RAG service to intelligently route questions between contract documentation and platform documentation based on semantic similarity.

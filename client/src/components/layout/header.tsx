@@ -7,9 +7,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Bell, Plus, Menu, User, LogOut, Settings } from "lucide-react";
+import { Bell, Plus, Menu, User, LogOut, Settings, Sun, Moon, Monitor } from "lucide-react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "@/contexts/theme-context";
 
 interface HeaderProps {
   title: string;
@@ -20,6 +21,7 @@ interface HeaderProps {
 export default function Header({ title, description, onMenuClick }: HeaderProps) {
   const [, setLocation] = useLocation();
   const { user, logoutMutation } = useAuth();
+  const { theme, setTheme } = useTheme();
 
   const handleNewContract = () => {
     setLocation("/upload");
@@ -39,6 +41,17 @@ export default function Header({ title, description, onMenuClick }: HeaderProps)
   const userInitials = user?.firstName && user?.lastName 
     ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
     : user?.email?.[0]?.toUpperCase() || 'U';
+
+  const getThemeIcon = () => {
+    switch (theme) {
+      case 'light':
+        return <Sun className="h-4 w-4" />;
+      case 'dark':
+        return <Moon className="h-4 w-4" />;
+      case 'system':
+        return <Monitor className="h-4 w-4" />;
+    }
+  };
 
   return (
     <header className="bg-card border-b border-border px-4 md:px-6 py-4">
@@ -119,6 +132,26 @@ export default function Header({ title, description, onMenuClick }: HeaderProps)
                   <span>Settings</span>
                 </DropdownMenuItem>
               )}
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-xs text-muted-foreground">
+                Theme
+              </DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => setTheme('light')} data-testid="menu-theme-light">
+                <Sun className="mr-2 h-4 w-4" />
+                <span>Light</span>
+                {theme === 'light' && <span className="ml-auto text-xs">✓</span>}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTheme('dark')} data-testid="menu-theme-dark">
+                <Moon className="mr-2 h-4 w-4" />
+                <span>Dark</span>
+                {theme === 'dark' && <span className="ml-auto text-xs">✓</span>}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTheme('system')} data-testid="menu-theme-system">
+                <Monitor className="mr-2 h-4 w-4" />
+                <span>System</span>
+                {theme === 'system' && <span className="ml-auto text-xs">✓</span>}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} data-testid="menu-logout">
                 <LogOut className="mr-2 h-4 w-4 text-red-500" />
                 <span>Log out</span>
