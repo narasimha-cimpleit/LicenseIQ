@@ -170,7 +170,7 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
         </nav>
         
         {/* User Profile */}
-        <div className="px-3 py-4 border-t border-white/10">
+        <div className="px-3 py-4 border-t border-blue-200 dark:border-slate-700">
           <div className={cn(
             "flex items-center transition-all duration-200",
             isCollapsed ? "justify-center" : ""
@@ -182,13 +182,13 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
             </div>
             {!isCollapsed && (
               <div className="ml-3 flex-1 transition-opacity duration-200">
-                <p className="text-sm font-semibold text-white truncate">
+                <p className="text-sm font-semibold text-slate-700 dark:text-white truncate">
                   {user?.firstName && user?.lastName 
                     ? `${user.firstName} ${user.lastName}`
                     : user?.email
                   }
                 </p>
-                <p className="text-xs text-white/70 capitalize">
+                <p className="text-xs text-slate-600 dark:text-white/70 capitalize">
                   {user?.role || 'User'}
                 </p>
               </div>
