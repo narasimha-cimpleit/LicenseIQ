@@ -116,9 +116,7 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
           {!isCollapsed && (
             <div className="flex items-center justify-between w-full">
               <div className="flex-1 flex justify-center">
-                <div className="bg-white/90 rounded-2xl p-3 shadow-xl">
-                  <img src={logoSymbol} alt="LicenseIQ" className="h-24 w-24 transition-opacity duration-300" />
-                </div>
+                <img src={logoSymbol} alt="LicenseIQ" className="h-24 w-24 transition-opacity duration-300" />
               </div>
               <Button
                 variant="ghost"
@@ -132,20 +130,15 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
             </div>
           )}
           {isCollapsed && (
-            <>
-              <div className="bg-white/90 rounded-xl p-2 shadow-lg">
-                <img src={logoSymbol} alt="LicenseIQ" className="h-12 w-12" />
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleCollapse}
-                className="text-white hover:bg-white/10 transition-all duration-300"
-                data-testid="button-toggle-sidebar"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleCollapse}
+              className="text-white hover:bg-white/10 transition-all duration-300"
+              data-testid="button-toggle-sidebar"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           )}
         </div>
         
