@@ -158,7 +158,7 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
                 title={isCollapsed ? item.name : undefined}
               >
                 <Icon className={cn(
-                  "h-5 w-5 text-slate-700 dark:text-white transition-all duration-200",
+                  "h-5 w-5 text-blue-600 dark:text-blue-400 transition-all duration-200",
                   !isCollapsed && "mr-3"
                 )} />
                 {!isCollapsed && (
