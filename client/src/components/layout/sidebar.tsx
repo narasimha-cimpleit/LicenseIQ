@@ -112,11 +112,11 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
       )}>
       <div className="flex flex-col h-full">
         {/* Logo & Toggle */}
-        <div className="flex flex-col items-center px-4 py-4 border-b border-white/10 gap-3">
+        <div className="flex flex-col items-center px-4 py-2 border-b border-white/10 gap-2">
           {!isCollapsed && (
             <div className="flex items-center justify-between w-full">
               <div className="flex-1 flex justify-center">
-                <div className="bg-white/90 rounded-2xl p-4 shadow-xl">
+                <div className="bg-white/90 rounded-2xl p-3 shadow-xl">
                   <img src={logoSymbol} alt="LicenseIQ" className="h-24 w-24 transition-opacity duration-300" />
                 </div>
               </div>
