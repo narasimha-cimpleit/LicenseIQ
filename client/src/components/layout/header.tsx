@@ -7,10 +7,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Bell, Plus, Menu, User, LogOut, Settings, Sun, Moon, Monitor } from "lucide-react";
+import { Bell, Plus, Menu, User, LogOut, Settings, Sun, Moon, Monitor, Check, Palette } from "lucide-react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
-import { useTheme } from "@/contexts/theme-context";
+import { useTheme, THEME_OPTIONS, ThemeName } from "@/contexts/theme-context";
 
 interface HeaderProps {
   title: string;
@@ -42,15 +42,10 @@ export default function Header({ title, description, onMenuClick }: HeaderProps)
     ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
     : user?.email?.[0]?.toUpperCase() || 'U';
 
-  const getThemeIcon = () => {
-    switch (theme) {
-      case 'light':
-        return <Sun className="h-4 w-4" />;
-      case 'dark':
-        return <Moon className="h-4 w-4" />;
-      case 'system':
-        return <Monitor className="h-4 w-4" />;
-    }
+  const currentTheme = THEME_OPTIONS.find(t => t.name === theme);
+  
+  const handleThemeChange = (themeName: ThemeName) => {
+    setTheme(themeName);
   };
 
   return (
@@ -133,24 +128,33 @@ export default function Header({ title, description, onMenuClick }: HeaderProps)
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
-              <DropdownMenuLabel className="text-xs text-muted-foreground">
-                Theme
+              <DropdownMenuLabel className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Palette className="h-3 w-3" />
+                <span>Choose Theme</span>
               </DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => setTheme('light')} data-testid="menu-theme-light">
-                <Sun className="mr-2 h-4 w-4" />
-                <span>Light</span>
-                {theme === 'light' && <span className="ml-auto text-xs">✓</span>}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setTheme('dark')} data-testid="menu-theme-dark">
-                <Moon className="mr-2 h-4 w-4" />
-                <span>Dark</span>
-                {theme === 'dark' && <span className="ml-auto text-xs">✓</span>}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setTheme('system')} data-testid="menu-theme-system">
-                <Monitor className="mr-2 h-4 w-4" />
-                <span>System</span>
-                {theme === 'system' && <span className="ml-auto text-xs">✓</span>}
-              </DropdownMenuItem>
+              <div className="max-h-[400px] overflow-y-auto px-1">
+                <div className="grid grid-cols-1 gap-1 py-1">
+                  {THEME_OPTIONS.map((themeOption) => (
+                    <DropdownMenuItem
+                      key={themeOption.name}
+                      onClick={() => handleThemeChange(themeOption.name)}
+                      className="cursor-pointer hover:bg-accent p-2"
+                      data-testid={`menu-theme-${themeOption.name}`}
+                    >
+                      <div className="flex items-center gap-3 w-full">
+                        <div className={`h-8 w-8 rounded-md bg-gradient-to-br ${themeOption.preview} flex-shrink-0 border border-border`} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{themeOption.label}</p>
+                          <p className="text-xs text-muted-foreground truncate">{themeOption.description}</p>
+                        </div>
+                        {theme === themeOption.name && (
+                          <Check className="h-4 w-4 text-primary flex-shrink-0" />
+                        )}
+                      </div>
+                    </DropdownMenuItem>
+                  ))}
+                </div>
+              </div>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} data-testid="menu-logout">
                 <LogOut className="mr-2 h-4 w-4 text-red-500" />
