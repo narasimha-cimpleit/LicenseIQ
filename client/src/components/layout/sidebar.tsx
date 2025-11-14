@@ -112,31 +112,40 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
       )}>
       <div className="flex flex-col h-full">
         {/* Logo & Toggle */}
-        <div className="flex items-center justify-between px-4 py-4 border-b border-white/10">
+        <div className="flex flex-col items-center px-4 py-4 border-b border-white/10 gap-3">
           {!isCollapsed && (
-            <div className="flex-1 flex justify-center">
-              <div className="bg-white/95 p-3 rounded-xl shadow-lg">
-                <img src={logoSymbol} alt="LicenseIQ" className="h-14 w-14 transition-opacity duration-300" />
+            <div className="flex items-center justify-between w-full">
+              <div className="flex-1 flex justify-center">
+                <div className="bg-white/95 p-3 rounded-xl shadow-lg">
+                  <img src={logoSymbol} alt="LicenseIQ" className="h-14 w-14 transition-opacity duration-300" />
+                </div>
               </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleCollapse}
+                className="flex-shrink-0 text-white hover:bg-white/10 transition-all duration-300"
+                data-testid="button-toggle-sidebar"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
             </div>
           )}
           {isCollapsed && (
-            <div className="mx-auto">
+            <>
               <div className="bg-white/95 p-2 rounded-lg shadow-lg">
                 <img src={logoSymbol} alt="LicenseIQ" className="h-8 w-8" />
               </div>
-            </div>
-          )}
-          {!isCollapsed && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleCollapse}
-              className="flex-shrink-0 text-white hover:bg-white/10 transition-all duration-300"
-              data-testid="button-toggle-sidebar"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleCollapse}
+                className="text-white hover:bg-white/10 transition-all duration-300"
+                data-testid="button-toggle-sidebar"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </>
           )}
         </div>
         
