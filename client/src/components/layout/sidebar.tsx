@@ -112,7 +112,7 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
       )}>
       <div className="flex flex-col h-full">
         {/* Logo & Toggle */}
-        <div className="flex flex-col items-center px-4 py-2 border-b border-white/10 gap-2 bg-background/50">
+        <div className="flex flex-col items-center px-4 py-2 border-b border-white/10 gap-2 bg-white dark:bg-slate-900">
           {!isCollapsed && (
             <div className="flex items-center justify-between w-full">
               <div className="flex-1 flex justify-center">
