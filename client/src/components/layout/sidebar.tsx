@@ -116,7 +116,7 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
           {!isCollapsed && (
             <div className="flex items-center justify-between w-full">
               <div className="flex-1 flex justify-center">
-                <div className="bg-slate-900 rounded-2xl p-3 shadow-xl">
+                <div className="bg-background/50 rounded-2xl p-3 shadow-xl">
                   <img src={logoSymbol} alt="LicenseIQ" className="h-24 w-24 transition-opacity duration-300" />
                 </div>
               </div>
