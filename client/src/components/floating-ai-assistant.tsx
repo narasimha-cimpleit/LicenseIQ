@@ -121,7 +121,7 @@ export function FloatingAIAssistant() {
             <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg">
               <Sparkles className="h-5 w-5 text-white" />
             </div>
-            lIQ Agent
+            liQ Agent
           </SheetTitle>
           <SheetDescription>
             Ask questions about your contracts using AI-powered semantic search
