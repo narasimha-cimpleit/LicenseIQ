@@ -93,9 +93,9 @@ const getSubItems = (itemKey: string, mainHref: string): SearchSubItem[] => {
       { label: 'View ERP Systems', href: '/erp-catalog', icon: 'List' },
       { label: 'Configure ERP', href: '/erp-catalog', icon: 'Settings' },
     ],
-    'liq-ai': [
-      { label: 'Ask Questions', href: '/liq-ai', icon: 'Brain' },
-      { label: 'View Chat History', href: '/liq-ai', icon: 'History' },
+    'contract-qna': [
+      { label: 'Ask Questions', href: '/contract-qna', icon: 'Brain' },
+      { label: 'View Chat History', href: '/contract-qna', icon: 'History' },
     ],
     'analytics': [
       { label: 'View Dashboard', href: '/analytics', icon: 'BarChart3' },

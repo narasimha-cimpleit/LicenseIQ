@@ -65,7 +65,7 @@ function Router() {
             <ProtectedRoute path="/calculations" component={CalculationsPage} />
             <ProtectedRoute path="/royalty-dashboard/:id" component={RoyaltyDashboard} />
             <ProtectedRoute path="/contracts/:id/rules" component={RulesManagement} />
-            {/* LIQ AI */}
+            {/* liQ AI */}
             <ProtectedRoute path="/contract-qna" component={ContractQnA} />
             <ProtectedRoute path="/rag-dashboard" component={RAGDashboard} />
             {/* Dynamic Extraction */}

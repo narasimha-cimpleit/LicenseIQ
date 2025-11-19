@@ -108,7 +108,7 @@ export default function ContractQnA() {
   };
 
   return (
-    <MainLayout title="LIQ AI">
+    <MainLayout title="liQ AI">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -117,7 +117,7 @@ export default function ContractQnA() {
               <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg">
                 <Sparkles className="h-6 w-6 text-white" />
               </div>
-              LIQ AI - Contract Intelligence
+              liQ AI - Contract Intelligence
             </h1>
             <p className="text-muted-foreground mt-1">
               Ask questions about your contracts using AI-powered semantic search
@@ -339,7 +339,7 @@ export default function ContractQnA() {
                       How it works
                     </h4>
                     <p className="text-xs text-blue-800 dark:text-blue-200">
-                      LIQ AI can answer questions about both the LicenseIQ platform itself and your uploaded contracts. It uses semantic search to find relevant information, then generates intelligent answers with source citations. Higher confidence scores indicate more certain answers.
+                      liQ AI can answer questions about both the LicenseIQ platform itself and your uploaded contracts. It uses semantic search to find relevant information, then generates intelligent answers with source citations. Higher confidence scores indicate more certain answers.
                     </p>
                   </div>
                 </div>
