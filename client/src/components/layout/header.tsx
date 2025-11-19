@@ -11,6 +11,7 @@ import { Bell, Plus, Menu, User, LogOut, Settings, Sun, Moon, Monitor, Check, Pa
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme, THEME_OPTIONS, ThemeName } from "@/contexts/theme-context";
+import GlobalSearch from "@/components/ui/global-search";
 
 interface HeaderProps {
   title: string;
@@ -71,6 +72,9 @@ export default function Header({ title, description, onMenuClick }: HeaderProps)
           </div>
         </div>
         <div className="flex items-center space-x-2 md:space-x-4">
+          {/* Global Search */}
+          <GlobalSearch />
+          
           <Button
             variant="ghost"
             size="sm"
