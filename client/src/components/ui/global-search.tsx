@@ -127,12 +127,17 @@ export default function GlobalSearch() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent 
           className="max-w-2xl p-0 gap-0"
-          onInteractOutside={(e) => {
-            // Prevent dialog from closing when clicking on buttons inside
+          onPointerDownOutside={(e) => {
+            // Only allow closing when clicking the dark overlay, not anywhere else
             const target = e.target as HTMLElement;
-            if (target.closest('[data-testid^="search-result-"]')) {
+            const isOverlay = target.hasAttribute('data-radix-dialog-overlay');
+            if (!isOverlay) {
               e.preventDefault();
             }
+          }}
+          onInteractOutside={(e) => {
+            // Prevent dialog from closing when interacting inside
+            e.preventDefault();
           }}
         >
           {/* Search Input */}
