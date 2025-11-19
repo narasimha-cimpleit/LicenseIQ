@@ -115,7 +115,7 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
         <div className="flex items-center justify-center px-3 py-1 border-b border-sidebar-border">
           {!isCollapsed && (
             <div className="flex items-center justify-center w-full relative">
-              <img src={logoSymbol} alt="" className="h-32 w-32 transition-opacity duration-300 mix-blend-multiply dark:mix-blend-normal" />
+              <img src={logoSymbol} alt="" className="h-32 w-32 transition-opacity duration-300 dark:brightness-0 dark:invert" />
               <button
                 onClick={toggleCollapse}
                 className="absolute right-0 p-2 text-sidebar-primary hover:bg-sidebar-accent rounded-md transition-all duration-300"
@@ -155,11 +155,11 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
                 title={isCollapsed ? item.name : undefined}
               >
                 <Icon className={cn(
-                  "h-5 w-5 transition-all duration-200",
+                  "h-5 w-5 flex-shrink-0 transition-all duration-200",
                   !isCollapsed && "mr-3"
                 )} />
                 {!isCollapsed && (
-                  <span className="transition-opacity duration-200 font-medium">{item.name}</span>
+                  <span className="transition-opacity duration-200 font-medium text-sm leading-tight">{item.name}</span>
                 )}
               </button>
             );
