@@ -104,7 +104,7 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
       
       {/* Sidebar */}
       <aside className={cn(
-        "fixed inset-y-0 left-0 bg-gradient-to-b from-blue-50 via-blue-100 to-blue-50 dark:from-slate-800 dark:via-slate-900 dark:to-slate-800 border-r border-blue-200 dark:border-slate-700 shadow-xl sidebar-transition z-50 transform transition-all duration-300 ease-in-out",
+        "fixed inset-y-0 left-0 bg-sidebar border-r border-sidebar-border shadow-xl sidebar-transition z-50 transform transition-all duration-300 ease-in-out",
         "md:translate-x-0",
         isCollapsed ? "w-16" : "w-64",
         isOpen ? "translate-x-0" : "-translate-x-full",
@@ -112,31 +112,29 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
       )}>
       <div className="flex flex-col h-full">
         {/* Logo & Toggle */}
-        <div className="flex items-center justify-center px-3 py-1 border-b border-blue-200 dark:border-slate-700">
+        <div className="flex items-center justify-center px-3 py-1 border-b border-sidebar-border">
           {!isCollapsed && (
             <div className="flex items-center justify-center w-full relative">
               <img src={logoSymbol} alt="" className="h-32 w-32 transition-opacity duration-300 mix-blend-multiply dark:mix-blend-normal" />
-              <Button
-                variant="ghost"
-                size="icon"
+              <button
                 onClick={toggleCollapse}
-                className="absolute right-0 text-blue-600 dark:text-white hover:bg-blue-50 dark:hover:bg-white/10 transition-all duration-300"
+                className="absolute right-0 p-2 text-sidebar-primary hover:bg-sidebar-accent rounded-md transition-all duration-300"
                 data-testid="button-toggle-sidebar"
+                aria-label="Collapse sidebar"
               >
                 <ChevronLeft className="h-5 w-5" />
-              </Button>
+              </button>
             </div>
           )}
           {isCollapsed && (
-            <Button
-              variant="ghost"
-              size="icon"
+            <button
               onClick={toggleCollapse}
-              className="text-blue-600 dark:text-white hover:bg-blue-50 dark:hover:bg-white/10 transition-all duration-300"
+              className="p-2 text-sidebar-primary hover:bg-sidebar-accent rounded-md transition-all duration-300"
               data-testid="button-toggle-sidebar"
+              aria-label="Expand sidebar"
             >
               <ChevronRight className="h-5 w-5" />
-            </Button>
+            </button>
           )}
         </div>
         
@@ -145,26 +143,25 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
           {navigation.map((item) => {
             const Icon = item.icon;
             return (
-              <Button
+              <button
                 key={item.name}
-                variant="ghost"
                 className={cn(
-                  "w-full text-slate-700 dark:text-white hover:bg-blue-200 dark:hover:bg-white/10 transition-all duration-200",
+                  "w-full flex items-center text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-200 rounded-md py-2 px-3",
                   isCollapsed ? "justify-center px-2" : "justify-start",
-                  item.current && "bg-blue-200 dark:bg-white/20 shadow-md font-semibold"
+                  item.current && "bg-sidebar-accent text-sidebar-accent-foreground shadow-md font-semibold"
                 )}
                 onClick={() => handleNavClick(item.href)}
                 data-testid={`nav-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
                 title={isCollapsed ? item.name : undefined}
               >
                 <Icon className={cn(
-                  "h-5 w-5 text-blue-600 dark:text-blue-400 transition-all duration-200",
+                  "h-5 w-5 transition-all duration-200",
                   !isCollapsed && "mr-3"
                 )} />
                 {!isCollapsed && (
                   <span className="transition-opacity duration-200 font-medium">{item.name}</span>
                 )}
-              </Button>
+              </button>
             );
           })}
         </nav>
