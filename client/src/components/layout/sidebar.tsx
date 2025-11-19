@@ -115,7 +115,7 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
         <div className="flex items-center justify-center px-3 py-1 border-b border-sidebar-border">
           {!isCollapsed && (
             <div className="flex items-center justify-center w-full relative">
-              <img src={logoSymbol} alt="" className="h-32 w-32 transition-opacity duration-300 dark:brightness-0 dark:invert" />
+              <img src={logoSymbol} alt="" className="h-32 w-32 transition-opacity duration-300 mix-blend-multiply dark:mix-blend-screen dark:opacity-90" />
               <button
                 onClick={toggleCollapse}
                 className="absolute right-0 p-2 text-sidebar-primary hover:bg-sidebar-accent rounded-md transition-all duration-300"
