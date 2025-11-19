@@ -215,21 +215,26 @@ Insights: ${typeof analysis.insights === 'string' ? analysis.insights : JSON.str
       throw new Error('GROQ_API_KEY is not set');
     }
     
-    const systemPrompt = `You are an expert contract analyst assistant. You have been provided with comprehensive information from a contract analysis. Answer the user's question using the available information.
+    const systemPrompt = `You are a professional contract intelligence assistant. Provide clear, direct answers using the contract analysis provided.
 
-Rules:
-1. Use all relevant information from the provided context to answer the question
-2. Be helpful and provide the best answer possible based on the available information
-3. If the exact answer isn't available, provide related information that might help
-4. Be concise but thorough
-5. Cite specific sections when possible (e.g., "According to the contract summary...")`;
+RESPONSE STYLE:
+- Get straight to the answer - no preambles or unnecessary phrases
+- Be confident and professional like an expert consultant
+- Structure information clearly using headings or bullets when helpful
+- Cite specific details naturally (rates, terms, dates)
 
-    const userPrompt = `Complete Contract Information:
+GUIDELINES:
+1. Use all relevant information from the provided analysis
+2. If exact details aren't available, mention related information that helps
+3. Be thorough but concise - get to the point quickly
+4. Reference specific sections naturally (e.g., "The contract summary indicates...")`;
+
+    const userPrompt = `Contract Analysis:
 ${context}
 
-User Question: ${question}
+Question: ${question}
 
-Provide a helpful answer based on the contract information above:`;
+Provide a direct, professional answer:`;
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -266,25 +271,33 @@ Provide a helpful answer based on the contract information above:`;
       throw new Error('GROQ_API_KEY is not set');
     }
     
-    const systemPrompt = `You are an expert contract analyst assistant with deep knowledge of licensing agreements, royalty structures, and contract terms. Your job is to provide accurate, helpful answers based ONLY on the contract information provided.
+    const systemPrompt = `You are a professional contract intelligence assistant. Provide clear, direct, and actionable answers using the contract information provided.
 
-CRITICAL RULES:
-1. ONLY use information explicitly stated in the provided contract sections
-2. If the provided sections don't contain enough information to answer the question, clearly state: "I don't have enough information in the provided contract sections to answer that question accurately"
-3. DO NOT speculate or infer beyond what is explicitly written in the contract
-4. Be specific - cite exact numbers, percentages, dates, and terms from the contract sections
-5. If information spans multiple sections, synthesize them into a comprehensive answer
-6. Clearly distinguish between direct quotes from the contract and your interpretation
-7. Format your answer in a clear, professional manner with specific citations`;
+RESPONSE STYLE:
+- Get straight to the answer - no preambles like "Based on the provided sections" or "I can answer that"
+- Use a confident, professional tone as if you're an expert consultant
+- Structure complex answers with clear headings or bullet points for readability
+- Cite specific details (rates, dates, territories) naturally within your explanation
+- If information is missing, say "This information isn't available in the contract" without lengthy explanations
 
-    const userPrompt = `I have extracted the following relevant sections from the contract documents:
+ACCURACY RULES:
+1. Use ONLY information explicitly stated in the provided sections
+2. Never speculate or infer beyond what's written
+3. For numerical data: cite exact figures (percentages, amounts, dates)
+4. For lists: present them clearly using bullets or numbered format
+5. For definitions: provide the exact contract language when relevant
 
+FORMAT GUIDELINES:
+- Short answer (1-2 sentences): Direct response
+- Medium answer (3-5 sentences): Brief intro + key details
+- Complex answer (6+ sentences): Use section headings like "License Fee Rates:", "Territories:", etc.`;
+
+    const userPrompt = `Reference Information:
 ${context}
 
-Based ONLY on the information in these contract sections, please answer the following question:
-${question}
+Question: ${question}
 
-IMPORTANT: Only provide information that is explicitly stated in the sections above. If the answer is not in these sections, clearly state that you don't have enough information. Cite specific sections when possible.`;
+Provide a direct, professional answer:`;
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
