@@ -125,7 +125,16 @@ export default function GlobalSearch() {
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl p-0 gap-0">
+        <DialogContent 
+          className="max-w-2xl p-0 gap-0"
+          onInteractOutside={(e) => {
+            // Prevent dialog from closing when clicking on buttons inside
+            const target = e.target as HTMLElement;
+            if (target.closest('[data-testid^="search-result-"]')) {
+              e.preventDefault();
+            }
+          }}
+        >
           {/* Search Input */}
           <div className="flex items-center border-b px-4 py-3">
             <Search className="h-4 w-4 text-muted-foreground mr-2" />
