@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FormattedAnswer } from "@/components/ui/formatted-answer";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import {
@@ -15,6 +16,7 @@ import {
   ChevronDown,
   MessageSquare,
   X,
+  FileText,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -208,13 +210,7 @@ export function FloatingAIAssistant() {
                                   </Badge>
                                 )}
                               </div>
-                              <div className="text-xs leading-relaxed text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
-                                {msg.content.split('\n\n').map((paragraph, pidx) => (
-                                  <p key={pidx} className="mb-2 last:mb-0">
-                                    {paragraph}
-                                  </p>
-                                ))}
-                              </div>
+                              <FormattedAnswer content={msg.content} className="text-xs" />
                               {msg.sources && msg.sources.length > 0 && (
                                 <div className="pt-2 border-t border-purple-200 dark:border-purple-800">
                                   <details className="group">

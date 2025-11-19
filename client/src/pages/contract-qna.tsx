@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FormattedAnswer } from "@/components/ui/formatted-answer";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import {
@@ -176,15 +177,7 @@ export default function ContractQnA() {
                                         </Badge>
                                       )}
                                     </div>
-                                    <div className="prose prose-sm dark:prose-invert max-w-none">
-                                      <div className="text-sm leading-relaxed text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
-                                        {msg.content.split('\n\n').map((paragraph, pidx) => (
-                                          <p key={pidx} className="mb-3 last:mb-0">
-                                            {paragraph}
-                                          </p>
-                                        ))}
-                                      </div>
-                                    </div>
+                                    <FormattedAnswer content={msg.content} />
                                     {msg.sources && msg.sources.length > 0 && (
                                       <div className="pt-3 border-t border-purple-200 dark:border-purple-800">
                                         <details className="group">
