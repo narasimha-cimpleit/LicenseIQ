@@ -193,50 +193,57 @@ export function FloatingAIAssistant() {
                           <p className="text-sm">{msg.content}</p>
                         </div>
                       ) : (
-                        <div className="space-y-2">
+                        <div className="space-y-3">
                           <div className="flex items-start gap-2">
-                            <Sparkles className="h-4 w-4 text-purple-600 mt-0.5 flex-shrink-0" />
-                            <div className="flex-1">
-                              <p className="text-xs font-semibold text-purple-700 dark:text-purple-300 mb-1">AI:</p>
-                              <p className="text-sm leading-relaxed">{msg.content}</p>
+                            <div className="p-1.5 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex-shrink-0">
+                              <Sparkles className="h-3 w-3 text-white" />
                             </div>
-                          </div>
-                          {msg.confidence !== undefined && (
-                            <div className="flex items-center gap-2 pt-2 border-t">
-                              <Badge variant={getConfidenceBadge(msg.confidence)} className="text-xs">
-                                <CheckCircle2 className="h-3 w-3 mr-1" />
-                                {(msg.confidence * 100).toFixed(0)}% Confidence
-                              </Badge>
-                              {msg.sources && msg.sources.length > 0 && (
-                                <span className="text-xs text-muted-foreground">
-                                  {msg.sources.length} source{msg.sources.length > 1 ? 's' : ''}
-                                </span>
-                              )}
-                            </div>
-                          )}
-                          {msg.sources && msg.sources.length > 0 && (
-                            <details className="group">
-                              <summary className="cursor-pointer text-xs text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1">
-                                <ChevronDown className="h-3 w-3 transition-transform group-open:rotate-180" />
-                                View Sources
-                              </summary>
-                              <div className="mt-2 space-y-2">
-                                {msg.sources.map((source, sidx) => (
-                                  <div key={sidx} className="bg-white dark:bg-gray-900 rounded p-2 border text-xs">
-                                    <div className="flex items-center justify-between mb-1">
-                                      <p className="font-semibold text-purple-700 dark:text-purple-300 text-xs">
-                                        {source.contractName}
-                                      </p>
-                                      <Badge variant="outline" className="text-xs">
-                                        {(source.similarity * 100).toFixed(0)}% match
-                                      </Badge>
-                                    </div>
-                                    <p className="text-muted-foreground text-xs">{source.relevantText}</p>
-                                  </div>
+                            <div className="flex-1 space-y-2">
+                              <div className="flex items-center gap-2">
+                                <p className="text-xs font-bold text-purple-700 dark:text-purple-300">AI Answer</p>
+                                {msg.confidence !== undefined && (
+                                  <Badge variant={getConfidenceBadge(msg.confidence)} className="text-xs">
+                                    <CheckCircle2 className="h-3 w-3 mr-1" />
+                                    {(msg.confidence * 100).toFixed(0)}%
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="text-xs leading-relaxed text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
+                                {msg.content.split('\n\n').map((paragraph, pidx) => (
+                                  <p key={pidx} className="mb-2 last:mb-0">
+                                    {paragraph}
+                                  </p>
                                 ))}
                               </div>
-                            </details>
-                          )}
+                              {msg.sources && msg.sources.length > 0 && (
+                                <div className="pt-2 border-t border-purple-200 dark:border-purple-800">
+                                  <details className="group">
+                                    <summary className="cursor-pointer text-xs font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 flex items-center gap-1 transition-colors">
+                                      <ChevronDown className="h-3 w-3 transition-transform group-open:rotate-180" />
+                                      <span>View {msg.sources.length} Source{msg.sources.length > 1 ? 's' : ''}</span>
+                                    </summary>
+                                    <div className="mt-2 space-y-2 pl-4">
+                                      {msg.sources.map((source, sidx) => (
+                                        <div key={sidx} className="bg-white dark:bg-gray-900 rounded p-2 border border-purple-100 dark:border-purple-900 shadow-sm">
+                                          <div className="flex items-center justify-between gap-2 mb-1">
+                                            <p className="font-semibold text-purple-700 dark:text-purple-300 text-xs line-clamp-1 flex-1">
+                                              {source.contractName}
+                                            </p>
+                                            <Badge variant="outline" className="text-xs flex-shrink-0">
+                                              {(source.similarity * 100).toFixed(0)}%
+                                            </Badge>
+                                          </div>
+                                          <p className="text-gray-600 dark:text-gray-400 text-xs leading-relaxed">
+                                            {source.relevantText}
+                                          </p>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </details>
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>

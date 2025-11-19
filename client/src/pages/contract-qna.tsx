@@ -161,50 +161,62 @@ export default function ContractQnA() {
                                 <p className="text-sm">{msg.content}</p>
                               </div>
                             ) : (
-                              <div className="space-y-3">
-                                <div className="flex items-start gap-2">
-                                  <Sparkles className="h-5 w-5 text-purple-600 mt-0.5" />
-                                  <div className="flex-1">
-                                    <p className="text-sm font-semibold text-purple-700 dark:text-purple-300 mb-2">AI Answer:</p>
-                                    <p className="text-sm leading-relaxed">{msg.content}</p>
+                              <div className="space-y-4">
+                                <div className="flex items-start gap-3">
+                                  <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex-shrink-0">
+                                    <Sparkles className="h-4 w-4 text-white" />
                                   </div>
-                                </div>
-                                {msg.confidence !== undefined && (
-                                  <div className="flex items-center gap-2 pt-2 border-t">
-                                    <Badge variant={getConfidenceBadge(msg.confidence)}>
-                                      <CheckCircle2 className="h-3 w-3 mr-1" />
-                                      {(msg.confidence * 100).toFixed(0)}% Confidence
-                                    </Badge>
+                                  <div className="flex-1 space-y-3">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <p className="text-sm font-bold text-purple-700 dark:text-purple-300">AI Answer</p>
+                                      {msg.confidence !== undefined && (
+                                        <Badge variant={getConfidenceBadge(msg.confidence)} className="text-xs">
+                                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                                          {(msg.confidence * 100).toFixed(0)}% Confidence
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                                      <div className="text-sm leading-relaxed text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
+                                        {msg.content.split('\n\n').map((paragraph, pidx) => (
+                                          <p key={pidx} className="mb-3 last:mb-0">
+                                            {paragraph}
+                                          </p>
+                                        ))}
+                                      </div>
+                                    </div>
                                     {msg.sources && msg.sources.length > 0 && (
-                                      <span className="text-xs text-muted-foreground">
-                                        {msg.sources.length} source{msg.sources.length > 1 ? 's' : ''}
-                                      </span>
+                                      <div className="pt-3 border-t border-purple-200 dark:border-purple-800">
+                                        <details className="group">
+                                          <summary className="cursor-pointer text-sm font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 flex items-center gap-2 transition-colors">
+                                            <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
+                                            <span>View {msg.sources.length} Source{msg.sources.length > 1 ? 's' : ''}</span>
+                                          </summary>
+                                          <div className="mt-3 space-y-2 pl-6">
+                                            {msg.sources.map((source, sidx) => (
+                                              <div key={sidx} className="bg-white dark:bg-gray-900 rounded-lg p-3 border border-purple-100 dark:border-purple-900 shadow-sm hover:shadow-md transition-shadow">
+                                                <div className="flex items-start justify-between gap-2 mb-2">
+                                                  <div className="flex items-center gap-2 flex-1">
+                                                    <FileText className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400 flex-shrink-0" />
+                                                    <p className="text-xs font-semibold text-purple-700 dark:text-purple-300 line-clamp-1">
+                                                      {source.contractName}
+                                                    </p>
+                                                  </div>
+                                                  <Badge variant="outline" className="text-xs flex-shrink-0">
+                                                    {(source.similarity * 100).toFixed(0)}% match
+                                                  </Badge>
+                                                </div>
+                                                <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed pl-5">
+                                                  {source.relevantText}
+                                                </p>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </details>
+                                      </div>
                                     )}
                                   </div>
-                                )}
-                                {msg.sources && msg.sources.length > 0 && (
-                                  <details className="group">
-                                    <summary className="cursor-pointer text-xs text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1">
-                                      <ChevronDown className="h-3 w-3 transition-transform group-open:rotate-180" />
-                                      View Sources
-                                    </summary>
-                                    <div className="mt-2 space-y-2">
-                                      {msg.sources.map((source, sidx) => (
-                                        <div key={sidx} className="bg-white dark:bg-gray-900 rounded p-3 border">
-                                          <div className="flex items-center justify-between mb-1">
-                                            <p className="text-xs font-semibold text-purple-700 dark:text-purple-300">
-                                              {source.contractName}
-                                            </p>
-                                            <Badge variant="outline" className="text-xs">
-                                              {(source.similarity * 100).toFixed(0)}% match
-                                            </Badge>
-                                          </div>
-                                          <p className="text-xs text-muted-foreground">{source.relevantText}</p>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </details>
-                                )}
+                                </div>
                               </div>
                             )}
                           </div>
