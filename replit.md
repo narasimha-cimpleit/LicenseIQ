@@ -12,6 +12,7 @@ Preferred communication style: Simple, everyday language.
 
 # Recent Changes
 
+- **Light Blue Sidebar for Light Theme** (2025-11-19): Updated Light theme sidebar background to light blue (hsl(210, 60%, 95%)) for better visual appeal while maintaining existing colors for all other themes.
 - **Transparent Logo Implementation** (2025-11-19): Replaced opaque white-background logo with transparent PNG version (Transparent Logo (1)_1763596083942.png). Logo now displays seamlessly across all light and dark themes without patches or background boxes. Sized at h-52 w-52 (208px) for optimal visibility with minimal container padding.
 - **Theme-Aware Sidebar** (2025-11-19): Implemented dynamic sidebar theming across all 12 themes. Sidebar now changes colors based on selected theme using CSS variables (--sidebar, --sidebar-foreground, --sidebar-primary, --sidebar-accent, etc.). Replaced Button components with native button elements to prevent style conflicts. All 12 themes now have complete sidebar variable sets for consistent appearance. Sidebar background, borders, text, icons, hover states, and active states all respond to theme changes.
 - **liQ Agent Platform Questions** (2025-11-19): Enhanced floating liQ Agent to support both platform-specific and contract-specific questions, matching main liQ AI page functionality. Updated description, example questions, and source display with FileText icons for consistency.
