@@ -126,7 +126,7 @@ export function FloatingAIAssistant() {
             liQ Agent
           </SheetTitle>
           <SheetDescription>
-            Ask questions about your contracts using AI-powered semantic search
+            Ask questions about both the LicenseIQ platform and your contracts using AI-powered semantic search
           </SheetDescription>
         </SheetHeader>
 
@@ -163,15 +163,15 @@ export function FloatingAIAssistant() {
                 <Brain className="h-16 w-16 text-purple-300 dark:text-purple-700 mb-4" />
                 <h3 className="text-lg font-semibold mb-2">Ask me anything!</h3>
                 <p className="text-sm text-muted-foreground max-w-md mb-4">
-                  I can help you understand contract terms, find royalty rates, check territories, and more.
+                  I can answer questions about the LicenseIQ platform itself and your contracts - including terms, rates, territories, and features.
                 </p>
                 <div className="space-y-2 w-full max-w-sm">
                   <p className="text-xs font-semibold text-muted-foreground text-left mb-1">Try asking:</p>
                   {[
-                    "What are the royalty rates?",
+                    "What is LicenseIQ?",
+                    "How does the rule engine work?",
+                    "What are the license fee rates?",
                     "Which territories are covered?",
-                    "What are the payment terms?",
-                    "Are there any volume discounts?",
                   ].map((example, idx) => (
                     <button
                       key={idx}
@@ -221,15 +221,18 @@ export function FloatingAIAssistant() {
                                     <div className="mt-2 space-y-2 pl-4">
                                       {msg.sources.map((source, sidx) => (
                                         <div key={sidx} className="bg-white dark:bg-gray-900 rounded p-2 border border-purple-100 dark:border-purple-900 shadow-sm">
-                                          <div className="flex items-center justify-between gap-2 mb-1">
-                                            <p className="font-semibold text-purple-700 dark:text-purple-300 text-xs line-clamp-1 flex-1">
-                                              {source.contractName}
-                                            </p>
+                                          <div className="flex items-start justify-between gap-2 mb-1">
+                                            <div className="flex items-center gap-1.5 flex-1">
+                                              <FileText className="h-3 w-3 text-purple-600 dark:text-purple-400 flex-shrink-0" />
+                                              <p className="font-semibold text-purple-700 dark:text-purple-300 text-xs line-clamp-1">
+                                                {source.contractName}
+                                              </p>
+                                            </div>
                                             <Badge variant="outline" className="text-xs flex-shrink-0">
                                               {(source.similarity * 100).toFixed(0)}%
                                             </Badge>
                                           </div>
-                                          <p className="text-gray-600 dark:text-gray-400 text-xs leading-relaxed">
+                                          <p className="text-gray-600 dark:text-gray-400 text-xs leading-relaxed pl-4">
                                             {source.relevantText}
                                           </p>
                                         </div>

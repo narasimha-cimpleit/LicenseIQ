@@ -8,7 +8,7 @@ Preferred communication style: Simple, everyday language.
 
 **Terminology Standards:**
 - Use "License Fee" (NOT "Royalty") throughout the application
-- Use "LIQ AI" (NOT "Contract Q&A") for the RAG-powered assistant
+- Use "liQ AI" (NOT "Contract Q&A") for the RAG-powered assistant - Note: lowercase 'l', lowercase 'i', uppercase 'Q'
 
 # Recent Changes
 
