@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Search, FileText, Upload, Receipt, Calculator, Database, Layers, Table, Building2, Brain, Sparkles, TrendingUp, Users, History, Settings, Mail, ClipboardCheck, BarChart3, File, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Search, FileText, Upload, Receipt, Calculator, Database, Layers, Table, Building2, Brain, Sparkles, TrendingUp, Users, History, Settings, Mail, ClipboardCheck, BarChart3, File, Loader2, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface NavigationItem {
   itemKey: string;
@@ -72,14 +73,20 @@ export default function GlobalSearch() {
         e.preventDefault();
         setOpen((open) => !open);
       }
+
+      // Close on Escape
+      if (e.key === "Escape" && open) {
+        setOpen(false);
+      }
     };
 
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
-  }, []);
+  }, [open]);
 
   const filteredItems = navigationItems
     .filter((item) => {
+      if (!searchQuery) return true; // Show all if no search query
       const query = searchQuery.toLowerCase();
       return (
         item.itemName.toLowerCase().includes(query) ||
@@ -87,7 +94,7 @@ export default function GlobalSearch() {
         item.href.toLowerCase().includes(query)
       );
     })
-    .sort((a, b) => a.sortOrder - b.sortOrder); // Preserve original sortOrder
+    .sort((a, b) => a.sortOrder - b.sortOrder);
 
   const handleSelect = (href: string) => {
     setOpen(false);
@@ -117,49 +124,92 @@ export default function GlobalSearch() {
         </kbd>
       </Button>
 
-      <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput 
-          placeholder="Search for any page or feature..." 
-          value={searchQuery}
-          onValueChange={setSearchQuery}
-        />
-        <CommandList>
-          {isLoading ? (
-            <div className="flex items-center justify-center p-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              <span className="ml-2 text-sm text-muted-foreground">Loading navigation...</span>
-            </div>
-          ) : isError ? (
-            <div className="flex items-center justify-center p-8 text-sm text-destructive">
-              Failed to load navigation items
-            </div>
-          ) : (
-            <>
-              <CommandEmpty>No results found.</CommandEmpty>
-              <CommandGroup heading="Navigation">
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-2xl p-0 gap-0">
+          {/* Search Input */}
+          <div className="flex items-center border-b px-4 py-3">
+            <Search className="h-4 w-4 text-muted-foreground mr-2" />
+            <Input
+              placeholder="Search for any page or feature..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-10 text-base"
+              autoFocus
+              data-testid="input-global-search"
+            />
+            <kbd className="hidden md:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground ml-2">
+              ESC
+            </kbd>
+          </div>
+
+          {/* Results */}
+          <ScrollArea className="max-h-[400px]">
+            {isLoading ? (
+              <div className="flex items-center justify-center p-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <span className="ml-2 text-sm text-muted-foreground">Loading navigation...</span>
+              </div>
+            ) : isError ? (
+              <div className="flex items-center justify-center p-8 text-sm text-destructive">
+                Failed to load navigation items
+              </div>
+            ) : filteredItems.length === 0 ? (
+              <div className="flex flex-col items-center justify-center p-8 text-center">
+                <Search className="h-12 w-12 text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground">No results found for "{searchQuery}"</p>
+              </div>
+            ) : (
+              <div className="p-2">
+                <div className="text-xs font-medium text-muted-foreground px-2 py-1.5 mb-1">
+                  Quick Navigation
+                </div>
                 {filteredItems.map((item) => {
                   const Icon = getIcon(item.iconName);
                   return (
-                    <CommandItem
+                    <button
                       key={item.itemKey}
-                      value={item.itemName}
-                      onSelect={() => handleSelect(item.href)}
-                      className="cursor-pointer"
+                      onClick={() => handleSelect(item.href)}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-accent transition-colors text-left group"
                       data-testid={`search-result-${item.itemKey}`}
                     >
-                      <Icon className="mr-2 h-4 w-4 text-blue-600 dark:text-blue-400" />
-                      <span>{item.itemName}</span>
-                      <Badge variant="secondary" className="ml-auto text-xs">
-                        {item.href}
-                      </Badge>
-                    </CommandItem>
+                      <div className="flex items-center justify-center w-8 h-8 rounded-md bg-blue-50 dark:bg-blue-950/30">
+                        <Icon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground">
+                          {item.itemName}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {item.href}
+                        </p>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </button>
                   );
                 })}
-              </CommandGroup>
-            </>
-          )}
-        </CommandList>
-      </CommandDialog>
+              </div>
+            )}
+          </ScrollArea>
+
+          {/* Footer */}
+          <div className="border-t px-4 py-2 text-xs text-muted-foreground flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1">
+                <kbd className="px-1.5 py-0.5 rounded border bg-muted font-mono">↑↓</kbd>
+                <span>Navigate</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <kbd className="px-1.5 py-0.5 rounded border bg-muted font-mono">Enter</kbd>
+                <span>Select</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <kbd className="px-1.5 py-0.5 rounded border bg-muted font-mono">ESC</kbd>
+                <span>Close</span>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
