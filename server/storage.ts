@@ -626,23 +626,38 @@ export class DatabaseStorage implements IStorage {
     const contractResults = await baseQuery.orderBy(desc(contracts.createdAt));
     
     // Also search in royalty rules and get matching contract IDs
-    const rulesQuery = db
+    // First, find contracts that match through rules
+    const rulesSearchConditions = or(
+      ilike(royaltyRules.ruleName, searchPattern),
+      ilike(royaltyRules.description, searchPattern),
+      ilike(royaltyRules.sourceText, searchPattern),
+      ilike(royaltyRules.sourceSection, searchPattern),
+      ilike(royaltyRules.calculationFormula, searchPattern)
+    );
+    
+    let rulesSearchQuery = db
       .select({
-        contractId: royaltyRules.contractId
+        contractId: royaltyRules.contractId,
+        uploadedBy: contracts.uploadedBy
       })
       .from(royaltyRules)
-      .where(
-        or(
-          ilike(royaltyRules.ruleName, searchPattern),
-          ilike(royaltyRules.description, searchPattern),
-          ilike(royaltyRules.sourceText, searchPattern),
-          ilike(royaltyRules.sourceSection, searchPattern),
-          ilike(royaltyRules.calculationFormula, searchPattern)
+      .leftJoin(contracts, eq(royaltyRules.contractId, contracts.id));
+    
+    // Apply combined conditions: search pattern AND user filter (if provided)
+    if (userId) {
+      rulesSearchQuery = rulesSearchQuery.where(
+        and(
+          rulesSearchConditions,
+          eq(contracts.uploadedBy, userId)
         )
       );
+    } else {
+      rulesSearchQuery = rulesSearchQuery.where(rulesSearchConditions);
+    }
     
-    const rulesResults = await rulesQuery;
-    const contractIdsFromRules = new Set(rulesResults.map(r => r.contractId));
+    const rulesResults = await rulesSearchQuery;
+    
+    const contractIdsFromRules = new Set(rulesResults.map(r => r.contractId).filter(Boolean));
     
     // If we found contracts through rules search, fetch those contracts too
     if (contractIdsFromRules.size > 0) {
