@@ -664,9 +664,40 @@ export class DatabaseStorage implements IStorage {
     
     const contractIdsFromRules = new Set(rulesResults.map(r => r.contractId).filter(Boolean));
     
-    // If we found contracts through rules search, fetch those contracts too
-    if (contractIdsFromRules.size > 0) {
-      const contractIdsArray = Array.from(contractIdsFromRules);
+    // Also search by date (separate query to avoid SQL errors with OR conditions)
+    // Search for dates in formats: "11/3/2025", "11/03/2025", "November", "2025"
+    const dateSearchResults = await db
+      .select({
+        id: contracts.id
+      })
+      .from(contracts)
+      .where(
+        userId
+          ? and(
+              or(
+                sql`to_char(${contracts.createdAt}, 'MM/DD/YYYY') ILIKE ${searchPattern}`,
+                sql`to_char(${contracts.createdAt}, 'FMMM/FMDD/YYYY') ILIKE ${searchPattern}`,
+                sql`to_char(${contracts.createdAt}, 'FMMonth') ILIKE ${searchPattern}`,
+                sql`to_char(${contracts.createdAt}, 'YYYY') ILIKE ${searchPattern}`
+              ),
+              eq(contracts.uploadedBy, userId)
+            )
+          : or(
+              sql`to_char(${contracts.createdAt}, 'MM/DD/YYYY') ILIKE ${searchPattern}`,
+              sql`to_char(${contracts.createdAt}, 'FMMM/FMDD/YYYY') ILIKE ${searchPattern}`,
+              sql`to_char(${contracts.createdAt}, 'FMMonth') ILIKE ${searchPattern}`,
+              sql`to_char(${contracts.createdAt}, 'YYYY') ILIKE ${searchPattern}`
+            )
+      );
+    
+    const contractIdsFromDates = new Set(dateSearchResults.map(r => r.id));
+    
+    // Combine all contract IDs from rules and dates
+    const allAdditionalIds = new Set([...contractIdsFromRules, ...contractIdsFromDates]);
+    
+    // If we found contracts through rules or dates search, fetch those contracts too
+    if (allAdditionalIds.size > 0) {
+      const contractIdsArray = Array.from(allAdditionalIds);
       const additionalContractsQuery = db
         .select({
           contract: contracts,
@@ -705,7 +736,7 @@ export class DatabaseStorage implements IStorage {
       }));
     }
 
-    // Return just contract results if no rules matches
+    // Return just contract results if no rules/dates matches
     return contractResults.map(({ contract, analysis, uploadedByUser }) => ({
       ...contract,
       analysis: analysis || undefined,
