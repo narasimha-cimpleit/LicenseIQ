@@ -98,7 +98,7 @@ import {
   type InsertLocation,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, or, ilike, count, gte, sql } from "drizzle-orm";
+import { eq, desc, and, or, ilike, count, gte, sql, inArray } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -661,6 +661,7 @@ export class DatabaseStorage implements IStorage {
     
     // If we found contracts through rules search, fetch those contracts too
     if (contractIdsFromRules.size > 0) {
+      const contractIdsArray = Array.from(contractIdsFromRules);
       const additionalContractsQuery = db
         .select({
           contract: contracts,
@@ -673,10 +674,10 @@ export class DatabaseStorage implements IStorage {
         .where(
           userId 
             ? and(
-                sql`${contracts.id} = ANY(${Array.from(contractIdsFromRules)})`,
+                inArray(contracts.id, contractIdsArray),
                 eq(contracts.uploadedBy, userId)
               )
-            : sql`${contracts.id} = ANY(${Array.from(contractIdsFromRules)})`
+            : inArray(contracts.id, contractIdsArray)
         )
         .orderBy(desc(contracts.createdAt));
       
