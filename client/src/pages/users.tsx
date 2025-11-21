@@ -22,7 +22,9 @@ import {
   ChevronDown,
   ChevronUp,
   X,
-  Check
+  Check,
+  Building2,
+  MapPin
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -38,7 +40,7 @@ export default function Users() {
 
   // Inline editing state
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
-  const [editingSection, setEditingSection] = useState<"profile" | "password" | "delete" | null>(null);
+  const [editingSection, setEditingSection] = useState<"profile" | "password" | "delete" | "organizations" | null>(null);
 
   // Edit form states
   const [firstName, setFirstName] = useState("");
@@ -51,6 +53,13 @@ export default function Users() {
 
   // Delete confirmation state
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
+
+  // Organization assignment states
+  const [selectedCompanyId, setSelectedCompanyId] = useState("");
+  const [selectedBusinessUnitId, setSelectedBusinessUnitId] = useState("");
+  const [selectedLocationId, setSelectedLocationId] = useState("");
+  const [selectedOrgRole, setSelectedOrgRole] = useState("viewer");
+  const [showAddOrgForm, setShowAddOrgForm] = useState(false);
 
   // Handle Escape key to close editing panel
   useEffect(() => {
@@ -77,6 +86,40 @@ export default function Users() {
       }
       return failureCount < 3;
     },
+  });
+
+  // Fetch companies for organization assignment
+  const { data: companies = [] } = useQuery({
+    queryKey: ["/api/master-data/companies"],
+    enabled: editingSection === "organizations",
+  });
+
+  // Fetch business units for selected company
+  const { data: businessUnits = [] } = useQuery({
+    queryKey: ["/api/master-data/business-units", { companyId: selectedCompanyId }],
+    queryFn: async () => {
+      const response = await fetch(`/api/master-data/business-units?companyId=${selectedCompanyId}`);
+      if (!response.ok) throw new Error('Failed to fetch business units');
+      return response.json();
+    },
+    enabled: !!selectedCompanyId && editingSection === "organizations",
+  });
+
+  // Fetch locations for selected business unit
+  const { data: locations = [] } = useQuery({
+    queryKey: ["/api/master-data/locations", { orgId: selectedBusinessUnitId }],
+    queryFn: async () => {
+      const response = await fetch(`/api/master-data/locations?orgId=${selectedBusinessUnitId}`);
+      if (!response.ok) throw new Error('Failed to fetch locations');
+      return response.json();
+    },
+    enabled: !!selectedBusinessUnitId && editingSection === "organizations",
+  });
+
+  // Fetch user organization roles
+  const { data: userOrgRoles = [], refetch: refetchOrgRoles } = useQuery({
+    queryKey: ["/api/user-organization-roles/user", expandedUserId],
+    enabled: !!expandedUserId && editingSection === "organizations",
   });
 
   // Role update mutation
@@ -167,6 +210,53 @@ export default function Users() {
     },
   });
 
+  // Create user organization role mutation
+  const createOrgRoleMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return apiRequest("POST", "/api/user-organization-roles", data);
+    },
+    onSuccess: () => {
+      refetchOrgRoles();
+      toast({
+        title: "Organization Assignment Created",
+        description: "User has been assigned to the organization successfully",
+      });
+      setShowAddOrgForm(false);
+      setSelectedCompanyId("");
+      setSelectedBusinessUnitId("");
+      setSelectedLocationId("");
+      setSelectedOrgRole("viewer");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create organization assignment",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete user organization role mutation
+  const deleteOrgRoleMutation = useMutation({
+    mutationFn: async (roleId: string) => {
+      return apiRequest("DELETE", `/api/user-organization-roles/${roleId}`);
+    },
+    onSuccess: () => {
+      refetchOrgRoles();
+      toast({
+        title: "Assignment Removed",
+        description: "User organization assignment has been removed",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to remove organization assignment",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Filter users based on search and filters
   const filteredUsers = users.filter((user: any) => {
     const matchesSearch = !searchQuery || 
@@ -183,7 +273,7 @@ export default function Users() {
   });
 
   // Inline editing handlers
-  const openEditing = (userId: string, section: "profile" | "password" | "delete") => {
+  const openEditing = (userId: string, section: "profile" | "password" | "delete" | "organizations") => {
     const user = users.find((u: any) => u.id === userId);
     if (!user) return;
 
@@ -207,6 +297,15 @@ export default function Users() {
     if (section === "delete") {
       setDeleteConfirmText("");
     }
+
+    // Reset organization form
+    if (section === "organizations") {
+      setShowAddOrgForm(false);
+      setSelectedCompanyId("");
+      setSelectedBusinessUnitId("");
+      setSelectedLocationId("");
+      setSelectedOrgRole("viewer");
+    }
   };
 
   const closeEditing = () => {
@@ -218,6 +317,11 @@ export default function Users() {
     setNewPassword("");
     setConfirmPassword("");
     setDeleteConfirmText("");
+    setShowAddOrgForm(false);
+    setSelectedCompanyId("");
+    setSelectedBusinessUnitId("");
+    setSelectedLocationId("");
+    setSelectedOrgRole("viewer");
   };
 
   const handleSaveProfile = async () => {
@@ -283,6 +387,25 @@ export default function Users() {
     deleteUserMutation.mutate(expandedUserId);
   };
 
+  const handleAddOrgAssignment = async () => {
+    if (!expandedUserId || !selectedCompanyId) {
+      toast({
+        title: "Validation Error",
+        description: "Please select at least a company",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createOrgRoleMutation.mutate({
+      userId: expandedUserId,
+      companyId: selectedCompanyId,
+      businessUnitId: selectedBusinessUnitId || null,
+      locationId: selectedLocationId || null,
+      role: selectedOrgRole,
+    });
+  };
+
   // Render inline editing panel
   const renderInlineEditingPanel = (user: any) => {
     if (expandedUserId !== user.id) return null;
@@ -303,6 +426,17 @@ export default function Users() {
                 data-testid={`tab-profile-${user.id}`}
               >
                 Profile
+              </button>
+              <button
+                className={`pb-2 px-1 text-sm font-medium border-b-2 ${
+                  editingSection === "organizations" 
+                    ? "border-primary text-primary" 
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+                onClick={() => openEditing(user.id, "organizations")}
+                data-testid={`tab-organizations-${user.id}`}
+              >
+                Organizations
               </button>
               <button
                 className={`pb-2 px-1 text-sm font-medium border-b-2 ${
@@ -486,6 +620,189 @@ export default function Users() {
                     <X className="h-4 w-4 mr-2" />
                     Cancel
                   </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Organizations Section */}
+            {editingSection === "organizations" && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-medium">Organization Assignments</h3>
+                  <Button
+                    size="sm"
+                    onClick={() => setShowAddOrgForm(!showAddOrgForm)}
+                    data-testid={`button-add-org-${user.id}`}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    {showAddOrgForm ? "Cancel" : "Add Assignment"}
+                  </Button>
+                </div>
+
+                {/* Add Organization Form */}
+                {showAddOrgForm && (
+                  <div className="bg-muted/20 p-4 rounded-lg border border-border space-y-3">
+                    <h4 className="text-sm font-medium">New Organization Assignment</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <Label htmlFor={`company-${user.id}`}>Company *</Label>
+                        <select
+                          id={`company-${user.id}`}
+                          value={selectedCompanyId}
+                          onChange={(e) => {
+                            setSelectedCompanyId(e.target.value);
+                            setSelectedBusinessUnitId("");
+                            setSelectedLocationId("");
+                          }}
+                          className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                          data-testid={`select-company-${user.id}`}
+                        >
+                          <option value="">Select a company...</option>
+                          {companies.map((company: any) => (
+                            <option key={company.id} value={company.id}>
+                              {company.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <Label htmlFor={`business-unit-${user.id}`}>Business Unit</Label>
+                        <select
+                          id={`business-unit-${user.id}`}
+                          value={selectedBusinessUnitId}
+                          onChange={(e) => {
+                            setSelectedBusinessUnitId(e.target.value);
+                            setSelectedLocationId("");
+                          }}
+                          disabled={!selectedCompanyId}
+                          className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm disabled:opacity-50"
+                          data-testid={`select-business-unit-${user.id}`}
+                        >
+                          <option value="">Select a business unit...</option>
+                          {businessUnits.map((bu: any) => (
+                            <option key={bu.id} value={bu.id}>
+                              {bu.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <Label htmlFor={`location-${user.id}`}>Location</Label>
+                        <select
+                          id={`location-${user.id}`}
+                          value={selectedLocationId}
+                          onChange={(e) => setSelectedLocationId(e.target.value)}
+                          disabled={!selectedBusinessUnitId}
+                          className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm disabled:opacity-50"
+                          data-testid={`select-location-${user.id}`}
+                        >
+                          <option value="">Select a location...</option>
+                          {locations.map((loc: any) => (
+                            <option key={loc.id} value={loc.id}>
+                              {loc.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <Label htmlFor={`role-${user.id}`}>Role *</Label>
+                        <select
+                          id={`role-${user.id}`}
+                          value={selectedOrgRole}
+                          onChange={(e) => setSelectedOrgRole(e.target.value)}
+                          className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                          data-testid={`select-role-${user.id}`}
+                        >
+                          <option value="viewer">Viewer</option>
+                          <option value="editor">Editor</option>
+                          <option value="admin">Admin</option>
+                          <option value="owner">Owner</option>
+                          <option value="auditor">Auditor</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        size="sm"
+                        onClick={handleAddOrgAssignment}
+                        disabled={createOrgRoleMutation.isPending || !selectedCompanyId}
+                        data-testid={`button-save-org-${user.id}`}
+                      >
+                        <Check className="h-4 w-4 mr-2" />
+                        {createOrgRoleMutation.isPending ? "Adding..." : "Add Assignment"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setShowAddOrgForm(false)}
+                        data-testid={`button-cancel-org-${user.id}`}
+                      >
+                        <X className="h-4 w-4 mr-2" />
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Current Assignments List */}
+                <div className="space-y-2">
+                  {userOrgRoles.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-4 text-center">
+                      No organization assignments yet. Click "Add Assignment" to get started.
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {userOrgRoles.map((role: any) => (
+                        <div
+                          key={role.id}
+                          className="flex items-center justify-between p-3 bg-muted/20 rounded-lg border border-border"
+                          data-testid={`org-role-${role.id}`}
+                        >
+                          <div className="flex items-center space-x-3 flex-1">
+                            <Building2 className="h-5 w-5 text-blue-600" />
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2">
+                                <span className="font-medium text-sm">{role.companyName}</span>
+                                {role.businessUnitName && (
+                                  <>
+                                    <span className="text-muted-foreground">/</span>
+                                    <span className="text-sm">{role.businessUnitName}</span>
+                                  </>
+                                )}
+                                {role.locationName && (
+                                  <>
+                                    <span className="text-muted-foreground">/</span>
+                                    <MapPin className="h-3 w-3 text-muted-foreground" />
+                                    <span className="text-sm">{role.locationName}</span>
+                                  </>
+                                )}
+                              </div>
+                              <div className="flex items-center space-x-2 mt-1">
+                                <Badge variant="secondary" className="text-xs">
+                                  {role.role}
+                                </Badge>
+                                <Badge 
+                                  variant={role.status === "active" ? "default" : "outline"} 
+                                  className="text-xs"
+                                >
+                                  {role.status}
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => deleteOrgRoleMutation.mutate(role.id)}
+                            disabled={deleteOrgRoleMutation.isPending}
+                            data-testid={`button-delete-org-${role.id}`}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
