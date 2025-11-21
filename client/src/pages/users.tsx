@@ -42,7 +42,7 @@ export default function Users() {
 
   // Inline editing state
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
-  const [editingSection, setEditingSection] = useState<"profile" | "password" | "delete" | "organizations" | null>(null);
+  const [editingSection, setEditingSection] = useState<"profile" | "password" | "delete" | "organizations" | "quickassign" | null>(null);
 
   // Edit form states
   const [firstName, setFirstName] = useState("");
@@ -56,15 +56,14 @@ export default function Users() {
   // Delete confirmation state
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
-  // Organization assignment states
+  // Organization assignment states (for Organizations tab only)
   const [selectedCompanyId, setSelectedCompanyId] = useState("");
   const [selectedBusinessUnitId, setSelectedBusinessUnitId] = useState("");
   const [selectedLocationId, setSelectedLocationId] = useState("");
   const [selectedOrgRole, setSelectedOrgRole] = useState("viewer");
   const [showAddOrgForm, setShowAddOrgForm] = useState(false);
   
-  // Quick assign dialog state
-  const [quickAssignUserId, setQuickAssignUserId] = useState<string | null>(null);
+  // Quick Assign dedicated state (separate from Organizations tab)
   const [quickAssignCompanyId, setQuickAssignCompanyId] = useState("");
   const [quickAssignBusinessUnitId, setQuickAssignBusinessUnitId] = useState("");
   const [quickAssignLocationId, setQuickAssignLocationId] = useState("");
@@ -97,13 +96,13 @@ export default function Users() {
     },
   });
 
-  // Fetch companies for organization assignment
+  // Fetch companies for Organizations tab
   const { data: companies = [] } = useQuery({
     queryKey: ["/api/master-data/companies"],
     enabled: editingSection === "organizations",
   });
 
-  // Fetch business units for selected company
+  // Fetch business units for Organizations tab
   const { data: businessUnits = [] } = useQuery({
     queryKey: ["/api/master-data/business-units", { companyId: selectedCompanyId }],
     queryFn: async () => {
@@ -114,7 +113,7 @@ export default function Users() {
     enabled: !!selectedCompanyId && editingSection === "organizations",
   });
 
-  // Fetch locations for selected business unit
+  // Fetch locations for Organizations tab
   const { data: locations = [] } = useQuery({
     queryKey: ["/api/master-data/locations", { orgId: selectedBusinessUnitId }],
     queryFn: async () => {
@@ -124,17 +123,11 @@ export default function Users() {
     },
     enabled: !!selectedBusinessUnitId && editingSection === "organizations",
   });
-
-  // Fetch user organization roles
-  const { data: userOrgRoles = [], refetch: refetchOrgRoles } = useQuery({
-    queryKey: ["/api/user-organization-roles/user", expandedUserId],
-    enabled: !!expandedUserId && editingSection === "organizations",
-  });
-
-  // Quick assign dialog queries
+  
+  // Quick Assign dedicated queries
   const { data: quickAssignCompanies = [] } = useQuery({
     queryKey: ["/api/master-data/companies"],
-    enabled: !!quickAssignUserId,
+    enabled: editingSection === "quickassign",
   });
 
   const { data: quickAssignBusinessUnits = [] } = useQuery({
@@ -144,7 +137,7 @@ export default function Users() {
       if (!response.ok) throw new Error('Failed to fetch business units');
       return response.json();
     },
-    enabled: !!quickAssignCompanyId && !!quickAssignUserId,
+    enabled: !!quickAssignCompanyId && editingSection === "quickassign",
   });
 
   const { data: quickAssignLocations = [] } = useQuery({
@@ -154,7 +147,13 @@ export default function Users() {
       if (!response.ok) throw new Error('Failed to fetch locations');
       return response.json();
     },
-    enabled: !!quickAssignBusinessUnitId && !!quickAssignUserId,
+    enabled: !!quickAssignBusinessUnitId && editingSection === "quickassign",
+  });
+
+  // Fetch user organization roles
+  const { data: userOrgRoles = [], refetch: refetchOrgRoles } = useQuery({
+    queryKey: ["/api/user-organization-roles/user", expandedUserId],
+    enabled: !!expandedUserId && editingSection === "organizations",
   });
 
   // Role update mutation
@@ -263,13 +262,21 @@ export default function Users() {
         description: "User has been assigned to the organization successfully",
       });
       
-      // Reset both regular form and quick assign dialog
-      setShowAddOrgForm(false);
-      setSelectedCompanyId("");
-      setSelectedBusinessUnitId("");
-      setSelectedLocationId("");
-      setSelectedOrgRole("viewer");
-      closeQuickAssign();
+      // Reset form fields based on which tab we're in
+      if (editingSection === "quickassign") {
+        // Reset Quick Assign state only - keep user in Quick Assign for multiple entries
+        setQuickAssignCompanyId("");
+        setQuickAssignBusinessUnitId("");
+        setQuickAssignLocationId("");
+        setQuickAssignRole("viewer");
+      } else if (editingSection === "organizations") {
+        // Reset Organizations tab state only
+        setShowAddOrgForm(false);
+        setSelectedCompanyId("");
+        setSelectedBusinessUnitId("");
+        setSelectedLocationId("");
+        setSelectedOrgRole("viewer");
+      }
     },
     onError: (error: any) => {
       toast({
@@ -325,7 +332,7 @@ export default function Users() {
   });
 
   // Inline editing handlers
-  const openEditing = (userId: string, section: "profile" | "password" | "delete" | "organizations") => {
+  const openEditing = (userId: string, section: "profile" | "password" | "delete" | "organizations" | "quickassign") => {
     const user = users.find((u: any) => u.id === userId);
     if (!user) return;
 
@@ -350,13 +357,21 @@ export default function Users() {
       setDeleteConfirmText("");
     }
 
-    // Reset organization form
+    // Reset organization form (Organizations tab)
     if (section === "organizations") {
       setShowAddOrgForm(false);
       setSelectedCompanyId("");
       setSelectedBusinessUnitId("");
       setSelectedLocationId("");
       setSelectedOrgRole("viewer");
+    }
+    
+    // Reset Quick Assign form (separate state)
+    if (section === "quickassign") {
+      setQuickAssignCompanyId("");
+      setQuickAssignBusinessUnitId("");
+      setQuickAssignLocationId("");
+      setQuickAssignRole("viewer");
     }
   };
 
@@ -374,6 +389,10 @@ export default function Users() {
     setSelectedBusinessUnitId("");
     setSelectedLocationId("");
     setSelectedOrgRole("viewer");
+    setQuickAssignCompanyId("");
+    setQuickAssignBusinessUnitId("");
+    setQuickAssignLocationId("");
+    setQuickAssignRole("viewer");
   };
 
   const handleSaveProfile = async () => {
@@ -440,7 +459,14 @@ export default function Users() {
   };
 
   const handleAddOrgAssignment = async () => {
-    if (!expandedUserId || !selectedCompanyId) {
+    // Use different state depending on whether we're in Quick Assign or Organizations tab
+    const isQuickAssign = editingSection === "quickassign";
+    const companyId = isQuickAssign ? quickAssignCompanyId : selectedCompanyId;
+    const businessUnitId = isQuickAssign ? quickAssignBusinessUnitId : selectedBusinessUnitId;
+    const locationId = isQuickAssign ? quickAssignLocationId : selectedLocationId;
+    const role = isQuickAssign ? quickAssignRole : selectedOrgRole;
+    
+    if (!expandedUserId || !companyId) {
       toast({
         title: "Validation Error",
         description: "Please select at least a company",
@@ -451,46 +477,10 @@ export default function Users() {
 
     createOrgRoleMutation.mutate({
       userId: expandedUserId,
-      companyId: selectedCompanyId,
-      businessUnitId: selectedBusinessUnitId || null,
-      locationId: selectedLocationId || null,
-      role: selectedOrgRole,
-    });
-  };
-
-  // Quick assign dialog handlers
-  const openQuickAssign = (userId: string) => {
-    setQuickAssignUserId(userId);
-    setQuickAssignCompanyId("");
-    setQuickAssignBusinessUnitId("");
-    setQuickAssignLocationId("");
-    setQuickAssignRole("viewer");
-  };
-
-  const closeQuickAssign = () => {
-    setQuickAssignUserId(null);
-    setQuickAssignCompanyId("");
-    setQuickAssignBusinessUnitId("");
-    setQuickAssignLocationId("");
-    setQuickAssignRole("viewer");
-  };
-
-  const handleQuickAssign = async () => {
-    if (!quickAssignUserId || !quickAssignCompanyId) {
-      toast({
-        title: "Validation Error",
-        description: "Please select at least a company",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    createOrgRoleMutation.mutate({
-      userId: quickAssignUserId,
-      companyId: quickAssignCompanyId,
-      businessUnitId: quickAssignBusinessUnitId || null,
-      locationId: quickAssignLocationId || null,
-      role: quickAssignRole,
+      companyId: companyId,
+      businessUnitId: businessUnitId || null,
+      locationId: locationId || null,
+      role: role,
     });
   };
 
@@ -514,6 +504,17 @@ export default function Users() {
                 data-testid={`tab-profile-${user.id}`}
               >
                 Profile
+              </button>
+              <button
+                className={`pb-2 px-1 text-sm font-medium border-b-2 ${
+                  editingSection === "quickassign" 
+                    ? "border-blue-600 text-blue-600" 
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+                onClick={() => openEditing(user.id, "quickassign")}
+                data-testid={`tab-quick-assign-${user.id}`}
+              >
+                Quick Assign
               </button>
               <button
                 className={`pb-2 px-1 text-sm font-medium border-b-2 ${
@@ -600,6 +601,122 @@ export default function Users() {
                     variant="outline" 
                     onClick={closeEditing}
                     data-testid={`button-cancel-profile-${user.id}`}
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Quick Assign Section */}
+            {editingSection === "quickassign" && (
+              <div className="space-y-4 max-w-2xl">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-medium text-blue-600">Quick Assign to Organization</h3>
+                  <span className="text-sm text-muted-foreground">Assign {user.firstName} {user.lastName} to an organization</span>
+                </div>
+                
+                <div className="grid grid-cols-4 gap-4">
+                  {/* Company Dropdown */}
+                  <div className="space-y-2">
+                    <Label htmlFor={`quick-company-${user.id}`}>Company *</Label>
+                    <select
+                      id={`quick-company-${user.id}`}
+                      value={quickAssignCompanyId}
+                      onChange={(e) => {
+                        setQuickAssignCompanyId(e.target.value);
+                        setQuickAssignBusinessUnitId("");
+                        setQuickAssignLocationId("");
+                      }}
+                      className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                      data-testid={`select-quick-company-${user.id}`}
+                    >
+                      <option value="">Select...</option>
+                      {quickAssignCompanies.map((company: any) => (
+                        <option key={company.id} value={company.id}>
+                          {company.companyName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Business Unit Dropdown */}
+                  <div className="space-y-2">
+                    <Label htmlFor={`quick-business-unit-${user.id}`}>Business Unit</Label>
+                    <select
+                      id={`quick-business-unit-${user.id}`}
+                      value={quickAssignBusinessUnitId}
+                      onChange={(e) => {
+                        setQuickAssignBusinessUnitId(e.target.value);
+                        setQuickAssignLocationId("");
+                      }}
+                      disabled={!quickAssignCompanyId}
+                      className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm disabled:opacity-50"
+                      data-testid={`select-quick-business-unit-${user.id}`}
+                    >
+                      <option value="">Select...</option>
+                      {quickAssignBusinessUnits.map((bu: any) => (
+                        <option key={bu.id} value={bu.id}>
+                          {bu.orgName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Location Dropdown */}
+                  <div className="space-y-2">
+                    <Label htmlFor={`quick-location-${user.id}`}>Location</Label>
+                    <select
+                      id={`quick-location-${user.id}`}
+                      value={quickAssignLocationId}
+                      onChange={(e) => setQuickAssignLocationId(e.target.value)}
+                      disabled={!quickAssignBusinessUnitId}
+                      className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm disabled:opacity-50"
+                      data-testid={`select-quick-location-${user.id}`}
+                    >
+                      <option value="">Select...</option>
+                      {quickAssignLocations.map((loc: any) => (
+                        <option key={loc.id} value={loc.id}>
+                          {loc.locName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Role Dropdown */}
+                  <div className="space-y-2">
+                    <Label htmlFor={`quick-role-${user.id}`}>Role *</Label>
+                    <select
+                      id={`quick-role-${user.id}`}
+                      value={quickAssignRole}
+                      onChange={(e) => setQuickAssignRole(e.target.value)}
+                      className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                      data-testid={`select-quick-role-${user.id}`}
+                    >
+                      <option value="viewer">Viewer</option>
+                      <option value="editor">Editor</option>
+                      <option value="admin">Admin</option>
+                      <option value="owner">Owner</option>
+                      <option value="auditor">Auditor</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex space-x-2">
+                  <Button 
+                    onClick={handleAddOrgAssignment}
+                    disabled={createOrgRoleMutation.isPending || !quickAssignCompanyId}
+                    className="bg-blue-600 hover:bg-blue-700"
+                    data-testid={`button-quick-assign-submit-${user.id}`}
+                  >
+                    <Check className="h-4 w-4 mr-2" />
+                    {createOrgRoleMutation.isPending ? "Assigning..." : "Assign to Organization"}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={closeEditing}
+                    data-testid={`button-cancel-quick-assign-${user.id}`}
                   >
                     <X className="h-4 w-4 mr-2" />
                     Cancel
@@ -1067,7 +1184,7 @@ export default function Users() {
                               <Button 
                                 variant="ghost" 
                                 size="sm"
-                                onClick={() => openQuickAssign(user.id)}
+                                onClick={() => openEditing(user.id, "quickassign")}
                                 title="Quick Assign to Organization"
                                 data-testid={`button-quick-assign-${user.id}`}
                               >
@@ -1101,123 +1218,6 @@ export default function Users() {
         </Card>
       </div>
 
-      {/* Quick Assign to Organization Dialog */}
-      <Dialog open={!!quickAssignUserId} onOpenChange={(open) => !open && closeQuickAssign()}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Assign to Organization</DialogTitle>
-            <DialogDescription>
-              Quickly assign this user to an organization with a specific role.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            {/* Company Dropdown */}
-            <div className="space-y-2">
-              <Label htmlFor="quick-assign-company">Company *</Label>
-              <select
-                id="quick-assign-company"
-                value={quickAssignCompanyId}
-                onChange={(e) => {
-                  setQuickAssignCompanyId(e.target.value);
-                  setQuickAssignBusinessUnitId("");
-                  setQuickAssignLocationId("");
-                }}
-                className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
-                data-testid="select-quick-assign-company"
-              >
-                <option value="">Select a company...</option>
-                {quickAssignCompanies.map((company: any) => (
-                  <option key={company.id} value={company.id}>
-                    {company.companyName}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Business Unit Dropdown */}
-            <div className="space-y-2">
-              <Label htmlFor="quick-assign-business-unit">Business Unit</Label>
-              <select
-                id="quick-assign-business-unit"
-                value={quickAssignBusinessUnitId}
-                onChange={(e) => {
-                  setQuickAssignBusinessUnitId(e.target.value);
-                  setQuickAssignLocationId("");
-                }}
-                disabled={!quickAssignCompanyId}
-                className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm disabled:opacity-50"
-                data-testid="select-quick-assign-business-unit"
-              >
-                <option value="">Select a business unit...</option>
-                {quickAssignBusinessUnits.map((bu: any) => (
-                  <option key={bu.id} value={bu.id}>
-                    {bu.orgName}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Location Dropdown */}
-            <div className="space-y-2">
-              <Label htmlFor="quick-assign-location">Location</Label>
-              <select
-                id="quick-assign-location"
-                value={quickAssignLocationId}
-                onChange={(e) => setQuickAssignLocationId(e.target.value)}
-                disabled={!quickAssignBusinessUnitId}
-                className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm disabled:opacity-50"
-                data-testid="select-quick-assign-location"
-              >
-                <option value="">Select a location...</option>
-                {quickAssignLocations.map((loc: any) => (
-                  <option key={loc.id} value={loc.id}>
-                    {loc.locName}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Role Dropdown */}
-            <div className="space-y-2">
-              <Label htmlFor="quick-assign-role">Role *</Label>
-              <select
-                id="quick-assign-role"
-                value={quickAssignRole}
-                onChange={(e) => setQuickAssignRole(e.target.value)}
-                className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
-                data-testid="select-quick-assign-role"
-              >
-                <option value="viewer">Viewer</option>
-                <option value="editor">Editor</option>
-                <option value="admin">Admin</option>
-                <option value="owner">Owner</option>
-                <option value="auditor">Auditor</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex justify-end space-x-2">
-            <Button
-              variant="outline"
-              onClick={closeQuickAssign}
-              disabled={createOrgRoleMutation.isPending}
-              data-testid="button-cancel-quick-assign"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleQuickAssign}
-              disabled={createOrgRoleMutation.isPending || !quickAssignCompanyId}
-              data-testid="button-submit-quick-assign"
-            >
-              <Check className="h-4 w-4 mr-2" />
-              {createOrgRoleMutation.isPending ? "Assigning..." : "Assign to Organization"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </MainLayout>
   );
 }
