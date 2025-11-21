@@ -24,6 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { RoyaltyRulesEditor } from "@/components/RoyaltyRulesEditor";
+import { formatDateUSA } from "@/lib/dateFormat";
 import { 
   FileText, 
   Download, 
@@ -947,7 +948,7 @@ export default function ContractAnalysis() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Upload Date:</span>
-                      <span className="text-foreground">{contract?.createdAt ? new Date(contract.createdAt).toLocaleDateString() : 'Unknown'}</span>
+                      <span className="text-foreground">{formatDateUSA(contract?.createdAt)}</span>
                     </div>
                     {contract?.uploadedByUser && (
                       <div className="flex justify-between">

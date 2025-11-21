@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import MainLayout from "@/components/layout/main-layout";
+import { formatDateTimeUSA } from "@/lib/dateFormat";
 
 interface EmbeddingStats {
   totalEmbeddings: number;
@@ -193,8 +194,7 @@ export default function RAGDashboard() {
                         </Badge>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(embedding.createdAt).toLocaleDateString()} at{' '}
-                        {new Date(embedding.createdAt).toLocaleTimeString()}
+                        {formatDateTimeUSA(embedding.createdAt)}
                       </p>
                     </div>
                   </div>

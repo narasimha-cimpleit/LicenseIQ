@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Sparkles, Upload, Download, Save, Trash2, Eye, FileJson, AlertCircle, CheckCircle2, Loader2, Settings, ArrowLeft, Layers, Database } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { ErpSystem, ErpEntity, LicenseiqEntity, LicenseiqField } from '@shared/schema';
+import { formatDateUSA } from '@/lib/dateFormat';
 
 interface FieldMapping {
   source_field: string | null;
@@ -1176,7 +1177,7 @@ export default function MasterDataMapping() {
                           <TableCell>{mapping.erpSystem}</TableCell>
                           <TableCell>{mapping.mappingResults.length} fields</TableCell>
                           <TableCell className="text-sm text-muted-foreground">
-                            {new Date(mapping.createdAt).toLocaleDateString()}
+                            {formatDateUSA(mapping.createdAt)}
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-2">

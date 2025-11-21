@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Calculator, Edit, Plus, Trash2, Play, DollarSign, Percent, TrendingUp, RefreshCw, Sparkles, ChevronDown, ChevronUp, Save, X, Info, Calendar } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { formatDateTimeUSA } from "@/lib/dateFormat";
 
 interface RoyaltyRule {
   id: string;
@@ -1206,7 +1207,7 @@ export function RoyaltyRulesEditor({ contractId, ruleSets, onRulesUpdate, onRepr
                   </div>
                   <div className="flex justify-between">
                     <span>Calculated At:</span>
-                    <span>{new Date(calculationResult.calculatedAt).toLocaleString()}</span>
+                    <span>{formatDateTimeUSA(calculationResult.calculatedAt)}</span>
                   </div>
                 </div>
 

@@ -24,6 +24,7 @@ import {
   LogOut
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { formatDateUSA, formatDateTimeUSA } from "@/lib/dateFormat";
 
 export default function Audit() {
   const { user } = useAuth();
@@ -260,10 +261,10 @@ export default function Audit() {
                       
                       <div className="text-right">
                         <div className="text-sm font-medium text-foreground">
-                          {new Date(log.createdAt).toLocaleDateString()}
+                          {formatDateUSA(log.createdAt)}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {new Date(log.createdAt).toLocaleTimeString()}
+                          {new Date(log.createdAt).toLocaleTimeString('en-US')}
                         </div>
                       </div>
                     </div>
