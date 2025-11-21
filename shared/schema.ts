@@ -10,6 +10,7 @@ import {
   decimal,
   boolean,
   vector,
+  unique,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -1250,6 +1251,8 @@ export const userOrganizationRoles = pgTable("user_organization_roles", {
   index("user_org_roles_bu_idx").on(table.businessUnitId),
   index("user_org_roles_location_idx").on(table.locationId),
   index("user_org_roles_status_idx").on(table.status),
+  // Unique constraint: One role per user per organization path
+  unique("user_org_unique").on(table.userId, table.companyId, table.businessUnitId, table.locationId),
 ]);
 
 // Insert schemas
