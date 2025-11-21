@@ -592,12 +592,11 @@ export class DatabaseStorage implements IStorage {
       ilike(contracts.governingLaw, searchPattern),
       ilike(contracts.renewalTerms, searchPattern),
       
-      // User fields (who created the contract)
-      ilike(users.username, searchPattern),
-      ilike(users.fullName, searchPattern),
-      
       // Contract analysis fields
-      ilike(contractAnalysis.summary, searchPattern)
+      ilike(contractAnalysis.summary, searchPattern),
+      // Search in JSONB fields using text cast for insights and keyTerms
+      sql`${contractAnalysis.insights}::text ILIKE ${searchPattern}`,
+      sql`${contractAnalysis.keyTerms}::text ILIKE ${searchPattern}`
     );
 
     // Build base query

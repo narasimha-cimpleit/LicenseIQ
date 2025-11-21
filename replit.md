@@ -13,8 +13,7 @@ Preferred communication style: Simple, everyday language.
 # Recent Changes
 
 - **USA Date Format Standardization** (2025-11-21): Implemented consistent USA date formatting (MM/DD/YYYY) across the entire platform. Created centralized date utility functions (`formatDateUSA()`, `formatDateTimeUSA()`, `formatDateTimeLongUSA()`) in `client/src/lib/dateFormat.ts`. Updated all date displays in contract analysis, audit logs, master data mapping, RAG dashboard, and royalty calculations to use consistent USA format.
-- **Contract Search Bug Fix** (2025-11-21): Fixed critical search bug preventing searches through royalty rules (e.g., "Ornamental Trees" not finding contracts). Replaced raw SQL `ANY()` operator with Drizzle ORM's `inArray()` function, eliminating PostgreSQL errors. Search now works correctly across all contract fields including embedded royalty rules.
-- **Enhanced Contract Search** (2025-11-21): Added search capability for user information and dates. Users can now search contracts by username, creator's full name, and creation date (supports USA format MM/DD/YYYY and month names). Search now covers 15+ fields across contracts, users, and analysis data.
+- **Contract Search Bug Fix** (2025-11-21): Fixed critical search bug preventing searches through royalty rules (e.g., "Ornamental Trees" not finding contracts). Replaced raw SQL `ANY()` operator with Drizzle ORM's `inArray()` function, eliminating PostgreSQL errors. Search now works correctly across all contract fields including embedded royalty rules. Search covers: contract names, numbers, types, notes, counterparty, organization, governing law, renewal terms, AI analysis summary, insights, key terms, and royalty rule names/descriptions/formulas.
 
 # System Architecture
 
