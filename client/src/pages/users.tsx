@@ -250,12 +250,19 @@ export default function Users() {
     mutationFn: async (data: any) => {
       return apiRequest("POST", "/api/user-organization-roles", data);
     },
-    onSuccess: () => {
-      refetchOrgRoles();
+    onSuccess: (_, variables) => {
+      // Invalidate all user organization role queries for the affected user
+      queryClient.invalidateQueries({ 
+        queryKey: ["/api/user-organization-roles/user", variables.userId] 
+      });
+      // Also invalidate the users list to show updated data
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      
       toast({
         title: "Organization Assignment Created",
         description: "User has been assigned to the organization successfully",
       });
+      
       // Reset both regular form and quick assign dialog
       setShowAddOrgForm(false);
       setSelectedCompanyId("");
@@ -279,7 +286,15 @@ export default function Users() {
       return apiRequest("DELETE", `/api/user-organization-roles/${roleId}`);
     },
     onSuccess: () => {
-      refetchOrgRoles();
+      // Invalidate organization roles for the currently expanded user
+      if (expandedUserId) {
+        queryClient.invalidateQueries({ 
+          queryKey: ["/api/user-organization-roles/user", expandedUserId] 
+        });
+      }
+      // Also invalidate users list
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      
       toast({
         title: "Assignment Removed",
         description: "User organization assignment has been removed",
