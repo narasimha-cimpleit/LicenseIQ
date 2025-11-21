@@ -592,6 +592,14 @@ export class DatabaseStorage implements IStorage {
       ilike(contracts.governingLaw, searchPattern),
       ilike(contracts.renewalTerms, searchPattern),
       
+      // User fields (who created the contract)
+      ilike(users.username, searchPattern),
+      ilike(users.fullName, searchPattern),
+      
+      // Date field - cast to text for searching dates like "11/21/2025" or "November"
+      sql`to_char(${contracts.createdAt}, 'MM/DD/YYYY') ILIKE ${searchPattern}`,
+      sql`to_char(${contracts.createdAt}, 'Month DD, YYYY') ILIKE ${searchPattern}`,
+      
       // Contract analysis fields
       ilike(contractAnalysis.summary, searchPattern),
       // Search in JSONB fields using text cast for insights and keyTerms
