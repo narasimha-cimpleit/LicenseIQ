@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import MainLayout from "@/components/layout/main-layout";
@@ -14,25 +14,57 @@ export default function Contracts() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
 
-  const { data: contractsData, isLoading } = useQuery({
+  // Debounce search query to avoid excessive API calls
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Fetch all contracts (when no search query)
+  const { data: allContractsData, isLoading: isLoadingAll } = useQuery({
     queryKey: ["/api/contracts"],
-    staleTime: 30000, // Consider stale after 30 seconds
-    refetchInterval: 30000, // Refetch every 30 seconds to catch status updates
+    enabled: !debouncedSearchQuery.trim(),
+    staleTime: 30000,
+    refetchInterval: 30000,
     refetchOnWindowFocus: true,
   });
 
-  const contracts = contractsData?.contracts || [];
-  const total = contractsData?.total || 0;
+  // Search contracts (when search query exists)
+  const { data: searchResultsData, isLoading: isLoadingSearch } = useQuery({
+    queryKey: ["/api/contracts/search", debouncedSearchQuery],
+    queryFn: async () => {
+      if (!debouncedSearchQuery.trim()) return { contracts: [] };
+      const response = await fetch(`/api/contracts/search?q=${encodeURIComponent(debouncedSearchQuery)}`);
+      if (!response.ok) throw new Error('Search failed');
+      return response.json();
+    },
+    enabled: !!debouncedSearchQuery.trim(),
+    staleTime: 30000,
+  });
 
-  // Filter contracts based on search and filters
+  // Determine which data source to use
+  const contracts = useMemo(() => {
+    if (debouncedSearchQuery.trim()) {
+      return searchResultsData?.contracts || [];
+    }
+    return allContractsData?.contracts || [];
+  }, [debouncedSearchQuery, searchResultsData, allContractsData]);
+
+  const isLoading = debouncedSearchQuery.trim() ? isLoadingSearch : isLoadingAll;
+  const total = allContractsData?.total || contracts.length;
+
+  // Filter contracts based on status and type (search is handled by backend)
   const filteredContracts = contracts.filter((contract: any) => {
-    const matchesSearch = contract.originalName.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === "all" || contract.status === statusFilter;
     const matchesType = typeFilter === "all" || contract.contractType === typeFilter;
-    return matchesSearch && matchesStatus && matchesType;
+    return matchesStatus && matchesType;
   });
 
   const handleUpload = () => {
@@ -64,7 +96,7 @@ export default function Contracts() {
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
-                placeholder="Search contracts..."
+                placeholder="Search contracts, parties, terms, rules, analysis..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
