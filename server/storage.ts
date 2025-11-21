@@ -36,8 +36,11 @@ import {
   companies,
   businessUnits,
   locations,
+  userOrganizationRoles,
   type User,
   type InsertUser,
+  type UserOrganizationRole,
+  type InsertUserOrganizationRole,
   type Contract,
   type InsertContract,
   type ContractAnalysis,
@@ -381,6 +384,14 @@ export interface IStorage {
   
   // Master Data operations - Get full hierarchy
   getMasterDataHierarchy(status?: string): Promise<any>;
+  
+  // User Organization Roles operations
+  createUserOrganizationRole(role: InsertUserOrganizationRole): Promise<UserOrganizationRole>;
+  getUserOrganizationRoles(userId: string): Promise<any[]>;
+  getAllUserOrganizationRoles(): Promise<any[]>;
+  updateUserOrganizationRole(id: string, updates: Partial<InsertUserOrganizationRole>, userId: string): Promise<UserOrganizationRole>;
+  deleteUserOrganizationRole(id: string): Promise<void>;
+  getUsersByOrganization(companyId: string, businessUnitId?: string, locationId?: string): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2570,6 +2581,118 @@ export class DatabaseStorage implements IStorage {
     );
     
     return hierarchy;
+  }
+
+  // User Organization Roles operations
+  async createUserOrganizationRole(roleData: InsertUserOrganizationRole): Promise<UserOrganizationRole> {
+    const [role] = await db
+      .insert(userOrganizationRoles)
+      .values(roleData)
+      .returning();
+    return role;
+  }
+
+  async getUserOrganizationRoles(userId: string): Promise<any[]> {
+    const roles = await db
+      .select({
+        id: userOrganizationRoles.id,
+        userId: userOrganizationRoles.userId,
+        companyId: userOrganizationRoles.companyId,
+        companyName: companies.companyName,
+        businessUnitId: userOrganizationRoles.businessUnitId,
+        businessUnitName: businessUnits.orgName,
+        locationId: userOrganizationRoles.locationId,
+        locationName: locations.locName,
+        role: userOrganizationRoles.role,
+        status: userOrganizationRoles.status,
+        creationDate: userOrganizationRoles.creationDate,
+        lastUpdateDate: userOrganizationRoles.lastUpdateDate,
+      })
+      .from(userOrganizationRoles)
+      .leftJoin(companies, eq(userOrganizationRoles.companyId, companies.id))
+      .leftJoin(businessUnits, eq(userOrganizationRoles.businessUnitId, businessUnits.id))
+      .leftJoin(locations, eq(userOrganizationRoles.locationId, locations.id))
+      .where(eq(userOrganizationRoles.userId, userId))
+      .orderBy(companies.companyName, businessUnits.orgName, locations.locName);
+    
+    return roles;
+  }
+
+  async getAllUserOrganizationRoles(): Promise<any[]> {
+    const roles = await db
+      .select({
+        id: userOrganizationRoles.id,
+        userId: userOrganizationRoles.userId,
+        username: users.username,
+        userEmail: users.email,
+        userFirstName: users.firstName,
+        userLastName: users.lastName,
+        companyId: userOrganizationRoles.companyId,
+        companyName: companies.companyName,
+        businessUnitId: userOrganizationRoles.businessUnitId,
+        businessUnitName: businessUnits.orgName,
+        locationId: userOrganizationRoles.locationId,
+        locationName: locations.locName,
+        role: userOrganizationRoles.role,
+        status: userOrganizationRoles.status,
+        creationDate: userOrganizationRoles.creationDate,
+        lastUpdateDate: userOrganizationRoles.lastUpdateDate,
+      })
+      .from(userOrganizationRoles)
+      .leftJoin(users, eq(userOrganizationRoles.userId, users.id))
+      .leftJoin(companies, eq(userOrganizationRoles.companyId, companies.id))
+      .leftJoin(businessUnits, eq(userOrganizationRoles.businessUnitId, businessUnits.id))
+      .leftJoin(locations, eq(userOrganizationRoles.locationId, locations.id))
+      .orderBy(users.username, companies.companyName);
+    
+    return roles;
+  }
+
+  async updateUserOrganizationRole(id: string, updates: Partial<InsertUserOrganizationRole>, userId: string): Promise<UserOrganizationRole> {
+    const [updated] = await db
+      .update(userOrganizationRoles)
+      .set({ ...updates, lastUpdateDate: new Date(), lastUpdatedBy: userId })
+      .where(eq(userOrganizationRoles.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteUserOrganizationRole(id: string): Promise<void> {
+    await db.delete(userOrganizationRoles).where(eq(userOrganizationRoles.id, id));
+  }
+
+  async getUsersByOrganization(companyId: string, businessUnitId?: string, locationId?: string): Promise<any[]> {
+    let query = db
+      .select({
+        id: userOrganizationRoles.id,
+        userId: userOrganizationRoles.userId,
+        username: users.username,
+        userEmail: users.email,
+        userFirstName: users.firstName,
+        userLastName: users.lastName,
+        role: userOrganizationRoles.role,
+        status: userOrganizationRoles.status,
+      })
+      .from(userOrganizationRoles)
+      .leftJoin(users, eq(userOrganizationRoles.userId, users.id))
+      .where(eq(userOrganizationRoles.companyId, companyId));
+    
+    if (businessUnitId) {
+      query = query.where(and(
+        eq(userOrganizationRoles.companyId, companyId),
+        eq(userOrganizationRoles.businessUnitId, businessUnitId)
+      )) as any;
+    }
+    
+    if (locationId) {
+      query = query.where(and(
+        eq(userOrganizationRoles.companyId, companyId),
+        eq(userOrganizationRoles.businessUnitId, businessUnitId!),
+        eq(userOrganizationRoles.locationId, locationId)
+      )) as any;
+    }
+    
+    return await query.orderBy(users.username);
   }
 
 }

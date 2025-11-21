@@ -1227,6 +1227,31 @@ export const locations = pgTable("locations", {
   index("locations_name_idx").on(table.locName),
 ]);
 
+// User Organization Roles - Links users to organizations/locations with specific roles
+export const userOrganizationRoles = pgTable("user_organization_roles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  companyId: varchar("company_id").notNull().references(() => companies.id, { onDelete: 'cascade' }),
+  businessUnitId: varchar("business_unit_id").references(() => businessUnits.id, { onDelete: 'cascade' }), // Optional - user can be assigned to company level
+  locationId: varchar("location_id").references(() => locations.id, { onDelete: 'cascade' }), // Optional - user can be assigned to specific location
+  
+  // Role for this specific organization/location context
+  role: varchar("role").notNull().default("viewer"), // owner, admin, editor, viewer, auditor
+  
+  // Audit columns
+  status: varchar("status", { length: 1 }).notNull().default("A"), // A=Active, I=Inactive
+  createdBy: varchar("created_by").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  creationDate: timestamp("creation_date").notNull().defaultNow(),
+  lastUpdatedBy: varchar("last_updated_by").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  lastUpdateDate: timestamp("last_update_date").notNull().defaultNow(),
+}, (table) => [
+  index("user_org_roles_user_idx").on(table.userId),
+  index("user_org_roles_company_idx").on(table.companyId),
+  index("user_org_roles_bu_idx").on(table.businessUnitId),
+  index("user_org_roles_location_idx").on(table.locationId),
+  index("user_org_roles_status_idx").on(table.status),
+]);
+
 // Insert schemas
 export const insertCompanySchema = createInsertSchema(companies).omit({
   id: true,
@@ -1246,6 +1271,12 @@ export const insertLocationSchema = createInsertSchema(locations).omit({
   lastUpdateDate: true,
 });
 
+export const insertUserOrganizationRoleSchema = createInsertSchema(userOrganizationRoles).omit({
+  id: true,
+  creationDate: true,
+  lastUpdateDate: true,
+});
+
 // Types
 export type Company = typeof companies.$inferSelect;
 export type InsertCompany = z.infer<typeof insertCompanySchema>;
@@ -1253,6 +1284,8 @@ export type BusinessUnit = typeof businessUnits.$inferSelect;
 export type InsertBusinessUnit = z.infer<typeof insertBusinessUnitSchema>;
 export type Location = typeof locations.$inferSelect;
 export type InsertLocation = z.infer<typeof insertLocationSchema>;
+export type UserOrganizationRole = typeof userOrganizationRoles.$inferSelect;
+export type InsertUserOrganizationRole = z.infer<typeof insertUserOrganizationRoleSchema>;
 
 
 // LicenseIQ Entity Records - Stores actual data for each entity (flexible schema)

@@ -573,6 +573,150 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User Organization Roles Routes
+  
+  // Get all user organization role assignments
+  app.get('/api/user-organization-roles', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const currentUserId = req.user.id;
+      const currentUserRole = (await storage.getUser(currentUserId))?.role;
+      
+      // Check if user has admin access
+      if (currentUserRole !== 'admin' && currentUserRole !== 'owner') {
+        return res.status(403).json({ error: 'Insufficient permissions' });
+      }
+
+      const roles = await storage.getAllUserOrganizationRoles();
+      res.json(roles);
+    } catch (error) {
+      console.error('Error fetching user organization roles:', error);
+      res.status(500).json({ error: 'Failed to fetch user organization roles' });
+    }
+  });
+
+  // Get organization roles for a specific user
+  app.get('/api/user-organization-roles/user/:userId', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const currentUserId = req.user.id;
+      const currentUserRole = (await storage.getUser(currentUserId))?.role;
+      const targetUserId = req.params.userId;
+      
+      // Users can view their own roles, admins can view any
+      if (currentUserId !== targetUserId && currentUserRole !== 'admin' && currentUserRole !== 'owner') {
+        return res.status(403).json({ error: 'Insufficient permissions' });
+      }
+
+      const roles = await storage.getUserOrganizationRoles(targetUserId);
+      res.json(roles);
+    } catch (error) {
+      console.error('Error fetching user organization roles:', error);
+      res.status(500).json({ error: 'Failed to fetch user organization roles' });
+    }
+  });
+
+  // Get users by organization
+  app.get('/api/user-organization-roles/organization/:companyId', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const currentUserId = req.user.id;
+      const currentUserRole = (await storage.getUser(currentUserId))?.role;
+      
+      // Check if user has admin access
+      if (currentUserRole !== 'admin' && currentUserRole !== 'owner') {
+        return res.status(403).json({ error: 'Insufficient permissions' });
+      }
+
+      const { businessUnitId, locationId } = req.query;
+      const users = await storage.getUsersByOrganization(
+        req.params.companyId,
+        businessUnitId as string | undefined,
+        locationId as string | undefined
+      );
+      res.json(users);
+    } catch (error) {
+      console.error('Error fetching users by organization:', error);
+      res.status(500).json({ error: 'Failed to fetch users by organization' });
+    }
+  });
+
+  // Create user organization role assignment
+  app.post('/api/user-organization-roles', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const currentUserId = req.user.id;
+      const currentUserRole = (await storage.getUser(currentUserId))?.role;
+      
+      // Check if user has admin access
+      if (currentUserRole !== 'admin' && currentUserRole !== 'owner') {
+        return res.status(403).json({ error: 'Insufficient permissions' });
+      }
+
+      const { insertUserOrganizationRoleSchema } = await import("@shared/schema");
+      const roleData = insertUserOrganizationRoleSchema.parse({
+        ...req.body,
+        createdBy: currentUserId,
+        lastUpdatedBy: currentUserId,
+      });
+
+      const role = await storage.createUserOrganizationRole(roleData);
+      
+      await createAuditLog(req, 'create_user_org_role', 'user_organization_role', role.id, {
+        userId: role.userId,
+        companyId: role.companyId,
+        role: role.role,
+      });
+
+      res.json(role);
+    } catch (error: any) {
+      console.error('Create user organization role error:', error);
+      res.status(500).json({ error: error.message || 'Failed to create user organization role' });
+    }
+  });
+
+  // Update user organization role assignment
+  app.patch('/api/user-organization-roles/:id', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const currentUserId = req.user.id;
+      const currentUserRole = (await storage.getUser(currentUserId))?.role;
+      
+      // Check if user has admin access
+      if (currentUserRole !== 'admin' && currentUserRole !== 'owner') {
+        return res.status(403).json({ error: 'Insufficient permissions' });
+      }
+
+      const role = await storage.updateUserOrganizationRole(req.params.id, req.body, currentUserId);
+      
+      await createAuditLog(req, 'update_user_org_role', 'user_organization_role', role.id, {
+        changes: req.body,
+      });
+
+      res.json(role);
+    } catch (error: any) {
+      console.error('Update user organization role error:', error);
+      res.status(500).json({ error: error.message || 'Failed to update user organization role' });
+    }
+  });
+
+  // Delete user organization role assignment
+  app.delete('/api/user-organization-roles/:id', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const currentUserId = req.user.id;
+      const currentUserRole = (await storage.getUser(currentUserId))?.role;
+      
+      // Check if user has admin access
+      if (currentUserRole !== 'admin' && currentUserRole !== 'owner') {
+        return res.status(403).json({ error: 'Insufficient permissions' });
+      }
+
+      await storage.deleteUserOrganizationRole(req.params.id);
+      
+      await createAuditLog(req, 'delete_user_org_role', 'user_organization_role', req.params.id, {});
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting user organization role:', error);
+      res.status(500).json({ error: 'Failed to delete user organization role' });
+    }
+  });
+
   // Get contracts list
   app.get('/api/contracts', isAuthenticated, async (req: any, res: Response) => {
     try {
