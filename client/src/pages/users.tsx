@@ -660,7 +660,7 @@ export default function Users() {
                           <option value="">Select a company...</option>
                           {companies.map((company: any) => (
                             <option key={company.id} value={company.id}>
-                              {company.name}
+                              {company.companyName}
                             </option>
                           ))}
                         </select>
@@ -681,7 +681,7 @@ export default function Users() {
                           <option value="">Select a business unit...</option>
                           {businessUnits.map((bu: any) => (
                             <option key={bu.id} value={bu.id}>
-                              {bu.name}
+                              {bu.orgName}
                             </option>
                           ))}
                         </select>
@@ -699,7 +699,7 @@ export default function Users() {
                           <option value="">Select a location...</option>
                           {locations.map((loc: any) => (
                             <option key={loc.id} value={loc.id}>
-                              {loc.name}
+                              {loc.locName}
                             </option>
                           ))}
                         </select>
