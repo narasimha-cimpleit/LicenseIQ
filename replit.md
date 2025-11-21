@@ -10,6 +10,11 @@ Preferred communication style: Simple, everyday language.
 - Use "License Fee" (NOT "Royalty") throughout the application
 - Use "liQ AI" (NOT "Contract Q&A") for the RAG-powered assistant - Note: lowercase 'l', lowercase 'i', uppercase 'Q'
 
+# Recent Changes
+
+- **USA Date Format Standardization** (2025-11-21): Implemented consistent USA date formatting (MM/DD/YYYY) across the entire platform. Created centralized date utility functions (`formatDateUSA()`, `formatDateTimeUSA()`, `formatDateTimeLongUSA()`) in `client/src/lib/dateFormat.ts`. Updated all date displays in contract analysis, audit logs, master data mapping, RAG dashboard, and royalty calculations to use consistent USA format.
+- **Contract Search Bug Fix** (2025-11-21): Fixed critical search bug preventing searches through royalty rules (e.g., "Ornamental Trees" not finding contracts). Replaced raw SQL `ANY()` operator with Drizzle ORM's `inArray()` function, eliminating PostgreSQL errors. Search now works correctly across all contract fields including embedded royalty rules.
+
 # System Architecture
 
 ## UI/UX Decisions
