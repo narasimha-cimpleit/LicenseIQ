@@ -717,6 +717,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Search contracts (comprehensive content-based search)
+  app.get('/api/contracts/search', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const query = req.query.q as string;
+      
+      if (!query || query.trim().length === 0) {
+        return res.json({ contracts: [] });
+      }
+
+      const userId = req.user.id;
+      const userRole = (await storage.getUser(userId))?.role;
+      const canViewAny = userRole === 'admin' || userRole === 'owner';
+      
+      const contracts = await storage.searchContracts(
+        query.trim(),
+        canViewAny ? undefined : userId
+      );
+      
+      res.json({ contracts });
+    } catch (error) {
+      console.error('Search contracts error:', error);
+      res.status(500).json({ error: 'Failed to search contracts' });
+    }
+  });
+
   // Get contracts list
   app.get('/api/contracts', isAuthenticated, async (req: any, res: Response) => {
     try {
