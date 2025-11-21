@@ -575,7 +575,32 @@ export class DatabaseStorage implements IStorage {
   }
 
   async searchContracts(query: string, userId?: string): Promise<ContractWithAnalysis[]> {
-    let searchQuery = db
+    // Comprehensive search conditions across all contract-related fields
+    const searchPattern = `%${query}%`;
+    
+    const searchConditions = or(
+      // Contract basic fields
+      ilike(contracts.originalName, searchPattern),
+      ilike(contracts.displayName, searchPattern),
+      ilike(contracts.contractNumber, searchPattern),
+      ilike(contracts.contractType, searchPattern),
+      ilike(contracts.notes, searchPattern),
+      
+      // Contract metadata fields
+      ilike(contracts.counterpartyName, searchPattern),
+      ilike(contracts.organizationName, searchPattern),
+      ilike(contracts.governingLaw, searchPattern),
+      ilike(contracts.renewalTerms, searchPattern),
+      
+      // Contract analysis fields
+      ilike(contractAnalysis.summary, searchPattern),
+      // Search in JSONB fields using text cast for insights and keyTerms
+      sql`${contractAnalysis.insights}::text ILIKE ${searchPattern}`,
+      sql`${contractAnalysis.keyTerms}::text ILIKE ${searchPattern}`
+    );
+
+    // Build base query
+    let baseQuery = db
       .select({
         contract: contracts,
         analysis: contractAnalysis,
@@ -583,23 +608,84 @@ export class DatabaseStorage implements IStorage {
       })
       .from(contracts)
       .leftJoin(contractAnalysis, eq(contracts.id, contractAnalysis.contractId))
-      .leftJoin(users, eq(contracts.uploadedBy, users.id))
-      .where(
-        ilike(contracts.originalName, `%${query}%`)
-      );
+      .leftJoin(users, eq(contracts.uploadedBy, users.id));
 
+    // Apply search and user filters
     if (userId) {
-      searchQuery = searchQuery.where(
+      baseQuery = baseQuery.where(
         and(
-          ilike(contracts.originalName, `%${query}%`),
+          searchConditions,
           eq(contracts.uploadedBy, userId)
         )
       );
+    } else {
+      baseQuery = baseQuery.where(searchConditions);
     }
 
-    const result = await searchQuery.orderBy(desc(contracts.createdAt));
+    // Execute base contract search
+    const contractResults = await baseQuery.orderBy(desc(contracts.createdAt));
+    
+    // Also search in royalty rules and get matching contract IDs
+    const rulesQuery = db
+      .select({
+        contractId: royaltyRules.contractId
+      })
+      .from(royaltyRules)
+      .where(
+        or(
+          ilike(royaltyRules.ruleName, searchPattern),
+          ilike(royaltyRules.description, searchPattern),
+          ilike(royaltyRules.sourceText, searchPattern),
+          ilike(royaltyRules.sourceSection, searchPattern),
+          ilike(royaltyRules.calculationFormula, searchPattern)
+        )
+      );
+    
+    const rulesResults = await rulesQuery;
+    const contractIdsFromRules = new Set(rulesResults.map(r => r.contractId));
+    
+    // If we found contracts through rules search, fetch those contracts too
+    if (contractIdsFromRules.size > 0) {
+      const additionalContractsQuery = db
+        .select({
+          contract: contracts,
+          analysis: contractAnalysis,
+          uploadedByUser: users,
+        })
+        .from(contracts)
+        .leftJoin(contractAnalysis, eq(contracts.id, contractAnalysis.contractId))
+        .leftJoin(users, eq(contracts.uploadedBy, users.id))
+        .where(
+          userId 
+            ? and(
+                sql`${contracts.id} = ANY(${Array.from(contractIdsFromRules)})`,
+                eq(contracts.uploadedBy, userId)
+              )
+            : sql`${contracts.id} = ANY(${Array.from(contractIdsFromRules)})`
+        )
+        .orderBy(desc(contracts.createdAt));
+      
+      const additionalContracts = await additionalContractsQuery;
+      
+      // Combine results and deduplicate by contract ID
+      const allResults = [...contractResults, ...additionalContracts];
+      const uniqueContractsMap = new Map();
+      
+      allResults.forEach(result => {
+        if (!uniqueContractsMap.has(result.contract.id)) {
+          uniqueContractsMap.set(result.contract.id, result);
+        }
+      });
+      
+      return Array.from(uniqueContractsMap.values()).map(({ contract, analysis, uploadedByUser }) => ({
+        ...contract,
+        analysis: analysis || undefined,
+        uploadedByUser: uploadedByUser || undefined,
+      }));
+    }
 
-    return result.map(({ contract, analysis, uploadedByUser }) => ({
+    // Return just contract results if no rules matches
+    return contractResults.map(({ contract, analysis, uploadedByUser }) => ({
       ...contract,
       analysis: analysis || undefined,
       uploadedByUser: uploadedByUser || undefined,
