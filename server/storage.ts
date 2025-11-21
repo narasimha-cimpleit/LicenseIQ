@@ -596,15 +596,15 @@ export class DatabaseStorage implements IStorage {
       ilike(users.username, searchPattern),
       ilike(users.fullName, searchPattern),
       
-      // Date field - cast to text for searching dates like "11/21/2025" or "November"
-      sql`to_char(${contracts.createdAt}, 'MM/DD/YYYY') ILIKE ${searchPattern}`,
-      sql`to_char(${contracts.createdAt}, 'Month DD, YYYY') ILIKE ${searchPattern}`,
-      
       // Contract analysis fields
       ilike(contractAnalysis.summary, searchPattern),
       // Search in JSONB fields using text cast for insights and keyTerms
       sql`${contractAnalysis.insights}::text ILIKE ${searchPattern}`,
-      sql`${contractAnalysis.keyTerms}::text ILIKE ${searchPattern}`
+      sql`${contractAnalysis.keyTerms}::text ILIKE ${searchPattern}`,
+      // Date field - cast to text for searching dates like "11/21/2025" or "November"
+      sql`to_char(${contracts.createdAt}, 'MM/DD/YYYY') ILIKE ${searchPattern}`,
+      sql`to_char(${contracts.createdAt}, 'FMMM/FMDD/YYYY') ILIKE ${searchPattern}`,
+      sql`to_char(${contracts.createdAt}, 'FMMonth') ILIKE ${searchPattern}`
     );
 
     // Build base query
