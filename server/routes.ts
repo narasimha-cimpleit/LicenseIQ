@@ -4710,6 +4710,196 @@ Return ONLY valid JSON array, no other text.`;
     }
   });
 
+  // Get user's categorized navigation (NEW: Tree structure with categories)
+  app.get('/api/navigation/categorized', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const userRole = req.user.role;
+
+      // Get all active categories
+      const categories = await db.select().from(navigationCategories)
+        .where(eq(navigationCategories.isActive, true))
+        .orderBy(navigationCategories.defaultSortOrder);
+
+      // Get all active navigation items
+      const allItems = await db.select().from(navigationPermissions)
+        .where(eq(navigationPermissions.isActive, true));
+
+      // Get role permissions
+      const rolePermissions = await db.select().from(roleNavigationPermissions)
+        .where(and(
+          eq(roleNavigationPermissions.role, userRole),
+          eq(roleNavigationPermissions.isEnabled, true)
+        ));
+
+      // Get user-specific overrides
+      const userOverrides = await db.select().from(userNavigationOverrides)
+        .where(eq(userNavigationOverrides.userId, userId));
+
+      // Get default item-to-category mappings
+      const itemCategoryMappings = await db.select().from(navigationItemCategories);
+
+      // Get user-specific category preferences
+      const userPreferences = await db.select().from(userCategoryPreferences)
+        .where(eq(userCategoryPreferences.userId, userId));
+
+      // Get user category expanded/collapsed state
+      const userCategoryStates = await db.select().from(userCategoryState)
+        .where(eq(userCategoryState.userId, userId));
+
+      // Build permission maps
+      const rolePermissionKeys = new Set(rolePermissions.map(p => p.navItemKey));
+      const userOverrideMap = new Map(userOverrides.map(o => [o.navItemKey, o.isEnabled]));
+
+      // Filter allowed items based on permissions
+      const allowedItems = allItems.filter(item => {
+        if (userOverrideMap.has(item.itemKey)) {
+          return userOverrideMap.get(item.itemKey);
+        }
+        return rolePermissionKeys.has(item.itemKey);
+      });
+
+      // Build category state map
+      const categoryStateMap = new Map(userCategoryStates.map(s => [s.categoryKey, s.isExpanded]));
+
+      // Build user preference map (custom category assignments and sort order)
+      const userPrefMap = new Map(userPreferences.map(p => [p.navItemKey, p]));
+
+      // Build default mapping
+      const defaultMappingMap = new Map(itemCategoryMappings.map(m => [m.navItemKey, m]));
+
+      // Organize items into categories
+      const categorizedNavigation = categories.map(category => {
+        // Find items for this category
+        const categoryItems = allowedItems
+          .filter(item => {
+            // Check user preference first
+            const userPref = userPrefMap.get(item.itemKey);
+            if (userPref) {
+              return userPref.categoryKey === category.categoryKey && userPref.isVisible;
+            }
+            // Otherwise use default mapping
+            const defaultMapping = defaultMappingMap.get(item.itemKey);
+            return defaultMapping?.categoryKey === category.categoryKey;
+          })
+          .map(item => {
+            // Get sort order (user preference or default)
+            const userPref = userPrefMap.get(item.itemKey);
+            const defaultMapping = defaultMappingMap.get(item.itemKey);
+            const sortOrder = userPref?.sortOrder ?? defaultMapping?.sortOrder ?? 0;
+
+            return {
+              ...item,
+              sortOrder
+            };
+          })
+          .sort((a, b) => a.sortOrder - b.sortOrder);
+
+        // Get expanded state (user preference or default)
+        const isExpanded = categoryStateMap.has(category.categoryKey)
+          ? categoryStateMap.get(category.categoryKey)
+          : category.defaultExpanded;
+
+        return {
+          ...category,
+          isExpanded,
+          items: categoryItems
+        };
+      });
+
+      // Filter out empty categories
+      const nonEmptyCategories = categorizedNavigation.filter(cat => cat.items.length > 0);
+
+      res.json({ categories: nonEmptyCategories });
+    } catch (error) {
+      console.error('❌ [NAV CATEGORIES] Get categorized navigation error:', error);
+      res.status(500).json({ error: 'Failed to get categorized navigation' });
+    }
+  });
+
+  // Toggle category expanded/collapsed state
+  app.patch('/api/navigation/category-state/:categoryKey', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const { categoryKey } = req.params;
+      const { isExpanded } = req.body;
+
+      // Check if state exists
+      const existing = await db.select().from(userCategoryState)
+        .where(and(
+          eq(userCategoryState.userId, userId),
+          eq(userCategoryState.categoryKey, categoryKey)
+        ));
+
+      if (existing.length > 0) {
+        // Update existing state
+        await db.update(userCategoryState)
+          .set({ isExpanded, updatedAt: new Date() })
+          .where(and(
+            eq(userCategoryState.userId, userId),
+            eq(userCategoryState.categoryKey, categoryKey)
+          ));
+      } else {
+        // Create new state
+        await db.insert(userCategoryState)
+          .values({ userId, categoryKey, isExpanded });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('❌ [NAV CATEGORIES] Toggle category state error:', error);
+      res.status(500).json({ error: 'Failed to toggle category state' });
+    }
+  });
+
+  // Update user's category preferences (drag-and-drop result)
+  app.post('/api/navigation/user-preferences', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const { preferences } = req.body; // Array of { navItemKey, categoryKey, sortOrder, isVisible }
+
+      // Delete existing preferences for this user
+      await db.delete(userCategoryPreferences)
+        .where(eq(userCategoryPreferences.userId, userId));
+
+      // Insert new preferences
+      if (preferences && preferences.length > 0) {
+        await db.insert(userCategoryPreferences)
+          .values(preferences.map((pref: any) => ({
+            userId,
+            navItemKey: pref.navItemKey,
+            categoryKey: pref.categoryKey,
+            sortOrder: pref.sortOrder,
+            isVisible: pref.isVisible ?? true
+          })));
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('❌ [NAV CATEGORIES] Update preferences error:', error);
+      res.status(500).json({ error: 'Failed to update user preferences' });
+    }
+  });
+
+  // Reset user preferences to defaults
+  app.post('/api/navigation/reset-preferences', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+
+      // Delete all user preferences and category states
+      await db.delete(userCategoryPreferences)
+        .where(eq(userCategoryPreferences.userId, userId));
+      
+      await db.delete(userCategoryState)
+        .where(eq(userCategoryState.userId, userId));
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('❌ [NAV CATEGORIES] Reset preferences error:', error);
+      res.status(500).json({ error: 'Failed to reset preferences' });
+    }
+  });
+
   // ==========================================
   // MASTER DATA MANAGEMENT ROUTES
   // ==========================================
