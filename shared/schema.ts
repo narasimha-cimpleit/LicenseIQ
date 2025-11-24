@@ -1528,3 +1528,97 @@ export type InsertRoleNavigationPermission = z.infer<typeof insertRoleNavigation
 export type UserNavigationOverride = typeof userNavigationOverrides.$inferSelect;
 export type InsertUserNavigationOverride = z.infer<typeof insertUserNavigationOverrideSchema>;
 
+// ==================================
+// NAVIGATION CATEGORIES (Tree Structure)
+// ==================================
+
+export const navigationCategories = pgTable("navigation_categories", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  categoryKey: varchar("category_key").notNull().unique(), // Unique identifier (e.g., 'contract_mgmt', 'analytics')
+  categoryName: varchar("category_name").notNull(), // Display name (e.g., 'Contract Management')
+  iconName: varchar("icon_name"), // Icon for category header
+  description: text("description"), // Optional description
+  defaultSortOrder: integer("default_sort_order").default(0), // Order in sidebar
+  isCollapsible: boolean("is_collapsible").default(true), // Can be collapsed?
+  defaultExpanded: boolean("default_expanded").default(true), // Expanded by default?
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("nav_cat_key_idx").on(table.categoryKey),
+  index("nav_cat_sort_idx").on(table.defaultSortOrder),
+]);
+
+export const navigationItemCategories = pgTable("navigation_item_categories", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  navItemKey: varchar("nav_item_key").notNull().references(() => navigationPermissions.itemKey, { onDelete: 'cascade' }),
+  categoryKey: varchar("category_key").notNull().references(() => navigationCategories.categoryKey, { onDelete: 'cascade' }),
+  sortOrder: integer("sort_order").default(0), // Order within category
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("nav_item_cat_item_idx").on(table.navItemKey),
+  index("nav_item_cat_cat_idx").on(table.categoryKey),
+]);
+
+export const userCategoryPreferences = pgTable("user_category_preferences", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  navItemKey: varchar("nav_item_key").notNull().references(() => navigationPermissions.itemKey, { onDelete: 'cascade' }),
+  categoryKey: varchar("category_key").notNull().references(() => navigationCategories.categoryKey, { onDelete: 'cascade' }),
+  sortOrder: integer("sort_order").default(0), // User's custom order
+  isVisible: boolean("is_visible").default(true), // User can hide items
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("user_cat_pref_user_idx").on(table.userId),
+  index("user_cat_pref_item_idx").on(table.navItemKey),
+]);
+
+export const userCategoryState = pgTable("user_category_state", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  categoryKey: varchar("category_key").notNull().references(() => navigationCategories.categoryKey, { onDelete: 'cascade' }),
+  isExpanded: boolean("is_expanded").default(true), // Remember collapsed/expanded state
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("user_cat_state_user_idx").on(table.userId),
+  index("user_cat_state_cat_idx").on(table.categoryKey),
+]);
+
+// Insert schemas for navigation categories
+export const insertNavigationCategorySchema = createInsertSchema(navigationCategories).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertNavigationItemCategorySchema = createInsertSchema(navigationItemCategories).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertUserCategoryPreferenceSchema = createInsertSchema(userCategoryPreferences).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertUserCategoryStateSchema = createInsertSchema(userCategoryState).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Types for navigation categories
+export type NavigationCategory = typeof navigationCategories.$inferSelect;
+export type InsertNavigationCategory = z.infer<typeof insertNavigationCategorySchema>;
+export type NavigationItemCategory = typeof navigationItemCategories.$inferSelect;
+export type InsertNavigationItemCategory = z.infer<typeof insertNavigationItemCategorySchema>;
+export type UserCategoryPreference = typeof userCategoryPreferences.$inferSelect;
+export type InsertUserCategoryPreference = z.infer<typeof insertUserCategoryPreferenceSchema>;
+export type UserCategoryState = typeof userCategoryState.$inferSelect;
+export type InsertUserCategoryState = z.infer<typeof insertUserCategoryStateSchema>;
+
