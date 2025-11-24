@@ -76,8 +76,14 @@ export default function Analytics() {
 
   // Enhanced analytics calculations
   const analyzedContracts = contracts.filter((c: any) => c.status === 'analyzed');
-  const hasFinancialAnalysis = analyzedContracts.filter((c: any) => c.analysis?.keyTerms?.some((t: any) => t.term?.toLowerCase().includes('payment')));
-  const hasComplianceIssues = analyzedContracts.filter((c: any) => c.analysis?.riskAnalysis?.some((r: any) => r.level === 'high'));
+  const hasFinancialAnalysis = analyzedContracts.filter((c: any) => 
+    c.analysis?.keyTerms && Array.isArray(c.analysis.keyTerms) && 
+    c.analysis.keyTerms.some((t: any) => t.term?.toLowerCase().includes('payment'))
+  );
+  const hasComplianceIssues = analyzedContracts.filter((c: any) => 
+    c.analysis?.riskAnalysis && Array.isArray(c.analysis.riskAnalysis) && 
+    c.analysis.riskAnalysis.some((r: any) => r.level === 'high')
+  );
   
   // Dynamic analytics data from real API endpoints with safe fallbacks
   const financialMetrics = {
