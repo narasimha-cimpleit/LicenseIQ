@@ -295,6 +295,25 @@ export default function NavigationManager() {
       // Dropped on another item
       destCategoryKey = overData.categoryKey;
       overIndex = overData.index;
+      
+      // For inter-category moves, check pointer position relative to hovered item
+      // to determine if we should insert before or after
+      if (activeCategoryKey !== destCategoryKey && over.rect) {
+        const overRect = over.rect;
+        const activeRect = active.rect.current.translated;
+        
+        if (activeRect && overRect) {
+          // Calculate the vertical center of the hovered item
+          const overCenter = overRect.top + (overRect.height / 2);
+          // Use the active item's center position to determine placement
+          const activeCenter = activeRect.top + (activeRect.height / 2);
+          
+          // If active center is below the over center, insert after
+          if (activeCenter > overCenter) {
+            overIndex = overIndex + 1;
+          }
+        }
+      }
     } else {
       return;
     }
@@ -310,7 +329,10 @@ export default function NavigationManager() {
     } else {
       // Moving to a different category
       const [movedItem] = sourceCategory.items.splice(activeIndex, 1);
-      destCategory.items.splice(overIndex, 0, movedItem);
+      
+      // Clamp overIndex to valid range
+      const insertIndex = Math.min(overIndex, destCategory.items.length);
+      destCategory.items.splice(insertIndex, 0, movedItem);
     }
 
     setCategories(newCategories);
