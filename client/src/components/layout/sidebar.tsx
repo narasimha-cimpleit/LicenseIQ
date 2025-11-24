@@ -192,7 +192,7 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
 
                 {/* Category Items - indented when expanded */}
                 {isExpanded && !isCollapsed && (
-                  <div className="mt-1 space-y-0.5">
+                  <div className="mt-1 ml-6 space-y-0.5 border-l-2 border-sidebar-border/50 pl-4">
                     {category.items.map((item: any) => {
                       const Icon = item.iconName ? iconMap[item.iconName] || BarChart3 : BarChart3;
                       const isCurrent = location === item.href || 
@@ -203,7 +203,7 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
                         <button
                           key={item.itemKey}
                           className={cn(
-                            "w-full flex items-center gap-3 pl-11 pr-3 py-2 rounded-lg transition-colors text-sm",
+                            "w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm",
                             "text-sidebar-foreground/80 hover:bg-sidebar-accent/40",
                             isCurrent && "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                           )}
