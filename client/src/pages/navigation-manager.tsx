@@ -4,7 +4,6 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import MainLayout from "@/components/layout/main-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -184,7 +183,7 @@ export default function NavigationManager() {
   const { toast } = useToast();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [showInlineForm, setShowInlineForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [newCategory, setNewCategory] = useState({
     categoryKey: '',
@@ -368,7 +367,15 @@ export default function NavigationManager() {
       title: "Coming Soon",
       description: "Category creation will be implemented in the next update",
     });
-    setIsCreateDialogOpen(false);
+    setShowInlineForm(false);
+    setEditingCategory(null);
+    setNewCategory({
+      categoryKey: '',
+      categoryName: '',
+      iconName: 'BarChart3',
+      isCollapsible: true,
+      defaultExpanded: true,
+    });
   };
 
   const handleEditCategory = (category: Category) => {
@@ -380,7 +387,23 @@ export default function NavigationManager() {
       isCollapsible: category.isCollapsible,
       defaultExpanded: category.defaultExpanded,
     });
-    setIsCreateDialogOpen(true);
+    setShowInlineForm(true);
+    // Scroll to the form
+    setTimeout(() => {
+      document.getElementById('category-form')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 100);
+  };
+
+  const handleCancelForm = () => {
+    setShowInlineForm(false);
+    setEditingCategory(null);
+    setNewCategory({
+      categoryKey: '',
+      categoryName: '',
+      iconName: 'BarChart3',
+      isCollapsible: true,
+      defaultExpanded: true,
+    });
   };
 
   const handleDeleteCategory = (categoryKey: string) => {
@@ -428,22 +451,28 @@ export default function NavigationManager() {
             </Button>
           </div>
           
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" data-testid="button-create-category">
-                <Plus className="h-4 w-4 mr-2" />
-                New Category
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>
-                  {editingCategory ? 'Edit Category' : 'Create New Category'}
-                </DialogTitle>
-                <DialogDescription>
-                  {editingCategory ? 'Modify category details' : 'Add a new category to organize navigation items'}
-                </DialogDescription>
-              </DialogHeader>
+          <Button 
+            variant="outline" 
+            onClick={() => setShowInlineForm(!showInlineForm)}
+            data-testid="button-create-category"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            New Category
+          </Button>
+        </div>
+
+        {/* Inline Category Form */}
+        {showInlineForm && (
+          <Card id="category-form" className="border-2 border-primary/20">
+            <CardHeader>
+              <CardTitle>
+                {editingCategory ? 'Edit Category' : 'Create New Category'}
+              </CardTitle>
+              <CardDescription>
+                {editingCategory ? 'Modify category details' : 'Add a new category to organize navigation items'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="categoryKey">Category Key</Label>
@@ -472,7 +501,7 @@ export default function NavigationManager() {
                     id="iconName"
                     value={newCategory.iconName}
                     onChange={(e) => setNewCategory({ ...newCategory, iconName: e.target.value })}
-                    className="w-full p-2 border rounded-md"
+                    className="w-full p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
                     data-testid="select-icon"
                   >
                     {availableIcons.map((icon) => (
@@ -498,15 +527,18 @@ export default function NavigationManager() {
                     data-testid="switch-expanded"
                   />
                 </div>
+                <div className="flex gap-3 pt-4">
+                  <Button onClick={handleCreateCategory} data-testid="button-confirm-category">
+                    {editingCategory ? 'Update' : 'Create'} Category
+                  </Button>
+                  <Button variant="outline" onClick={handleCancelForm} data-testid="button-cancel-category">
+                    Cancel
+                  </Button>
+                </div>
               </div>
-              <DialogFooter>
-                <Button onClick={handleCreateCategory} data-testid="button-confirm-category">
-                  {editingCategory ? 'Update' : 'Create'} Category
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Drag and Drop Categories */}
         <DndContext
