@@ -65,7 +65,7 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
   const { user } = useAuth();
   const { isCollapsed, toggleCollapse } = useSidebar();
   const navRef = useRef<HTMLElement>(null);
-  const [savedScrollPos, setSavedScrollPos] = useState(0);
+  const scrollPosRef = useRef<number>(0);
 
   // Fetch categorized navigation from database
   const { data: categorizedData } = useQuery<{ categories: any[] }>({
@@ -79,15 +79,19 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
 
   // Preserve sidebar scroll position after navigation
   useEffect(() => {
-    if (navRef.current && savedScrollPos > 0) {
-      navRef.current.scrollTop = savedScrollPos;
+    if (navRef.current) {
+      requestAnimationFrame(() => {
+        if (navRef.current) {
+          navRef.current.scrollTop = scrollPosRef.current;
+        }
+      });
     }
-  }, [location, savedScrollPos]);
+  }, [location]);
 
   const handleNavClick = (href: string) => {
     // Save sidebar scroll position before navigation
     if (navRef.current) {
-      setSavedScrollPos(navRef.current.scrollTop);
+      scrollPosRef.current = navRef.current.scrollTop;
     }
     
     setLocation(href);
