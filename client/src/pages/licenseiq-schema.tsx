@@ -325,36 +325,13 @@ export default function LicenseIQSchema() {
   ) || [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-      <div className="container mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
-        {/* Header */}
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
-                <Layers className="h-8 w-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
-                  LicenseIQ Schema Catalog
-                </h1>
-                <p className="text-gray-600 dark:text-gray-400 mt-1">
-                  Define and manage your platform's standard data entities and fields
-                </p>
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              onClick={() => navigate("/master-data-mapping")}
-              data-testid="button-back"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-          </div>
-
-          {/* Category filter and search */}
-          <div className="flex flex-col sm:flex-row gap-3">
+    <MainLayout
+      title="LicenseIQ Schema Catalog"
+      description="Define and manage your platform's standard data entities and fields"
+    >
+      <div className="space-y-6">
+        {/* Category filter and search */}
+        <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
@@ -759,6 +736,6 @@ export default function LicenseIQSchema() {
           </TabsContent>
         </Tabs>
       </div>
-    </div>
+    </MainLayout>
   );
 }

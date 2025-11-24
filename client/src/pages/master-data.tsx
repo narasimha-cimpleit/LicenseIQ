@@ -56,58 +56,41 @@ export default function MasterDataPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading master data...</p>
+      <MainLayout
+        title="Master Data Management"
+        description="Manage your organizational hierarchy"
+      >
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading master data...</p>
+          </div>
         </div>
-      </div>
+      </MainLayout>
     );
   }
 
   return (
-    <div className="h-full flex flex-col bg-gradient-to-br from-background via-background to-primary/5">
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/80 border-b shadow-sm">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center gap-4 mb-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setLocation('/')}
-              className="gap-2 hover:bg-accent"
-              data-testid="button-back"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Button>
-            <div className="h-6 w-px bg-border" />
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-primary to-blue-600 bg-clip-text text-transparent">
-                Master Data Management
-              </h1>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                Manage your organizational hierarchy
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-40 shadow-sm" data-testid="select-status-filter">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="A">Active Only</SelectItem>
-                  <SelectItem value="I">Inactive Only</SelectItem>
-                  <SelectItem value="all">All Records</SelectItem>
-                </SelectContent>
-              </Select>
-              <AddCompanyButton />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-auto">
-        <div className="container mx-auto p-6">
+    <MainLayout
+      title="Master Data Management"
+      description="Manage your organizational hierarchy"
+      actions={
+        <>
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-40" data-testid="select-status-filter">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="A">Active Only</SelectItem>
+              <SelectItem value="I">Inactive Only</SelectItem>
+              <SelectItem value="all">All Records</SelectItem>
+            </SelectContent>
+          </Select>
+          <AddCompanyButton />
+        </>
+      }
+    >
+      <div className="space-y-6">
           <Card className="shadow-lg border-2 backdrop-blur-sm bg-card/95">
             {hierarchy?.companies && hierarchy.companies.length > 0 ? (
               <div className="p-6 space-y-3">
@@ -128,9 +111,8 @@ export default function MasterDataPage() {
               </div>
             )}
           </Card>
-        </div>
       </div>
-    </div>
+    </MainLayout>
   );
 }
 

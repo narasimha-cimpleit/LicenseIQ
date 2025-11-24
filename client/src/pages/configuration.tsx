@@ -246,27 +246,11 @@ export default function Configuration() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
-            Configuration
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Manage roles, navigation permissions, sample data, and system settings
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => navigate("/")}
-            data-testid="button-back-dashboard"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-        </div>
-      </div>
+    <MainLayout
+      title="Configuration"
+      description="Manage roles, navigation permissions, sample data, and system settings"
+    >
+      <div className="space-y-6">
 
       <Tabs defaultValue="navigation" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
@@ -695,6 +679,7 @@ export default function Configuration() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </MainLayout>
   );
 }

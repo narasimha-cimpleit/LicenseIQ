@@ -31,23 +31,11 @@ export default function AdminLeads() {
   });
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <Link href="/">
-            <Button variant="ghost" size="sm" className="mb-4" data-testid="button-back">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Dashboard
-            </Button>
-          </Link>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Lead Management
-          </h1>
-          <p className="text-slate-600 dark:text-slate-400 mt-1">
-            View and manage early access signups and demo requests
-          </p>
-        </div>
-      </div>
+    <MainLayout
+      title="Lead Management"
+      description="View and manage early access signups and demo requests"
+    >
+      <div className="space-y-6">
 
       <Tabs defaultValue="early-access" className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-2">
@@ -198,6 +186,7 @@ export default function AdminLeads() {
           )}
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </MainLayout>
   );
 }
