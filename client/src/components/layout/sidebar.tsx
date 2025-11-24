@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { 
   File, 
   BarChart3, 
@@ -63,9 +63,8 @@ const iconMap: Record<string, LucideIcon> = {
 export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
   const [location, setLocation] = useLocation();
   const { user } = useAuth();
-  const { isCollapsed, toggleCollapse } = useSidebar();
+  const { isCollapsed, toggleCollapse, scrollTop, setScrollTop } = useSidebar();
   const navRef = useRef<HTMLElement>(null);
-  const scrollPosRef = useRef<number>(0);
 
   // Fetch categorized navigation from database
   const { data: categorizedData } = useQuery<{ categories: any[] }>({
@@ -77,21 +76,26 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
     ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
     : user?.email?.[0]?.toUpperCase() || 'U';
 
-  // Preserve sidebar scroll position after navigation
-  useEffect(() => {
-    if (navRef.current) {
-      requestAnimationFrame(() => {
-        if (navRef.current) {
-          navRef.current.scrollTop = scrollPosRef.current;
-        }
-      });
+  // Restore sidebar scroll position from context BEFORE paint
+  useLayoutEffect(() => {
+    if (navRef.current && scrollTop > 0) {
+      navRef.current.scrollTop = scrollTop;
     }
-  }, [location]);
+  }, []);
+
+  // Save scroll position to context on unmount
+  useEffect(() => {
+    return () => {
+      if (navRef.current) {
+        setScrollTop(navRef.current.scrollTop);
+      }
+    };
+  }, [setScrollTop]);
 
   const handleNavClick = (href: string) => {
-    // Save sidebar scroll position before navigation
+    // Save sidebar scroll position to context before navigation
     if (navRef.current) {
-      scrollPosRef.current = navRef.current.scrollTop;
+      setScrollTop(navRef.current.scrollTop);
     }
     
     setLocation(href);
