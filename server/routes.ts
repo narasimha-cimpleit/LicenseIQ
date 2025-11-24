@@ -14,7 +14,7 @@ import { PDFInvoiceService } from "./services/pdfInvoiceService";
 import { HuggingFaceEmbeddingService } from "./services/huggingFaceEmbedding";
 import { RAGService } from "./services/ragService";
 import { db } from "./db";
-import { contracts, contractEmbeddings, royaltyRules, navigationPermissions, roleNavigationPermissions, userNavigationOverrides, roles, insertRoleSchema, InsertRoyaltyRule } from "@shared/schema";
+import { contracts, contractEmbeddings, royaltyRules, navigationPermissions, roleNavigationPermissions, userNavigationOverrides, navigationCategories, navigationItemCategories, userCategoryPreferences, userCategoryState, roles, insertRoleSchema, InsertRoyaltyRule } from "@shared/schema";
 import { 
   insertContractSchema, 
   insertContractAnalysisSchema, 

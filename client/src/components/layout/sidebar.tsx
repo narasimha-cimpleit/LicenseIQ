@@ -84,13 +84,15 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
 
   const toggleCategory = async (categoryKey: string, currentState: boolean) => {
     try {
-      await apiRequest(`/api/navigation/category-state/${categoryKey}`, {
+      const response = await fetch(`/api/navigation/category-state/${categoryKey}`, {
         method: 'PATCH',
         body: JSON.stringify({ isExpanded: !currentState }),
         headers: { 'Content-Type': 'application/json' },
       });
-      // Refetch categorized navigation to update UI
-      queryClient.invalidateQueries({ queryKey: ['/api/navigation/categorized'] });
+      if (response.ok) {
+        // Refetch categorized navigation to update UI
+        queryClient.invalidateQueries({ queryKey: ['/api/navigation/categorized'] });
+      }
     } catch (error) {
       console.error('Failed to toggle category:', error);
     }
