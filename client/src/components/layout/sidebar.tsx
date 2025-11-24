@@ -4,6 +4,8 @@ import { useSidebar } from "@/contexts/sidebar-context";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useState } from "react";
 import { 
   File, 
   BarChart3, 
@@ -25,6 +27,8 @@ import {
   Table,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   LucideIcon
 } from "lucide-react";
 import logoSymbol from "@assets/Transparent Logo (1)_1763596083942.png";
@@ -61,23 +65,10 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
   const { user } = useAuth();
   const { isCollapsed, toggleCollapse } = useSidebar();
 
-  // Fetch dynamic navigation permissions from database
-  const { data: navData } = useQuery<{ items: any[] }>({
-    queryKey: ['/api/navigation/allowed'],
+  // Fetch categorized navigation from database
+  const { data: categorizedData } = useQuery<{ categories: any[] }>({
+    queryKey: ['/api/navigation/categorized'],
     enabled: !!user,
-  });
-
-  // Build navigation from database permissions
-  const navigation = (navData?.items || []).map((item: any) => {
-    const Icon = item.iconName ? iconMap[item.iconName] || BarChart3 : BarChart3;
-    return {
-      name: item.itemName,
-      href: item.href,
-      icon: Icon,
-      current: location === item.href || 
-               (item.href !== "/" && location.startsWith(item.href)) ||
-               (item.href === "/calculations" && location.startsWith("/royalty-dashboard/")),
-    };
   });
 
   const userInitials = user?.firstName && user?.lastName 
@@ -88,6 +79,20 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
     setLocation(href);
     if (onClose) {
       onClose();
+    }
+  };
+
+  const toggleCategory = async (categoryKey: string, currentState: boolean) => {
+    try {
+      await apiRequest(`/api/navigation/category-state/${categoryKey}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ isExpanded: !currentState }),
+        headers: { 'Content-Type': 'application/json' },
+      });
+      // Refetch categorized navigation to update UI
+      queryClient.invalidateQueries({ queryKey: ['/api/navigation/categorized'] });
+    } catch (error) {
+      console.error('Failed to toggle category:', error);
     }
   };
 
@@ -138,30 +143,68 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
           )}
         </div>
         
-        {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {navigation.map((item) => {
-            const Icon = item.icon;
+        {/* Navigation with Categories */}
+        <nav className="flex-1 px-3 py-4 space-y-2 overflow-y-auto">
+          {(categorizedData?.categories || []).map((category: any) => {
+            const CategoryIcon = category.iconName ? iconMap[category.iconName] || BarChart3 : BarChart3;
+            const isExpanded = category.isExpanded ?? true;
+
             return (
-              <button
-                key={item.name}
-                className={cn(
-                  "w-full flex items-center text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-200 rounded-md py-2 px-3",
-                  isCollapsed ? "justify-center px-2" : "justify-start",
-                  item.current && "bg-sidebar-accent text-sidebar-accent-foreground shadow-md font-semibold"
-                )}
-                onClick={() => handleNavClick(item.href)}
-                data-testid={`nav-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
-                title={isCollapsed ? item.name : undefined}
-              >
-                <Icon className={cn(
-                  "h-5 w-5 flex-shrink-0 transition-all duration-200",
-                  !isCollapsed && "mr-3"
-                )} />
+              <div key={category.categoryKey} className="space-y-1">
+                {/* Category Header */}
                 {!isCollapsed && (
-                  <span className="transition-opacity duration-200 font-medium text-sm leading-tight">{item.name}</span>
+                  <button
+                    onClick={() => category.isCollapsible && toggleCategory(category.categoryKey, isExpanded)}
+                    className={cn(
+                      "w-full flex items-center justify-between text-sidebar-foreground/70 hover:text-sidebar-foreground transition-all duration-200 py-1.5 px-2 rounded-md",
+                      category.isCollapsible && "hover:bg-sidebar-accent/50 cursor-pointer"
+                    )}
+                    data-testid={`category-${category.categoryKey}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <CategoryIcon className="h-4 w-4" />
+                      <span className="text-xs font-semibold uppercase tracking-wider">{category.categoryName}</span>
+                    </div>
+                    {category.isCollapsible && (
+                      isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />
+                    )}
+                  </button>
                 )}
-              </button>
+
+                {/* Category Items */}
+                {(isExpanded || isCollapsed) && (
+                  <div className={cn("space-y-0.5", !isCollapsed && "ml-1")}>
+                    {category.items.map((item: any) => {
+                      const Icon = item.iconName ? iconMap[item.iconName] || BarChart3 : BarChart3;
+                      const isCurrent = location === item.href || 
+                                       (item.href !== "/" && location.startsWith(item.href)) ||
+                                       (item.href === "/calculations" && location.startsWith("/royalty-dashboard/"));
+
+                      return (
+                        <button
+                          key={item.itemKey}
+                          className={cn(
+                            "w-full flex items-center text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-200 rounded-md py-2 px-3",
+                            isCollapsed ? "justify-center px-2" : "justify-start",
+                            isCurrent && "bg-sidebar-accent text-sidebar-accent-foreground shadow-md font-semibold"
+                          )}
+                          onClick={() => handleNavClick(item.href)}
+                          data-testid={`nav-${item.itemName.toLowerCase().replace(/\s+/g, '-')}`}
+                          title={isCollapsed ? item.itemName : undefined}
+                        >
+                          <Icon className={cn(
+                            "h-5 w-5 flex-shrink-0 transition-all duration-200",
+                            !isCollapsed && "mr-3"
+                          )} />
+                          {!isCollapsed && (
+                            <span className="transition-opacity duration-200 font-medium text-sm leading-tight">{item.itemName}</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             );
           })}
         </nav>
