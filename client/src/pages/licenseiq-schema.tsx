@@ -356,7 +356,6 @@ export default function LicenseIQSchema() {
               </Select>
             )}
           </div>
-        </div>
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
