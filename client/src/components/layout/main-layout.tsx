@@ -9,9 +9,10 @@ interface MainLayoutProps {
   children: React.ReactNode;
   title: string;
   description?: string;
+  actions?: React.ReactNode;
 }
 
-export default function MainLayout({ children, title, description }: MainLayoutProps) {
+export default function MainLayout({ children, title, description, actions }: MainLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { isCollapsed } = useSidebar();
 
@@ -29,6 +30,7 @@ export default function MainLayout({ children, title, description }: MainLayoutP
           title={title} 
           description={description}
           onMenuClick={() => setIsSidebarOpen(true)}
+          actions={actions}
         />
         <div className="p-4 md:p-6 flex-1" data-testid="main-content">
           {children}

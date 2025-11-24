@@ -17,9 +17,10 @@ interface HeaderProps {
   title: string;
   description?: string;
   onMenuClick?: () => void;
+  actions?: React.ReactNode;
 }
 
-export default function Header({ title, description, onMenuClick }: HeaderProps) {
+export default function Header({ title, description, onMenuClick, actions }: HeaderProps) {
   const [, setLocation] = useLocation();
   const { user, logoutMutation } = useAuth();
   const { theme, setTheme } = useTheme();
@@ -75,6 +76,13 @@ export default function Header({ title, description, onMenuClick }: HeaderProps)
           {/* Global Search */}
           <GlobalSearch />
           
+          {/* Custom Actions */}
+          {actions && (
+            <div className="flex items-center gap-2">
+              {actions}
+            </div>
+          )}
+          
           <Button
             variant="ghost"
             size="sm"
@@ -84,7 +92,7 @@ export default function Header({ title, description, onMenuClick }: HeaderProps)
             <Bell className="h-4 w-4" />
             <span className="absolute top-0 right-0 h-2 w-2 bg-destructive rounded-full" />
           </Button>
-          {showNewContractButton && (
+          {!actions && showNewContractButton && (
             <Button onClick={handleNewContract} data-testid="button-header-new-contract" size="sm" className="md:size-default">
               <Plus className="h-4 w-4 md:mr-2" />
               <span className="hidden md:inline">New Contract</span>

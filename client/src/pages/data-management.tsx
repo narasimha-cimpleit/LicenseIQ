@@ -3,6 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import MainLayout from "@/components/layout/main-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Edit2, Trash2, Database, FolderOpen, Receipt, Save, X, RefreshCw, ArrowLeft } from "lucide-react";
+import { Plus, Edit2, Trash2, Database, FolderOpen, Receipt, Save, X, RefreshCw } from "lucide-react";
 
 type LicenseiqEntity = {
   id: string;
@@ -234,25 +235,11 @@ export default function DataManagement() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
-            Data Management
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Manage data across all 25 standard LicenseIQ entities
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => navigate("/")}
-            data-testid="button-back-dashboard"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
+    <MainLayout
+      title="Data Management"
+      description="Manage data across all 25 standard LicenseIQ entities"
+      actions={
+        <>
           <Button
             onClick={() => seedMutation.mutate()}
             disabled={seedMutation.isPending}
@@ -271,8 +258,10 @@ export default function DataManagement() {
             <FolderOpen className="h-4 w-4 mr-2" />
             {seedFieldsMutation.isPending ? 'Seeding Fields...' : 'Seed Standard Fields'}
           </Button>
-        </div>
-      </div>
+        </>
+      }
+    >
+      <div className="space-y-6">
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Sidebar - Entity Selection */}
@@ -505,6 +494,7 @@ export default function DataManagement() {
           </CardContent>
         </Card>
       </div>
-    </div>
+      </div>
+    </MainLayout>
   );
 }
