@@ -36,6 +36,7 @@ import LicenseiqSchema from "@/pages/licenseiq-schema";
 import DataManagement from "@/pages/data-management";
 import Configuration from "@/pages/configuration";
 import MasterData from "@/pages/master-data";
+import NavigationManager from "@/pages/navigation-manager";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -80,6 +81,7 @@ function Router() {
             <ProtectedRoute path="/data-management" component={DataManagement} />
             <ProtectedRoute path="/master-data" component={MasterData} />
             <ProtectedRoute path="/configuration" component={Configuration} />
+            <ProtectedRoute path="/navigation-manager" component={NavigationManager} />
             {/* Contract Management - must come before /contracts/:id */}
             <ProtectedRoute path="/contracts/:id/manage" component={ContractManagement} />
             <ProtectedRoute path="/contracts/:id" component={ContractAnalysis} />
