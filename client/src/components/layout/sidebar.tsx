@@ -90,7 +90,6 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
         headers: { 'Content-Type': 'application/json' },
       });
       if (response.ok) {
-        // Refetch categorized navigation to update UI
         queryClient.invalidateQueries({ queryKey: ['/api/navigation/categorized'] });
       }
     } catch (error) {
@@ -146,36 +145,54 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
         </div>
         
         {/* Navigation with Categories */}
-        <nav className="flex-1 px-3 py-4 space-y-2 overflow-y-auto">
+        <nav className="flex-1 px-2 py-2 space-y-1 overflow-y-auto">
           {(categorizedData?.categories || []).map((category: any) => {
             const CategoryIcon = category.iconName ? iconMap[category.iconName] || BarChart3 : BarChart3;
             const isExpanded = category.isExpanded ?? true;
 
             return (
-              <div key={category.categoryKey} className="space-y-1">
-                {/* Category Header */}
+              <div key={category.categoryKey}>
+                {/* Category Header - looks like a regular nav item */}
                 {!isCollapsed && (
                   <button
                     onClick={() => category.isCollapsible && toggleCategory(category.categoryKey, isExpanded)}
                     className={cn(
-                      "w-full flex items-center justify-between text-sidebar-foreground/70 hover:text-sidebar-foreground transition-all duration-200 py-1.5 px-2 rounded-md",
-                      category.isCollapsible && "hover:bg-sidebar-accent/50 cursor-pointer"
+                      "w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors",
+                      "text-sidebar-foreground hover:bg-sidebar-accent/50",
+                      isExpanded && category.isCollapsible && "bg-sidebar-accent/30"
                     )}
                     data-testid={`category-${category.categoryKey}`}
                   >
-                    <div className="flex items-center gap-2">
-                      <CategoryIcon className="h-4 w-4" />
-                      <span className="text-xs font-semibold uppercase tracking-wider">{category.categoryName}</span>
+                    <div className="flex items-center gap-3">
+                      <CategoryIcon className="h-5 w-5 text-sidebar-foreground/70" />
+                      <span className="text-sm font-medium">{category.categoryName}</span>
                     </div>
                     {category.isCollapsible && (
-                      isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />
+                      isExpanded 
+                        ? <ChevronDown className="h-4 w-4 text-sidebar-foreground/50" /> 
+                        : <ChevronRight className="h-4 w-4 text-sidebar-foreground/50" />
                     )}
                   </button>
                 )}
 
-                {/* Category Items */}
-                {(isExpanded || isCollapsed) && (
-                  <div className={cn("space-y-0.5", !isCollapsed && "ml-1")}>
+                {/* Collapsed sidebar - show category icon */}
+                {isCollapsed && (
+                  <button
+                    onClick={() => category.isCollapsible && toggleCategory(category.categoryKey, isExpanded)}
+                    className={cn(
+                      "w-full flex items-center justify-center px-2 py-2.5 rounded-lg transition-colors",
+                      "text-sidebar-foreground hover:bg-sidebar-accent/50"
+                    )}
+                    data-testid={`category-${category.categoryKey}`}
+                    title={category.categoryName}
+                  >
+                    <CategoryIcon className="h-5 w-5 text-sidebar-foreground/70" />
+                  </button>
+                )}
+
+                {/* Category Items - indented when expanded */}
+                {isExpanded && !isCollapsed && (
+                  <div className="mt-1 space-y-0.5">
                     {category.items.map((item: any) => {
                       const Icon = item.iconName ? iconMap[item.iconName] || BarChart3 : BarChart3;
                       const isCurrent = location === item.href || 
@@ -186,21 +203,42 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
                         <button
                           key={item.itemKey}
                           className={cn(
-                            "w-full flex items-center text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-200 rounded-md py-2 px-3",
-                            isCollapsed ? "justify-center px-2" : "justify-start",
-                            isCurrent && "bg-sidebar-accent text-sidebar-accent-foreground shadow-md font-semibold"
+                            "w-full flex items-center gap-3 pl-11 pr-3 py-2 rounded-lg transition-colors text-sm",
+                            "text-sidebar-foreground/80 hover:bg-sidebar-accent/40",
+                            isCurrent && "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                           )}
                           onClick={() => handleNavClick(item.href)}
                           data-testid={`nav-${item.itemName.toLowerCase().replace(/\s+/g, '-')}`}
-                          title={isCollapsed ? item.itemName : undefined}
                         >
-                          <Icon className={cn(
-                            "h-5 w-5 flex-shrink-0 transition-all duration-200",
-                            !isCollapsed && "mr-3"
-                          )} />
-                          {!isCollapsed && (
-                            <span className="transition-opacity duration-200 font-medium text-sm leading-tight">{item.itemName}</span>
+                          <span>{item.itemName}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Collapsed sidebar - show all items */}
+                {isCollapsed && (
+                  <div className="space-y-0.5">
+                    {category.items.map((item: any) => {
+                      const Icon = item.iconName ? iconMap[item.iconName] || BarChart3 : BarChart3;
+                      const isCurrent = location === item.href || 
+                                       (item.href !== "/" && location.startsWith(item.href)) ||
+                                       (item.href === "/calculations" && location.startsWith("/royalty-dashboard/"));
+
+                      return (
+                        <button
+                          key={item.itemKey}
+                          className={cn(
+                            "w-full flex items-center justify-center px-2 py-2.5 rounded-lg transition-colors",
+                            "text-sidebar-foreground/80 hover:bg-sidebar-accent/50",
+                            isCurrent && "bg-sidebar-accent text-sidebar-accent-foreground"
                           )}
+                          onClick={() => handleNavClick(item.href)}
+                          data-testid={`nav-${item.itemName.toLowerCase().replace(/\s+/g, '-')}`}
+                          title={item.itemName}
+                        >
+                          <Icon className="h-5 w-5" />
                         </button>
                       );
                     })}
