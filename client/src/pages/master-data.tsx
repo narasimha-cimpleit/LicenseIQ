@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
+import MainLayout from '@/components/layout/main-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -24,7 +25,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Building2, Layers, MapPin, Plus, ChevronRight, ChevronDown, Check, X, Trash2, Edit2, ArrowLeft } from 'lucide-react';
+import { Building2, Layers, MapPin, Plus, ChevronRight, ChevronDown, Check, X, Trash2, Edit2 } from 'lucide-react';
 import { useLocation } from 'wouter';
 import type { Company, BusinessUnit, Location } from '@shared/schema';
 

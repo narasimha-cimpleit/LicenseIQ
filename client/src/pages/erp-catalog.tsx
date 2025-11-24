@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import MainLayout from "@/components/layout/main-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,7 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Edit, Trash2, Database, FileText, Table as TableIcon, Save } from "lucide-react";
+import { Plus, Edit, Trash2, Database, FileText, Table as TableIcon, Save } from "lucide-react";
 import type { ErpSystem, ErpEntity, ErpField } from "@shared/schema";
 
 export default function ErpCatalogPage() {
@@ -113,51 +114,11 @@ export default function ErpCatalogPage() {
   const selectedEntity = entitiesData?.entities?.find(e => e.id === selectedEntityId);
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-7xl">
-      {/* Header with Back Navigation */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/master-data-mapping')}
-            data-testid="button-back"
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Mapping
-          </Button>
-        </div>
-
-        {/* Breadcrumbs */}
-        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-          <span>Settings</span>
-          <span>/</span>
-          <span>ERP Catalog</span>
-          {selectedSystemId && (
-            <>
-              <span>/</span>
-              <span className="text-foreground font-medium">{selectedSystem?.name}</span>
-            </>
-          )}
-          {selectedEntityId && (
-            <>
-              <span>/</span>
-              <span className="text-foreground font-medium">{selectedEntity?.name}</span>
-            </>
-          )}
-        </div>
-
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-3">
-            <Database className="h-8 w-8 text-primary" />
-            ERP Catalog Management
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Configure ERP systems, entities, and fields for universal data mapping
-          </p>
-        </div>
-      </div>
+    <MainLayout
+      title="ERP Catalog Management"
+      description="Configure ERP systems, entities, and fields for universal data mapping"
+    >
+      <div className="space-y-6">
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full max-w-md grid-cols-3">
@@ -541,6 +502,7 @@ export default function ErpCatalogPage() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </MainLayout>
   );
 }

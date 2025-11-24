@@ -1,10 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
+import MainLayout from "@/components/layout/main-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Mail, Building2, Calendar, Star, ArrowLeft } from "lucide-react";
+import { Mail, Building2, Calendar, Star } from "lucide-react";
 import { format } from "date-fns";
 
 interface EarlyAccessSignup {

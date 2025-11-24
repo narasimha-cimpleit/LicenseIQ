@@ -4,6 +4,7 @@ import { useLocation } from "wouter";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useRoles, useActiveRoles } from "@/hooks/use-roles";
+import MainLayout from "@/components/layout/main-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -13,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Shield, RefreshCw, Check, X, Settings, Users, Database, Plus, Save, Trash2, Edit2, XCircle, UserCog } from "lucide-react";
+import { Shield, RefreshCw, Check, X, Settings, Users, Database, Plus, Save, Trash2, Edit2, XCircle, UserCog } from "lucide-react";
 
 type NavItem = {
   id: string;

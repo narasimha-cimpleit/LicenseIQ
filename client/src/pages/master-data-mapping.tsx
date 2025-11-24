@@ -3,6 +3,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import MainLayout from '@/components/layout/main-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Sparkles, Upload, Download, Save, Trash2, Eye, FileJson, AlertCircle, CheckCircle2, Loader2, Settings, ArrowLeft, Layers, Database } from 'lucide-react';
+import { Sparkles, Upload, Download, Save, Trash2, Eye, FileJson, AlertCircle, CheckCircle2, Loader2, Settings, Layers, Database } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { ErpSystem, ErpEntity, LicenseiqEntity, LicenseiqField } from '@shared/schema';
 import { formatDateUSA } from '@/lib/dateFormat';
@@ -340,49 +341,21 @@ export default function MasterDataMapping() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Breadcrumb Navigation */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <button 
-          onClick={() => navigate('/contracts')} 
-          className="hover:text-foreground transition-colors"
-          data-testid="breadcrumb-home"
+    <MainLayout
+      title="AI Master Data Mapping"
+      description="Map your ERP field names to LicenseIQ standard fields using AI - Create reusable mapping templates"
+      actions={
+        <Button
+          variant="outline"
+          onClick={() => navigate('/erp-catalog')}
+          data-testid="button-configure-erp"
         >
-          Home
-        </button>
-        <span>/</span>
-        <span className="text-foreground font-medium">AI Master Data Mapping</span>
-      </div>
-
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Sparkles className="h-8 w-8 text-purple-500" />
-            AI Master Data Mapping
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Map your ERP field names to LicenseIQ standard fields using AI - Create reusable mapping templates
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => navigate('/contracts')}
-            data-testid="button-back-home"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => navigate('/erp-catalog')}
-            data-testid="button-configure-erp"
-          >
-            <Settings className="h-4 w-4 mr-2" />
-            Configure ERP Catalog
-          </Button>
-        </div>
-      </div>
+          <Settings className="h-4 w-4 mr-2" />
+          Configure ERP Catalog
+        </Button>
+      }
+    >
+      <div className="space-y-6">
 
       <Tabs defaultValue="generate" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
@@ -1267,6 +1240,7 @@ export default function MasterDataMapping() {
           </DialogContent>
         </Dialog>
       )}
-    </div>
+      </div>
+    </MainLayout>
   );
 }
