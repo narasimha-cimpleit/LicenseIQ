@@ -1,5 +1,4 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Link } from 'wouter';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,10 +6,11 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, CheckCircle, XCircle, Clock, Sparkles, ShieldAlert, RefreshCw, ArrowLeft } from 'lucide-react';
+import { AlertCircle, CheckCircle, XCircle, Clock, Sparkles, ShieldAlert, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import MainLayout from '@/components/layout/main-layout';
 
 interface ReviewTask {
   id: string;
@@ -134,13 +134,10 @@ export default function HumanReviewQueue() {
   // Authorization check
   if (!isAuthorized) {
     return (
-      <div className="container mx-auto p-6">
-        <Link href="/">
-          <Button variant="ghost" size="sm" className="mb-4" data-testid="button-back">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
-          </Button>
-        </Link>
+      <MainLayout
+        title="Human Review Queue"
+        description="Review and approve AI-extracted contract data"
+      >
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <ShieldAlert className="h-16 w-16 text-amber-500 mb-4" />
@@ -150,37 +147,29 @@ export default function HumanReviewQueue() {
             </p>
           </CardContent>
         </Card>
-      </div>
+      </MainLayout>
     );
   }
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-6">
-        <Link href="/">
-          <Button variant="ghost" size="sm" className="mb-4" data-testid="button-back">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
-          </Button>
-        </Link>
-        <h1 className="text-3xl font-bold mb-6">Human Review Queue</h1>
+      <MainLayout
+        title="Human Review Queue"
+        description="Review and approve AI-extracted contract data"
+      >
         <div className="flex items-center justify-center h-64">
           <Clock className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
-      </div>
+      </MainLayout>
     );
   }
 
   if (isError) {
     return (
-      <div className="container mx-auto p-6">
-        <Link href="/">
-          <Button variant="ghost" size="sm" className="mb-4" data-testid="button-back">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
-          </Button>
-        </Link>
-        <h1 className="text-3xl font-bold mb-6">Human Review Queue</h1>
+      <MainLayout
+        title="Human Review Queue"
+        description="Review and approve AI-extracted contract data"
+      >
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <AlertCircle className="h-16 w-16 text-red-500 mb-4" />
@@ -194,26 +183,15 @@ export default function HumanReviewQueue() {
             </Button>
           </CardContent>
         </Card>
-      </div>
+      </MainLayout>
     );
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <Link href="/">
-        <Button variant="ghost" size="sm" className="mb-4" data-testid="button-back">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Dashboard
-        </Button>
-      </Link>
-      <div className="flex items-center gap-3 mb-6">
-        <Sparkles className="h-8 w-8 text-primary" />
-        <div>
-          <h1 className="text-3xl font-bold" data-testid="heading-review-queue">Human Review Queue</h1>
-          <p className="text-muted-foreground">Review and approve AI-extracted contract data</p>
-        </div>
-      </div>
-
+    <MainLayout
+      title="Human Review Queue"
+      description="Review and approve AI-extracted contract data"
+    >
       <div className="mb-6 flex items-center gap-4">
         <Badge variant="outline" className="text-lg px-4 py-2" data-testid="badge-pending-count">
           {tasks.length} Pending Tasks
@@ -323,6 +301,6 @@ export default function HumanReviewQueue() {
           ))}
         </div>
       )}
-    </div>
+    </MainLayout>
   );
 }

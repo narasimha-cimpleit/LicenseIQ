@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { 
   File, 
   BarChart3, 
@@ -64,6 +64,8 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
   const [location, setLocation] = useLocation();
   const { user } = useAuth();
   const { isCollapsed, toggleCollapse } = useSidebar();
+  const navRef = useRef<HTMLElement>(null);
+  const [savedScrollPos, setSavedScrollPos] = useState(0);
 
   // Fetch categorized navigation from database
   const { data: categorizedData } = useQuery<{ categories: any[] }>({
@@ -75,8 +77,21 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
     ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
     : user?.email?.[0]?.toUpperCase() || 'U';
 
+  // Preserve sidebar scroll position after navigation
+  useEffect(() => {
+    if (navRef.current && savedScrollPos > 0) {
+      navRef.current.scrollTop = savedScrollPos;
+    }
+  }, [location, savedScrollPos]);
+
   const handleNavClick = (href: string) => {
+    // Save sidebar scroll position before navigation
+    if (navRef.current) {
+      setSavedScrollPos(navRef.current.scrollTop);
+    }
+    
     setLocation(href);
+    
     if (onClose) {
       onClose();
     }
@@ -145,7 +160,7 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
         </div>
         
         {/* Navigation with Categories */}
-        <nav className="flex-1 px-2 py-2 space-y-1 overflow-y-auto">
+        <nav ref={navRef} className="flex-1 px-2 py-2 space-y-1 overflow-y-auto">
           {(categorizedData?.categories || []).map((category: any) => {
             const CategoryIcon = category.iconName ? iconMap[category.iconName] || BarChart3 : BarChart3;
             const isExpanded = category.isExpanded ?? true;
