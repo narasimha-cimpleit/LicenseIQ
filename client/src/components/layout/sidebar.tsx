@@ -192,7 +192,7 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
 
                 {/* Category Items - indented when expanded */}
                 {isExpanded && !isCollapsed && (
-                  <div className="mt-1 ml-6 space-y-0.5 border-l-2 border-sidebar-border/50 pl-4">
+                  <div className="mt-1 ml-6 space-y-0.5 border-l-2 border-sidebar-foreground/20 pl-4">
                     {category.items.map((item: any) => {
                       const Icon = item.iconName ? iconMap[item.iconName] || BarChart3 : BarChart3;
                       const isCurrent = location === item.href || 
