@@ -163,14 +163,17 @@ export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
                     )}
                     data-testid={`category-${category.categoryKey}`}
                   >
-                    <div className="flex items-center gap-3">
-                      <CategoryIcon className="h-5 w-5 text-sidebar-foreground/70" />
-                      <span className="text-sm font-medium">{category.categoryName}</span>
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <CategoryIcon className="h-5 w-5 flex-shrink-0 text-sidebar-foreground/70" />
+                      <span className="text-sm font-medium text-left truncate">{category.categoryName}</span>
                     </div>
                     {category.isCollapsible && (
-                      isExpanded 
-                        ? <ChevronDown className="h-4 w-4 text-sidebar-foreground/50" /> 
-                        : <ChevronRight className="h-4 w-4 text-sidebar-foreground/50" />
+                      <div className="flex-shrink-0 ml-2">
+                        {isExpanded 
+                          ? <ChevronDown className="h-4 w-4 text-sidebar-foreground/50" /> 
+                          : <ChevronRight className="h-4 w-4 text-sidebar-foreground/50" />
+                        }
+                      </div>
                     )}
                   </button>
                 )}
