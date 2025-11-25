@@ -121,17 +121,40 @@ function CategoryCard({ category, onEditCategory, onDeleteCategory }: CategoryCa
   const CategoryIcon = category.iconName ? iconMap[category.iconName] || BarChart3 : BarChart3;
   
   const {
+    attributes,
+    listeners,
     setNodeRef,
+    transform,
+    transition,
+    isDragging,
   } = useSortable({
     id: `category-${category.categoryKey}`,
     data: { categoryKey: category.categoryKey, isCategory: true }
   });
 
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   return (
-    <Card ref={setNodeRef} data-testid={`category-card-${category.categoryKey}`}>
+    <Card 
+      ref={setNodeRef} 
+      style={style}
+      className={cn(isDragging && "opacity-50 shadow-2xl")}
+      data-testid={`category-card-${category.categoryKey}`}
+    >
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
+            <div
+              {...attributes}
+              {...listeners}
+              className="cursor-grab active:cursor-grabbing touch-none"
+              data-testid={`drag-handle-category-${category.categoryKey}`}
+            >
+              <GripVertical className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+            </div>
             <CategoryIcon className="h-5 w-5 text-primary" />
             <div>
               <CardTitle className="text-lg">{category.categoryName}</CardTitle>
@@ -256,13 +279,47 @@ export default function NavigationManager() {
     const { active, over } = event;
     setActiveId(null);
 
-    if (!over || active.id === over.id) return;
-
     const activeData = active.data.current;
-    const overData = over.data.current;
-
     if (!activeData) return;
 
+    // Check if dragging a category
+    if (activeData.isCategory) {
+      const activeId = active.id as string;
+      const activeCategoryKey = activeId.replace('category-', '');
+      const oldIndex = categories.findIndex(c => c.categoryKey === activeCategoryKey);
+      
+      if (oldIndex === -1) return;
+
+      // Handle drop at the end (when over is null)
+      if (!over) {
+        // Move to the end
+        const newCategories = arrayMove(categories, oldIndex, categories.length - 1);
+        setCategories(newCategories);
+        return;
+      }
+
+      // Handle drop on another category
+      if (over && over.id !== active.id) {
+        const overData = over.data.current;
+        if (overData?.isCategory) {
+          const overId = over.id as string;
+          const overCategoryKey = overId.replace('category-', '');
+          const newIndex = categories.findIndex(c => c.categoryKey === overCategoryKey);
+          
+          if (newIndex !== -1) {
+            const newCategories = arrayMove(categories, oldIndex, newIndex);
+            setCategories(newCategories);
+          }
+        }
+      }
+      return;
+    }
+
+    // Handle item dragging (existing logic)
+    if (!over || active.id === over.id) return;
+    const overData = over.data.current;
+
+    // Handle item dragging (existing logic)
     const activeItemKey = active.id as string;
     const activeCategoryKey = activeData.categoryKey;
 
@@ -337,8 +394,15 @@ export default function NavigationManager() {
     setCategories(newCategories);
   };
 
-  const handleSaveChanges = () => {
-    // Build preferences array
+  // Save category order mutation (separate from item preferences)
+  const saveCategoryOrderMutation = useMutation({
+    mutationFn: async (categoryOrder: any[]) => {
+      return apiRequest('POST', '/api/navigation/category-order', { categoryOrder });
+    },
+  });
+
+  const handleSaveChanges = async () => {
+    // Build preferences array for navigation items
     const preferences: any[] = [];
     
     categories.forEach((category) => {
@@ -352,7 +416,34 @@ export default function NavigationManager() {
       });
     });
 
-    savePreferencesMutation.mutate(preferences);
+    // Build category order array
+    const categoryOrder = categories.map((category, index) => ({
+      categoryKey: category.categoryKey,
+      sortOrder: index + 1, // 1-based order to match default_sort_order
+    }));
+
+    try {
+      // Save both atomically - if either fails, both should fail
+      await Promise.all([
+        savePreferencesMutation.mutateAsync(preferences),
+        saveCategoryOrderMutation.mutateAsync(categoryOrder)
+      ]);
+      
+      toast({
+        title: "Success",
+        description: "Navigation preferences and category order saved successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/navigation/categorized'] });
+    } catch (error: any) {
+      const message = error?.message || 'Failed to save preferences';
+      toast({
+        title: "Error",
+        description: message.includes('administrators') 
+          ? "Only administrators can reorder categories. You can still reorder items within categories."
+          : "Failed to save preferences",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleResetToDefaults = () => {

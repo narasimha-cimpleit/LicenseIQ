@@ -4881,6 +4881,40 @@ Return ONLY valid JSON array, no other text.`;
     }
   });
 
+  // Save user's custom category display order (ADMIN ONLY)
+  app.post('/api/navigation/category-order', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const userRole = req.user.role;
+      const { categoryOrder } = req.body; // Array of { categoryKey, sortOrder }
+
+      // AUTHORIZATION: Only admins and owners can reorder categories (system-wide change)
+      if (userRole !== 'admin' && userRole !== 'owner') {
+        return res.status(403).json({ error: 'Only administrators can reorder navigation categories' });
+      }
+
+      if (!categoryOrder || !Array.isArray(categoryOrder)) {
+        return res.status(400).json({ error: 'Invalid category order data' });
+      }
+
+      // Update default_sort_order for categories based on user's order
+      // Note: This updates the global category order, affecting all users
+      for (const item of categoryOrder) {
+        await db.update(navigationCategories)
+          .set({ 
+            defaultSortOrder: item.sortOrder,
+            updatedAt: new Date()
+          })
+          .where(eq(navigationCategories.categoryKey, item.categoryKey));
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('❌ [NAV CATEGORIES] Update category order error:', error);
+      res.status(500).json({ error: 'Failed to update category order' });
+    }
+  });
+
   // Reset user preferences to defaults
   app.post('/api/navigation/reset-preferences', isAuthenticated, async (req: any, res: Response) => {
     try {
