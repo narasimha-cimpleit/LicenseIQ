@@ -22,7 +22,7 @@ import {
   insertSalesDataSchema,
   insertLicenseiqEntityRecordSchema
 } from "@shared/schema";
-import { and, eq, count, desc } from "drizzle-orm";
+import { and, eq, count, desc, sql } from "drizzle-orm";
 
 // Configure multer for secure file uploads with disk storage
 const uploadDir = path.join(process.cwd(), 'uploads');
