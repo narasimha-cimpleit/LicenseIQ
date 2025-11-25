@@ -279,22 +279,42 @@ export default function NavigationManager() {
     const { active, over } = event;
     setActiveId(null);
 
+    console.log('🔷 Drag End Event:', { 
+      activeId: active.id, 
+      overId: over?.id,
+      activeData: active.data.current,
+      overData: over?.data.current
+    });
+
     const activeData = active.data.current;
-    if (!activeData) return;
+    if (!activeData) {
+      console.log('❌ No active data');
+      return;
+    }
 
     // Check if dragging a category
     if (activeData.isCategory) {
+      console.log('✅ Dragging a category');
       const activeId = active.id as string;
       const activeCategoryKey = activeId.replace('category-', '');
       const oldIndex = categories.findIndex(c => c.categoryKey === activeCategoryKey);
       
+      console.log('📍 Old Index:', oldIndex);
       if (oldIndex === -1) return;
 
       // If no over target or dropped on same position, do nothing
-      if (!over || over.id === active.id) return;
+      if (!over || over.id === active.id) {
+        console.log('⚠️ No over target or same position');
+        return;
+      }
 
       const overData = over.data.current;
-      if (!overData?.isCategory) return;
+      console.log('📦 Over Data:', overData);
+      
+      if (!overData?.isCategory) {
+        console.log('❌ Over target is not a category');
+        return;
+      }
 
       // Calculate new index
       const overId = over.id as string;
