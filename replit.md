@@ -39,9 +39,88 @@ The frontend utilizes React, TypeScript, Vite, Wouter for routing, TanStack Quer
 - **Comprehensive Contract Search**: Full content-based search across contract metadata, AI analysis data, royalty rules, user fields, and dates with RBAC enforcement.
 - **User-Organization Role Management**: System for assigning users to organizations with role-based access control at company, business unit, and location levels.
 - **Categorized Navigation System**: Intelligent database-driven menu organization with collapsible categories, user-customizable preferences, and persistent expand/collapse state per user.
+- **Multi-Location Data Filtering**: Comprehensive hierarchical access control enforcing organizational context across ALL data tables (contracts, sales, calculations) with admin bypass, preventing cross-context data leakage.
 
 ## System Design Choices
 The architecture emphasizes an AI-native design, integrating AI capabilities throughout. It prioritizes asynchronous AI processing with free APIs and uses a relational data model for core entities. The platform is designed for enterprise readiness, supporting multi-entity operations, user management, audit trails, and flexible data import.
+
+## Multi-Location Context Filtering (Phase 4-5 Implementation)
+
+**Overview:**
+Complete data isolation system that enforces organizational context across all business entities, ensuring users only see data relevant to their active location/business unit/company context.
+
+**Architecture:**
+
+1. **Database Schema:**
+   - Added `companyId`, `businessUnitId`, `locationId` fields to:
+     - `contracts` table (nullable)
+     - `sales_data` table (nullable, inherited from contract)
+     - `contract_royalty_calculations` table (nullable, inherited from contract)
+
+2. **Table-Agnostic Filter Builder:**
+   - `buildOrgContextFilter()` function in `server/storage.ts`
+   - Accepts column references and `OrgAccessContext` interface
+   - Returns SQL filter conditions for hierarchical filtering
+   - Supports Location → Business Unit → Company hierarchy
+   - Reusable across all tables with org fields
+
+3. **Storage Layer Updates:**
+   - **Contracts:** `getContracts()`, `searchContracts()`, `getContract()`, `getContractsByUser()`
+   - **Sales:** `getSalesDataByContract()`, `getAllSalesData()`
+   - **Calculations:** `getContractRoyaltyCalculations()`, `getContractRoyaltyCalculation()`
+   - All methods accept optional `context?: OrgAccessContext` parameter
+   - Filters applied using `and(...filterConditions)` pattern
+
+4. **Route Handlers:**
+   - Context extracted from `req.user?.activeContext` (populated by authentication middleware)
+   - Passed to all storage methods as optional parameter
+   - No context = no filtering (backward compatible)
+
+5. **Security Features:**
+   - **Admin/Owner Bypass:** Users with `admin` or `owner` roles bypass all context filtering
+   - **Hierarchical Access:** Location users see location data only; BU users see all locations in BU; Company users see all BU and locations
+   - **No Data Leakage:** Verified through architect review - all query paths properly filtered
+   - **Backward Compatibility:** Users without org assignments can still access data (no context applied)
+
+6. **Search Security:**
+   - Primary contract search query: ✅ Filtered
+   - Rules-based search query: ✅ Filtered
+   - Date-based search query: ✅ Filtered
+   - Additional contracts fetch: ✅ Filtered
+   - All secondary query paths verified to prevent cross-context data exposure
+
+**Maintenance Scripts:**
+
+1. **`server/scripts/backfill-org-context.ts`:**
+   - Assigns org IDs to existing contracts based on uploader's primary org assignment
+   - Cascades org IDs to sales data (inherited from matched contract)
+   - Cascades org IDs to calculations (inherited from parent contract)
+   - Safe to re-run (only updates NULL values)
+
+2. **`server/scripts/create-test-data.ts`:**
+   - Creates comprehensive multi-location test scenarios:
+     - 2 companies, 3 business units, 4 locations
+     - 4 test users with different access levels:
+       - Alice (Location-level access) - sees 1 contract
+       - Bob (Location-level access) - sees 1 contract
+       - Charlie (BU-level access) - sees 2 contracts
+       - Diana (Company-level access) - sees 3 contracts
+   - Test data includes contracts, sales, and calculations
+   - Validates hierarchical filtering works correctly
+
+**Testing Scenarios:**
+1. Location-scoped user sees only their location's data
+2. BU-scoped user sees all locations within their BU
+3. Company-scoped user sees all data across all BUs
+4. Admin user bypasses all filters and sees everything
+5. User without org assignments sees all data (backward compatible)
+
+**Future Enhancements:**
+- Add foreign key constraints to org fields (after backfill complete)
+- Add indexes on org fields for query performance
+- Extend pattern to other tables (rules, analytics, reports)
+- Add UI indicators showing active context filter
+- Add bulk org assignment tool for administrators
 
 # External Dependencies
 

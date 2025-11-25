@@ -1715,7 +1715,8 @@ Report ID: ${contractId}
   app.get('/api/contracts/:id/sales', isAuthenticated, async (req: any, res: Response) => {
     try {
       const contractId = req.params.id;
-      const salesData = await storage.getSalesDataByContract(contractId);
+      const context = req.user?.activeContext;
+      const salesData = await storage.getSalesDataByContract(contractId, context);
       
       res.json({
         salesData,
@@ -2408,7 +2409,8 @@ Report ID: ${contractId}
   app.get('/api/contracts/:id/royalty-calculations', isAuthenticated, async (req: any, res: Response) => {
     try {
       const contractId = req.params.id;
-      const calculations = await storage.getContractRoyaltyCalculations(contractId);
+      const context = req.user?.activeContext;
+      const calculations = await storage.getContractRoyaltyCalculations(contractId, context);
       
       res.json({
         calculations,
@@ -2540,9 +2542,10 @@ Report ID: ${contractId}
   app.get('/api/calculations/:id/details', isAuthenticated, async (req: any, res: Response) => {
     try {
       const calculationId = req.params.id;
+      const context = req.user?.activeContext;
       
       // Get calculation
-      const calculation = await storage.getContractRoyaltyCalculation(calculationId);
+      const calculation = await storage.getContractRoyaltyCalculation(calculationId, context);
       if (!calculation) {
         return res.status(404).json({ message: 'Calculation not found' });
       }
