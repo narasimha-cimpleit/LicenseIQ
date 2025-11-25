@@ -74,6 +74,11 @@ export const contracts = pgTable("contracts", {
   
   // ERP Integration Configuration
   useErpMatching: boolean("use_erp_matching").notNull().default(false), // Toggle: Use ERP data matching vs traditional approach
+  
+  // Organizational Context Fields (for multi-location context switching)
+  companyId: varchar("company_id"), // References companies table
+  businessUnitId: varchar("business_unit_id"), // References business_units table
+  locationId: varchar("location_id"), // References locations table
 });
 
 // Contract analysis results
