@@ -2,10 +2,13 @@
 
 ## 📦 Latest Backup File
 
-**File:** `licenseiq_backup_20251125_184941.sql`  
-**Size:** 767 KB  
-**Date:** November 25, 2025 at 6:49 PM  
+**File:** `licenseiq_backup_20251125_185452.sql`  
+**Size:** 761 KB  
+**Date:** November 25, 2025 at 6:54 PM  
 **Format:** PostgreSQL dump with complete schema and data
+
+**Previous Backups:**
+- `licenseiq_backup_20251125_184941.sql` (767 KB) - Before category CRUD implementation
 
 ---
 
@@ -44,14 +47,14 @@ This backup contains:
 cd /path/to/licenseiq
 
 # Restore using environment variables
-PGPASSWORD=$PGPASSWORD psql -h $PGHOST -p $PGPORT -U $PGUSER -d $PGDATABASE -f database/licenseiq_backup_20251125_184941.sql
+PGPASSWORD=$PGPASSWORD psql -h $PGHOST -p $PGPORT -U $PGUSER -d $PGDATABASE -f database/licenseiq_backup_20251125_185452.sql
 ```
 
 ### Method 2: Restore to Custom Database
 
 ```bash
 # Replace with your database credentials
-psql -h your-host -p 5432 -U your-user -d your-database -f database/licenseiq_backup_20251125_184941.sql
+psql -h your-host -p 5432 -U your-user -d your-database -f database/licenseiq_backup_20251125_185452.sql
 ```
 
 ### Method 3: Restore via pgAdmin
@@ -147,7 +150,7 @@ After restoring this backup, use these credentials:
 One-liner to restore and start the app:
 
 ```bash
-PGPASSWORD=$PGPASSWORD psql -h $PGHOST -p $PGPORT -U $PGUSER -d $PGDATABASE -f database/licenseiq_backup_20251125_184941.sql && npm run dev
+PGPASSWORD=$PGPASSWORD psql -h $PGHOST -p $PGPORT -U $PGUSER -d $PGDATABASE -f database/licenseiq_backup_20251125_185452.sql && npm run dev
 ```
 
 ---
@@ -195,7 +198,7 @@ If you encounter issues:
 
 1. Check the application logs: `npm run dev`
 2. Verify database connection: `psql -h $PGHOST -p $PGPORT -U $PGUSER -d $PGDATABASE -c "SELECT version();"`
-3. Review the backup file: `head -100 database/licenseiq_backup_20251125_184941.sql`
+3. Review the backup file: `head -100 database/licenseiq_backup_20251125_185452.sql`
 
 ---
 

@@ -4934,6 +4934,115 @@ Return ONLY valid JSON array, no other text.`;
     }
   });
 
+  // Create new category (ADMIN ONLY)
+  app.post('/api/navigation/categories', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const userRole = req.user.role;
+      const { categoryKey, categoryName, iconName, isCollapsible, defaultExpanded } = req.body;
+
+      // AUTHORIZATION: Only admins and owners can create categories
+      if (userRole !== 'admin' && userRole !== 'owner') {
+        return res.status(403).json({ error: 'Only administrators can create navigation categories' });
+      }
+
+      // Validate required fields
+      if (!categoryKey || !categoryName) {
+        return res.status(400).json({ error: 'Category key and name are required' });
+      }
+
+      // Check if category already exists
+      const existing = await db.select().from(navigationCategories)
+        .where(eq(navigationCategories.categoryKey, categoryKey))
+        .limit(1);
+
+      if (existing.length > 0) {
+        return res.status(400).json({ error: 'Category with this key already exists' });
+      }
+
+      // Get max sort order
+      const maxOrder = await db.select({ max: sql<number>`MAX(${navigationCategories.defaultSortOrder})` })
+        .from(navigationCategories);
+      const nextOrder = (maxOrder[0]?.max || 0) + 1;
+
+      // Create category
+      await db.insert(navigationCategories).values({
+        categoryKey,
+        categoryName,
+        iconName: iconName || 'Folder',
+        isCollapsible: isCollapsible ?? true,
+        defaultExpanded: defaultExpanded ?? true,
+        defaultSortOrder: nextOrder,
+        isActive: true,
+      });
+
+      res.json({ success: true, categoryKey });
+    } catch (error) {
+      console.error('❌ [NAV CATEGORIES] Create category error:', error);
+      res.status(500).json({ error: 'Failed to create category' });
+    }
+  });
+
+  // Update category (ADMIN ONLY)
+  app.patch('/api/navigation/categories/:categoryKey', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const userRole = req.user.role;
+      const { categoryKey } = req.params;
+      const { categoryName, iconName, isCollapsible, defaultExpanded } = req.body;
+
+      // AUTHORIZATION: Only admins and owners can edit categories
+      if (userRole !== 'admin' && userRole !== 'owner') {
+        return res.status(403).json({ error: 'Only administrators can edit navigation categories' });
+      }
+
+      // Update category
+      await db.update(navigationCategories)
+        .set({ 
+          categoryName,
+          iconName,
+          isCollapsible,
+          defaultExpanded,
+          updatedAt: new Date()
+        })
+        .where(eq(navigationCategories.categoryKey, categoryKey));
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('❌ [NAV CATEGORIES] Update category error:', error);
+      res.status(500).json({ error: 'Failed to update category' });
+    }
+  });
+
+  // Delete category (ADMIN ONLY)
+  app.delete('/api/navigation/categories/:categoryKey', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const userRole = req.user.role;
+      const { categoryKey } = req.params;
+
+      // AUTHORIZATION: Only admins and owners can delete categories
+      if (userRole !== 'admin' && userRole !== 'owner') {
+        return res.status(403).json({ error: 'Only administrators can delete navigation categories' });
+      }
+
+      // Check if any items are mapped to this category
+      const mappedItems = await db.select().from(navigationItemCategories)
+        .where(eq(navigationItemCategories.categoryKey, categoryKey))
+        .limit(1);
+
+      if (mappedItems.length > 0) {
+        return res.status(400).json({ error: 'Cannot delete category with mapped navigation items. Please reassign items first.' });
+      }
+
+      // Delete category
+      await db.delete(navigationCategories)
+        .where(eq(navigationCategories.categoryKey, categoryKey));
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('❌ [NAV CATEGORIES] Delete category error:', error);
+      res.status(500).json({ error: 'Failed to delete category' });
+    }
+  });
+
   // ==========================================
   // MASTER DATA MANAGEMENT ROUTES
   // ==========================================

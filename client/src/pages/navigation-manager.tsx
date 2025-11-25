@@ -483,21 +483,50 @@ export default function NavigationManager() {
     }
   };
 
+  const createCategoryMutation = useMutation({
+    mutationFn: async (category: any) => {
+      if (editingCategory) {
+        return apiRequest('PATCH', `/api/navigation/categories/${editingCategory.categoryKey}`, category);
+      } else {
+        return apiRequest('POST', '/api/navigation/categories', category);
+      }
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: editingCategory ? "Category updated successfully" : "Category created successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/navigation/categorized'] });
+      setShowInlineForm(false);
+      setEditingCategory(null);
+      setNewCategory({
+        categoryKey: '',
+        categoryName: '',
+        iconName: 'BarChart3',
+        isCollapsible: true,
+        defaultExpanded: true,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error?.message || 'Failed to save category',
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleCreateCategory = () => {
-    // This would need a backend endpoint to create categories
-    toast({
-      title: "Coming Soon",
-      description: "Category creation will be implemented in the next update",
-    });
-    setShowInlineForm(false);
-    setEditingCategory(null);
-    setNewCategory({
-      categoryKey: '',
-      categoryName: '',
-      iconName: 'BarChart3',
-      isCollapsible: true,
-      defaultExpanded: true,
-    });
+    if (!newCategory.categoryKey || !newCategory.categoryName) {
+      toast({
+        title: "Validation Error",
+        description: "Category key and name are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createCategoryMutation.mutate(newCategory);
   };
 
   const handleEditCategory = (category: Category) => {
@@ -528,11 +557,30 @@ export default function NavigationManager() {
     });
   };
 
+  const deleteCategoryMutation = useMutation({
+    mutationFn: async (categoryKey: string) => {
+      return apiRequest('DELETE', `/api/navigation/categories/${categoryKey}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Category deleted successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/navigation/categorized'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error?.message || 'Failed to delete category',
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleDeleteCategory = (categoryKey: string) => {
-    toast({
-      title: "Coming Soon",
-      description: "Category deletion will be implemented in the next update",
-    });
+    if (confirm('Are you sure you want to delete this category? This action cannot be undone.')) {
+      deleteCategoryMutation.mutate(categoryKey);
+    }
   };
 
   if (isLoading) {
