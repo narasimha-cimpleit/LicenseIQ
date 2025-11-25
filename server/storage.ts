@@ -544,7 +544,30 @@ export class DatabaseStorage implements IStorage {
     return newContract;
   }
 
-  async getContract(id: string): Promise<ContractWithAnalysis | undefined> {
+  async getContract(id: string, context?: OrgAccessContext): Promise<ContractWithAnalysis | undefined> {
+    // Build filter conditions: ID is required, context and userId are optional
+    const filterConditions: any[] = [eq(contracts.id, id)];
+
+    // Apply organizational context filter
+    if (context) {
+      const orgFilter = buildOrgContextFilter(
+        {
+          companyId: contracts.companyId,
+          businessUnitId: contracts.businessUnitId,
+          locationId: contracts.locationId,
+        },
+        context
+      );
+      if (orgFilter) {
+        filterConditions.push(orgFilter);
+      }
+
+      // Also apply user filter if not admin/owner
+      if (context.userId && context.globalRole !== 'admin' && context.globalRole !== 'owner') {
+        filterConditions.push(eq(contracts.uploadedBy, context.userId));
+      }
+    }
+
     const result = await db
       .select({
         contract: contracts,
@@ -554,7 +577,7 @@ export class DatabaseStorage implements IStorage {
       .from(contracts)
       .leftJoin(contractAnalysis, eq(contracts.id, contractAnalysis.contractId))
       .leftJoin(users, eq(contracts.uploadedBy, users.id))
-      .where(eq(contracts.id, id));
+      .where(and(...filterConditions));
 
     if (result.length === 0) return undefined;
 
@@ -566,7 +589,7 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getContracts(userId?: string, limit = 20, offset = 0): Promise<{ contracts: ContractWithAnalysis[], total: number }> {
+  async getContracts(userId?: string, limit = 20, offset = 0, context?: OrgAccessContext): Promise<{ contracts: ContractWithAnalysis[], total: number }> {
     let contractsQuery = db
       .select({
         contract: contracts,
@@ -579,9 +602,36 @@ export class DatabaseStorage implements IStorage {
 
     let countQuery = db.select({ count: count() }).from(contracts);
 
+    // Build filter conditions
+    const filterConditions: any[] = [];
+
+    // Apply organizational context filter if provided
+    if (context) {
+      const orgFilter = buildOrgContextFilter(
+        {
+          companyId: contracts.companyId,
+          businessUnitId: contracts.businessUnitId,
+          locationId: contracts.locationId,
+        },
+        context
+      );
+      if (orgFilter) {
+        filterConditions.push(orgFilter);
+      }
+    }
+
+    // Apply user filter if provided (for non-admin users without org context)
     if (userId) {
-      contractsQuery = contractsQuery.where(eq(contracts.uploadedBy, userId));
-      countQuery = countQuery.where(eq(contracts.uploadedBy, userId));
+      filterConditions.push(eq(contracts.uploadedBy, userId));
+    }
+
+    // Apply combined filters
+    if (filterConditions.length > 0) {
+      const combinedFilter = filterConditions.length === 1 
+        ? filterConditions[0] 
+        : and(...filterConditions);
+      contractsQuery = contractsQuery.where(combinedFilter);
+      countQuery = countQuery.where(combinedFilter);
     }
 
     const [contractsResult, totalResult] = await Promise.all([
@@ -636,7 +686,7 @@ export class DatabaseStorage implements IStorage {
     return contract;
   }
 
-  async searchContracts(query: string, userId?: string): Promise<ContractWithAnalysis[]> {
+  async searchContracts(query: string, userId?: string, context?: OrgAccessContext): Promise<ContractWithAnalysis[]> {
     // Comprehensive search conditions across all contract-related fields
     const searchPattern = `%${query}%`;
     
@@ -677,17 +727,31 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(contractAnalysis, eq(contracts.id, contractAnalysis.contractId))
       .leftJoin(users, eq(contracts.uploadedBy, users.id));
 
-    // Apply search and user filters
-    if (userId) {
-      baseQuery = baseQuery.where(
-        and(
-          searchConditions,
-          eq(contracts.uploadedBy, userId)
-        )
+    // Build filter conditions
+    const filterConditions: any[] = [searchConditions];
+
+    // Apply organizational context filter
+    if (context) {
+      const orgFilter = buildOrgContextFilter(
+        {
+          companyId: contracts.companyId,
+          businessUnitId: contracts.businessUnitId,
+          locationId: contracts.locationId,
+        },
+        context
       );
-    } else {
-      baseQuery = baseQuery.where(searchConditions);
+      if (orgFilter) {
+        filterConditions.push(orgFilter);
+      }
     }
+
+    // Apply user filter if provided
+    if (userId) {
+      filterConditions.push(eq(contracts.uploadedBy, userId));
+    }
+
+    // Apply combined filters
+    baseQuery = baseQuery.where(and(...filterConditions));
 
     // Execute base contract search
     const contractResults = await baseQuery.orderBy(desc(contracts.createdAt));
@@ -710,17 +774,28 @@ export class DatabaseStorage implements IStorage {
       .from(royaltyRules)
       .leftJoin(contracts, eq(royaltyRules.contractId, contracts.id));
     
-    // Apply combined conditions: search pattern AND user filter (if provided)
-    if (userId) {
-      rulesSearchQuery = rulesSearchQuery.where(
-        and(
-          rulesSearchConditions,
-          eq(contracts.uploadedBy, userId)
-        )
+    // Apply combined conditions: search pattern + context + user filter
+    const rulesFilterConditions: any[] = [rulesSearchConditions];
+    
+    if (context) {
+      const orgFilter = buildOrgContextFilter(
+        {
+          companyId: contracts.companyId,
+          businessUnitId: contracts.businessUnitId,
+          locationId: contracts.locationId,
+        },
+        context
       );
-    } else {
-      rulesSearchQuery = rulesSearchQuery.where(rulesSearchConditions);
+      if (orgFilter) {
+        rulesFilterConditions.push(orgFilter);
+      }
     }
+    
+    if (userId) {
+      rulesFilterConditions.push(eq(contracts.uploadedBy, userId));
+    }
+    
+    rulesSearchQuery = rulesSearchQuery.where(and(...rulesFilterConditions));
     
     const rulesResults = await rulesSearchQuery;
     
@@ -728,29 +803,39 @@ export class DatabaseStorage implements IStorage {
     
     // Also search by date (separate query to avoid SQL errors with OR conditions)
     // Search for dates in formats: "11/3/2025", "11/03/2025", "November", "2025"
+    const dateFilterConditions: any[] = [
+      or(
+        sql`to_char(${contracts.createdAt}, 'MM/DD/YYYY') ILIKE ${searchPattern}`,
+        sql`to_char(${contracts.createdAt}, 'FMMM/FMDD/YYYY') ILIKE ${searchPattern}`,
+        sql`to_char(${contracts.createdAt}, 'FMMonth') ILIKE ${searchPattern}`,
+        sql`to_char(${contracts.createdAt}, 'YYYY') ILIKE ${searchPattern}`
+      )
+    ];
+
+    if (context) {
+      const orgFilter = buildOrgContextFilter(
+        {
+          companyId: contracts.companyId,
+          businessUnitId: contracts.businessUnitId,
+          locationId: contracts.locationId,
+        },
+        context
+      );
+      if (orgFilter) {
+        dateFilterConditions.push(orgFilter);
+      }
+    }
+
+    if (userId) {
+      dateFilterConditions.push(eq(contracts.uploadedBy, userId));
+    }
+
     const dateSearchResults = await db
       .select({
         id: contracts.id
       })
       .from(contracts)
-      .where(
-        userId
-          ? and(
-              or(
-                sql`to_char(${contracts.createdAt}, 'MM/DD/YYYY') ILIKE ${searchPattern}`,
-                sql`to_char(${contracts.createdAt}, 'FMMM/FMDD/YYYY') ILIKE ${searchPattern}`,
-                sql`to_char(${contracts.createdAt}, 'FMMonth') ILIKE ${searchPattern}`,
-                sql`to_char(${contracts.createdAt}, 'YYYY') ILIKE ${searchPattern}`
-              ),
-              eq(contracts.uploadedBy, userId)
-            )
-          : or(
-              sql`to_char(${contracts.createdAt}, 'MM/DD/YYYY') ILIKE ${searchPattern}`,
-              sql`to_char(${contracts.createdAt}, 'FMMM/FMDD/YYYY') ILIKE ${searchPattern}`,
-              sql`to_char(${contracts.createdAt}, 'FMMonth') ILIKE ${searchPattern}`,
-              sql`to_char(${contracts.createdAt}, 'YYYY') ILIKE ${searchPattern}`
-            )
-      );
+      .where(and(...dateFilterConditions));
     
     const contractIdsFromDates = new Set(dateSearchResults.map(r => r.id));
     
@@ -760,6 +845,28 @@ export class DatabaseStorage implements IStorage {
     // If we found contracts through rules or dates search, fetch those contracts too
     if (allAdditionalIds.size > 0) {
       const contractIdsArray = Array.from(allAdditionalIds);
+      
+      // Build filters for additional fetch: IDs + context + userId
+      const additionalFilterConditions: any[] = [inArray(contracts.id, contractIdsArray)];
+
+      if (context) {
+        const orgFilter = buildOrgContextFilter(
+          {
+            companyId: contracts.companyId,
+            businessUnitId: contracts.businessUnitId,
+            locationId: contracts.locationId,
+          },
+          context
+        );
+        if (orgFilter) {
+          additionalFilterConditions.push(orgFilter);
+        }
+      }
+
+      if (userId) {
+        additionalFilterConditions.push(eq(contracts.uploadedBy, userId));
+      }
+
       const additionalContractsQuery = db
         .select({
           contract: contracts,
@@ -769,14 +876,7 @@ export class DatabaseStorage implements IStorage {
         .from(contracts)
         .leftJoin(contractAnalysis, eq(contracts.id, contractAnalysis.contractId))
         .leftJoin(users, eq(contracts.uploadedBy, users.id))
-        .where(
-          userId 
-            ? and(
-                inArray(contracts.id, contractIdsArray),
-                eq(contracts.uploadedBy, userId)
-              )
-            : inArray(contracts.id, contractIdsArray)
-        )
+        .where(and(...additionalFilterConditions))
         .orderBy(desc(contracts.createdAt));
       
       const additionalContracts = await additionalContractsQuery;
@@ -806,11 +906,29 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
-  async getContractsByUser(userId: string): Promise<Contract[]> {
+  async getContractsByUser(userId: string, context?: OrgAccessContext): Promise<Contract[]> {
+    // Build filter conditions: userId is required, context is optional
+    const filterConditions: any[] = [eq(contracts.uploadedBy, userId)];
+
+    // Apply organizational context filter
+    if (context) {
+      const orgFilter = buildOrgContextFilter(
+        {
+          companyId: contracts.companyId,
+          businessUnitId: contracts.businessUnitId,
+          locationId: contracts.locationId,
+        },
+        context
+      );
+      if (orgFilter) {
+        filterConditions.push(orgFilter);
+      }
+    }
+
     return await db
       .select()
       .from(contracts)
-      .where(eq(contracts.uploadedBy, userId))
+      .where(and(...filterConditions))
       .orderBy(desc(contracts.createdAt));
   }
 

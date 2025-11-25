@@ -818,9 +818,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userRole = (await storage.getUser(userId))?.role;
       const canViewAny = userRole === 'admin' || userRole === 'owner';
       
+      // Build organizational context for filtering
+      const orgContext = {
+        activeContext: req.user.activeContext,
+        globalRole: userRole || 'viewer',
+        userId,
+      };
+
       const contracts = await storage.searchContracts(
         query.trim(),
-        canViewAny ? undefined : userId
+        canViewAny ? undefined : userId,
+        orgContext
       );
       
       res.json({ contracts });
@@ -837,7 +845,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userRole = (await storage.getUser(userId))?.role;
       const canViewAny = userRole === 'admin' || userRole === 'owner';
       
-      const contracts = await storage.getContracts(canViewAny ? undefined : userId);
+      const limit = parseInt(req.query.limit as string) || 20;
+      const offset = parseInt(req.query.offset as string) || 0;
+
+      // Build organizational context for filtering
+      const orgContext = {
+        activeContext: req.user.activeContext,
+        globalRole: userRole || 'viewer',
+        userId,
+      };
+
+      const contracts = await storage.getContracts(canViewAny ? undefined : userId, limit, offset, orgContext);
       res.json(contracts);
     } catch (error) {
       console.error('Get contracts error:', error);
