@@ -290,58 +290,50 @@ export default function NavigationManager() {
       
       if (oldIndex === -1) return;
 
-      let newCategories: Category[];
+      // If no over target or dropped on same position, do nothing
+      if (!over || over.id === active.id) return;
 
-      // Handle drop at the end (when over is null)
-      if (!over) {
-        // Move to the end
-        newCategories = arrayMove(categories, oldIndex, categories.length - 1);
-        setCategories(newCategories);
-      }
-      // Handle drop on another category
-      else if (over && over.id !== active.id) {
-        const overData = over.data.current;
-        if (overData?.isCategory) {
-          const overId = over.id as string;
-          const overCategoryKey = overId.replace('category-', '');
-          const newIndex = categories.findIndex(c => c.categoryKey === overCategoryKey);
-          
-          if (newIndex !== -1) {
-            newCategories = arrayMove(categories, oldIndex, newIndex);
-            setCategories(newCategories);
-          }
-        }
-      }
+      const overData = over.data.current;
+      if (!overData?.isCategory) return;
+
+      // Calculate new index
+      const overId = over.id as string;
+      const overCategoryKey = overId.replace('category-', '');
+      const newIndex = categories.findIndex(c => c.categoryKey === overCategoryKey);
+      
+      if (newIndex === -1 || oldIndex === newIndex) return;
+
+      // Reorder categories
+      const newCategories = arrayMove(categories, oldIndex, newIndex);
+      setCategories(newCategories);
 
       // Auto-save category order to database
-      if (newCategories!) {
-        try {
-          const categoryOrder = newCategories.map((cat, index) => ({
-            categoryKey: cat.categoryKey,
-            sortOrder: index + 1
-          }));
-          
-          await apiRequest('POST', '/api/navigation/category-order', { categoryOrder });
-          
-          // Invalidate cache to get fresh data
-          queryClient.invalidateQueries({ queryKey: ['/api/navigation/categorized'] });
-          
-          toast({
-            title: "Success",
-            description: "Category order saved",
-          });
-        } catch (error: any) {
-          const message = error?.message || 'Failed to save category order';
-          toast({
-            title: "Error",
-            description: message.includes('administrators') 
-              ? "Only administrators can reorder categories"
-              : "Failed to save category order",
-            variant: "destructive",
-          });
-          // Revert on error
-          queryClient.invalidateQueries({ queryKey: ['/api/navigation/categorized'] });
-        }
+      try {
+        const categoryOrder = newCategories.map((cat, index) => ({
+          categoryKey: cat.categoryKey,
+          sortOrder: index + 1
+        }));
+        
+        await apiRequest('POST', '/api/navigation/category-order', { categoryOrder });
+        
+        // Invalidate cache to get fresh data
+        queryClient.invalidateQueries({ queryKey: ['/api/navigation/categorized'] });
+        
+        toast({
+          title: "Success",
+          description: "Category order saved",
+        });
+      } catch (error: any) {
+        const message = error?.message || 'Failed to save category order';
+        toast({
+          title: "Error",
+          description: message.includes('administrators') 
+            ? "Only administrators can reorder categories"
+            : "Failed to save category order",
+          variant: "destructive",
+        });
+        // Revert on error
+        queryClient.invalidateQueries({ queryKey: ['/api/navigation/categorized'] });
       }
       return;
     }
