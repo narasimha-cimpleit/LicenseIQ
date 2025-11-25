@@ -37,10 +37,13 @@ import {
   businessUnits,
   locations,
   userOrganizationRoles,
+  userActiveContext,
   type User,
   type InsertUser,
   type UserOrganizationRole,
   type InsertUserOrganizationRole,
+  type UserActiveContext,
+  type InsertUserActiveContext,
   type Contract,
   type InsertContract,
   type ContractAnalysis,
@@ -392,6 +395,11 @@ export interface IStorage {
   updateUserOrganizationRole(id: string, updates: Partial<InsertUserOrganizationRole>, userId: string): Promise<UserOrganizationRole>;
   deleteUserOrganizationRole(id: string): Promise<void>;
   getUsersByOrganization(companyId: string, businessUnitId?: string, locationId?: string): Promise<any[]>;
+  
+  // User Active Context operations
+  getUserActiveContext(userId: string): Promise<UserActiveContext | undefined>;
+  setUserActiveContext(userId: string, orgRoleId: string): Promise<UserActiveContext>;
+  deleteUserActiveContext(userId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2831,6 +2839,49 @@ export class DatabaseStorage implements IStorage {
     }
     
     return await query.orderBy(users.username);
+  }
+
+  // User Active Context operations
+  async getUserActiveContext(userId: string): Promise<UserActiveContext | undefined> {
+    const [context] = await db
+      .select()
+      .from(userActiveContext)
+      .where(eq(userActiveContext.userId, userId));
+    return context;
+  }
+
+  async setUserActiveContext(userId: string, orgRoleId: string): Promise<UserActiveContext> {
+    // Check if user already has an active context
+    const existing = await this.getUserActiveContext(userId);
+    
+    if (existing) {
+      // Update existing context
+      const [updated] = await db
+        .update(userActiveContext)
+        .set({ 
+          activeOrgRoleId: orgRoleId, 
+          lastSwitched: new Date(),
+          updatedAt: new Date() 
+        })
+        .where(eq(userActiveContext.userId, userId))
+        .returning();
+      return updated;
+    } else {
+      // Create new context
+      const [created] = await db
+        .insert(userActiveContext)
+        .values({ 
+          userId, 
+          activeOrgRoleId: orgRoleId,
+          lastSwitched: new Date()
+        })
+        .returning();
+      return created;
+    }
+  }
+
+  async deleteUserActiveContext(userId: string): Promise<void> {
+    await db.delete(userActiveContext).where(eq(userActiveContext.userId, userId));
   }
 
 }

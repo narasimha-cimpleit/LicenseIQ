@@ -717,6 +717,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User Context Management Routes
+  
+  // Get all organization contexts for current user (with full details)
+  app.get('/api/user/org-contexts', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const contexts = await storage.getUserOrganizationRoles(userId);
+      res.json(contexts);
+    } catch (error) {
+      console.error('Error fetching user org contexts:', error);
+      res.status(500).json({ error: 'Failed to fetch organization contexts' });
+    }
+  });
+
+  // Get current active context for user
+  app.get('/api/user/active-context', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const activeContext = await storage.getUserActiveContext(userId);
+      
+      if (!activeContext) {
+        return res.status(404).json({ error: 'No active context found' });
+      }
+
+      // Get full details of the active organization role
+      const allContexts = await storage.getUserOrganizationRoles(userId);
+      const fullContext = allContexts.find(c => c.id === activeContext.activeOrgRoleId);
+      
+      res.json({
+        ...activeContext,
+        contextDetails: fullContext
+      });
+    } catch (error) {
+      console.error('Error fetching active context:', error);
+      res.status(500).json({ error: 'Failed to fetch active context' });
+    }
+  });
+
+  // Switch to a different organization context
+  app.post('/api/user/active-context', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const { orgRoleId } = req.body;
+
+      if (!orgRoleId) {
+        return res.status(400).json({ error: 'orgRoleId is required' });
+      }
+
+      // Verify that the user has this org role assigned
+      const userRoles = await storage.getUserOrganizationRoles(userId);
+      const hasRole = userRoles.some(r => r.id === orgRoleId);
+      
+      if (!hasRole) {
+        return res.status(403).json({ error: 'User does not have this organization role' });
+      }
+
+      // Set the active context
+      const context = await storage.setUserActiveContext(userId, orgRoleId);
+      
+      await createAuditLog(req, 'switch_context', 'user_active_context', context.id, {
+        orgRoleId,
+        previousContext: await storage.getUserActiveContext(userId)
+      });
+
+      res.json(context);
+    } catch (error) {
+      console.error('Error switching context:', error);
+      res.status(500).json({ error: 'Failed to switch context' });
+    }
+  });
+
   // Search contracts (comprehensive content-based search)
   app.get('/api/contracts/search', isAuthenticated, async (req: any, res: Response) => {
     try {
