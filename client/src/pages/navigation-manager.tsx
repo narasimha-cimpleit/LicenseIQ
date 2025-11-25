@@ -275,7 +275,7 @@ export default function NavigationManager() {
     setActiveId(event.active.id as string);
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveId(null);
 
@@ -290,16 +290,16 @@ export default function NavigationManager() {
       
       if (oldIndex === -1) return;
 
+      let newCategories: Category[];
+
       // Handle drop at the end (when over is null)
       if (!over) {
         // Move to the end
-        const newCategories = arrayMove(categories, oldIndex, categories.length - 1);
+        newCategories = arrayMove(categories, oldIndex, categories.length - 1);
         setCategories(newCategories);
-        return;
       }
-
       // Handle drop on another category
-      if (over && over.id !== active.id) {
+      else if (over && over.id !== active.id) {
         const overData = over.data.current;
         if (overData?.isCategory) {
           const overId = over.id as string;
@@ -307,9 +307,40 @@ export default function NavigationManager() {
           const newIndex = categories.findIndex(c => c.categoryKey === overCategoryKey);
           
           if (newIndex !== -1) {
-            const newCategories = arrayMove(categories, oldIndex, newIndex);
+            newCategories = arrayMove(categories, oldIndex, newIndex);
             setCategories(newCategories);
           }
+        }
+      }
+
+      // Auto-save category order to database
+      if (newCategories!) {
+        try {
+          const categoryOrder = newCategories.map((cat, index) => ({
+            categoryKey: cat.categoryKey,
+            sortOrder: index + 1
+          }));
+          
+          await apiRequest('POST', '/api/navigation/category-order', { categoryOrder });
+          
+          // Invalidate cache to get fresh data
+          queryClient.invalidateQueries({ queryKey: ['/api/navigation/categorized'] });
+          
+          toast({
+            title: "Success",
+            description: "Category order saved",
+          });
+        } catch (error: any) {
+          const message = error?.message || 'Failed to save category order';
+          toast({
+            title: "Error",
+            description: message.includes('administrators') 
+              ? "Only administrators can reorder categories"
+              : "Failed to save category order",
+            variant: "destructive",
+          });
+          // Revert on error
+          queryClient.invalidateQueries({ queryKey: ['/api/navigation/categorized'] });
         }
       }
       return;
