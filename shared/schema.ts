@@ -517,6 +517,12 @@ export const salesData = pgTable("sales_data", {
   unitPrice: decimal("unit_price", { precision: 15, scale: 2 }),
   customFields: jsonb("custom_fields"),
   importJobId: varchar("import_job_id"),
+  
+  // Multi-location context fields (inherited from matched contract or set during import)
+  companyId: varchar("company_id").references(() => companies.id),
+  businessUnitId: varchar("business_unit_id").references(() => businessUnits.id),
+  locationId: varchar("location_id").references(() => locations.id),
+  
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -541,6 +547,12 @@ export const contractRoyaltyCalculations = pgTable("contract_royalty_calculation
   rejectedAt: timestamp("rejected_at"),
   rejectionReason: text("rejection_reason"),
   comments: text("comments"),
+  
+  // Multi-location context fields (inherited from contract)
+  companyId: varchar("company_id").references(() => companies.id),
+  businessUnitId: varchar("business_unit_id").references(() => businessUnits.id),
+  locationId: varchar("location_id").references(() => locations.id),
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
