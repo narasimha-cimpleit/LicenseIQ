@@ -317,16 +317,16 @@ export interface IStorage {
   // Sales data operations
   createSalesData(salesData: InsertSalesData): Promise<SalesData>;
   createBulkSalesData(salesDataArray: InsertSalesData[]): Promise<SalesData[]>;
-  getSalesDataByContract(contractId: string): Promise<SalesData[]>;
-  getAllSalesData(limit?: number, offset?: number): Promise<{ salesData: SalesData[], total: number }>;
+  getSalesDataByContract(contractId: string, context?: OrgAccessContext): Promise<SalesData[]>;
+  getAllSalesData(limit?: number, offset?: number, context?: OrgAccessContext): Promise<{ salesData: SalesData[], total: number }>;
   updateSalesDataMatch(id: string, contractId: string, confidence: number): Promise<SalesData>;
   deleteSalesData(id: string): Promise<void>;
   deleteAllSalesDataForContract(contractId: string): Promise<void>;
   
   // Contract royalty calculation operations
   createContractRoyaltyCalculation(calculation: InsertContractRoyaltyCalculation): Promise<ContractRoyaltyCalculation>;
-  getContractRoyaltyCalculations(contractId: string): Promise<ContractRoyaltyCalculation[]>;
-  getContractRoyaltyCalculation(id: string): Promise<ContractRoyaltyCalculation | undefined>;
+  getContractRoyaltyCalculations(contractId: string, context?: OrgAccessContext): Promise<ContractRoyaltyCalculation[]>;
+  getContractRoyaltyCalculation(id: string, context?: OrgAccessContext): Promise<ContractRoyaltyCalculation | undefined>;
   updateCalculationStatus(id: string, status: string, comments?: string): Promise<ContractRoyaltyCalculation>;
   deleteContractRoyaltyCalculation(id: string): Promise<void>;
   deleteAllCalculationsForContract(contractId: string): Promise<void>;
@@ -1990,19 +1990,61 @@ export class DatabaseStorage implements IStorage {
     return records;
   }
 
-  async getSalesDataByContract(contractId: string): Promise<SalesData[]> {
+  async getSalesDataByContract(contractId: string, context?: OrgAccessContext): Promise<SalesData[]> {
+    const filterConditions: any[] = [eq(salesData.matchedContractId, contractId)];
+    
+    // Apply organizational context filtering
+    if (context) {
+      const orgFilter = buildOrgContextFilter(
+        {
+          companyId: salesData.companyId,
+          businessUnitId: salesData.businessUnitId,
+          locationId: salesData.locationId,
+        },
+        context
+      );
+      if (orgFilter) {
+        filterConditions.push(orgFilter);
+      }
+    }
+    
     return await db
       .select()
       .from(salesData)
-      .where(eq(salesData.matchedContractId, contractId))
+      .where(and(...filterConditions))
       .orderBy(desc(salesData.transactionDate));
   }
 
-  async getAllSalesData(limit: number = 100, offset: number = 0): Promise<{ salesData: SalesData[], total: number }> {
-    const [totalResult] = await db.select({ count: count() }).from(salesData);
+  async getAllSalesData(limit: number = 100, offset: number = 0, context?: OrgAccessContext): Promise<{ salesData: SalesData[], total: number }> {
+    const filterConditions: any[] = [];
+    
+    // Apply organizational context filtering
+    if (context) {
+      const orgFilter = buildOrgContextFilter(
+        {
+          companyId: salesData.companyId,
+          businessUnitId: salesData.businessUnitId,
+          locationId: salesData.locationId,
+        },
+        context
+      );
+      if (orgFilter) {
+        filterConditions.push(orgFilter);
+      }
+    }
+    
+    // Build base query with optional filters
+    const whereClause = filterConditions.length > 0 ? and(...filterConditions) : undefined;
+    
+    const [totalResult] = await db
+      .select({ count: count() })
+      .from(salesData)
+      .where(whereClause);
+      
     const data = await db
       .select()
       .from(salesData)
+      .where(whereClause)
       .orderBy(desc(salesData.transactionDate))
       .limit(limit)
       .offset(offset);
@@ -2042,19 +2084,53 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async getContractRoyaltyCalculations(contractId: string): Promise<ContractRoyaltyCalculation[]> {
+  async getContractRoyaltyCalculations(contractId: string, context?: OrgAccessContext): Promise<ContractRoyaltyCalculation[]> {
+    const filterConditions: any[] = [eq(contractRoyaltyCalculations.contractId, contractId)];
+    
+    // Apply organizational context filtering
+    if (context) {
+      const orgFilter = buildOrgContextFilter(
+        {
+          companyId: contractRoyaltyCalculations.companyId,
+          businessUnitId: contractRoyaltyCalculations.businessUnitId,
+          locationId: contractRoyaltyCalculations.locationId,
+        },
+        context
+      );
+      if (orgFilter) {
+        filterConditions.push(orgFilter);
+      }
+    }
+    
     return await db
       .select()
       .from(contractRoyaltyCalculations)
-      .where(eq(contractRoyaltyCalculations.contractId, contractId))
+      .where(and(...filterConditions))
       .orderBy(desc(contractRoyaltyCalculations.createdAt));
   }
 
-  async getContractRoyaltyCalculation(id: string): Promise<ContractRoyaltyCalculation | undefined> {
+  async getContractRoyaltyCalculation(id: string, context?: OrgAccessContext): Promise<ContractRoyaltyCalculation | undefined> {
+    const filterConditions: any[] = [eq(contractRoyaltyCalculations.id, id)];
+    
+    // Apply organizational context filtering
+    if (context) {
+      const orgFilter = buildOrgContextFilter(
+        {
+          companyId: contractRoyaltyCalculations.companyId,
+          businessUnitId: contractRoyaltyCalculations.businessUnitId,
+          locationId: contractRoyaltyCalculations.locationId,
+        },
+        context
+      );
+      if (orgFilter) {
+        filterConditions.push(orgFilter);
+      }
+    }
+    
     const [calculation] = await db
       .select()
       .from(contractRoyaltyCalculations)
-      .where(eq(contractRoyaltyCalculations.id, id));
+      .where(and(...filterConditions));
     return calculation;
   }
 
