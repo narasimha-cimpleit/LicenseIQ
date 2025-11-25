@@ -57,13 +57,13 @@ export default function MasterDataPage() {
   if (isLoading) {
     return (
       <MainLayout
-        title="Master Data Management"
+        title="Client Master Hierarchy"
         description="Manage your organizational hierarchy"
       >
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading master data...</p>
+            <p className="text-muted-foreground">Loading hierarchy...</p>
           </div>
         </div>
       </MainLayout>
@@ -72,7 +72,7 @@ export default function MasterDataPage() {
 
   return (
     <MainLayout
-      title="Master Data Management"
+      title="Client Master Hierarchy"
       description="Manage your organizational hierarchy"
       actions={
         <>

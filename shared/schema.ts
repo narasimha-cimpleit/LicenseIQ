@@ -1255,6 +1255,18 @@ export const userOrganizationRoles = pgTable("user_organization_roles", {
   unique("user_org_unique").on(table.userId, table.companyId, table.businessUnitId, table.locationId),
 ]);
 
+// User Active Context - Stores the current active organization context per user (session-level)
+export const userActiveContext = pgTable("user_active_context", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().unique().references(() => users.id, { onDelete: 'cascade' }), // One active context per user
+  activeOrgRoleId: varchar("active_org_role_id").notNull().references(() => userOrganizationRoles.id, { onDelete: 'cascade' }), // Current active organization role
+  lastSwitched: timestamp("last_switched").notNull().defaultNow(), // When user last switched context
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  index("user_active_ctx_user_idx").on(table.userId),
+  index("user_active_ctx_role_idx").on(table.activeOrgRoleId),
+]);
+
 // Insert schemas
 export const insertCompanySchema = createInsertSchema(companies).omit({
   id: true,
@@ -1280,6 +1292,11 @@ export const insertUserOrganizationRoleSchema = createInsertSchema(userOrganizat
   lastUpdateDate: true,
 });
 
+export const insertUserActiveContextSchema = createInsertSchema(userActiveContext).omit({
+  id: true,
+  updatedAt: true,
+});
+
 // Types
 export type Company = typeof companies.$inferSelect;
 export type InsertCompany = z.infer<typeof insertCompanySchema>;
@@ -1289,6 +1306,8 @@ export type Location = typeof locations.$inferSelect;
 export type InsertLocation = z.infer<typeof insertLocationSchema>;
 export type UserOrganizationRole = typeof userOrganizationRoles.$inferSelect;
 export type InsertUserOrganizationRole = z.infer<typeof insertUserOrganizationRoleSchema>;
+export type UserActiveContext = typeof userActiveContext.$inferSelect;
+export type InsertUserActiveContext = z.infer<typeof insertUserActiveContextSchema>;
 
 
 // LicenseIQ Entity Records - Stores actual data for each entity (flexible schema)
