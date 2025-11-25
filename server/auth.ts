@@ -99,7 +99,49 @@ export function setupAuth(app: Express) {
   passport.deserializeUser(async (id: string, done) => {
     try {
       const user = await storage.getUser(id);
-      done(null, user);
+      if (!user) {
+        return done(null, false);
+      }
+
+      // Load user's active organization context with full details
+      let activeContext = null;
+      
+      try {
+        const userActiveCtx = await storage.getUserActiveContext(user.id);
+        if (userActiveCtx) {
+          // Get full context details including company/BU/location names
+          const allContexts = await storage.getUserOrganizationRoles(user.id);
+          const contextDetails = allContexts.find(c => c.id === userActiveCtx.activeOrgRoleId);
+          
+          if (contextDetails) {
+            // Include all fields needed by UI: id, names, IDs, role
+            activeContext = {
+              id: contextDetails.id,
+              userId: userActiveCtx.userId,
+              activeOrgRoleId: userActiveCtx.activeOrgRoleId,
+              companyId: contextDetails.companyId,
+              companyName: contextDetails.companyName,
+              businessUnitId: contextDetails.businessUnitId,
+              businessUnitName: contextDetails.businessUnitName,
+              locationId: contextDetails.locationId,
+              locationName: contextDetails.locationName,
+              role: contextDetails.role,
+              lastSwitched: userActiveCtx.lastSwitched,
+            };
+          }
+        }
+      } catch (ctxError) {
+        console.error('Error loading user context:', ctxError);
+        // Continue without context - backward compatibility
+      }
+
+      // Attach active context to user object
+      const userWithContext = {
+        ...user,
+        activeContext,
+      };
+
+      done(null, userWithContext);
     } catch (error) {
       done(error);
     }
@@ -152,8 +194,25 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/login", passport.authenticate("local"), (req, res) => {
-    const user = req.user as User;
+  app.post("/api/login", passport.authenticate("local"), async (req, res) => {
+    const user = req.user as any;
+    
+    // Auto-initialize active context on first login if user has org assignments but no active context
+    try {
+      const hasActiveContext = await storage.getUserActiveContext(user.id);
+      if (!hasActiveContext) {
+        const userOrgRoles = await storage.getUserOrganizationRoles(user.id);
+        if (userOrgRoles.length > 0) {
+          // Set first org role as default active context
+          await storage.setUserActiveContext(user.id, userOrgRoles[0].id);
+          console.log(`✅ Auto-initialized active context for user ${user.username}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error initializing context on login:', error);
+      // Continue login even if context init fails
+    }
+    
     res.status(200).json({
       id: user.id,
       username: user.username,
@@ -162,6 +221,7 @@ export function setupAuth(app: Express) {
       lastName: user.lastName,
       role: user.role,
       isActive: user.isActive,
+      activeContext: user.activeContext || null,
     });
   });
 
@@ -177,7 +237,7 @@ export function setupAuth(app: Express) {
       return res.status(401).json({ message: "Unauthorized" });
     }
     
-    const user = req.user as User;
+    const user = req.user as any;
     res.json({
       id: user.id,
       username: user.username,
@@ -186,6 +246,7 @@ export function setupAuth(app: Express) {
       lastName: user.lastName,
       role: user.role,
       isActive: user.isActive,
+      activeContext: user.activeContext || null,
     });
   });
 }

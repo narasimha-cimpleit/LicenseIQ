@@ -735,19 +735,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/user/active-context', isAuthenticated, async (req: any, res: Response) => {
     try {
       const userId = req.user.id;
-      const activeContext = await storage.getUserActiveContext(userId);
+      const activeContextRaw = await storage.getUserActiveContext(userId);
       
-      if (!activeContext) {
+      if (!activeContextRaw) {
         return res.status(404).json({ error: 'No active context found' });
       }
 
-      // Get full details of the active organization role
+      // Get full details of the active organization role (with all display names)
       const allContexts = await storage.getUserOrganizationRoles(userId);
-      const fullContext = allContexts.find(c => c.id === activeContext.activeOrgRoleId);
+      const contextDetails = allContexts.find(c => c.id === activeContextRaw.activeOrgRoleId);
       
+      if (!contextDetails) {
+        return res.status(404).json({ error: 'Active context details not found' });
+      }
+
+      // Return complete context with all fields needed by UI
       res.json({
-        ...activeContext,
-        contextDetails: fullContext
+        activeContext: {
+          id: contextDetails.id,
+          userId: activeContextRaw.userId,
+          activeOrgRoleId: activeContextRaw.activeOrgRoleId,
+          companyId: contextDetails.companyId,
+          companyName: contextDetails.companyName,
+          businessUnitId: contextDetails.businessUnitId,
+          businessUnitName: contextDetails.businessUnitName,
+          locationId: contextDetails.locationId,
+          locationName: contextDetails.locationName,
+          role: contextDetails.role,
+          lastSwitched: activeContextRaw.lastSwitched,
+        },
+        contextDetails, // Keep for backward compatibility
       });
     } catch (error) {
       console.error('Error fetching active context:', error);
@@ -4741,17 +4758,19 @@ Return ONLY valid JSON array, no other text.`;
   app.get('/api/navigation/allowed', isAuthenticated, async (req: any, res: Response) => {
     try {
       const userId = req.user.id;
-      const userRole = req.user.role;
+      
+      // Use context role if available, otherwise fall back to global role
+      const effectiveRole = req.user.activeContext?.role || req.user.role;
 
       // Get all active navigation items
       const allItems = await db.select().from(navigationPermissions)
         .where(eq(navigationPermissions.isActive, true))
         .orderBy(navigationPermissions.sortOrder);
 
-      // Get role permissions for this user's role
+      // Get role permissions for effective role (context or global)
       const rolePermissions = await db.select().from(roleNavigationPermissions)
         .where(and(
-          eq(roleNavigationPermissions.role, userRole),
+          eq(roleNavigationPermissions.role, effectiveRole),
           eq(roleNavigationPermissions.isEnabled, true)
         ));
 
@@ -4785,7 +4804,9 @@ Return ONLY valid JSON array, no other text.`;
   app.get('/api/navigation/categorized', isAuthenticated, async (req: any, res: Response) => {
     try {
       const userId = req.user.id;
-      const userRole = req.user.role;
+      
+      // Use context role if available, otherwise fall back to global role (backward compatibility)
+      const effectiveRole = req.user.activeContext?.role || req.user.role;
 
       // Get all active categories
       const categories = await db.select().from(navigationCategories)
@@ -4796,10 +4817,10 @@ Return ONLY valid JSON array, no other text.`;
       const allItems = await db.select().from(navigationPermissions)
         .where(eq(navigationPermissions.isActive, true));
 
-      // Get role permissions
+      // Get role permissions based on effective role (context role or global role)
       const rolePermissions = await db.select().from(roleNavigationPermissions)
         .where(and(
-          eq(roleNavigationPermissions.role, userRole),
+          eq(roleNavigationPermissions.role, effectiveRole),
           eq(roleNavigationPermissions.isEnabled, true)
         ));
 

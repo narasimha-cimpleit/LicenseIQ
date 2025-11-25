@@ -12,6 +12,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme, THEME_OPTIONS, ThemeName } from "@/contexts/theme-context";
 import GlobalSearch from "@/components/ui/global-search";
+import { ContextSwitcher } from "@/components/context-switcher";
 
 interface HeaderProps {
   title: string;
@@ -98,6 +99,9 @@ export default function Header({ title, description, onMenuClick, actions }: Hea
               <span className="hidden md:inline">New Contract</span>
             </Button>
           )}
+          
+          {/* Context/Location Switcher */}
+          <ContextSwitcher />
           
           {/* User Profile Dropdown */}
           <DropdownMenu>
