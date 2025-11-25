@@ -103,6 +103,60 @@ import {
 import { db } from "./db";
 import { eq, desc, and, or, ilike, count, gte, sql, inArray } from "drizzle-orm";
 
+/**
+ * Organizational context for hierarchical access control
+ */
+export interface OrgAccessContext {
+  activeContext: any; // User's active organizational context (companyId, businessUnitId, locationId, role)
+  globalRole: string; // User's global system role
+  userId?: string; // User ID for fallback filtering
+}
+
+/**
+ * Hierarchical Access Control Helper (Table-Agnostic)
+ * Builds query conditions based on organizational context.
+ * Hierarchy: Company > Business Unit > Location
+ * 
+ * @param columns - Object with column references: { companyId, businessUnitId, locationId }
+ * @param context - Organizational access context
+ * @returns Drizzle query condition or null (no filtering needed)
+ */
+function buildOrgContextFilter(
+  columns: { companyId: any; businessUnitId: any; locationId: any },
+  context: OrgAccessContext
+) {
+  const { activeContext, globalRole } = context;
+  // Admin and Owner bypass all context filtering - see everything
+  if (globalRole === 'admin' || globalRole === 'owner') {
+    return null;
+  }
+
+  // No active context = no organization assignments = see only own data (handled by userId filtering)
+  if (!activeContext) {
+    return null;
+  }
+
+  const { companyId, businessUnitId, locationId } = activeContext;
+
+  // Location level: Most restrictive - see only this specific location's data
+  if (locationId) {
+    return eq(columns.locationId, locationId);
+  }
+
+  // Business Unit level: See all locations within this BU
+  if (businessUnitId) {
+    return eq(columns.businessUnitId, businessUnitId);
+  }
+
+  // Company level: See all data within the company (all BUs and locations)
+  if (companyId) {
+    return eq(columns.companyId, companyId);
+  }
+
+  // Fallback: no filtering
+  return null;
+}
+
 export interface IStorage {
   // User operations
   getUser(id: string): Promise<User | undefined>;
@@ -118,11 +172,11 @@ export interface IStorage {
   
   // Contract operations
   createContract(contract: InsertContract): Promise<Contract>;
-  getContract(id: string): Promise<ContractWithAnalysis | undefined>;
-  getContracts(userId?: string, limit?: number, offset?: number): Promise<{ contracts: ContractWithAnalysis[], total: number }>;
+  getContract(id: string, context?: OrgAccessContext): Promise<ContractWithAnalysis | undefined>;
+  getContracts(userId?: string, limit?: number, offset?: number, context?: OrgAccessContext): Promise<{ contracts: ContractWithAnalysis[], total: number }>;
   updateContractStatus(id: string, status: string, processingTime?: number): Promise<Contract>;
-  searchContracts(query: string, userId?: string): Promise<ContractWithAnalysis[]>;
-  getContractsByUser(userId: string): Promise<Contract[]>;
+  searchContracts(query: string, userId?: string, context?: OrgAccessContext): Promise<ContractWithAnalysis[]>;
+  getContractsByUser(userId: string, context?: OrgAccessContext): Promise<Contract[]>;
   deleteContract(id: string): Promise<void>;
   updateContractMetadata(id: string, metadata: any, userId: string): Promise<Contract>;
   submitContractForApproval(id: string, userId: string): Promise<Contract>;
