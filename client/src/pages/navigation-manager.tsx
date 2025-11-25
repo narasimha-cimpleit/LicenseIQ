@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors, closestCorners } from "@dnd-kit/core";
-import { SortableContext, arrayMove, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
+import { SortableContext, arrayMove, verticalListSortingStrategy, rectSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { 
   BarChart3, File, Upload, Receipt, Calculator, Database, Layers, Table, 
@@ -638,12 +638,10 @@ export default function NavigationManager() {
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
+          {/* Separate SortableContext for categories with grid strategy */}
           <SortableContext
-            items={[
-              ...categories.map(c => `category-${c.categoryKey}`),
-              ...categories.flatMap(c => c.items.map(item => item.itemKey))
-            ]}
-            strategy={verticalListSortingStrategy}
+            items={categories.map(c => `category-${c.categoryKey}`)}
+            strategy={rectSortingStrategy}
           >
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {categories.map((category) => (
