@@ -65,9 +65,9 @@ const getSubItems = (itemKey: string, mainHref: string): SearchSubItem[] => {
       { label: 'Edit Contract', href: '/contracts', icon: 'Edit' },
     ],
     'sales-data': [
-      { label: 'View Sales Data', href: '/sales-data', icon: 'List' },
-      { label: 'Upload Sales Data', href: '/sales-data/upload', icon: 'Upload', badge: 'New' },
-      { label: 'Download Template', href: '/sales-data', icon: 'Download' },
+      { label: 'View Sales Data', href: '/sales-upload', icon: 'List' },
+      { label: 'Upload Sales Data', href: '/sales-upload', icon: 'Upload', badge: 'New' },
+      { label: 'Download Template', href: '/sales-upload', icon: 'Download' },
     ],
     'payment-runs': [
       { label: 'View All Payments', href: '/payment-runs', icon: 'List' },
@@ -75,8 +75,8 @@ const getSubItems = (itemKey: string, mainHref: string): SearchSubItem[] => {
       { label: 'View History', href: '/payment-runs/history', icon: 'History' },
     ],
     'royalty-calculator': [
-      { label: 'Calculate License Fee', href: '/royalty-calculator', icon: 'Calculator' },
-      { label: 'View Saved Calculations', href: '/royalty-calculator', icon: 'List' },
+      { label: 'Calculate License Fee', href: '/calculations', icon: 'Calculator' },
+      { label: 'View Saved Calculations', href: '/calculations', icon: 'List' },
     ],
     'master-data': [
       { label: 'View Master Data', href: '/master-data', icon: 'List' },
