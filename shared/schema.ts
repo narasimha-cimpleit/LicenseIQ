@@ -36,6 +36,7 @@ export const users = pgTable("users", {
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
   role: varchar("role").notNull().default("viewer"), // owner, admin, editor, viewer, auditor
+  isSystemAdmin: boolean("is_system_admin").notNull().default(false), // System-level super admin (can manage all companies)
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

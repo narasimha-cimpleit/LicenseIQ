@@ -107,6 +107,22 @@ async function createAuditLog(req: any, action: string, resourceType?: string, r
   }
 }
 
+// Helper function to check if user is system admin
+function isSystemAdmin(user: any): boolean {
+  return user?.isSystemAdmin === true;
+}
+
+// Helper function to get user's company ID from active context
+function getUserCompanyId(user: any): string | null {
+  return user?.activeContext?.companyId || null;
+}
+
+// Helper function to check if user is admin/owner (for their context)
+function isContextAdmin(user: any): boolean {
+  const contextRole = user?.activeContext?.role;
+  return contextRole === 'admin' || contextRole === 'owner';
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   setupAuth(app);
@@ -451,18 +467,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get users list (admin only)
+  // System admins see all users, company admins see only users in their company
   app.get('/api/users', isAuthenticated, async (req: any, res: Response) => {
     try {
-      const userId = req.user.id;
-      const userRole = (await storage.getUser(userId))?.role;
+      const user = await storage.getUser(req.user.id);
       
-      // Check if user has admin access
-      if (userRole !== 'admin' && userRole !== 'owner') {
+      // System admins can see all users
+      if (isSystemAdmin(user)) {
+        const users = await storage.getAllUsers();
+        return res.json(users);
+      }
+      
+      // Check if user has admin/owner access (either global role or context role)
+      const globalRole = user?.role;
+      const contextRole = req.user?.activeContext?.role;
+      const hasAdminAccess = 
+        globalRole === 'admin' || globalRole === 'owner' || 
+        contextRole === 'admin' || contextRole === 'owner';
+      
+      if (!hasAdminAccess) {
         return res.status(403).json({ error: 'Insufficient permissions' });
       }
 
-      const users = await storage.getAllUsers();
-      res.json(users);
+      // Company admin: Filter users to only those with roles in this company
+      const companyId = getUserCompanyId(req.user);
+      if (!companyId) {
+        return res.status(400).json({ error: 'No active company context. Please select a location first.' });
+      }
+      
+      // Get all users that have organization roles in this company
+      const usersInCompany = await storage.getUsersByCompany(companyId);
+      res.json(usersInCompany);
     } catch (error) {
       console.error('Error fetching users:', error);
       res.status(500).json({ error: 'Failed to fetch users' });
@@ -5161,11 +5196,27 @@ Return ONLY valid JSON array, no other text.`;
   // ==========================================
   
   // Get full hierarchy
+  // System admins see all, company admins see only their company's hierarchy
   app.get('/api/master-data/hierarchy', isAuthenticated, async (req: any, res: Response) => {
     try {
       const { status } = req.query;
+      const user = await storage.getUser(req.user.id);
+      
+      // System admins see full hierarchy
+      if (isSystemAdmin(user)) {
+        const hierarchy = await storage.getMasterDataHierarchy(status as string);
+        return res.json({ companies: hierarchy });
+      }
+      
+      // Company admins see only their company's hierarchy
+      const companyId = getUserCompanyId(req.user);
+      if (!companyId) {
+        return res.json({ companies: [] });
+      }
+      
       const hierarchy = await storage.getMasterDataHierarchy(status as string);
-      res.json({ companies: hierarchy });
+      const filteredHierarchy = hierarchy.filter((company: any) => company.id === companyId);
+      res.json({ companies: filteredHierarchy });
     } catch (error: any) {
       console.error('Get hierarchy error:', error);
       res.status(500).json({ error: error.message || 'Failed to get master data hierarchy' });
@@ -5173,22 +5224,41 @@ Return ONLY valid JSON array, no other text.`;
   });
 
   // Companies
+  // System admins see all companies, company admins see only their company
   app.get('/api/master-data/companies', isAuthenticated, async (req: any, res: Response) => {
     try {
       const { status } = req.query;
+      const user = await storage.getUser(req.user.id);
+      
+      // System admins see all companies
+      if (isSystemAdmin(user)) {
+        const companies = await storage.getAllCompanies(status as string);
+        return res.json(companies);
+      }
+      
+      // Company admins see only their company
+      const companyId = getUserCompanyId(req.user);
+      if (!companyId) {
+        return res.json([]);
+      }
+      
       const companies = await storage.getAllCompanies(status as string);
-      res.json(companies);
+      const filteredCompanies = companies.filter((company: any) => company.id === companyId);
+      res.json(filteredCompanies);
     } catch (error: any) {
       console.error('Get companies error:', error);
       res.status(500).json({ error: error.message || 'Failed to get companies' });
     }
   });
 
+  // Only system admins can create new companies
   app.post('/api/master-data/companies', isAuthenticated, async (req: any, res: Response) => {
     try {
       const user = await storage.getUser(req.user.id);
-      if (!['admin', 'owner', 'editor'].includes(user?.role || '')) {
-        return res.status(403).json({ error: 'Insufficient permissions' });
+      
+      // Only system admins can create companies
+      if (!isSystemAdmin(user)) {
+        return res.status(403).json({ error: 'Only system administrators can create new companies' });
       }
 
       const { insertCompanySchema } = await import("@shared/schema");
@@ -5211,11 +5281,23 @@ Return ONLY valid JSON array, no other text.`;
     }
   });
 
+  // System admins can update any company, company admins can only update their company
   app.patch('/api/master-data/companies/:id', isAuthenticated, async (req: any, res: Response) => {
     try {
       const user = await storage.getUser(req.user.id);
-      if (!['admin', 'owner', 'editor'].includes(user?.role || '')) {
-        return res.status(403).json({ error: 'Insufficient permissions' });
+      const contextRole = req.user?.activeContext?.role;
+      
+      // System admins can update any company
+      if (!isSystemAdmin(user)) {
+        // Company admin must have owner/admin role and can only update their own company
+        if (!['admin', 'owner'].includes(contextRole || '')) {
+          return res.status(403).json({ error: 'Insufficient permissions' });
+        }
+        
+        const userCompanyId = getUserCompanyId(req.user);
+        if (userCompanyId !== req.params.id) {
+          return res.status(403).json({ error: 'You can only modify your own company' });
+        }
       }
 
       const company = await storage.updateCompany(req.params.id, req.body, req.user.id);
@@ -5231,11 +5313,14 @@ Return ONLY valid JSON array, no other text.`;
     }
   });
 
+  // Only system admins can delete companies
   app.delete('/api/master-data/companies/:id', isAuthenticated, async (req: any, res: Response) => {
     try {
       const user = await storage.getUser(req.user.id);
-      if (!['admin', 'owner'].includes(user?.role || '')) {
-        return res.status(403).json({ error: 'Only admins and owners can delete companies' });
+      
+      // Only system admins can delete companies
+      if (!isSystemAdmin(user)) {
+        return res.status(403).json({ error: 'Only system administrators can delete companies' });
       }
 
       await storage.deleteCompany(req.params.id);
@@ -5250,9 +5335,20 @@ Return ONLY valid JSON array, no other text.`;
   });
 
   // Business Units
+  // Company admins can only access business units in their company
   app.get('/api/master-data/business-units', isAuthenticated, async (req: any, res: Response) => {
     try {
       const { companyId, status } = req.query;
+      const user = await storage.getUser(req.user.id);
+      
+      // Verify company access for non-system admins
+      if (!isSystemAdmin(user)) {
+        const userCompanyId = getUserCompanyId(req.user);
+        if (companyId && companyId !== userCompanyId) {
+          return res.status(403).json({ error: 'Access denied to this company' });
+        }
+      }
+      
       const units = companyId 
         ? await storage.getBusinessUnitsByCompany(companyId as string, status as string)
         : [];
@@ -5263,11 +5359,23 @@ Return ONLY valid JSON array, no other text.`;
     }
   });
 
+  // Company admins can create business units only in their company
   app.post('/api/master-data/business-units', isAuthenticated, async (req: any, res: Response) => {
     try {
       const user = await storage.getUser(req.user.id);
-      if (!['admin', 'owner', 'editor'].includes(user?.role || '')) {
+      const contextRole = req.user?.activeContext?.role;
+      
+      // Check permission level
+      if (!isSystemAdmin(user) && !['admin', 'owner', 'editor'].includes(contextRole || '')) {
         return res.status(403).json({ error: 'Insufficient permissions' });
+      }
+      
+      // Verify company access for non-system admins
+      if (!isSystemAdmin(user)) {
+        const userCompanyId = getUserCompanyId(req.user);
+        if (req.body.companyId !== userCompanyId) {
+          return res.status(403).json({ error: 'You can only create business units in your company' });
+        }
       }
 
       const { insertBusinessUnitSchema } = await import("@shared/schema");
@@ -5294,9 +5402,13 @@ Return ONLY valid JSON array, no other text.`;
   app.patch('/api/master-data/business-units/:id', isAuthenticated, async (req: any, res: Response) => {
     try {
       const user = await storage.getUser(req.user.id);
-      if (!['admin', 'owner', 'editor'].includes(user?.role || '')) {
+      const contextRole = req.user?.activeContext?.role;
+      
+      if (!isSystemAdmin(user) && !['admin', 'owner', 'editor'].includes(contextRole || '')) {
         return res.status(403).json({ error: 'Insufficient permissions' });
       }
+      
+      // TODO: Add company verification for non-system admins
 
       const unit = await storage.updateBusinessUnit(req.params.id, req.body, req.user.id);
       
@@ -5314,9 +5426,13 @@ Return ONLY valid JSON array, no other text.`;
   app.delete('/api/master-data/business-units/:id', isAuthenticated, async (req: any, res: Response) => {
     try {
       const user = await storage.getUser(req.user.id);
-      if (!['admin', 'owner'].includes(user?.role || '')) {
+      const contextRole = req.user?.activeContext?.role;
+      
+      if (!isSystemAdmin(user) && !['admin', 'owner'].includes(contextRole || '')) {
         return res.status(403).json({ error: 'Only admins and owners can delete business units' });
       }
+      
+      // TODO: Add company verification for non-system admins
 
       await storage.deleteBusinessUnit(req.params.id);
       

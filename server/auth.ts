@@ -220,6 +220,7 @@ export function setupAuth(app: Express) {
       firstName: user.firstName,
       lastName: user.lastName,
       role: user.role,
+      isSystemAdmin: user.isSystemAdmin || false,
       isActive: user.isActive,
       activeContext: user.activeContext || null,
     });
@@ -245,6 +246,7 @@ export function setupAuth(app: Express) {
       firstName: user.firstName,
       lastName: user.lastName,
       role: user.role,
+      isSystemAdmin: user.isSystemAdmin || false,
       isActive: user.isActive,
       activeContext: user.activeContext || null,
     });

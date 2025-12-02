@@ -165,6 +165,7 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   updateUserRole(id: string, role: string): Promise<User>;
   getAllUsers(search?: string, role?: string): Promise<User[]>;
+  getUsersByCompany(companyId: string): Promise<User[]>;
   deleteUser(id: string): Promise<void>;
   updateUser(id: string, updates: Partial<InsertUser>): Promise<User>;
   resetUserPassword(id: string, newPassword: string): Promise<User>;
@@ -508,6 +509,31 @@ export class DatabaseStorage implements IStorage {
     }
     
     return await query.orderBy(desc(users.createdAt));
+  }
+
+  async getUsersByCompany(companyId: string): Promise<User[]> {
+    // Get all users that have at least one organization role in this company
+    const usersWithRolesInCompany = await db
+      .selectDistinct({
+        id: users.id,
+        username: users.username,
+        email: users.email,
+        password: users.password,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        profileImageUrl: users.profileImageUrl,
+        role: users.role,
+        isSystemAdmin: users.isSystemAdmin,
+        isActive: users.isActive,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt,
+      })
+      .from(users)
+      .innerJoin(userOrganizationRoles, eq(users.id, userOrganizationRoles.userId))
+      .where(eq(userOrganizationRoles.companyId, companyId))
+      .orderBy(desc(users.createdAt));
+    
+    return usersWithRolesInCompany;
   }
 
   // Contract operations
