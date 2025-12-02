@@ -62,6 +62,10 @@ async function initializeDatabase() {
     // Seed System Knowledge Base for LIQ AI platform questions
     const { SystemKnowledgeSeeder } = await import("./services/systemKnowledgeSeeder");
     await SystemKnowledgeSeeder.seedKnowledgeBase();
+    
+    // Seed Navigation System (categories, items, mappings, permissions)
+    const { seedNavigation } = await import("./seed-navigation");
+    await seedNavigation();
   } catch (error: any) {
     log(`⚠ Database initialization warning: ${error.message}`);
     // Don't fail server startup if index creation fails
