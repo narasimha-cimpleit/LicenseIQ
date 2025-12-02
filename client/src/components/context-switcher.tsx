@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -83,11 +84,53 @@ export function ContextSwitcher() {
     return `${parts.join(' → ')} [${ctx.role}]`;
   };
 
-  // Don't show if user has no contexts or only one context
-  if (!contexts || contexts.length <= 1) {
+  // Format short context for display
+  const formatShortContext = (ctx: OrgContext) => {
+    if (ctx.locationName) return ctx.locationName;
+    if (ctx.businessUnitName) return ctx.businessUnitName;
+    return ctx.companyName;
+  };
+
+  // Don't show if user has no contexts at all
+  if (!contexts || contexts.length === 0) {
+    // Still show active context if available (fallback display)
+    if (activeContext) {
+      return (
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-md border" data-testid="context-display">
+          <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+          <span className="text-sm font-medium truncate max-w-[200px]">
+            {formatShortContext(activeContext)}
+          </span>
+          <Badge variant="secondary" className="text-xs capitalize">
+            {activeContext.role}
+          </Badge>
+        </div>
+      );
+    }
     return null;
   }
 
+  // If user has only one context, show it as a static display (no dropdown)
+  if (contexts.length === 1) {
+    const ctx = activeContext || contexts[0];
+    return (
+      <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-md border" data-testid="context-display-single">
+        <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
+        <div className="flex flex-col">
+          <span className="text-sm font-medium truncate max-w-[200px]">
+            {ctx.companyName}
+            {ctx.businessUnitName && ` → ${ctx.businessUnitName}`}
+            {ctx.locationName && ` → ${ctx.locationName}`}
+          </span>
+        </div>
+        <Badge variant="outline" className="text-xs capitalize ml-1">
+          {ctx.role}
+        </Badge>
+      </div>
+    );
+  }
+
+  // User has multiple contexts - show dropdown switcher
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
@@ -96,7 +139,7 @@ export function ContextSwitcher() {
           className="flex items-center gap-2 max-w-xs"
           data-testid="button-context-switcher"
         >
-          <MapPin className="h-4 w-4 flex-shrink-0" />
+          <MapPin className="h-4 w-4 flex-shrink-0 text-primary" />
           <span className="truncate text-sm">
             {activeContext ? formatContext(activeContext) : 'Select Location'}
           </span>
