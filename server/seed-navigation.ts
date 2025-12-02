@@ -20,17 +20,11 @@ import {
 import { eq } from 'drizzle-orm';
 
 export async function seedNavigation() {
-  console.log('🌱 Seeding Navigation System...');
+  console.log('🌱 Seeding/Updating Navigation System...');
 
   try {
-    // Check if navigation is already seeded
-    const existingCategories = await db.select().from(navigationCategories).limit(1);
-    const existingItems = await db.select().from(navigationPermissions).limit(1);
-    
-    if (existingCategories.length > 0 && existingItems.length > 0) {
-      console.log('✓ Navigation already seeded');
-      return;
-    }
+    // Always run upserts to ensure navigation data is up-to-date
+    // The onConflictDoUpdate ensures existing records get updated with latest paths
 
     // ==========================================
     // STEP 1: Seed Navigation Categories
