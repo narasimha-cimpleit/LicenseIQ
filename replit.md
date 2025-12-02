@@ -163,6 +163,41 @@ Distinguishes between System Admins (super users managing all companies) and Com
 - Email: "admin@licenseiq.com"
 - `isSystemAdmin = true`
 
+## Automatic Server Startup Seeding
+
+The server automatically seeds essential data on startup via `server/index.ts`. This ensures both development and production environments have consistent data.
+
+**Seeding Modules (in order):**
+
+1. **LicenseIQ Schema Catalog** (`server/seed-licenseiq-schema.ts`)
+   - Seeds 28 standard schema entities for data mapping
+
+2. **System Knowledge Base** (`server/services/systemKnowledgeSeeder.ts`)
+   - Seeds 11 platform knowledge entries for liQ AI
+
+3. **Navigation System** (`server/seed-navigation.ts`)
+   - 6 Categories: Main, Contracts, Finance, Data Management, AI & Analytics, Administration
+   - 21 Navigation Items with role-based permissions
+   - 21 Item-to-Category mappings
+   - Role permissions for all 7 roles (viewer, editor, analyst, auditor, manager, admin, owner)
+
+4. **Master Data** (`server/seed-master-data.ts`)
+   - System Admin user (admin / Admin@123!)
+   - Monrovia Nursery Company 3-level hierarchy:
+     - **Company:** Monrovia Nursery Company
+     - **Business Units:**
+       - Monrovia Branded Division (premium branded products)
+       - Wight/Berryhill Non-Branded Division (wholesale products)
+     - **Locations:**
+       - Dayton, Oregon (HQ) - Branded Division
+       - Visalia, California - Branded Division
+       - Cairo, Georgia - Branded Division
+       - North Carolina - Non-Branded Division
+       - Ohio - Non-Branded Division
+   - Admin assigned as Owner to Monrovia Nursery Company
+
+**Idempotency:** All seeding is safe to run multiple times. Existing data is not duplicated.
+
 # External Dependencies
 
 ## Database Services
