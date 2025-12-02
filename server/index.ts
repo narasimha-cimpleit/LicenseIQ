@@ -66,6 +66,10 @@ async function initializeDatabase() {
     // Seed Navigation System (categories, items, mappings, permissions)
     const { seedNavigation } = await import("./seed-navigation");
     await seedNavigation();
+    
+    // Seed Master Data (admin user, Monrovia company hierarchy)
+    const { seedMasterData } = await import("./seed-master-data");
+    await seedMasterData();
   } catch (error: any) {
     log(`⚠ Database initialization warning: ${error.message}`);
     // Don't fail server startup if index creation fails
