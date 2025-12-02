@@ -48,24 +48,28 @@ export function ContextSwitcher() {
     mutationFn: async (orgRoleId: string) => {
       return apiRequest('POST', '/api/user/active-context', { orgRoleId });
     },
-    onSuccess: () => {
-      // Invalidate all queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ['/api/user/active-context'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/navigation/categorized'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/navigation/allowed'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+    onSuccess: async () => {
+      // Invalidate ALL queries to refresh data with new context
+      // This includes navigation, contracts, and user data
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['/api/user/active-context'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/navigation/categorized'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/navigation/allowed'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/user'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/contracts'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/analytics'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/sales'] }),
+      ]);
+      
+      // Refetch navigation immediately to update sidebar
+      await queryClient.refetchQueries({ queryKey: ['/api/navigation/categorized'] });
       
       toast({
         title: "Context Switched",
-        description: "Your active location has been changed. Navigation updated.",
+        description: "Your active location and navigation have been updated.",
       });
       
       setIsOpen(false);
-      
-      // Force page reload to refresh all data with new context
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
     },
     onError: (error: any) => {
       toast({
