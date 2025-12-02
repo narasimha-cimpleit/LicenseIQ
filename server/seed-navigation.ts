@@ -77,7 +77,7 @@ export async function seedNavigation() {
       { itemKey: 'royalty-rules', itemName: 'License Fee Rules', href: '/royalty-rules', iconName: 'Scale', defaultRoles: ['viewer', 'editor', 'analyst', 'auditor', 'manager', 'admin', 'owner'], sortOrder: 4 },
       { itemKey: 'royalty-calculator', itemName: 'Royalty Calculator', href: '/royalty-calculator', iconName: 'Calculator', defaultRoles: ['analyst', 'manager', 'admin', 'owner'], sortOrder: 5 },
       { itemKey: 'calculations', itemName: 'Calculations', href: '/calculations', iconName: 'Calculator', defaultRoles: ['analyst', 'auditor', 'manager', 'admin', 'owner'], sortOrder: 6 },
-      { itemKey: 'sales-data', itemName: 'Sales Data', href: '/sales', iconName: 'TrendingUp', defaultRoles: ['analyst', 'manager', 'admin', 'owner'], sortOrder: 7 },
+      { itemKey: 'sales-data', itemName: 'Sales Data', href: '/sales-upload', iconName: 'TrendingUp', defaultRoles: ['analyst', 'manager', 'admin', 'owner'], sortOrder: 7 },
       { itemKey: 'erp-mapping', itemName: 'ERP Mapping', href: '/erp-mapping', iconName: 'ArrowLeftRight', defaultRoles: ['admin', 'owner'], sortOrder: 8 },
       { itemKey: 'erp-catalog', itemName: 'ERP Catalog', href: '/erp-catalog', iconName: 'Layers', defaultRoles: ['admin', 'owner'], sortOrder: 9 },
       { itemKey: 'licenseiq-catalog', itemName: 'LicenseIQ Catalog', href: '/licenseiq-catalog', iconName: 'BookOpen', defaultRoles: ['admin', 'owner'], sortOrder: 10 },
