@@ -383,22 +383,26 @@ This creates:
 
 ## Production Setup
 
-### Required Data Seeding for Production
+### Automatic Data Seeding
 
-When deploying to production, you must seed the following data:
+All required data is **automatically seeded on server startup**. No manual scripts are needed.
 
-#### 1. Navigation Data (REQUIRED)
-If the left navigation menu is not showing, run:
-
-```bash
-npx tsx server/scripts/seed-navigation.ts
+When the server starts (both development and production), you should see these log messages:
+```
+🌱 Seeding/Updating Navigation System...
+✅ Navigation seeding complete: 6 categories, 21 items, 21 mappings
+🌱 Seeding Master Data...
+✅ Master Data seeding complete
 ```
 
-This seeds:
+#### Navigation Data (Auto-seeded)
+The navigation system is automatically seeded and updated on every server startup:
 - **Navigation Categories**: Main, Contracts, Finance, Data Management, AI & Analytics, Administration
-- **Navigation Items**: All 21 menu items with proper icons and routes
+- **Navigation Items**: All 21 menu items with correct icons and routes
 - **Item-to-Category Mappings**: Assigns each item to its category
 - **Role Permissions**: Sets up which roles can see which menu items
+
+**Important**: Navigation paths are kept in sync between development and production through the upsert mechanism. Any path corrections in the codebase will be applied on the next server restart/deployment.
 
 #### 2. LicenseIQ Schema Catalog (Auto-seeded)
 This is automatically seeded on server startup. Look for:
@@ -424,11 +428,13 @@ Ensure the system admin user exists:
 ### Production Deployment Checklist
 
 - [ ] Database migrations applied (`npm run db:push`)
-- [ ] Navigation data seeded (`npx tsx server/scripts/seed-navigation.ts`)
-- [ ] Admin user exists with `isSystemAdmin = true`
+- [ ] Deploy/Publish the latest code to production (triggers auto-seeding)
+- [ ] Verify server logs show seeding messages on startup
+- [ ] Admin user exists with `isSystemAdmin = true` (auto-created by seeding)
 - [ ] Environment variables configured (DATABASE_URL, GROQ_API_KEY, etc.)
 - [ ] Left navigation menu visible after login
 - [ ] Context switcher working for users with org assignments
+- [ ] All navigation links point to correct pages (License Fee Rules → /contracts, Royalty Calculator → /calculations, liQ AI → /contract-qna, Sales Data → /sales-upload)
 
 ### Troubleshooting Production Issues
 
