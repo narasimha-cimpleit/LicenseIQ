@@ -40,6 +40,7 @@ The frontend utilizes React, TypeScript, Vite, Wouter for routing, TanStack Quer
 - **User-Organization Role Management**: System for assigning users to organizations with role-based access control at company, business unit, and location levels.
 - **Categorized Navigation System**: Intelligent database-driven menu organization with collapsible categories, user-customizable preferences, and persistent expand/collapse state per user.
 - **Multi-Location Data Filtering**: Comprehensive hierarchical access control enforcing organizational context across ALL data tables (contracts, sales, calculations) with admin bypass, preventing cross-context data leakage.
+- **Two-Tier Admin System**: System Admin (super user managing all companies) and Company Admin (managing only their own company) with database-driven permissions.
 
 ## System Design Choices
 The architecture emphasizes an AI-native design, integrating AI capabilities throughout. It prioritizes asynchronous AI processing with free APIs and uses a relational data model for core entities. The platform is designed for enterprise readiness, supporting multi-entity operations, user management, audit trails, and flexible data import.
@@ -121,6 +122,46 @@ Complete data isolation system that enforces organizational context across all b
 - Extend pattern to other tables (rules, analytics, reports)
 - Add UI indicators showing active context filter
 - Add bulk org assignment tool for administrators
+
+## Two-Tier Admin System
+
+**Overview:**
+Distinguishes between System Admins (super users managing all companies) and Company Admins (managing only their own company).
+
+**Implementation:**
+
+1. **Database Schema:**
+   - `isSystemAdmin` boolean flag added to `users` table
+   - System Admins have `isSystemAdmin = true`
+   - Company Admins have organization roles with admin/owner access
+
+2. **Helper Functions:**
+   - `isSystemAdmin(user)` - checks if user has system admin privileges
+   - `getUserCompanyId(reqUser)` - extracts company ID from active context
+
+3. **Master Data Route Authorization:**
+   - **GET Hierarchy/Companies/BUs/Locations:** System admins see all data; company admins see only their company's data (server-enforced)
+   - **Create Company:** System admins only
+   - **Delete Company:** System admins only
+   - **Update Company:** System admins can update any; company admins only their own
+   - **Create BU/Location:** Company admins can only create in their own company (companyId is server-overridden)
+   - **Update/Delete BU/Location:** Company admins can only modify entities in their company (ownership verified via fetch)
+
+4. **Security Features:**
+   - Client-provided companyId/orgId ignored for non-system admins
+   - Server-side ownership verification before all mutations
+   - Location CREATE validates that orgId belongs to user's company
+   - BU/Location UPDATE/DELETE fetch existing records and verify company ownership
+
+5. **Users Route Filtering:**
+   - System admins see all users
+   - Company admins see only users with roles in their company via `getUsersByCompany()` storage method
+
+**Admin Credentials:**
+- Username: "admin"
+- Password: "Admin@123!"
+- Email: "admin@licenseiq.com"
+- `isSystemAdmin = true`
 
 # External Dependencies
 
