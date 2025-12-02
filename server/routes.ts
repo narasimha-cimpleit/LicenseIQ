@@ -5341,14 +5341,18 @@ Return ONLY valid JSON array, no other text.`;
       const { companyId, status } = req.query;
       const user = await storage.getUser(req.user.id);
       
-      // Verify company access for non-system admins
+      // For non-system admins, enforce company filtering server-side
       if (!isSystemAdmin(user)) {
         const userCompanyId = getUserCompanyId(req.user);
-        if (companyId && companyId !== userCompanyId) {
-          return res.status(403).json({ error: 'Access denied to this company' });
+        if (!userCompanyId) {
+          return res.json([]); // No company access = no data
         }
+        // Ignore client-provided companyId, use server-verified company
+        const units = await storage.getBusinessUnitsByCompany(userCompanyId, status as string);
+        return res.json(units);
       }
       
+      // System admins can query any company
       const units = companyId 
         ? await storage.getBusinessUnitsByCompany(companyId as string, status as string)
         : [];
@@ -5370,17 +5374,21 @@ Return ONLY valid JSON array, no other text.`;
         return res.status(403).json({ error: 'Insufficient permissions' });
       }
       
-      // Verify company access for non-system admins
+      // For non-system admins, override companyId with server-verified value
+      let companyIdToUse = req.body.companyId;
       if (!isSystemAdmin(user)) {
         const userCompanyId = getUserCompanyId(req.user);
-        if (req.body.companyId !== userCompanyId) {
-          return res.status(403).json({ error: 'You can only create business units in your company' });
+        if (!userCompanyId) {
+          return res.status(403).json({ error: 'No company context available' });
         }
+        // Always use server-verified companyId for non-system admins
+        companyIdToUse = userCompanyId;
       }
 
       const { insertBusinessUnitSchema } = await import("@shared/schema");
       const unitData = insertBusinessUnitSchema.parse({
         ...req.body,
+        companyId: companyIdToUse, // Override with server-verified value
         createdBy: req.user.id,
         lastUpdatedBy: req.user.id,
       });
@@ -5408,7 +5416,14 @@ Return ONLY valid JSON array, no other text.`;
         return res.status(403).json({ error: 'Insufficient permissions' });
       }
       
-      // TODO: Add company verification for non-system admins
+      // Verify company ownership for non-system admins
+      if (!isSystemAdmin(user)) {
+        const userCompanyId = getUserCompanyId(req.user);
+        const existingUnit = await storage.getBusinessUnit(req.params.id);
+        if (!existingUnit || existingUnit.companyId !== userCompanyId) {
+          return res.status(403).json({ error: 'You can only modify business units in your company' });
+        }
+      }
 
       const unit = await storage.updateBusinessUnit(req.params.id, req.body, req.user.id);
       
@@ -5432,7 +5447,14 @@ Return ONLY valid JSON array, no other text.`;
         return res.status(403).json({ error: 'Only admins and owners can delete business units' });
       }
       
-      // TODO: Add company verification for non-system admins
+      // Verify company ownership for non-system admins
+      if (!isSystemAdmin(user)) {
+        const userCompanyId = getUserCompanyId(req.user);
+        const existingUnit = await storage.getBusinessUnit(req.params.id);
+        if (!existingUnit || existingUnit.companyId !== userCompanyId) {
+          return res.status(403).json({ error: 'You can only delete business units in your company' });
+        }
+      }
 
       await storage.deleteBusinessUnit(req.params.id);
       
@@ -5446,11 +5468,25 @@ Return ONLY valid JSON array, no other text.`;
   });
 
   // Locations
+  // Company admins can only access locations in their company
   app.get('/api/master-data/locations', isAuthenticated, async (req: any, res: Response) => {
     try {
       const { companyId, orgId, status } = req.query;
-      let locations = [];
+      const user = await storage.getUser(req.user.id);
       
+      // For non-system admins, enforce company filtering server-side
+      if (!isSystemAdmin(user)) {
+        const userCompanyId = getUserCompanyId(req.user);
+        if (!userCompanyId) {
+          return res.json([]); // No company access = no data
+        }
+        // Ignore client-provided companyId/orgId, use server-verified company
+        const locations = await storage.getLocationsByCompany(userCompanyId, status as string);
+        return res.json(locations);
+      }
+      
+      // System admins can query any company
+      let locations = [];
       if (orgId) {
         locations = await storage.getLocationsByBusinessUnit(orgId as string, status as string);
       } else if (companyId) {
@@ -5464,16 +5500,41 @@ Return ONLY valid JSON array, no other text.`;
     }
   });
 
+  // Company admins can create locations only in their company
   app.post('/api/master-data/locations', isAuthenticated, async (req: any, res: Response) => {
     try {
       const user = await storage.getUser(req.user.id);
-      if (!['admin', 'owner', 'editor'].includes(user?.role || '')) {
+      const contextRole = req.user?.activeContext?.role;
+      
+      // Check permission level
+      if (!isSystemAdmin(user) && !['admin', 'owner', 'editor'].includes(contextRole || '')) {
         return res.status(403).json({ error: 'Insufficient permissions' });
+      }
+      
+      // For non-system admins, override companyId with server-verified value
+      // and validate that orgId belongs to user's company
+      let companyIdToUse = req.body.companyId;
+      if (!isSystemAdmin(user)) {
+        const userCompanyId = getUserCompanyId(req.user);
+        if (!userCompanyId) {
+          return res.status(403).json({ error: 'No company context available' });
+        }
+        // Always use server-verified companyId for non-system admins
+        companyIdToUse = userCompanyId;
+        
+        // Validate that the orgId (business unit) belongs to user's company
+        if (req.body.orgId) {
+          const businessUnit = await storage.getBusinessUnit(req.body.orgId);
+          if (!businessUnit || businessUnit.companyId !== userCompanyId) {
+            return res.status(403).json({ error: 'Invalid business unit for your company' });
+          }
+        }
       }
 
       const { insertLocationSchema } = await import("@shared/schema");
       const locationData = insertLocationSchema.parse({
         ...req.body,
+        companyId: companyIdToUse, // Override with server-verified value
         createdBy: req.user.id,
         lastUpdatedBy: req.user.id,
       });
@@ -5496,8 +5557,19 @@ Return ONLY valid JSON array, no other text.`;
   app.patch('/api/master-data/locations/:id', isAuthenticated, async (req: any, res: Response) => {
     try {
       const user = await storage.getUser(req.user.id);
-      if (!['admin', 'owner', 'editor'].includes(user?.role || '')) {
+      const contextRole = req.user?.activeContext?.role;
+      
+      if (!isSystemAdmin(user) && !['admin', 'owner', 'editor'].includes(contextRole || '')) {
         return res.status(403).json({ error: 'Insufficient permissions' });
+      }
+      
+      // Verify company ownership for non-system admins
+      if (!isSystemAdmin(user)) {
+        const userCompanyId = getUserCompanyId(req.user);
+        const existingLocation = await storage.getLocation(req.params.id);
+        if (!existingLocation || existingLocation.companyId !== userCompanyId) {
+          return res.status(403).json({ error: 'You can only modify locations in your company' });
+        }
       }
 
       const location = await storage.updateLocation(req.params.id, req.body, req.user.id);
@@ -5516,8 +5588,19 @@ Return ONLY valid JSON array, no other text.`;
   app.delete('/api/master-data/locations/:id', isAuthenticated, async (req: any, res: Response) => {
     try {
       const user = await storage.getUser(req.user.id);
-      if (!['admin', 'owner'].includes(user?.role || '')) {
+      const contextRole = req.user?.activeContext?.role;
+      
+      if (!isSystemAdmin(user) && !['admin', 'owner'].includes(contextRole || '')) {
         return res.status(403).json({ error: 'Only admins and owners can delete locations' });
+      }
+      
+      // Verify company ownership for non-system admins
+      if (!isSystemAdmin(user)) {
+        const userCompanyId = getUserCompanyId(req.user);
+        const existingLocation = await storage.getLocation(req.params.id);
+        if (!existingLocation || existingLocation.companyId !== userCompanyId) {
+          return res.status(403).json({ error: 'You can only delete locations in your company' });
+        }
       }
 
       await storage.deleteLocation(req.params.id);
