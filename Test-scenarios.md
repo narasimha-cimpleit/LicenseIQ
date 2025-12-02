@@ -381,4 +381,87 @@ This creates:
 
 ---
 
+## Production Setup
+
+### Required Data Seeding for Production
+
+When deploying to production, you must seed the following data:
+
+#### 1. Navigation Data (REQUIRED)
+If the left navigation menu is not showing, run:
+
+```bash
+npx tsx server/scripts/seed-navigation.ts
+```
+
+This seeds:
+- **Navigation Categories**: Main, Contracts, Finance, Data Management, AI & Analytics, Administration
+- **Navigation Items**: All 21 menu items with proper icons and routes
+- **Item-to-Category Mappings**: Assigns each item to its category
+- **Role Permissions**: Sets up which roles can see which menu items
+
+#### 2. LicenseIQ Schema Catalog (Auto-seeded)
+This is automatically seeded on server startup. Look for:
+```
+🌱 Seeding LicenseIQ Schema Catalog...
+✓ All 28 LicenseIQ schema entities already exist
+```
+
+#### 3. System Knowledge Base (Auto-seeded)
+This is automatically seeded on server startup. Look for:
+```
+🌱 Seeding System Knowledge Base for LIQ AI...
+✅ System Knowledge Base seeding complete
+```
+
+#### 4. Admin User
+Ensure the system admin user exists:
+- Username: `admin`
+- Password: `Admin@123!`
+- Email: `admin@licenseiq.com`
+- `isSystemAdmin = true`
+
+### Production Deployment Checklist
+
+- [ ] Database migrations applied (`npm run db:push`)
+- [ ] Navigation data seeded (`npx tsx server/scripts/seed-navigation.ts`)
+- [ ] Admin user exists with `isSystemAdmin = true`
+- [ ] Environment variables configured (DATABASE_URL, GROQ_API_KEY, etc.)
+- [ ] Left navigation menu visible after login
+- [ ] Context switcher working for users with org assignments
+
+### Troubleshooting Production Issues
+
+#### Navigation Menu Not Showing
+1. Check if navigation data exists:
+   ```sql
+   SELECT COUNT(*) FROM navigation_permissions;
+   SELECT COUNT(*) FROM navigation_categories;
+   SELECT COUNT(*) FROM navigation_item_categories;
+   ```
+2. If counts are 0, run the seeding script:
+   ```bash
+   npx tsx server/scripts/seed-navigation.ts
+   ```
+
+#### User Can't See Any Menu Items
+1. Check user's role:
+   ```sql
+   SELECT role FROM users WHERE username = 'your-user';
+   ```
+2. Check role permissions:
+   ```sql
+   SELECT * FROM role_navigation_permissions WHERE role = 'your-role';
+   ```
+3. If no permissions, re-run the navigation seeding script
+
+#### Context Switcher Empty
+1. Check user organization assignments:
+   ```sql
+   SELECT * FROM user_organization_roles WHERE user_id = 'user-id';
+   ```
+2. Assign user to organizations via User Management page
+
+---
+
 *Last Updated: December 2, 2024*
