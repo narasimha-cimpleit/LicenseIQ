@@ -1015,13 +1015,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const userId = req.user.id;
       const userRole = (await storage.getUser(userId))?.role;
-      const canViewAny = userRole === 'admin' || userRole === 'owner';
+      const isSystemAdmin = req.user.isSystemAdmin === true;
+      const canViewAny = userRole === 'admin' || userRole === 'owner' || isSystemAdmin;
       
       // Build organizational context for filtering
       const orgContext = {
         activeContext: req.user.activeContext,
         globalRole: userRole || 'viewer',
         userId,
+        isSystemAdmin,
       };
 
       const contracts = await storage.searchContracts(
@@ -1042,7 +1044,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const userRole = (await storage.getUser(userId))?.role;
-      const canViewAny = userRole === 'admin' || userRole === 'owner';
+      const isSystemAdmin = req.user.isSystemAdmin === true;
+      const canViewAny = userRole === 'admin' || userRole === 'owner' || isSystemAdmin;
       
       const limit = parseInt(req.query.limit as string) || 20;
       const offset = parseInt(req.query.offset as string) || 0;
@@ -1052,6 +1055,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         activeContext: req.user.activeContext,
         globalRole: userRole || 'viewer',
         userId,
+        isSystemAdmin,
       };
 
       const contracts = await storage.getContracts(canViewAny ? undefined : userId, limit, offset, orgContext);

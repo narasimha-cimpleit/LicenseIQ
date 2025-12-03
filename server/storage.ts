@@ -110,6 +110,7 @@ export interface OrgAccessContext {
   activeContext: any; // User's active organizational context (companyId, businessUnitId, locationId, role)
   globalRole: string; // User's global system role
   userId?: string; // User ID for fallback filtering
+  isSystemAdmin?: boolean; // System Admin bypass flag
 }
 
 /**
@@ -125,8 +126,14 @@ function buildOrgContextFilter(
   columns: { companyId: any; businessUnitId: any; locationId: any },
   context: OrgAccessContext
 ) {
-  const { activeContext, globalRole } = context;
-  // Admin and Owner bypass all context filtering - see everything
+  const { activeContext, globalRole, isSystemAdmin } = context;
+  
+  // System Admin bypass - see everything
+  if (isSystemAdmin) {
+    return null;
+  }
+  
+  // Global Admin/Owner bypass all context filtering - see everything
   if (globalRole === 'admin' || globalRole === 'owner') {
     return null;
   }
@@ -136,7 +143,12 @@ function buildOrgContextFilter(
     return null;
   }
 
-  const { companyId, businessUnitId, locationId } = activeContext;
+  const { companyId, businessUnitId, locationId, role: contextRole } = activeContext;
+
+  // Company Admin/Owner (context role) - see all data in their company
+  if ((contextRole === 'admin' || contextRole === 'owner') && companyId) {
+    return eq(columns.companyId, companyId);
+  }
 
   // Location level: Most restrictive - see only this specific location's data
   if (locationId) {
