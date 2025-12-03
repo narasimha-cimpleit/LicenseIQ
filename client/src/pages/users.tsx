@@ -1141,6 +1141,9 @@ export default function Users() {
                                     : user.email
                                   }
                                 </div>
+                                <div className="text-xs text-muted-foreground font-mono">
+                                  @{user.username}
+                                </div>
                                 <div className="text-sm text-muted-foreground">
                                   {user.email}
                                 </div>
