@@ -2707,13 +2707,21 @@ Report ID: ${contractId}
   // Get all royalty calculations across all contracts (for Calculations page)
   app.get('/api/calculations/all', isAuthenticated, async (req: any, res: Response) => {
     try {
-      // Get all contracts for the user's organization
-      const contractsResult = await storage.getContracts();
+      // Build organizational context for filtering
+      const context = {
+        activeContext: req.user?.activeContext,
+        globalRole: req.user?.role || 'viewer',
+        userId: req.user?.id,
+        isSystemAdmin: req.user?.isSystemAdmin === true
+      };
+      
+      // Get all contracts for the user's organization (with context filtering)
+      const contractsResult = await storage.getContracts(undefined, undefined, undefined, context);
       const contracts = contractsResult.contracts || [];
       
-      // Fetch calculations for each contract
+      // Fetch calculations for each contract (with context filtering)
       const allCalculationsPromises = contracts.map(async (contract) => {
-        const calculations = await storage.getContractRoyaltyCalculations(contract.id);
+        const calculations = await storage.getContractRoyaltyCalculations(contract.id, context);
         return calculations.map(calc => ({
           ...calc,
           contractName: contract.originalName,
