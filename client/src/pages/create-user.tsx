@@ -82,7 +82,14 @@ export default function CreateUser() {
   // This prevents blank screens from multiple auth checks
 
   // Check if user has permission to create users
-  if (!user || (user.role !== "admin" && user.role !== "owner")) {
+  // System admins (global admin/owner role) OR company admins (admin/owner in activeContext)
+  const globalRole = user?.role;
+  const contextRole = user?.activeContext?.role;
+  const hasAdminAccess = 
+    globalRole === 'admin' || globalRole === 'owner' ||
+    contextRole === 'admin' || contextRole === 'owner';
+    
+  if (!user || !hasAdminAccess) {
     return (
       <MainLayout title="Create User">
         <div className="p-6">

@@ -504,6 +504,130 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create user (admin only - with two-tier admin support)
+  // System admins can create users for any company
+  // Company admins can create users for their own company only
+  app.post('/api/users/create', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const user = req.user;
+      const currentUserId = user.id;
+      
+      // Check if user has admin access (system admin OR context admin)
+      const hasAdminAccess = isSystemAdmin(user) || isContextAdmin(user);
+      
+      if (!hasAdminAccess) {
+        return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+      }
+
+      const { username, password, email, firstName, lastName, role, companyId, businessUnitId, locationId, orgRole } = req.body;
+      
+      // Validate required fields
+      if (!username || !password) {
+        return res.status(400).json({ message: 'Username and password are required' });
+      }
+      
+      // Security: Company admins cannot assign global admin/owner roles
+      // Only system admins can create users with elevated global roles
+      let safeGlobalRole = role || 'viewer';
+      if (!isSystemAdmin(user)) {
+        // Company admins can only create users with safe global roles
+        const allowedRoles = ['viewer', 'editor', 'auditor'];
+        if (!allowedRoles.includes(safeGlobalRole)) {
+          safeGlobalRole = 'viewer'; // Force safe default
+        }
+      }
+      
+      // Check if username already exists
+      const existingUser = await storage.getUserByUsername(username);
+      if (existingUser) {
+        return res.status(400).json({ message: 'Username already exists' });
+      }
+
+      // Check if email already exists (if provided)
+      if (email) {
+        const existingEmail = await storage.getUserByEmail(email);
+        if (existingEmail) {
+          return res.status(400).json({ message: 'Email already exists' });
+        }
+      }
+
+      // Hash the password
+      const hashedPassword = await hashPassword(password);
+      
+      // Create the user with the safe global role
+      const newUser = await storage.createUser({
+        username,
+        password: hashedPassword,
+        email: email || null,
+        firstName: firstName || null,
+        lastName: lastName || null,
+        role: safeGlobalRole,
+        isActive: true,
+      });
+
+      // If company admin is creating user, auto-assign to their company
+      // Or if companyId is provided, create the organization role assignment
+      let targetCompanyId = companyId;
+      let targetBusinessUnitId = businessUnitId;
+      let targetLocationId = locationId;
+      let targetOrgRole = orgRole || 'viewer';
+      
+      // For company admins, enforce their company context
+      if (!isSystemAdmin(user)) {
+        const userCompanyId = getUserCompanyId(user);
+        if (!userCompanyId) {
+          return res.status(400).json({ message: 'No active company context. Please select a location first.' });
+        }
+        // Company admin can only assign to their own company
+        targetCompanyId = userCompanyId;
+        
+        // If they provided different companyId, reject
+        if (companyId && companyId !== userCompanyId) {
+          return res.status(403).json({ message: 'Cannot assign users to another company' });
+        }
+      }
+      
+      // If we have a company to assign to, create the organization role
+      if (targetCompanyId) {
+        try {
+          await storage.createUserOrganizationRole({
+            userId: newUser.id,
+            companyId: targetCompanyId,
+            businessUnitId: targetBusinessUnitId || null,
+            locationId: targetLocationId || null,
+            role: targetOrgRole,
+            status: 'A',
+            createdBy: currentUserId,
+            lastUpdatedBy: currentUserId,
+          });
+        } catch (orgError) {
+          console.error('Failed to create organization role for new user:', orgError);
+          // User is created, but org role failed - log but don't fail the request
+        }
+      }
+
+      await createAuditLog(req, 'user_created', 'user', newUser.id, {
+        username: newUser.username,
+        email: newUser.email,
+        role: newUser.role,
+        companyId: targetCompanyId,
+      });
+
+      res.status(201).json({
+        id: newUser.id,
+        username: newUser.username,
+        email: newUser.email,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        role: newUser.role,
+        isActive: newUser.isActive,
+      });
+    } catch (error: any) {
+      console.error('Create user error:', error);
+      res.status(500).json({ message: error.message || 'Failed to create user' });
+    }
+  });
+
   // Update user role (admin only)
   app.patch('/api/users/:id/role', isAuthenticated, async (req: any, res: Response) => {
     try {
