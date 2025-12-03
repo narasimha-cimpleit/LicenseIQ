@@ -467,14 +467,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get users list (admin only)
-  // System admins see all users, company admins see only users in their company
+  // System admins see all users with company assignments, company admins see only users in their company
   app.get('/api/users', isAuthenticated, async (req: any, res: Response) => {
     try {
       const user = await storage.getUser(req.user.id);
       
-      // System admins can see all users
+      // System admins can see all users with their company assignments
       if (isSystemAdmin(user)) {
-        const users = await storage.getAllUsers();
+        const users = await storage.getAllUsersWithCompanies();
         return res.json(users);
       }
       

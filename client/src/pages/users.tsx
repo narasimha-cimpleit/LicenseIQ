@@ -1144,6 +1144,24 @@ export default function Users() {
                                 <div className="text-sm text-muted-foreground">
                                   {user.email}
                                 </div>
+                                {user.primaryCompany && (
+                                  <div className="flex items-center gap-1 mt-1">
+                                    <Building2 className="h-3 w-3 text-blue-500" />
+                                    <span className="text-xs text-blue-600 dark:text-blue-400">
+                                      {user.primaryCompany}
+                                      {user.companies && user.companies.length > 1 && (
+                                        <span className="text-muted-foreground ml-1">
+                                          (+{user.companies.length - 1} more)
+                                        </span>
+                                      )}
+                                    </span>
+                                  </div>
+                                )}
+                                {!user.primaryCompany && user.isSystemAdmin && (
+                                  <div className="flex items-center gap-1 mt-1">
+                                    <Badge variant="outline" className="text-xs">System Admin</Badge>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </td>

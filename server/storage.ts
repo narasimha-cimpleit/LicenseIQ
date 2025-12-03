@@ -165,7 +165,8 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   updateUserRole(id: string, role: string): Promise<User>;
   getAllUsers(search?: string, role?: string): Promise<User[]>;
-  getUsersByCompany(companyId: string): Promise<User[]>;
+  getAllUsersWithCompanies(): Promise<any[]>;
+  getUsersByCompany(companyId: string): Promise<any[]>;
   deleteUser(id: string): Promise<void>;
   updateUser(id: string, updates: Partial<InsertUser>): Promise<User>;
   resetUserPassword(id: string, newPassword: string): Promise<User>;
@@ -512,14 +513,67 @@ export class DatabaseStorage implements IStorage {
     return await query.orderBy(desc(users.createdAt));
   }
 
-  async getUsersByCompany(companyId: string): Promise<User[]> {
+  async getAllUsersWithCompanies(): Promise<any[]> {
+    // Get all users with their company assignments aggregated
+    // Explicitly select non-sensitive fields (exclude password)
+    const allUsers = await db
+      .select({
+        id: users.id,
+        username: users.username,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        profileImageUrl: users.profileImageUrl,
+        role: users.role,
+        isSystemAdmin: users.isSystemAdmin,
+        isActive: users.isActive,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt,
+      })
+      .from(users)
+      .orderBy(desc(users.createdAt));
+    
+    // Get all organization roles with company names
+    const allOrgRoles = await db
+      .select({
+        userId: userOrganizationRoles.userId,
+        companyId: userOrganizationRoles.companyId,
+        companyName: companies.companyName,
+        role: userOrganizationRoles.role,
+      })
+      .from(userOrganizationRoles)
+      .leftJoin(companies, eq(userOrganizationRoles.companyId, companies.id));
+    
+    // Group company assignments by user
+    const userCompanyMap = new Map<string, { companyId: string; companyName: string; role: string }[]>();
+    for (const role of allOrgRoles) {
+      if (!userCompanyMap.has(role.userId)) {
+        userCompanyMap.set(role.userId, []);
+      }
+      userCompanyMap.get(role.userId)!.push({
+        companyId: role.companyId,
+        companyName: role.companyName || 'Unknown',
+        role: role.role,
+      });
+    }
+    
+    // Merge user data with company assignments (no password exposed)
+    return allUsers.map(user => ({
+      ...user,
+      companies: userCompanyMap.get(user.id) || [],
+      // Primary company is the first one (for display purposes)
+      primaryCompany: userCompanyMap.get(user.id)?.[0]?.companyName || null,
+    }));
+  }
+
+  async getUsersByCompany(companyId: string): Promise<any[]> {
     // Get all users that have at least one organization role in this company
+    // Explicitly exclude password for security
     const usersWithRolesInCompany = await db
       .selectDistinct({
         id: users.id,
         username: users.username,
         email: users.email,
-        password: users.password,
         firstName: users.firstName,
         lastName: users.lastName,
         profileImageUrl: users.profileImageUrl,
