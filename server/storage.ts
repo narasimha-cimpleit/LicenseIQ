@@ -101,7 +101,7 @@ import {
   type InsertLocation,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, or, ilike, count, gte, sql, inArray } from "drizzle-orm";
+import { eq, desc, and, or, ilike, count, gte, sql, inArray, isNull } from "drizzle-orm";
 
 /**
  * Organizational context for hierarchical access control
@@ -117,6 +117,8 @@ export interface OrgAccessContext {
  * Hierarchical Access Control Helper (Table-Agnostic)
  * Builds query conditions based on organizational context.
  * Hierarchy: Company > Business Unit > Location
+ * 
+ * Legacy contracts (with NULL org fields) are included for Company Admins/Owners.
  * 
  * @param columns - Object with column references: { companyId, businessUnitId, locationId }
  * @param context - Organizational access context
@@ -145,24 +147,36 @@ function buildOrgContextFilter(
 
   const { companyId, businessUnitId, locationId, role: contextRole } = activeContext;
 
-  // Company Admin/Owner (context role) - see all data in their company
+  // Company Admin/Owner (context role) - see all data in their company + legacy contracts (NULL org)
   if ((contextRole === 'admin' || contextRole === 'owner') && companyId) {
-    return eq(columns.companyId, companyId);
+    return or(
+      eq(columns.companyId, companyId),
+      isNull(columns.companyId) // Include legacy contracts without org assignment
+    );
   }
 
-  // Location level: Most restrictive - see only this specific location's data
+  // Location level: Most restrictive - see only this specific location's data + legacy contracts
   if (locationId) {
-    return eq(columns.locationId, locationId);
+    return or(
+      eq(columns.locationId, locationId),
+      isNull(columns.companyId) // Include legacy contracts
+    );
   }
 
-  // Business Unit level: See all locations within this BU
+  // Business Unit level: See all locations within this BU + legacy contracts
   if (businessUnitId) {
-    return eq(columns.businessUnitId, businessUnitId);
+    return or(
+      eq(columns.businessUnitId, businessUnitId),
+      isNull(columns.companyId) // Include legacy contracts
+    );
   }
 
-  // Company level: See all data within the company (all BUs and locations)
+  // Company level: See all data within the company (all BUs and locations) + legacy contracts
   if (companyId) {
-    return eq(columns.companyId, companyId);
+    return or(
+      eq(columns.companyId, companyId),
+      isNull(columns.companyId) // Include legacy contracts
+    );
   }
 
   // Fallback: no filtering
