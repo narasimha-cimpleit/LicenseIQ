@@ -86,6 +86,7 @@ export async function seedNavigation() {
       { itemKey: 'audit-trail', itemName: 'Audit Trail', href: '/audit', iconName: 'History', defaultRoles: ['auditor', 'admin', 'owner'], sortOrder: 19 },
       { itemKey: 'configuration', itemName: 'Configuration', href: '/configuration', iconName: 'Sparkles', defaultRoles: ['admin', 'owner'], sortOrder: 20 },
       { itemKey: 'master-data', itemName: 'Master Data', href: '/master-data', iconName: 'Database', defaultRoles: ['admin', 'owner'], sortOrder: 21 },
+      { itemKey: 'navigation-manager', itemName: 'Navigation Manager', href: '/navigation-manager', iconName: 'Settings', defaultRoles: ['owner'], sortOrder: 22 },
     ];
 
     for (const item of navItems) {
@@ -136,6 +137,7 @@ export async function seedNavigation() {
       { navItemKey: 'lead-management', categoryKey: 'admin', sortOrder: 2 },
       { navItemKey: 'audit-trail', categoryKey: 'admin', sortOrder: 3 },
       { navItemKey: 'configuration', categoryKey: 'admin', sortOrder: 4 },
+      { navItemKey: 'navigation-manager', categoryKey: 'admin', sortOrder: 5 },
     ];
 
     for (const mapping of itemCategoryMappings) {
@@ -177,7 +179,7 @@ export async function seedNavigation() {
       }
     }
 
-    console.log('✅ Navigation seeding complete: 6 categories, 21 items, 21 mappings');
+    console.log('✅ Navigation seeding complete: 6 categories, 22 items, 22 mappings');
 
   } catch (error: any) {
     console.error('⚠ Navigation seeding warning:', error.message);

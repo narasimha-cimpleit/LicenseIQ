@@ -5044,6 +5044,7 @@ Return ONLY valid JSON array, no other text.`;
   app.get('/api/navigation/categorized', isAuthenticated, async (req: any, res: Response) => {
     try {
       const userId = req.user.id;
+      const isSystemAdmin = req.user.isSystemAdmin === true;
       
       // Use context role if available, otherwise fall back to global role (backward compatibility)
       const effectiveRole = req.user.activeContext?.role || req.user.role;
@@ -5084,7 +5085,11 @@ Return ONLY valid JSON array, no other text.`;
       const userOverrideMap = new Map(userOverrides.map(o => [o.navItemKey, o.isEnabled]));
 
       // Filter allowed items based on permissions
+      // System Admins get access to ALL navigation items
       const allowedItems = allItems.filter(item => {
+        if (isSystemAdmin) {
+          return true; // System admins see everything
+        }
         if (userOverrideMap.has(item.itemKey)) {
           return userOverrideMap.get(item.itemKey);
         }
