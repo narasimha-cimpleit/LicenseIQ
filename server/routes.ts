@@ -652,17 +652,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get users by organization
   app.get('/api/user-organization-roles/organization/:companyId', isAuthenticated, async (req: any, res: Response) => {
     try {
-      const currentUserId = req.user.id;
-      const currentUserRole = (await storage.getUser(currentUserId))?.role;
+      const user = req.user;
+      const targetCompanyId = req.params.companyId;
       
-      // Check if user has admin access
-      if (currentUserRole !== 'admin' && currentUserRole !== 'owner') {
-        return res.status(403).json({ error: 'Insufficient permissions' });
+      // System admins can view any company's users
+      // Company admins can only view their own company's users
+      if (!isSystemAdmin(user)) {
+        if (!isContextAdmin(user)) {
+          return res.status(403).json({ error: 'Insufficient permissions' });
+        }
+        const userCompanyId = getUserCompanyId(user);
+        if (userCompanyId !== targetCompanyId) {
+          return res.status(403).json({ error: 'Cannot view users from another company' });
+        }
       }
 
       const { businessUnitId, locationId } = req.query;
       const users = await storage.getUsersByOrganization(
-        req.params.companyId,
+        targetCompanyId,
         businessUnitId as string | undefined,
         locationId as string | undefined
       );
@@ -676,12 +683,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create user organization role assignment
   app.post('/api/user-organization-roles', isAuthenticated, async (req: any, res: Response) => {
     try {
-      const currentUserId = req.user.id;
-      const currentUserRole = (await storage.getUser(currentUserId))?.role;
+      const user = req.user;
+      const currentUserId = user.id;
+      const targetCompanyId = req.body.companyId;
       
-      // Check if user has admin access
-      if (currentUserRole !== 'admin' && currentUserRole !== 'owner') {
-        return res.status(403).json({ error: 'Insufficient permissions' });
+      // System admins can create roles in any company
+      // Company admins can only create roles in their own company
+      if (!isSystemAdmin(user)) {
+        if (!isContextAdmin(user)) {
+          return res.status(403).json({ error: 'Insufficient permissions' });
+        }
+        const userCompanyId = getUserCompanyId(user);
+        if (userCompanyId !== targetCompanyId) {
+          return res.status(403).json({ error: 'Cannot assign roles in another company' });
+        }
       }
 
       const { insertUserOrganizationRoleSchema } = await import("@shared/schema");
@@ -709,12 +724,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update user organization role assignment
   app.patch('/api/user-organization-roles/:id', isAuthenticated, async (req: any, res: Response) => {
     try {
-      const currentUserId = req.user.id;
-      const currentUserRole = (await storage.getUser(currentUserId))?.role;
+      const user = req.user;
+      const currentUserId = user.id;
       
-      // Check if user has admin access
-      if (currentUserRole !== 'admin' && currentUserRole !== 'owner') {
-        return res.status(403).json({ error: 'Insufficient permissions' });
+      // First, get the existing role to check ownership
+      const existingRole = await storage.getUserOrganizationRoleById(req.params.id);
+      if (!existingRole) {
+        return res.status(404).json({ error: 'Role assignment not found' });
+      }
+      
+      // System admins can update any role
+      // Company admins can only update roles in their own company
+      if (!isSystemAdmin(user)) {
+        if (!isContextAdmin(user)) {
+          return res.status(403).json({ error: 'Insufficient permissions' });
+        }
+        const userCompanyId = getUserCompanyId(user);
+        if (userCompanyId !== existingRole.companyId) {
+          return res.status(403).json({ error: 'Cannot update roles in another company' });
+        }
       }
 
       const role = await storage.updateUserOrganizationRole(req.params.id, req.body, currentUserId);
@@ -733,12 +761,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delete user organization role assignment
   app.delete('/api/user-organization-roles/:id', isAuthenticated, async (req: any, res: Response) => {
     try {
-      const currentUserId = req.user.id;
-      const currentUserRole = (await storage.getUser(currentUserId))?.role;
+      const user = req.user;
       
-      // Check if user has admin access
-      if (currentUserRole !== 'admin' && currentUserRole !== 'owner') {
-        return res.status(403).json({ error: 'Insufficient permissions' });
+      // First, get the existing role to check ownership
+      const existingRole = await storage.getUserOrganizationRoleById(req.params.id);
+      if (!existingRole) {
+        return res.status(404).json({ error: 'Role assignment not found' });
+      }
+      
+      // System admins can delete any role
+      // Company admins can only delete roles in their own company
+      if (!isSystemAdmin(user)) {
+        if (!isContextAdmin(user)) {
+          return res.status(403).json({ error: 'Insufficient permissions' });
+        }
+        const userCompanyId = getUserCompanyId(user);
+        if (userCompanyId !== existingRole.companyId) {
+          return res.status(403).json({ error: 'Cannot delete roles in another company' });
+        }
       }
 
       await storage.deleteUserOrganizationRole(req.params.id);

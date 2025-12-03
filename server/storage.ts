@@ -445,6 +445,7 @@ export interface IStorage {
   
   // User Organization Roles operations
   createUserOrganizationRole(role: InsertUserOrganizationRole): Promise<UserOrganizationRole>;
+  getUserOrganizationRoleById(id: string): Promise<UserOrganizationRole | undefined>;
   getUserOrganizationRoles(userId: string): Promise<any[]>;
   getAllUserOrganizationRoles(): Promise<any[]>;
   updateUserOrganizationRole(id: string, updates: Partial<InsertUserOrganizationRole>, userId: string): Promise<UserOrganizationRole>;
@@ -3066,6 +3067,14 @@ export class DatabaseStorage implements IStorage {
       .orderBy(users.username, companies.companyName);
     
     return roles;
+  }
+
+  async getUserOrganizationRoleById(id: string): Promise<UserOrganizationRole | undefined> {
+    const [role] = await db
+      .select()
+      .from(userOrganizationRoles)
+      .where(eq(userOrganizationRoles.id, id));
+    return role;
   }
 
   async updateUserOrganizationRole(id: string, updates: Partial<InsertUserOrganizationRole>, userId: string): Promise<UserOrganizationRole> {
