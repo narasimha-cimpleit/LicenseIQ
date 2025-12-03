@@ -67,7 +67,7 @@ export async function seedNavigation() {
     const navItems = [
       { itemKey: 'dashboard', itemName: 'Dashboard', href: '/', iconName: 'LayoutDashboard', defaultRoles: ['viewer', 'editor', 'analyst', 'auditor', 'manager', 'admin', 'owner'], sortOrder: 1 },
       { itemKey: 'contracts', itemName: 'Contracts', href: '/contracts', iconName: 'FileText', defaultRoles: ['viewer', 'editor', 'analyst', 'auditor', 'manager', 'admin', 'owner'], sortOrder: 2 },
-      { itemKey: 'contract-upload', itemName: 'Upload Contract', href: '/contracts/upload', iconName: 'Upload', defaultRoles: ['editor', 'manager', 'admin', 'owner'], sortOrder: 3 },
+      { itemKey: 'contract-upload', itemName: 'Upload Contract', href: '/upload', iconName: 'Upload', defaultRoles: ['editor', 'manager', 'admin', 'owner'], sortOrder: 3 },
       { itemKey: 'royalty-rules', itemName: 'License Fee Rules', href: '/contracts', iconName: 'Scale', defaultRoles: ['viewer', 'editor', 'analyst', 'auditor', 'manager', 'admin', 'owner'], sortOrder: 4 },
       { itemKey: 'royalty-calculator', itemName: 'Royalty Calculator', href: '/calculations', iconName: 'Calculator', defaultRoles: ['analyst', 'manager', 'admin', 'owner'], sortOrder: 5 },
       { itemKey: 'calculations', itemName: 'Calculations', href: '/calculations', iconName: 'Calculator', defaultRoles: ['analyst', 'auditor', 'manager', 'admin', 'owner'], sortOrder: 6 },
