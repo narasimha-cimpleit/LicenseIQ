@@ -5006,6 +5006,45 @@ Return ONLY valid JSON array, no other text.`;
     }
   });
 
+  // Update default roles for a navigation item
+  app.patch('/api/config/navigation/:itemKey/default-roles', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      if (req.user.role !== 'admin' && req.user.role !== 'owner') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      const { itemKey } = req.params;
+      const { role, isDefault } = req.body;
+
+      // Get current item
+      const [item] = await db.select().from(navigationPermissions)
+        .where(eq(navigationPermissions.itemKey, itemKey));
+
+      if (!item) {
+        return res.status(404).json({ error: 'Navigation item not found' });
+      }
+
+      // Update defaultRoles array
+      let currentRoles = item.defaultRoles || [];
+      if (isDefault && !currentRoles.includes(role)) {
+        currentRoles = [...currentRoles, role];
+      } else if (!isDefault && currentRoles.includes(role)) {
+        currentRoles = currentRoles.filter(r => r !== role);
+      }
+
+      // Save updated defaultRoles
+      const [updated] = await db.update(navigationPermissions)
+        .set({ defaultRoles: currentRoles, updatedAt: new Date() })
+        .where(eq(navigationPermissions.itemKey, itemKey))
+        .returning();
+
+      res.json(updated);
+    } catch (error) {
+      console.error('❌ [NAV PERMISSIONS] Update default roles error:', error);
+      res.status(400).json({ error: error instanceof Error ? error.message : 'Failed to update default roles' });
+    }
+  });
+
   // Get user's allowed navigation items (dynamic permissions)
   app.get('/api/navigation/allowed', isAuthenticated, async (req: any, res: Response) => {
     try {

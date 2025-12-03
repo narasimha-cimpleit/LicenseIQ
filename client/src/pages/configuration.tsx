@@ -245,6 +245,31 @@ export default function Configuration() {
     updatePermMutation.mutate({ role, navItemKey: itemKey, isEnabled: !currentValue });
   };
 
+  // Update default roles mutation
+  const updateDefaultRoleMutation = useMutation({
+    mutationFn: async ({ itemKey, role, isDefault }: { itemKey: string; role: string; isDefault: boolean }) => {
+      return await apiRequest('PATCH', `/api/config/navigation/${itemKey}/default-roles`, { role, isDefault });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/config/navigation'] });
+      toast({
+        title: "Success",
+        description: "Default access updated successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update default access",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleToggleDefaultRole = (itemKey: string, role: string, currentValue: boolean) => {
+    updateDefaultRoleMutation.mutate({ itemKey, role, isDefault: !currentValue });
+  };
+
   return (
     <MainLayout
       title="Configuration"
@@ -364,18 +389,13 @@ export default function Configuration() {
                                 <TableRow key={item.id} data-testid={`row-nav-${item.itemKey}`}>
                                   <TableCell className="font-medium">{item.itemName}</TableCell>
                                   <TableCell className="text-muted-foreground font-mono text-sm">{item.href}</TableCell>
-                                  <TableCell>
-                                    {hasDefault ? (
-                                      <Badge variant="secondary" className="bg-green-100 dark:bg-green-900">
-                                        <Check className="h-3 w-3 mr-1" />
-                                        Yes
-                                      </Badge>
-                                    ) : (
-                                      <Badge variant="secondary" className="bg-gray-100 dark:bg-gray-800">
-                                        <X className="h-3 w-3 mr-1" />
-                                        No
-                                      </Badge>
-                                    )}
+                                  <TableCell className="text-center">
+                                    <Switch
+                                      checked={hasDefault}
+                                      onCheckedChange={() => handleToggleDefaultRole(item.itemKey, selectedRole, hasDefault)}
+                                      disabled={updateDefaultRoleMutation.isPending}
+                                      data-testid={`switch-default-${item.itemKey}-${selectedRole}`}
+                                    />
                                   </TableCell>
                                   <TableCell className="text-center">
                                     <Switch
