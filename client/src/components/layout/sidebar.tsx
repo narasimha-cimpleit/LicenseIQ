@@ -29,7 +29,15 @@ import {
   ChevronRight,
   ChevronDown,
   ChevronUp,
-  LucideIcon
+  LucideIcon,
+  LayoutDashboard,
+  Scale,
+  ArrowLeftRight,
+  BookOpen,
+  Bot,
+  Home,
+  Settings,
+  DollarSign
 } from "lucide-react";
 import logoSymbol from "@assets/Transparent Logo (1)_1763596083942.png";
 
@@ -58,6 +66,14 @@ const iconMap: Record<string, LucideIcon> = {
   'Users': Users,
   'History': History,
   'Building2': Building2,
+  'LayoutDashboard': LayoutDashboard,
+  'Scale': Scale,
+  'ArrowLeftRight': ArrowLeftRight,
+  'BookOpen': BookOpen,
+  'Bot': Bot,
+  'Home': Home,
+  'Settings': Settings,
+  'DollarSign': DollarSign,
 };
 
 export default function Sidebar({ className, isOpen, onClose }: SidebarProps) {
