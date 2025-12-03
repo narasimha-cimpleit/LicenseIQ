@@ -5069,19 +5069,29 @@ Return ONLY valid JSON array, no other text.`;
       const userOverrides = await db.select().from(userNavigationOverrides)
         .where(eq(userNavigationOverrides.userId, userId));
 
-      // Build a map of allowed items
-      const rolePermissionKeys = new Set(rolePermissions.map(p => p.navItemKey));
+      // Build maps for permission checking
+      const rolePermissionMap = new Map(rolePermissions.map(p => [p.navItemKey, true]));
       const userOverrideMap = new Map(userOverrides.map(o => [o.navItemKey, o.isEnabled]));
+      
+      // Get all role permissions (including disabled) to check if explicit override exists
+      const allRolePermissions = await db.select().from(roleNavigationPermissions)
+        .where(eq(roleNavigationPermissions.role, effectiveRole));
+      const explicitRolePermissionMap = new Map(allRolePermissions.map(p => [p.navItemKey, p.isEnabled]));
 
       // Filter items based on permissions
       const allowedItems = allItems.filter(item => {
-        // Check if user has a specific override
+        // Priority 1: Check if user has a specific override
         if (userOverrideMap.has(item.itemKey)) {
           return userOverrideMap.get(item.itemKey);
         }
         
-        // Otherwise, check role permission
-        return rolePermissionKeys.has(item.itemKey);
+        // Priority 2: Check if there's an explicit role permission (Enabled toggle)
+        if (explicitRolePermissionMap.has(item.itemKey)) {
+          return explicitRolePermissionMap.get(item.itemKey);
+        }
+        
+        // Priority 3: Fall back to defaultRoles (Default Access)
+        return item.defaultRoles?.includes(effectiveRole) || false;
       });
 
       res.json({ items: allowedItems });
@@ -5132,8 +5142,12 @@ Return ONLY valid JSON array, no other text.`;
         .where(eq(userCategoryState.userId, userId));
 
       // Build permission maps
-      const rolePermissionKeys = new Set(rolePermissions.map(p => p.navItemKey));
       const userOverrideMap = new Map(userOverrides.map(o => [o.navItemKey, o.isEnabled]));
+      
+      // Get all role permissions (including disabled) to check if explicit override exists
+      const allRolePermissions = await db.select().from(roleNavigationPermissions)
+        .where(eq(roleNavigationPermissions.role, effectiveRole));
+      const explicitRolePermissionMap = new Map(allRolePermissions.map(p => [p.navItemKey, p.isEnabled]));
 
       // Filter allowed items based on permissions
       // System Admins get access to ALL navigation items
@@ -5141,10 +5155,19 @@ Return ONLY valid JSON array, no other text.`;
         if (isSystemAdmin) {
           return true; // System admins see everything
         }
+        
+        // Priority 1: Check if user has a specific override
         if (userOverrideMap.has(item.itemKey)) {
           return userOverrideMap.get(item.itemKey);
         }
-        return rolePermissionKeys.has(item.itemKey);
+        
+        // Priority 2: Check if there's an explicit role permission (Enabled toggle)
+        if (explicitRolePermissionMap.has(item.itemKey)) {
+          return explicitRolePermissionMap.get(item.itemKey);
+        }
+        
+        // Priority 3: Fall back to defaultRoles (Default Access)
+        return item.defaultRoles?.includes(effectiveRole) || false;
       });
 
       // Build category state map
