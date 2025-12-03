@@ -3189,6 +3189,26 @@ Report ID: ${contractId}
     }
   });
 
+  // Knowledge Base endpoint - Get system knowledge entries
+  app.get('/api/knowledge-base', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const { systemKnowledgeBase } = await import('./data/systemKnowledgeBase');
+      
+      const entries = systemKnowledgeBase.map(entry => ({
+        id: entry.id,
+        category: entry.category,
+        title: entry.title,
+        content: entry.content,
+        createdAt: new Date().toISOString(),
+      }));
+      
+      res.json(entries);
+    } catch (error: any) {
+      console.error('Knowledge base fetch error:', error);
+      res.status(500).json({ message: error.message || 'Failed to fetch knowledge base' });
+    }
+  });
+
   // RAG Stats endpoint - Get embedding statistics
   app.get('/api/rag/stats', isAuthenticated, async (req: any, res: Response) => {
     try {
